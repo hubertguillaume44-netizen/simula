@@ -5,12 +5,16 @@ Rejouer une règle de trading sur un historique H1, puis la juger en cinq questi
 - **En ligne** : quatre séries de démonstration.
 - **Vos CSV** : restent dans le navigateur, jamais envoyés.
 
-Site public : https://simula.grok.me/
-Dépôt : https://github.com/hubertguillaume44-netizen/simula
+Dépôt : [github.com/hubertguillaume44-netizen/simula](https://github.com/hubertguillaume44-netizen/simula)
 
-## Grok et Claude
+## Grok + Claude
 
-Ce dépôt est la copie qui compte. Ouvrez-le dans Claude / Cursor. Dans Grok, donnez cette URL.
+Ce dépôt est la copie qui compte. Grok et Claude travaillent **ici**, pas chacun de son côté.
+
+1. Ouvrez ce dépôt dans Claude / Cursor.
+2. Demandez la modification.
+3. Claude pousse sur `main`.
+4. Grok relit le même dépôt.
 
 ## Pages
 
@@ -29,6 +33,4 @@ npm install
 npm run dev
 ```
 
-Puis `npm run typecheck` et `npm run build`.
-
-TanStack Start, React 19, Tailwind v4, Zustand, Recharts. Pas de compte utilisateur.
+TanStack Start, React 19, Tailwind v4, Zustand, Recharts. Postgres (Neon en prod, PGLite en local). Pas de compte utilisateur.
