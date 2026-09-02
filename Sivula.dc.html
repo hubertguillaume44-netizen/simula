@@ -3424,6 +3424,13 @@ class Component extends DCLogic {
     gLignePente: ['mediane'], gPenteRecul: '3 5 8 10 15 20',
     fResist: false, utResist: 'D1', resistLookback: 20, resistMarge: 1,
     _grilleV2: 1, _penteV3: 1, _trailV4: 1, _echV3: 1, ut: 'D1', gPeriodes: '5 6 7 8 9 10 15 20 26',
+    // Sans session enregistrée (première visite), gEchelles restait undefined : les
+    // défauts de DEFAUTS_MULTI ne sont posés que si une session existe. Or la variante
+    // « Paliers progressifs » s'étend sur ce champ — vide, elle ne produit AUCUNE
+    // sous-variante et disparaît du scan en silence, alors que l'interface la montre
+    // sélectionnée. Le scan mesurait donc sans sécurisation, et exportait des robots
+    // qui, eux, gèrent leur stop.
+    gEchelles: '25>0 50>25 75>50 ; 50>0 75>50 ; 25>-25 50>25 75>50',
     gSls: '0,5 0,6 0,7 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,5 2,0 2,5 3,0',
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
