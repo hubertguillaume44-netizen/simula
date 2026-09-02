@@ -13,6 +13,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { chargerMoteur } from "./mt5/charger-moteur.mjs";
+import { construireConfig, lirePaliers, PALIERS_REFERENCE } from "./mt5/config.mjs";
 import { lireRapportMt5 } from "./mt5/parse-mt5.mjs";
 import { comparer, motifSimula, rNet } from "./mt5/comparer.mjs";
 
@@ -27,17 +28,22 @@ Données
                        des onglets Transactions / Ordres / Positions (obligatoire)
                        « - » pour lire l'entrée standard
 
-Réglages du moteur (par défaut : ceux de DEFAULT_SETTINGS)
-  --settings <f.json>  JSON partiel fusionné par-dessus DEFAULT_SETTINGS
-  --symbole <s>        --ut <H1|H4|D1>      --entree <type>
+Réglages du moteur (moteur.js à la racine — la spécification)
+  --symbole <s>        étiquette de l'instrument, pour l'affichage
+  --entree <type>      croisement_ou_rebond (défaut) | croisement_prix | rebond
+                       | croisement_lignes | cassure
+  --ut <H1|H4|D1>      unité de décision ; H4/D1 sont agrégées depuis le H1 (défaut H1)
   --ligne <ema|ma|mediane>                  --periode <n>
-  --sl <pct>           --rr <x>
-  --mtf / --sans-mtf   filtre de tendance supérieure
-  --be / --sans-be     sécurisation (BE progressif / trailing)
-  --frais / --sans-frais
-  --spread <pct>       --swap <pct/an>
-  --capital <eur>      --risque <pct>
-  --depuis <AAAA-MM-JJ>  début de simulation (défaut : DEBUT du moteur)
+  --sl <pct>           --rr <x>             --sens <achat|vente>
+  --paliers <s>        « 25:0,50:25,75:50 » (défaut) ou « aucun »
+  --trailing <pct>     stop suiveur, à la place des paliers
+  --prudent            lecture basse : bougie ambiguë tranchée en défaveur
+  --duree-max <n>      fermeture au cours de clôture après N bougies
+  --filtres <f.json>   tableau JSON de filtres du moteur
+  --spread <pct>       spread de repli quand la série n'en porte pas
+  --swap <pct/an>      --commission <pct>
+  --capital <eur>      --risque <pct>       (repli pour la conversion R → €)
+  --depuis <AAAA-MM-JJ>  début de simulation (défaut : 2020-01-01)
 
 Démonstration
   --demo               fabrique un couple (CSV, rapport MT5) aux écarts connus
@@ -122,42 +128,42 @@ async function main() {
     process.exit(1);
   }
 
-  const { engine, moteur } = await chargerMoteur();
+  const moteur = await chargerMoteur();
 
   // ---------- Données ----------
   const texteCsv = readFileSync(o.csv, "utf8");
   const brut = moteur.texteVersDf(texteCsv);
   const lues = brut.n + (brut.ecartees || 0);
-  const debut = o.depuis ? Date.parse(`${o.depuis}T00:00:00Z`) : engine.DEBUT;
+  const debut = o.depuis ? Date.parse(`${o.depuis}T00:00:00Z`) : Date.UTC(2020, 0, 1);
   const df = moteur.decouper(brut, debut, undefined);
 
   // ---------- Réglages ----------
-  let reglages = { ...engine.DEFAULT_SETTINGS };
-  if (o.settings) Object.assign(reglages, JSON.parse(readFileSync(o.settings, "utf8")));
-  const set = (k, v) => {
-    if (v !== undefined && !Number.isNaN(v)) reglages[k] = v;
+  const reglages = {
+    symbol: o.symbole || "?",
+    ut: o.ut || "H1",
+    entree: o.entree || "croisement_ou_rebond",
+    ligne: o.ligne || "mediane",
+    periode: num(o.periode, 15),
+    sl: num(o.sl, 0.5),
+    rr: num(o.rr, 2),
+    sens: o.sens === "vente" ? "vente" : "achat",
+    paliers: o.paliers !== undefined ? lirePaliers(o.paliers) : PALIERS_REFERENCE,
+    trailing: o.trailing !== undefined ? num(o.trailing) : 0,
+    prudent: !!o.prudent,
+    dureeMax: num(o["duree-max"], 0),
+    spread: num(o.spread, 0),
+    swap: num(o.swap, 0),
+    commission: num(o.commission, 0),
+    capital: num(o.capital, 20000),
+    risquePct: num(o.risque, 1),
+    filtres: o.filtres ? JSON.parse(readFileSync(o.filtres, "utf8")) : [],
+    debut,
   };
-  if (o.symbole) reglages.symbol = o.symbole;
-  if (o.ut) reglages.ut = o.ut;
-  if (o.entree) reglages.entree = o.entree;
-  if (o.ligne) reglages.ligne = o.ligne;
-  set("periode", num(o.periode));
-  set("sl", num(o.sl));
-  set("rr", num(o.rr));
-  set("spreadSaisi", num(o.spread));
-  set("swapSaisi", num(o.swap));
-  set("capital", num(o.capital));
-  set("risquePct", num(o.risque));
-  if (o.mtf) reglages.mtf = true;
-  if (o["sans-mtf"]) reglages.mtf = false;
-  if (o.be) reglages.be = true;
-  if (o["sans-be"]) reglages.be = false;
-  if (o.frais) reglages.frais = true;
-  if (o["sans-frais"]) reglages.frais = false;
 
-  const cfg = engine.buildConfig(reglages);
-  cfg.debut = debut;
-  const base = engine.baseOf(df, reglages.ut);
+  const cfg = construireConfig(reglages);
+  // Invariant 1 : les données de base sont en H1 ; H4 et D1 sont agrégées, jamais lues
+  // depuis une autre série. Le robot MT5 fait la même agrégation (InpBougiesAgr).
+  const base = reglages.ut === "H1" ? df : moteur.resampler(df, reglages.ut);
   const sim = moteur.backtester(base, cfg);
   const resumeSim = moteur.resume(sim);
 
@@ -190,10 +196,10 @@ async function main() {
   p();
   p(`CSV : \`${o.csv}\` · rapport MT5 : \`${o.mt5}\``);
   p(
-    `Règle : ${reglages.entree} · ${reglages.ligne} ${reglages.periode} · SL ${fr(reglages.sl, 2)} % · R/R ${fr(reglages.rr, 2)} · UT ${reglages.ut}`,
+    `Règle : ${reglages.entree} · ${reglages.ligne} ${reglages.periode} · SL ${fr(reglages.sl, 2)} % · R/R ${fr(reglages.rr, 2)} · ${reglages.sens} · UT ${reglages.ut}`,
   );
   p(
-    `Filtres actifs : ${cfg.filtres.length ? cfg.filtres.map((f) => f.type).join(", ") : "aucun"} · sécurisation : ${cfg.sortie.securisation.type}`,
+    `Filtres actifs : ${cfg.filtres.length ? cfg.filtres.map((f) => f.type).join(", ") : "aucun"} · sécurisation : ${cfg.sortie.securisation.type}${cfg.sortie.securisation.etapes ? " " + cfg.sortie.securisation.etapes.map((e) => e.join("\u2192")).join(" / ") : ""}${cfg.sortie.prudent ? " · lecture basse" : ""}`,
   );
   p();
 
@@ -205,6 +211,10 @@ async function main() {
   p(`| Écartées par \`nettoyer()\` | ${brut.ecartees || 0} |`);
   p(`| Heures de session retenues (UTC) | ${(brut.heuresSession || []).join(", ") || "—"} |`);
   p(`| Bougies après \`decouper()\` | ${df.n} |`);
+  p(`| Bougies de décision (UT ${reglages.ut}) | ${base.n} |`);
+  p(
+    `| Colonne spread du CSV | ${brut.spreadRenseigne ? `renseignée · moyenne ${fr(brut.spreadPctMoyen, 4)} %` : "absente ou vide"} |`,
+  );
   p(`| Fenêtre CSV simulée | ${df.n ? `${iso(df.t[0])} → ${iso(df.t[df.n - 1])}` : "—"} |`);
   p(`| Début de simulation (\`cfg.debut\`) | ${iso(debut)} |`);
   p(
@@ -338,7 +348,7 @@ async function main() {
   p("## 4. Frais");
   p();
   p(
-    "Ce que Simula modélise (formule du moteur : coût en R = spread% / SL%, swap au prorata des jours) :",
+    "Ce que Simula modélise. Le spread n'est plus déduit du R : il est payé dans le prix d'entrée (`px = open × (1 + spread)`), donc porté par le stop et l'objectif. Ne restent en coût post-hoc que la commission et le portage :",
   );
   p();
   p(ENTETE_STATS);
@@ -372,7 +382,7 @@ async function main() {
   p(ligneStats("commission MT5 (R/trade)", frais.mt5CommissionR, 4));
   p();
   p(
-    `Réglage Simula : spread ${fr(reglages.spreadSaisi, 3)} % · swap ${fr(reglages.swapSaisi, 3)} %/an · frais ${reglages.frais ? "actifs" : "désactivés"}.`,
+    `Réglage Simula : spread de repli ${fr(reglages.spread, 4)} % · swap ${fr(reglages.swap, 3)} %/an · commission ${fr(reglages.commission, 4)} %.`,
   );
   p();
 

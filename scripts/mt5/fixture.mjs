@@ -6,7 +6,10 @@
  * en trop, sorties divergentes). Le harnais doit les retrouver : c'est ce qui
  * permet de lui faire confiance avant de le lancer sur un vrai rapport.
  */
-import { chargerMoteur } from "./charger-moteur.mjs";
+import { chargerDemo, chargerMoteur } from "./charger-moteur.mjs";
+import { construireConfig } from "./config.mjs";
+
+export const DEBUT = Date.UTC(2020, 0, 1);
 
 const DEFAUTS = {
   symbole: "DEMO-FX",
@@ -34,27 +37,29 @@ const eur = (x) =>
 
 export async function fabriquer(options = {}) {
   const opt = { ...DEFAUTS, ...options };
-  const { engine, moteur } = await chargerMoteur();
-  const demo = await import(new URL("../../src/lib/demo.ts", import.meta.url).href);
+  const moteur = await chargerMoteur();
+  const demo = await chargerDemo();
 
   const series = demo.demoSeries();
   const id = opt.serie ?? Object.keys(series)[0];
   const csv = demo.seriesToCsv(id, series[id]);
 
   const reglages = {
-    ...engine.DEFAULT_SETTINGS,
     symbol: opt.symbole,
+    entree: "croisement_ou_rebond",
     ligne: "mediane",
     periode: 15,
     sl: 0.5,
     rr: 2,
-    mtf: false,
-    be: false,
-    frais: false,
+    sens: "achat",
+    paliers: [],
+    capital: 25000,
+    risquePct: 1,
+    debut: DEBUT,
     ...(opt.reglages ?? {}),
   };
-  const df = moteur.decouper(moteur.texteVersDf(csv), engine.DEBUT, undefined);
-  const sim = moteur.backtester(engine.baseOf(df, reglages.ut), engine.buildConfig(reglages));
+  const df = moteur.decouper(moteur.texteVersDf(csv), DEBUT, undefined);
+  const sim = moteur.backtester(df, construireConfig(reglages));
 
   const dec = opt.decalageH * 3600000;
   const pas = Math.max(2, Math.ceil(sim.length / Math.max(1, opt.manquants)));

@@ -102,7 +102,7 @@ export function cellules(texte) {
 
 const CLES = {
   heure: ["time", "heure", "open time", "heure d'ouverture", "date"],
-  transaction: ["deal", "transaction", "trade"],
+  transaction: ["deal", "transaction", "trade", "op\u00e9ration", "operation"],
   position: ["position"],
   ordre: ["order", "ordre"],
   symbole: ["symbol", "symbole"],
@@ -113,8 +113,8 @@ const CLES = {
   sl: ["s / l", "s/l", "sl", "stop loss"],
   tp: ["t / p", "t/p", "tp", "take profit"],
   commission: ["commission", "commissions"],
-  swap: ["swap", "swaps"],
-  profit: ["profit", "bénéfice", "benefice", "resultat", "résultat", "p/l"],
+  swap: ["swap", "swaps", "\u00e9change", "echange"],
+  profit: ["profit", "b\u00e9n\u00e9fice", "benefice", "resultat", "r\u00e9sultat", "p/l"],
   balance: ["balance", "solde"],
   etat: ["state", "état", "etat"],
   commentaire: ["comment", "commentaire"],
@@ -170,6 +170,27 @@ function motifDe(commentaire, type) {
   )
     return "balance";
   return c.trim() ? "autre" : "";
+}
+
+/**
+ * MT5 commente « sl » toute sortie au stop, y compris quand ce stop a été remonté au
+ * point mort : le rapport ne distingue pas un stop plein d'un trade rendu à l'équilibre.
+ * On les sépare sur le seul indice présent dans le rapport — le profit — étalonné sur la
+ * perte médiane des stops de CE rapport, sans rien supposer de l'instrument.
+ * Le motif d'origine reste lisible dans `motifBrut`.
+ */
+export function separerPointsMorts(trades, fraction = 0.25) {
+  const pertes = trades.filter((t) => t.motif === "sl" && t.profit < 0).map((t) => -t.profit);
+  if (pertes.length < 3) return trades;
+  const v = [...pertes].sort((a, b) => a - b);
+  const perteMediane = v[Math.floor(v.length / 2)];
+  const seuil = perteMediane * fraction;
+  for (const t of trades) {
+    if (t.motif !== "sl") continue;
+    t.motifBrut = "sl";
+    if (Math.abs(t.profit) < seuil) t.motif = "be";
+  }
+  return trades;
 }
 
 /**
@@ -246,7 +267,7 @@ export function lireRapportMt5(texte) {
     }
     if (trades.length) {
       return {
-        trades: trades.sort((a, b) => a.entree_t - b.entree_t),
+        trades: separerPointsMorts(trades.sort((a, b) => a.entree_t - b.entree_t)),
         source: "positions",
         compte,
         avertissements,
@@ -334,7 +355,7 @@ export function lireRapportMt5(texte) {
   if (ouverte)
     avertissements.push("Une position MT5 reste ouverte en fin de rapport : elle est ignorée.");
   return {
-    trades: trades.sort((a, b) => a.entree_t - b.entree_t),
+    trades: separerPointsMorts(trades.sort((a, b) => a.entree_t - b.entree_t)),
     source: "transactions",
     compte,
     avertissements,

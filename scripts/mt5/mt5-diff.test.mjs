@@ -7,7 +7,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { cellules, horodatage, lireRapportMt5, nombre } from "./parse-mt5.mjs";
 import { apparier, comparer, decalages, quantile } from "./comparer.mjs";
-import { fabriquer } from "./fixture.mjs";
+import { DEBUT, fabriquer } from "./fixture.mjs";
+import { construireConfig } from "./config.mjs";
 import { chargerMoteur } from "./charger-moteur.mjs";
 
 test("nombre() lit les formats MT5", () => {
@@ -90,18 +91,18 @@ test("les clôtures partielles sont recollées en un seul aller-retour", () => {
 
 test("le décalage d'heure serveur est retrouvé", async () => {
   const f = await fabriquer({ decalageH: 3 });
-  const { engine, moteur } = await chargerMoteur();
-  const df = moteur.decouper(moteur.texteVersDf(f.csv), engine.DEBUT, undefined);
-  const sim = moteur.backtester(df, engine.buildConfig(f.reglages));
+  const moteur = await chargerMoteur();
+  const df = moteur.decouper(moteur.texteVersDf(f.csv), DEBUT, undefined);
+  const sim = moteur.backtester(df, construireConfig(f.reglages));
   const mt5 = lireRapportMt5(f.rapport).trades;
   assert.equal(decalages(sim, mt5)[0].ms, 3 * 3600000);
 });
 
 test("le harnais chiffre les écarts injectés", async () => {
   const f = await fabriquer();
-  const { engine, moteur } = await chargerMoteur();
-  const df = moteur.decouper(moteur.texteVersDf(f.csv), engine.DEBUT, undefined);
-  const cfg = engine.buildConfig(f.reglages);
+  const moteur = await chargerMoteur();
+  const df = moteur.decouper(moteur.texteVersDf(f.csv), DEBUT, undefined);
+  const cfg = construireConfig(f.reglages);
   const sim = moteur.backtester(df, cfg);
   const mt5 = lireRapportMt5(f.rapport).trades;
 
@@ -153,9 +154,9 @@ test("le harnais chiffre les écarts injectés", async () => {
 
 test("un décalage imposé qui ne colle pas fait tomber l'appariement", async () => {
   const f = await fabriquer();
-  const { engine, moteur } = await chargerMoteur();
-  const df = moteur.decouper(moteur.texteVersDf(f.csv), engine.DEBUT, undefined);
-  const sim = moteur.backtester(df, engine.buildConfig(f.reglages));
+  const moteur = await chargerMoteur();
+  const df = moteur.decouper(moteur.texteVersDf(f.csv), DEBUT, undefined);
+  const sim = moteur.backtester(df, construireConfig(f.reglages));
   const mt5 = lireRapportMt5(f.rapport).trades;
   const { paires } = apparier(sim, mt5, 0, 30 * 60000);
   // Quelques coïncidences d'horaire subsistent (même heure, autre jour) : ce qui
