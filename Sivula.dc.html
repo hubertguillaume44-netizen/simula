@@ -6567,6 +6567,22 @@ GROUPES = {
     return this.state.ut === 'H1' ? df : this.M.resampler(df, this.state.ut);
   }
 
+  // série H1 brute : les données de base (invariant 1), spread par bougie compris
+  serieH1(sym) { return (this.dfs && this.dfs[sym]) || null; }
+
+  // TOUT backtest passe par ici. Le signal est lu sur la bougie de décision (ut),
+  // la position est suivie sur la H1 — la bougie journalière ne dit que O/H/L/C, donc
+  // l'ordre des mouvements y est inconnu et le moteur devait trancher par convention.
+  // Mesuré sur huit configurations de référence face au testeur MT5 : l'erreur absolue
+  // moyenne passe de 22 800 € à 6 900 €, et la surestimation systématique
+  // (8 configurations sur 8) disparaît.
+  mesurer(sym, cfg, ut, repli) {
+    const h1 = this.serieH1(sym);
+    const u = ut || this.state.ut;
+    if (!h1) return repli ? this.M.backtester(repli, cfg) : [];
+    return this.M.backtesterSuivi(h1, cfg, u);
+  }
+
   // Fermeture ou rechargement de l'onglet. Un scan est une boucle qui vit dans la
   // page : la quitter le tue. On demande confirmation, et on jette la session sur le
   // stockage synchrone avant de partir.
@@ -7082,7 +7098,7 @@ GROUPES = {
     // le backtest est un calcul synchrone long : on rend la main une fois avant,
     // sinon le clic d'onglet est perdu et l'interface gèle sans rien annoncer.
     await new Promise((z) => setTimeout(z, 0));
-    const trades = this.M.backtester(df, cfg);
+    const trades = this.mesurer(this.state.btSym, cfg, this.state.ut, df);
     const res = this.M.resume(trades);
     const seg = this.M.segments(trades, 5);
     const courbe = this.M.courbe(trades);
@@ -7922,7 +7938,7 @@ GROUPES = {
     for (const dp of [-1, 0, 1]) for (const dr of [-0.25, 0, 0.25]) {
       const p = d.periode + dp, rr = Math.round((d.rr + dr) * 100) / 100;
       if (p < 2 || rr <= 0) { cases.push(null); continue; }
-      const trades = this.M.backtester(df, this.cfgCourante(d.sym, p, d.sl, rr));
+      const trades = this.mesurer(d.sym, this.cfgCourante(d.sym, p, d.sl, rr), this.state.ut, df);
       const r = trades.length ? this.M.resume(trades) : null;
       const sg = trades.length ? this.M.segments(trades, 5) : null;
       cases.push({ p, rr, centre: dp === 0 && dr === 0,
@@ -7985,7 +8001,7 @@ GROUPES = {
           sansDonnees: true, erreur: qual.raison, grain: true });
         continue;
       }
-      const trades = this.M.backtester(df, this.cfgCourante(sym, d.periode, d.sl, d.rr));
+      const trades = this.mesurer(sym, this.cfgCourante(sym, d.periode, d.sl, d.rr), this.state.ut, df);
       if (!trades.length) { out.push({ sym, total: null, n: 0, positifs: 0, dd: 0 }); continue; }
       const r = this.M.resume(trades), sg = this.M.segments(trades, 5);
       out.push({ sym, total: r.total, n: r.n, dd: r.dd, positifs: sg.positifs, segTotal: sg.total });
@@ -8324,7 +8340,7 @@ GROUPES = {
     }
     const df = this.base(r.sym);
     if (!df) return false;
-    const trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr));
+    const trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr), this.state.ut, df);
     if (!trades.length) return false;
     const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
     const sup = this.mesuresSup(trades, res);
@@ -8428,8 +8444,8 @@ GROUPES = {
         if (!df || df.n < 100) continue;
         let trades = [];
         try {
-          trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat,
-            { entree: r.entree, ligne: r.ligne }));
+          trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat,
+            { entree: r.entree, ligne: r.ligne }), etat.ut, df);
         } catch (e) { continue; }
         if (!trades.length) { out[this.cleConfig(r)] = { vide: true }; continue; }
         const res = this.M.resume(trades);
@@ -8586,7 +8602,7 @@ GROUPES = {
         for (const entree of entrees) for (const ligne of lignes) {
           for (const p of periodes) for (const sl of sls) for (const rr of rrs) {
             let tr = [];
-            try { tr = this.M.backtester(df, this.cfgCourante(sym, p, sl, rr, null, { entree, ligne })); } catch (e) {}
+            try { tr = this.mesurer(sym, this.cfgCourante(sym, p, sl, rr, null, { entree, ligne }), this.state.ut, df); } catch (e) {}
             const r = this.M.resume(tr);
             res.push([sym, entree, ligne, p, sl, rr, tr.length,
               r.total.toFixed(10), r.dd.toFixed(10), r.winRate.toFixed(10), r.pf.toFixed(10)].join('|'));
@@ -8689,7 +8705,13 @@ GROUPES = {
         w.onmessage = (e) => { if ((e.data || {}).type === 'pret') fini(); };
         w.onerror = () => { ok = false; fini(); };
         try {
-          w.postMessage({ type: 'bougies', sym, df: { n: df.n, t: df.t, o: df.o, h: df.h, l: df.l, c: df.c } });
+          // sp / spreadPct / grain doivent suivre : sans eux le worker retombe sur le
+          // spread MOYEN du relevé, et un scan parallèle rend d'autres chiffres qu'un
+          // scan séquentiel sans que rien ne le signale.
+          w.postMessage({ type: 'bougies', sym, df: { n: df.n, t: df.t, o: df.o, h: df.h,
+            l: df.l, c: df.c, sp: df.sp, spreadPct: df.spreadPct,
+            spreadPctMoyen: df.spreadPctMoyen, spreadRenseigne: df.spreadRenseigne,
+            grain: df.grain, heuresSession: df.heuresSession } });
         } catch (e) { ok = false; fini(); }
       }
     });
@@ -8942,11 +8964,17 @@ GROUPES = {
           ...(sousBruit ? { sousBruit: true, bruitPct: Math.round(bruit * 1000) / 1000,
             trailingPct: dTr } : {}),
           etiq: vf.base === 'aucun' ? etiqFiltres : this.filtresTexte(cfg),
+          // l'unité de décision voyage avec la variante : le noyau en a besoin pour
+          // savoir sur quelle bougie lire le signal, la H1 restant le pas de suivi
+          ut: etatV.ut || this.state.ut,
           cfg });
       }
       this._grille = { periodes, sls, rrs };
+      // le noyau reçoit la H1 : c'est le pas de suivi. `df` (agrégé) reste utilisé
+      // au-dessus pour les gardes et la mesure d'amplitude.
+      const dfH1 = this.serieH1(sym) || df;
       let enParallele = workers.length >= 1 && lots.length > 0;
-      if (enParallele) enParallele = await this.preparerWorkers(workers, df, sym);
+      if (enParallele) enParallele = await this.preparerWorkers(workers, dfH1, sym);
       if (enParallele) {
         // découpé en tours : le fil principal reprend la main entre deux, donc
         // l'interface et le bouton « Arrêter le scan » restent vivants
@@ -8970,7 +8998,7 @@ GROUPES = {
           if (this._stopScan) { if (faitsSeq < lots.length) partiels.add(sym); break; }
           faitsSeq++;
           await this.attendreReprise();
-          const r = this.N.mesurerVariante(df, v, periodes, sls, rrs);
+          const r = this.N.mesurerVariante(dfH1, v, periodes, sls, rrs);
           for (const x of r.out) out.push(x);
           for (const x of r.echecs) echecs.push(x);
           borner();
@@ -9563,7 +9591,7 @@ GROUPES = {
       const df0 = this.dfs && this.dfs[r.sym];
       const df = !df0 ? null : (etat.ut === 'H1' ? df0 : this.M.resampler(df0, etat.ut));
       if (!df || df.n < 300) { lignes.push({ sym: r.sym, avant: r.total, apres: null }); continue; }
-      const trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat));
+      const trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat), etat.ut, df);
       if (!trades.length) { lignes.push({ sym: r.sym, avant: r.total, apres: null }); continue; }
       const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
       const sup = this.mesuresSup(trades, res);

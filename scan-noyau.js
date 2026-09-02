@@ -82,7 +82,9 @@ export function mesurerVariante(df, v, periodes, sls, rrs) {
   for (const p of periodes) for (const sl of sls) for (const rr of rrs) {
     let trades;
     try {
-      trades = M.backtester(df, appliquer(v.cfg, p, sl, rr));
+      // `df` est la série H1 : le suivi de position se fait à ce pas, la décision
+      // reste lue sur la bougie de `v.ut`. Voir moteur.js/backtesterSuivi.
+      trades = M.backtesterSuivi(df, appliquer(v.cfg, p, sl, rr), v.ut);
     } catch (e) { echecs.push(v.sym + ' ' + p + '/' + sl + '/' + rr); continue; }
     const base = { sym: v.sym, entree: v.entree, ligne: v.ligne, filtre: v.filtre,
       filtreNom: v.filtreNom, sens: v.sens, periode: p, sl, rr,

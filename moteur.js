@@ -960,6 +960,47 @@ export function backtester(df, cfg) {
   return trades;
 }
 
+// ---------- suivi de la position sur la H1 ----------
+// Le signal reste lu sur la clôture de l'unité de décision (D1 ou H4) : invariants 2, 3
+// et 5 intacts. Seul change le pas auquel le stop, l'objectif et les paliers sont
+// surveillés — la bougie journalière ne dit que O/H/L/C, donc l'ordre des mouvements y
+// est inconnu et le moteur doit trancher par convention. Sur la H1 cette part
+// indécidable s'effondre (mesuré : 12 % des trades → 3 % sur GOLD, 19 % → 4 % sur
+// BITCOIN), et le résultat cesse d'être systématiquement optimiste.
+//
+// Aucune donnée supplémentaire n'est requise : les H1 SONT les données de base
+// (invariant 1). Les filtres restent évalués sur la bougie de décision, pas sur la H1 :
+// la bascule ne doit changer que le suivi, sinon on comparerait deux règles.
+export function backtesterSuivi(df, cfg, ut) {
+  if (!ut || ut === 'H1') return backtester(df, cfg);
+  const sup = resampler(df, ut);
+  const signal = signalDe(sup, cfg);
+  const autorise = autorisePar(sup, cfg.filtres);
+  const seau = sup.bucket;
+  if (!seau) return backtester(sup, cfg); // repli : série déjà agrégée, rien à reporter
+
+  // première bougie H1 de chaque seau de décision : c'est l'ouverture qui suit la
+  // clôture du signal, donc exactement l'entrée de l'invariant 5.
+  const premiere = new Map();
+  for (let i = 0; i < df.n; i++) {
+    const k = seau(df.t[i]);
+    if (!premiere.has(k)) premiere.set(k, i);
+  }
+  const force = new Array(df.n).fill(false);
+  for (let k = 0; k < sup.n; k++) {
+    if (!signal[k]) continue;
+    if (autorise && !autorise[k]) continue;
+    const i = premiere.get(sup.t[k]);
+    if (i !== undefined) force[i] = true;
+  }
+  // le délai est exprimé en bougies de décision : on le convertit en bougies H1
+  const parSeau = ut === 'D1' ? 24 : 4;
+  const filtres = (cfg.filtres || [])
+    .filter((f) => f.type === 'delai_bougies' && f.actif !== false)
+    .map((f) => ({ ...f, n: f.n * parSeau }));
+  return backtester(df, { ...cfg, signal_force: force, filtres });
+}
+
 function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
   return {
     entree_t: df.t[iEnt], entree: px, sortie_t: df.t[i], sortie, motif,

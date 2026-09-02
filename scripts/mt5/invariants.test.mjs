@@ -194,3 +194,39 @@ test("le spread est payé DANS le prix d'entrée, et une seule fois", () => {
   }
   assert.ok(vus > 10, "trop peu de trades comparables");
 });
+
+test("backtesterSuivi — le signal reste sur la bougie de décision, le suivi passe en H1", () => {
+  const cfg = construireConfig({ ...CFG, paliers: [[25, 0], [50, 25], [75, 50]] });
+  const base = M.resampler(DF, "D1");
+  const d1 = M.backtester(base, cfg);
+  const h1 = M.backtesterSuivi(DF, cfg, "D1");
+
+  // même règle : chaque entrée H1 tombe le jour d'une entrée D1 possible
+  const joursD1 = new Set(base.t.filter((_, k) => M.signalDe(base, cfg)[k]).map((t) => t));
+  for (const tr of h1) {
+    const j = Math.floor(tr.entree_t / 86400000) * 86400000;
+    assert.ok(joursD1.has(j), `entrée H1 le ${new Date(tr.entree_t).toISOString()} sans signal D1 ce jour-là`);
+  }
+  // l'entrée tombe sur la PREMIÈRE bougie H1 de la journée : l'ouverture qui suit la clôture du signal
+  for (const tr of h1) {
+    const j = Math.floor(tr.entree_t / 86400000) * 86400000;
+    let premiere = Infinity;
+    for (let i = 0; i < DF.n; i++) if (Math.floor(DF.t[i] / 86400000) * 86400000 === j) { premiere = DF.t[i]; break; }
+    assert.equal(tr.entree_t, premiere, "l'entrée n'est pas sur la première bougie H1 du jour");
+  }
+  // le suivi plus fin réduit la part indécidable
+  const ambD1 = M.resume(d1).ambigus / d1.length;
+  const ambH1 = M.resume(h1).ambigus / h1.length;
+  assert.ok(ambH1 <= ambD1, `le suivi H1 laisse plus de bougies ambiguës (${ambH1}) que le D1 (${ambD1})`);
+});
+
+test("backtesterSuivi — en H1 il ne change rien", () => {
+  const cfg = construireConfig(CFG);
+  const a = M.backtester(DF, cfg);
+  const b = M.backtesterSuivi(DF, cfg, "H1");
+  assert.equal(b.length, a.length);
+  for (let i = 0; i < a.length; i++) {
+    assert.equal(b[i].entree_t, a[i].entree_t);
+    assert.equal(b[i].R, a[i].R);
+  }
+});
