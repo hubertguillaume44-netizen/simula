@@ -798,6 +798,12 @@ export function backtester(df, cfg) {
   // quoi sécuriser ou gagner, on tranche toujours en défaveur (stop d'abord, palier
   // posé seulement en fin de bougie). Donne la borne basse du résultat.
   const prudent = !!cfg.sortie.prudent;
+  // Armer le palier depuis le HAUT de la bougie puis tester le stop contre son BAS
+  // suppose que le haut est venu en premier — précisément ce que la bougie ne dit pas.
+  // C'était un pis-aller du suivi en Daily, où sans lui aucun point mort n'apparaissait
+  // jamais. Sur un suivi H1 il n'a plus lieu d'être : il transforme des gagnants en
+  // points morts sur la foi d'un ordre inconnu. `backtesterSuivi` le désactive.
+  const armerAvant = cfg.sortie.armer_avant !== false;
   // sortie sur le temps : une position qui n'a atteint ni son stop ni son objectif
   // au bout de N bougies est fermée au cours de clôture. Sans elle, un trade qui
   // stagne paie le portage indéfiniment et immobilise le capital.
@@ -882,7 +888,7 @@ export function backtester(df, cfg) {
       // « bougie favorable » : haussière à l'achat, baissière à la vente — c'est elle
       // qui décide si l'extrême favorable est atteint avant le stop
       const haussiere = d * (df.c[i] - df.o[i]) >= 0;
-      if (!haussiere && !prudent) majSecu(i);
+      if (!haussiere && !prudent && armerAvant) majSecu(i);
       const ordre = (haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'];
       // bougie ambiguë : elle contient le stop ET l'objectif. L'ordre réel des
       // mouvements y est inconnu, donc le sort du trade est décidé par une
@@ -926,7 +932,7 @@ export function backtester(df, cfg) {
     // la bougie d'entrée peut déjà toucher SL ou TP — et, si elle est baissière,
     // avoir sécurisé la position avant d'y redescendre
     const haussiere = d * (df.c[i] - df.o[i]) >= 0;
-    if (!haussiere && !prudent) majSecu(i);
+    if (!haussiere && !prudent && armerAvant) majSecu(i);
     const pire0 = vente ? df.h[i] : df.l[i], mieux0 = vente ? df.l[i] : df.h[i];
     const ambigu0 = d * pire0 <= d * sl && d * mieux0 >= d * tp;
     for (const q of ((haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'])) {
@@ -979,12 +985,24 @@ export function backtesterSuivi(df, cfg, ut) {
   const seau = sup.bucket;
   if (!seau) return backtester(sup, cfg); // repli : série déjà agrégée, rien à reporter
 
-  // première bougie H1 de chaque seau de décision : c'est l'ouverture qui suit la
-  // clôture du signal, donc exactement l'entrée de l'invariant 5.
+  // Première bougie H1 EXÉCUTABLE de chaque seau : l'ouverture qui suit la clôture du
+  // signal (invariant 5), sauf quand le robot refuserait l'ordre. `InpPasDebutSemaine`
+  // (robot-mt5.js) interdit le dimanche et le lundi avant 02:00 ; le signal n'est pas
+  // perdu pour autant, il est réessayé sur les ticks suivants du MÊME seau. Sans cette
+  // règle, Simula entrait deux heures et un mouvement de prix avant le robot — mesuré :
+  // 90 trades sur 434 concernés sur BITCOIN, 51 sur 489 sur GOLD.
+  const pasDebutSemaine = cfg.pas_debut_semaine !== false;
+  const executable = (i) => {
+    if (!pasDebutSemaine) return true;
+    const d = new Date(df.t[i]);
+    const j = d.getUTCDay();
+    if (j === 0) return false;
+    return !(j === 1 && d.getUTCHours() < 2);
+  };
   const premiere = new Map();
-  for (let i = 0; i < df.n; i++) {
-    const k = seau(df.t[i]);
-    if (!premiere.has(k)) premiere.set(k, i);
+  for (let i = df.n - 1; i >= 0; i--) {
+    if (!executable(i)) continue;
+    premiere.set(seau(df.t[i]), i);
   }
   const force = new Array(df.n).fill(false);
   for (let k = 0; k < sup.n; k++) {
@@ -998,7 +1016,12 @@ export function backtesterSuivi(df, cfg, ut) {
   const filtres = (cfg.filtres || [])
     .filter((f) => f.type === 'delai_bougies' && f.actif !== false)
     .map((f) => ({ ...f, n: f.n * parSeau }));
-  return backtester(df, { ...cfg, signal_force: force, filtres });
+  return backtester(df, {
+    ...cfg,
+    sortie: { ...cfg.sortie, armer_avant: false },
+    signal_force: force,
+    filtres,
+  });
 }
 
 function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
