@@ -14,12 +14,16 @@
  * Dans les trois cas la position est ensuite suivie sur les bougies H1 : stop, objectif et
  * paliers voient la même granularité, sinon on comparerait aussi des sorties différentes.
  *
- *   node scripts/moment-entree.mjs --csv AUDCAD_H1.csv --ligne mediane --periode 15 \
- *        --sl 0,5 --rr 2 --paliers "25:0,50:25,75:50"
+ *   node scripts/moment-entree.mjs --csv AUDCAD_H1.csv --ref AUDCAD
+ *   node scripts/moment-entree.mjs --csv GOLD_H1.csv --ref GOLD:ema_5_SL0p6_RR3 --heure 1
+ *
+ * `--ref` prend la configuration exacte du robot exporté, filtres compris ; sans lui les
+ * options individuelles s'appliquent et la mesure part sans filtre.
  */
 import { readFileSync } from "node:fs";
 import { chargerMoteur } from "./mt5/charger-moteur.mjs";
 import { construireConfig, lirePaliers, PALIERS_REFERENCE } from "./mt5/config.mjs";
+import { REFERENCES } from "./mt5/references.mjs";
 
 const num = (x, d) => (x === undefined ? d : Number(String(x).replace(",", ".")));
 const fr = (x, d = 2) => (Number.isFinite(x) ? x.toFixed(d).replace(".", ",") : "—");
@@ -88,12 +92,27 @@ async function main() {
   }
   const medSpread = medianeSpread(sp, df.n);
 
+  // --ref AUDCAD, --ref GOLD:ema_5_SL0p6_RR3 : la configuration exacte du robot exporté,
+  // filtres compris. Les retaper en options revenait à mesurer autre chose : cinq des huit
+  // références portent un filtre, et trois n'utilisent pas l'entrée par défaut.
+  let ref = null;
+  if (o.ref) {
+    const [sym, variante] = String(o.ref).split(":");
+    ref = REFERENCES.find((x) => x.sym === sym && (!variante || x.variante === variante));
+    if (!ref) {
+      console.error(`Référence inconnue : ${o.ref}. Connues : `
+        + REFERENCES.map((x) => x.sym + (x.variante ? ":" + x.variante : "")).join(", "));
+      process.exit(2);
+    }
+  }
+
   const reglages = {
-    entree: o.entree || "croisement_ou_rebond",
-    ligne: o.ligne || "mediane",
-    periode: num(o.periode, 15),
-    sl: num(o.sl, 0.5),
-    rr: num(o.rr, 2),
+    entree: o.entree || ref?.entree || "croisement_ou_rebond",
+    ligne: o.ligne || ref?.ligne || "mediane",
+    periode: num(o.periode, ref?.periode ?? 15),
+    sl: num(o.sl, ref?.sl ?? 0.5),
+    rr: num(o.rr, ref?.rr ?? 2),
+    filtres: ref?.filtres ?? [],
     sens: o.sens === "vente" ? "vente" : "achat",
     paliers: o.paliers !== undefined ? lirePaliers(o.paliers) : PALIERS_REFERENCE,
     commission: num(o.commission, 0),
@@ -103,7 +122,11 @@ async function main() {
 
   // ---- le signal, lu sur la D1, identique aux trois variantes ----
   const base = M.resampler(df, "D1");
-  const sigD1 = M.signalDe(base, construireConfig(reglages));
+  const cfgBase = construireConfig(reglages);
+  const sigD1 = M.signalDe(base, cfgBase);
+  // Les filtres décident sur la MÊME bougie que le signal. Les omettre ici mesurait la
+  // configuration sans eux : cinq des huit références en portent un.
+  const autoriseD1 = M.autorisePar(base, cfgBase.filtres);
   const parJour = joursH1(df);
   const heureFixe = num(o.heure, 8);
 
@@ -154,6 +177,7 @@ async function main() {
     const heures = new Map();
     for (let k = 0; k < base.n; k++) {
       if (!sigD1[k] || base.t[k] < debut) continue;
+      if (autoriseD1 && !autoriseD1[k]) continue;
       signaux++;
       const idx = parJour.get(jourDe(base.t[k]));
       const i = idx ? prendre(idx) : null;

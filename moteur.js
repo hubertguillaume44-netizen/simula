@@ -745,7 +745,10 @@ export function tirageHasard(df, cfg, nEntrees, tirages, graine) {
 // Tableau des bougies autorisées par les filtres. Comme le signal, il ne dépend que
 // des filtres — donc il était recalculé à l'identique pour chaque stop, chaque objectif,
 // chaque sécurisation et chaque durée de la grille : mille fois le même travail.
-function autorisePar(df, filtres) {
+// exporté : le harnais doit pouvoir reproduire EXACTEMENT la permission du moteur.
+// La recalculer à côté revenait à mesurer une autre configuration — scripts/moment-entree.mjs
+// ignorait les filtres, donc mesurait sans eux cinq des huit configurations de référence.
+export function autorisePar(df, filtres) {
   const actifs = (filtres || []).filter((f) => f.actif !== false && f.type !== 'delai_bougies');
   if (!actifs.length) return null;
   const cle = 'autorise|' + actifs.map((f) => [f.type, f.ut, f.ligne, f.periode, f.seuil,
