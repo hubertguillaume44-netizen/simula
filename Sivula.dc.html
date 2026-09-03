@@ -4849,15 +4849,24 @@ GROUPES = {
         iSL = col('StopsLevel', 'StopLevel'), iFr = col('FreezeLevel'),
         iD = col('Description'), iCh = col('Path', 'Chemin'),
         iDv = col('CurrencyProfit', 'DeviseProfit');
-      // MT5 SwapMode : 1 = points, 5/6 = intérêt annuel en %. MT4 SwapType : 0 = points,
-      // 2 = % annuel. On ramène tout à notre convention interne (0 = points, 2 = %).
+      // MT5 SwapMode : 1 = points, 2/3/4 = MONTANT par lot et par nuit (devise du
+      // symbole, de la marge, du dépôt), 5/6 = intérêt annuel en %. MT4 SwapType :
+      // 0 = points, 1 = montant, 2 = % annuel. Convention interne : 0 = points,
+      // 1 = montant par lot, 2 = % annuel.
+      //
+      // Le mode 2 était traité comme « inconnu » et le portage de tout un pan du
+      // catalogue restait non chiffré : GOLD, #Germany40, #Japan225, #HongKong50 et
+      // 27 autres symboles du relevé FxPro. C'est le mode le plus courant sur les
+      // métaux et les indices — précisément les instruments où le portage pèse le
+      // plus : sur GOLD il mange 15,2 R sur 54,5 R de résultat brut.
       const mt5 = i('SwapMode') >= 0;
       const normSwap = (v) => {
         if (!Number.isFinite(v)) return NaN;
         if (!mt5) return v;
         if (v === 1) return 0;
+        if (v === 2 || v === 3 || v === 4) return 1;
         if (v === 5 || v === 6) return 2;
-        return NaN;
+        return NaN;   // 0 = pas de portage, 7/8 = réouverture, 9 = mode non documenté
       };
       const table = {};
       for (let k = 1; k < lignes.length; k++) {
@@ -5067,12 +5076,26 @@ GROUPES = {
         const prix = l.bid || (r && r.bid)
           || (df && df.c && df.c.length ? df.c[df.c.length - 1] : 0) || ailleurs();
         if (!prix || !l.point) continue;
-        // SwapType : 0 = points, 2 = pourcentage annuel. Tout autre mode
-        // (1 = devise de base) reste inconnu plutôt que converti au hasard.
+        // SwapType interne : 0 = points, 1 = montant par lot, 2 = pourcentage annuel.
+        //
+        // Les deux premiers se ramènent exactement à un MONTANT par lot et par nuit,
+        // qui est ce que le courtier facture réellement — et ce que le moteur sait
+        // désormais compter au trade près. Le pourcentage annuel n'est gardé que pour
+        // l'AFFICHAGE, et comme modèle de repli : il dépend du cours, donc il dérive.
+        // Sur GOLD le taux annuel équivalent passe de 11,8 % à 1 800 $ l'once à 4,5 %
+        // à 4 470 $ alors que le montant facturé, lui, n'a pas bougé.
         let swapL, swapS, portageInconnu = false;
+        let montantL, montantS;
         if (l.swapType === 0) {
+          montantL = l.swapLongLot * l.point * (l.lot || 1);
+          montantS = l.swapShortLot * l.point * (l.lot || 1);
           swapL = l.swapLongLot * l.point * 365 / prix * 100;
           swapS = l.swapShortLot * l.point * 365 / prix * 100;
+        } else if (l.swapType === 1) {
+          montantL = l.swapLongLot;
+          montantS = l.swapShortLot;
+          swapL = montantL * 365 / (prix * (l.lot || 1)) * 100;
+          swapS = montantS * 365 / (prix * (l.lot || 1)) * 100;
         } else if (l.swapType === 2) {
           swapL = l.swapLongLot;
           swapS = l.swapShortLot;
@@ -5089,6 +5112,10 @@ GROUPES = {
         l.spread_pct = l.spreadPts * l.point / prix * 100;
         l.swapL = swapL;
         l.swapS = swapS;
+        // montant par lot et par nuit : le seul chiffre que le moteur peut compter
+        // exactement, la conversion de devise s'annulant dans le R
+        l.swapLongMontant = montantL;
+        l.swapShortMontant = montantS;
         l.prixRepris = true;
         l.portageInconnu = portageInconnu;
         l.chiffre = true;
@@ -6847,6 +6874,7 @@ GROUPES = {
     if (f.courtier) {
       const l = this.ligneCourtier(f.courtier, f.base);
       if (l) return { spread_pct: mes ?? l.spread_pct, swap_annuel_pct: l.swapL,
+        ...this.portageDe(l),
         commission_pct: this.commPct(f.courtier, l), connu: true, saisi: false, courtier: f.label, mesure: mes !== null };
     }
     // Le relevé DÉPOSÉ du compte actif est la source de référence : ligneCourtier y
@@ -6855,6 +6883,7 @@ GROUPES = {
     // et le backtest tournait donc hors frais sur un instrument pourtant chiffré.
     const lc = this.ligneCourtier(this.compteActif, f.base);
     if (lc) return { spread_pct: mes ?? lc.spread_pct, swap_annuel_pct: lc.swapL,
+      ...this.portageDe(lc),
       commission_pct: this.commPct(this.compteActif, lc), connu: true, saisi: false, mesure: mes !== null };
     const t = (this.frais || {})[this.source(f.base)] || {};
     const e = t[this.FRAIS_SYM[f.base] || f.base];
@@ -6865,8 +6894,21 @@ GROUPES = {
     const al = (this.ALIAS_COURTIER[src] || {})[f.base];
     const l = al && ((this.baremes || {})[src] || {})[al];
     if (l) return { spread_pct: l.spread_pct, swap_annuel_pct: l.swapL,
+      ...this.portageDe(l),
       commission_pct: this.commPct(src, l), connu: true, saisi: false };
     return { spread_pct: 0, swap_annuel_pct: 0, commission_pct: 0, connu: false, saisi: false };
+  }
+
+  // Portage exact : le MONTANT par lot et par nuit, et la taille du contrat.
+  //
+  // Le moteur préfère ce couple au pourcentage annuel dès qu'il l'a, parce que c'est
+  // ce que le courtier facture : mesuré sur les 174 trades GOLD portant au moins une
+  // nuit, le montant reste à -60 par lot de 2020 à 2026 pendant que l'once passe de
+  // 1 800 à 4 675, tandis que le taux annuel équivalent s'effondre de 11,8 % à 4,5 %.
+  // Rapport prédit / facturé : 1,0000 (p10 0,9965, p90 1,0038).
+  portageDe(l) {
+    if (!l || !(l.lot > 0) || !Number.isFinite(l.swapLongMontant)) return {};
+    return { contrat: l.lot, swap_long: l.swapLongMontant, swap_short: l.swapShortMontant };
   }
 
   // période couverte par un scan : la date plancher demandée, et ce que les données

@@ -28,9 +28,20 @@ export const PALIERS_REFERENCE = [
   [75, 50],
 ];
 
+// `portage` : taille du contrat et MONTANT de swap par lot et par nuit, relevés dans
+// Symboles_Sivula.csv (FxPro, 3 septembre 2026). Les paires forex y sont déclarées en
+// POINTS (SwapMode 1) et converties ici — points × Point × ContractSize — ce qui donne
+// 1 pour 1 sur une paire à cinq décimales et 100 000 de contrat. Les métaux et indices
+// sont déclarés en montant (SwapMode 2) et repris tels quels. BITCOIN est en intérêt
+// annuel (SwapMode 5) : le taux reste le modèle, faute de montant.
+//
+// Le signe est celui du courtier : un swap positif est un CRÉDIT réel — GOLD paie
+// -67,90 à l'achat et crédite +27,00 à la vente. Le modèle validé sur le journal GOLD
+// du 4 septembre 2026 rend 1,0000 fois le portage facturé (p10 0,9965, p90 1,0038).
 export const REFERENCES = [
   {
     sym: "AUDCAD",
+    portage: { contrat: 100000, swap_long: 0.30, swap_short: -7.35 },
     entree: "croisement_prix",
     ligne: "mediane",
     periode: 15,
@@ -48,6 +59,7 @@ export const REFERENCES = [
   },
   {
     sym: "GOLD",
+    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00 },
     variante: "ema_5_SL0p6_RR3",
     entree: "croisement_ou_rebond",
     ligne: "ema",
@@ -66,6 +78,7 @@ export const REFERENCES = [
   },
   {
     sym: "GOLD",
+    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00 },
     variante: "ma_7_SL0p5_RR1p5",
     entree: "croisement_ou_rebond",
     ligne: "ma",
@@ -84,6 +97,7 @@ export const REFERENCES = [
   },
   {
     sym: "Germany40",
+    portage: { contrat: 1, swap_long: -3.5057, swap_short: -0.2504 },
     entree: "croisement_ou_rebond",
     ligne: "ema",
     periode: 26,
@@ -101,6 +115,7 @@ export const REFERENCES = [
   },
   {
     sym: "Japan225",
+    portage: { contrat: 1, swap_long: -6.5306, swap_short: -3.0551 },
     entree: "croisement_prix",
     ligne: "mediane",
     periode: 10,
@@ -118,6 +133,7 @@ export const REFERENCES = [
   },
   {
     sym: "NZDCAD",
+    portage: { contrat: 100000, swap_long: -2.58, swap_short: -5.56 },
     entree: "croisement_prix",
     ligne: "ema",
     periode: 26,
@@ -135,6 +151,7 @@ export const REFERENCES = [
   },
   {
     sym: "BITCOIN",
+    portage: { contrat: 1, swap_annuel_pct: -30 },
     entree: "croisement_ou_rebond",
     ligne: "mediane",
     periode: 5,
@@ -152,6 +169,7 @@ export const REFERENCES = [
   },
   {
     sym: "HongKong50",
+    portage: { contrat: 1, swap_long: -3.3590, swap_short: -0.4306 },
     entree: "croisement_prix",
     ligne: "mediane",
     periode: 6,

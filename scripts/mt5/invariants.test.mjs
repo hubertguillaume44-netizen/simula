@@ -387,3 +387,61 @@ test("un signal empêché par la position en cours est repris plus tard dans la 
   const reprises = trades.filter((x) => new Date(x.entree_t).getUTCHours() > 1);
   assert.ok(reprises.length > 0, "aucune reprise en cours de journée : règle non exercée");
 });
+
+test("les nuits de portage suivent le calendrier du courtier, mesuré et non supposé", () => {
+  const j = (a, m, d, h) => Date.UTC(2026, m - 1, d, h);
+  // mardi 10:00 → mercredi 08:00 : un seul minuit, ordinaire
+  assert.equal(M.nuitsPortage(j(0, 9, 1, 10), j(0, 9, 2, 8)), 1);
+  // mercredi 10:00 → jeudi 08:00 : le minuit du JEUDI porte trois nuits. Mesuré sur les
+  // trades GOLD ne franchissant qu'un minuit : facteur 2,73 au jeudi contre 0,88 à 0,92
+  // les autres jours, stable de 2020 à 2025.
+  assert.equal(M.nuitsPortage(j(0, 9, 2, 10), j(0, 9, 3, 8)), 3);
+  // vendredi 10:00 → lundi 08:00 : samedi et dimanche ne sont pas facturés, seul le
+  // minuit du lundi compte. Les compter multipliait le coût par trois sur ces positions
+  // — c'est ce qui faisait passer l'étalement du rapport mesuré/prédit de ×1,14 à ×3,14.
+  assert.equal(M.nuitsPortage(j(0, 9, 4, 10), j(0, 9, 7, 8)), 1);
+  // une position fermée le jour même ne paie rien
+  assert.equal(M.nuitsPortage(j(0, 9, 1, 2), j(0, 9, 1, 22)), 0);
+});
+
+test("le swap se compte par lot et par nuit, pas en pourcentage annuel du notionnel", () => {
+  // Le courtier facture un MONTANT par lot et par nuit (SYMBOL_SWAP_LONG). Mesuré sur
+  // les 174 trades GOLD portant au moins une nuit, journal du 4 septembre 2026 : le coût
+  // par lot et par nuit reste à -60 de 2020 à 2026 pendant que l'once passe de 1 800 à
+  // 4 675, tandis que le taux annuel équivalent s'effondre de 11,8 % à 4,5 %. Le modèle
+  // en pourcentage se trompait donc d'un facteur 2,5 sur la durée de la mesure.
+  //
+  //   swap_R = |swap par lot| × nuits / (taille du contrat × |entrée − stop|)
+  //
+  // Rapport mesuré / prédit sur GOLD : 1,0000 (p10 0,9965, p90 1,0038) sur 129 trades.
+  const n = 24 * 200;
+  const t = [], o = [], h = [], l = [], c = [];
+  let px = 1800, a = 20260905;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.006;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.0008); l.push(Math.min(ouv, px) * 0.9992);
+  }
+  const df = { n, t, o, h, l, c, grain: { decimales: 2 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 0.6, rr: 3, paliers: [] });
+  const frais = { contrat: 100, swap_long: -67.9, swap_short: 27.0 };
+  const tr = M.backtesterSuivi(df, { ...cfg, frais }, "D1");
+  assert.ok(tr.length > 0, "gabarit sans trades : le test ne prouve rien");
+  for (const x of tr) {
+    const nuits = M.nuitsPortage(x.entree_t, x.sortie_t);
+    const attendu = x.R - 67.9 * nuits / (100 * Math.abs(x.entree - x.sl_initial));
+    assert.ok(Math.abs(x.R_net - attendu) < 1e-9,
+      `swap mal compté : R_net ${x.R_net} au lieu de ${attendu}`);
+  }
+  // le même trade, deux fois plus cher à porter, coûte deux fois plus
+  const cher = M.backtesterSuivi(df, { ...cfg, frais: { ...frais, swap_long: -135.8 } }, "D1");
+  const dette = (a) => a.reduce((s, x) => s + (x.R - x.R_net), 0);
+  assert.ok(Math.abs(dette(cher) - 2 * dette(tr)) < 1e-9, "le coût n'est pas proportionnel au taux");
+
+  // et le taux annuel ne s'applique QUE faute de montant par lot (modes 5 et 6 de MT5)
+  const annuel = M.backtesterSuivi(df, { ...cfg, frais: { swap_annuel_pct: -30 } }, "D1");
+  assert.ok(dette(annuel) > 0, "le repli en pourcentage annuel ne facture plus rien");
+});

@@ -305,6 +305,12 @@ test("la sortie est journalisée, avec ses frais séparés", () => {
   assert.match(src, /Conf\(StringFormat\("S\|/, "aucune ligne de sortie");
   assert.match(src, /DEAL_SWAP/, "le swap n'est pas journalisé");
   assert.match(src, /DEAL_COMMISSION/, "la commission n'est pas journalisée");
+  // sur TOUTES les opérations de la position : la commission est facturée à l'entrée
+  // comme à la sortie, et ne lire que la dernière montrait la moitié du coût réel
+  assert.match(src, /swapTot \+= HistoryDealGetDouble\(dd, DEAL_SWAP\);/);
+  assert.match(src, /commTot \+= HistoryDealGetDouble\(dd, DEAL_COMMISSION\);/);
+  assert.match(src, /DoubleToString\(swapTot, 2\)/);
+  assert.match(src, /DoubleToString\(commTot, 2\)/);
   assert.match(src, /DEAL_REASON/, "le motif de sortie n'est pas journalisé : stop et objectif se confondent");
   // le ticket doit être retenu à l'entrée, sinon la sortie n'est jamais rattachée
   assert.match(src, /g_posTicket = tk;/);

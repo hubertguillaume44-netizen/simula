@@ -107,6 +107,9 @@ function main() {
     ...construireConfig({ ...ref, paliers: PALIERS_REFERENCE, debut }),
     spread_max_facteur: Number(o.facteur ?? M.SPREAD_FACTEUR),
     ...(plage.complete ? {} : { fin: plage.fin }),
+    // Le portage relevé chez le courtier : sans lui on comparerait le R BRUT du moteur
+    // au R du robot, qui paie. Sur GOLD l'écart est de 15,2 R sur 54,5.
+    ...(ref.portage ? { frais: ref.portage } : {}),
   };
 
   // Le moteur, sur la même série et la même configuration.
@@ -204,6 +207,37 @@ function main() {
     console.log(`\nfrais du robot, sur ${conf.sorties.length} sorties : brut ${brut.toFixed(2)}, `
       + `swap ${sw.toFixed(2)}, commission ${co.toFixed(2)} → net ${(brut + sw + co).toFixed(2)} `
       + `(les frais pèsent ${brut !== 0 ? (100 * (sw + co) / Math.abs(brut)).toFixed(1) : "?"} % du brut)`);
+  }
+
+  // ————— le chiffre que l'on cherche à faire coïncider —————
+  if (conf.sorties.length && ref.portage) {
+    const contrat = Number(ref.portage.contrat) || 0;
+    const E = [];
+    for (const [, e] of conf.E) E.push(e);
+    // apparier entrées et sorties dans l'ordre : une position à la fois, donc la
+    // n-ième sortie clôt la n-ième entrée
+    const ent = [...conf.E.values()].sort((a, b) => a.t - b.t);
+    const sor = [...conf.sorties].sort((a, b) => a.t - b.t);
+    let brut = 0, coutSwap = 0, coutComm = 0, k = 0;
+    for (let i = 0; i < Math.min(ent.length, sor.length); i++) {
+      const risquePrix = ent[i].prix - ent[i].sl;
+      const r = (sor[i].prix - ent[i].prix) / risquePrix;
+      if (!Number.isFinite(r)) continue;
+      brut += r; k++;
+      if (contrat > 0 && ent[i].lots > 0) {
+        const risque = ent[i].lots * contrat * Math.abs(risquePrix);
+        coutSwap += -sor[i].swap / risque;
+        coutComm += -sor[i].commission / risque;
+      }
+    }
+    const rm = trades.reduce((a, t) => a + t.R, 0);
+    const rmNet = trades.reduce((a, t) => a + (t.R_net !== undefined ? t.R_net : t.R), 0);
+    console.log(`\nR sur ${k} trades robot / ${trades.length} moteur :`);
+    console.log(`  brut   robot ${brut.toFixed(1)}   moteur ${rm.toFixed(1)}   écart ${(rm - brut).toFixed(1)}`);
+    console.log(`  frais  robot ${(coutSwap + coutComm).toFixed(1)} (portage ${coutSwap.toFixed(1)}, commission ${coutComm.toFixed(1)})`
+      + `   moteur ${(rm - rmNet).toFixed(1)}`);
+    console.log(`  NET    robot ${(brut - coutSwap - coutComm).toFixed(1)}   moteur ${rmNet.toFixed(1)}   `
+      + `écart ${(rmNet - (brut - coutSwap - coutComm)).toFixed(1)}`);
   }
 
   console.log(`\n${sym}${variante ? " " + variante : ""} — ${communs} journées comparées `

@@ -807,6 +807,18 @@ void SurveillerSortie()
    if(PositionSelectByTicket(g_posTicket)) return;        // toujours ouverte
    ulong t = g_posTicket; g_posTicket = 0;
    if(!HistorySelectByPosition(t)) return;
+   // Les frais se comptent sur TOUTES les opérations de la position, pas sur la seule
+   // sortie : le courtier facture la commission à l'entrée ET à la sortie, et lire la
+   // dernière seule montrait -3,11 par lot là où l'aller-retour en coûte le double.
+   // Impossible de trancher depuis le journal précédent, qui ne portait qu'une jambe.
+   double swapTot = 0.0, commTot = 0.0;
+   for(int i = HistoryDealsTotal() - 1; i >= 0; i--)
+   {
+      ulong dd = HistoryDealGetTicket(i);
+      if(dd == 0) continue;
+      swapTot += HistoryDealGetDouble(dd, DEAL_SWAP);
+      commTot += HistoryDealGetDouble(dd, DEAL_COMMISSION);
+   }
    for(int i = HistoryDealsTotal() - 1; i >= 0; i--)
    {
       ulong d = HistoryDealGetTicket(i);
@@ -820,8 +832,8 @@ void SurveillerSortie()
            ConfH((datetime)HistoryDealGetInteger(d, DEAL_TIME)),
            ConfP(HistoryDealGetDouble(d, DEAL_PRICE)),
            DoubleToString(HistoryDealGetDouble(d, DEAL_PROFIT), 2),
-           DoubleToString(HistoryDealGetDouble(d, DEAL_SWAP), 2),
-           DoubleToString(HistoryDealGetDouble(d, DEAL_COMMISSION), 2),
+           DoubleToString(swapTot, 2),
+           DoubleToString(commTot, 2),
            EnumToString((ENUM_DEAL_REASON)HistoryDealGetInteger(d, DEAL_REASON))));
       break;
    }

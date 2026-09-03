@@ -1181,25 +1181,81 @@ export function backtester(df, cfg) {
     if (enPos && (haussiere || prudent)) majSecu(i);
   }
 
-  // frais, rapportés au risque du trade (règle du moteur Python)
+  // frais, rapportés au risque du trade
   const frais = cfg.frais || {};
+  const contrat = Number(frais.contrat) || 0;
+  const swapLot = frais.swap_long !== undefined || frais.swap_short !== undefined;
   for (const tr of trades) {
     const slP = Math.abs(tr.entree - tr.sl_initial) / tr.entree * 100;
     // le spread n'est plus déduit ici : il est déjà dans le prix d'entrée, et donc dans
     // le R du trade. Le compter deux fois doublerait le coût réel.
-    const comm = (frais.commission_pct || 0) * 2 / slP;
-    const nuits = (tr.sortie_t - tr.entree_t) / 86400000;
-    // Le relevé ne donne que le swap LONG. À la vente, prendre son opposé transformait
-    // un coût en crédit : la plupart des courtiers facturent le portage dans les DEUX
-    // sens, ils ne vous paient pas pour vendre. Sans relevé du swap court, on garde donc
-    // le coût, jamais le crédit. Un taux positif au comptant (portage favorable) reste
-    // crédité à l'achat, où il est réel.
-    const brut = Number(frais.swap_annuel_pct) || 0;
-    const taux = (tr.sens === 'vente') ? -Math.abs(brut) : brut;
-    const swap = -(taux / 360) * nuits / slP;
+    const comm = (frais.commission_pct || 0) * 2 / slP
+      + (contrat > 0 ? (Number(frais.commission_par_lot) || 0) / (contrat * Math.abs(tr.entree - tr.sl_initial)) : 0);
+    let swap;
+    if (swapLot && contrat > 0) {
+      // ————— modèle exact, calibré sur le journal du robot —————
+      // Le courtier facture un MONTANT par lot et par nuit (SYMBOL_SWAP_LONG/SHORT),
+      // pas un pourcentage annuel du notionnel. La différence n'est pas de forme : sur
+      // GOLD, le taux annuel équivalent va de 12 %/an à 1 800 $ l'once à 4,8 %/an à
+      // 4 470 $, et le modèle en pourcentage se trompait donc d'un facteur 2,5 sur la
+      // durée de la mesure. Mesuré sur les 174 trades de GOLD portant au moins une nuit,
+      // journal du 4 septembre 2026 : le coût par lot et par nuit reste à -60 de 2020 à
+      // 2026 pendant que le prix passe de 1 800 à 4 675, et le taux annuel équivalent
+      // s'effondre de 11,8 % à 4,5 %. C'est bien un montant, pas un taux.
+      //
+      // En R, la conversion de devise s'annule : le swap et le risque sont tous deux
+      // convertis au même cours. Compte en EUR, symbole en USD, et le rapport mesuré /
+      // prédit vaut 1,0000 (p10 0,9965, p90 1,0038) sur 129 trades.
+      //
+      //   swap_R = |swap par lot| × nuits / (taille du contrat × |entrée − stop|)
+      //
+      // Le sens compte : le courtier déclare les deux valeurs et elles ne sont pas
+      // symétriques — GOLD paie -67,90 à l'achat et CRÉDITE +27,00 à la vente. Un signe
+      // positif est un crédit réel, on le garde tel quel.
+      const parLot = tr.sens === 'vente'
+        ? (Number(frais.swap_short) || 0)
+        : (Number(frais.swap_long) || 0);
+      swap = -parLot * nuitsPortage(tr.entree_t, tr.sortie_t)
+        / (contrat * Math.abs(tr.entree - tr.sl_initial));
+    } else {
+      // repli : taux annuel du notionnel (modes 5 et 6 de MT5, « intérêt annuel »), et
+      // tout symbole dont on n'a pas relevé le montant par lot.
+      const nuits = (tr.sortie_t - tr.entree_t) / 86400000;
+      // Sans relevé du swap court, on garde le coût, jamais le crédit : la plupart des
+      // courtiers facturent le portage dans les DEUX sens.
+      const brut = Number(frais.swap_annuel_pct) || 0;
+      const taux = (tr.sens === 'vente') ? -Math.abs(brut) : brut;
+      swap = -(taux / 360) * nuits / slP;
+    }
     tr.R_net = tr.R - comm - swap;
   }
   return trades;
+}
+
+// Nuits de portage facturées entre deux instants, sur l'horloge du serveur.
+//
+// Trois règles, chacune mesurée sur le journal GOLD du 4 septembre 2026 plutôt que
+// supposée. On compare, pour chaque règle, le swap prédit au swap réellement facturé,
+// et on retient celle dont le rapport est le moins dispersé :
+//
+//   toutes les nuits, jeudi ×3           étalement p90/p10 ×3,14
+//   hors samedi/dimanche, jeudi ×3       étalement ×1,14   ← retenue
+//   hors samedi/dimanche, sans triple    étalement ×3,16
+//   hors samedi, jeudi ×3                étalement ×2,09
+//
+// Le triple tombe au minuit du JEUDI, pas du mercredi : sur les trades ne franchissant
+// qu'un seul minuit, le facteur mesuré vaut 2,73 au jeudi et 0,88 à 0,92 les autres
+// jours — un rapport de 3,08. Il est stable de 2020 à 2025 (2,53 à 2,77).
+// Le week-end n'est pas facturé : les compter multipliait le coût par trois sur les
+// positions tenues du vendredi au lundi.
+export function nuitsPortage(debut, fin) {
+  let n = 0;
+  for (let j = Math.ceil(debut / 86400000); j <= Math.floor(fin / 86400000); j++) {
+    const jour = new Date(j * 86400000).getUTCDay();
+    if (jour === 0 || jour === 6) continue;      // samedi et dimanche : pas de portage
+    n += jour === 4 ? 3 : 1;                     // le minuit du jeudi porte trois nuits
+  }
+  return n;
 }
 
 // ---------- suivi de la position sur la H1 ----------
