@@ -214,12 +214,46 @@ export function separerPointsMorts(trades, fraction = 0.25) {
 }
 
 /**
+ * Le symbole sur lequel le test a réellement tourné, et le robot qui l'a exécuté.
+ *
+ * MT5 lance l'expert sur le SYMBOLE DU GRAPHIQUE, pas sur celui que son nom annonce.
+ * Un robot HongKong50 déposé sur un graphique Germany40 tourne sans broncher et rend un
+ * rapport d'apparence normale. C'est arrivé : 94 trades au lieu de 67, dix journées
+ * communes avec le moteur sur 94, et la conclusion — à tort — qu'une correction récente
+ * avait tout cassé. Rien n'était cassé ; le rapport décrivait un autre instrument.
+ */
+export function contexteRapport(texte) {
+  const t = String(texte);
+  const expert = (t.match(/Sivula_\S*?_\d{6}_\w+/) || [null])[0];
+  let symbole = null;
+  const i = t.search(/Symbole\s*:/);
+  if (i >= 0) {
+    const bout = t.slice(i, i + 300).replace(/<[^>]*>/g, "\n");
+    const m = bout.match(/Symbole\s*:\s*\n*\s*([A-Za-z#][\w#.]{1,24})/);
+    symbole = m ? m[1] : null;
+  }
+  // le nom du robot porte l'instrument entre « Sivula_ » et le sens
+  const attendu = expert ? expert.split("_")[1] : null;
+  const norm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const concorde = !expert || !symbole ? null : norm(symbole).includes(norm(attendu));
+  return { expert, symbole, attendu, concorde };
+}
+
+/**
  * Analyse un rapport MT5 et renvoie
  * { trades, sections: {…nb de lignes lues…}, source: 'positions'|'transactions', avertissements }
  */
 export function lireRapportMt5(texte) {
   const lignes = cellules(texte);
   const avertissements = [];
+  const ctx = contexteRapport(texte);
+  if (ctx.concorde === false) {
+    avertissements.push(
+      `Le robot « ${ctx.expert} » a tourné sur le symbole ${ctx.symbole}. `
+      + "MT5 exécute l'expert sur le symbole DU GRAPHIQUE : ce rapport ne décrit pas "
+      + `${ctx.attendu}. Rejouez le test sur un graphique ${ctx.attendu}.`,
+    );
+  }
   const tables = { transactions: [], ordres: [], positions: [] };
   let courante = null;
   let carte = null;
@@ -290,6 +324,7 @@ export function lireRapportMt5(texte) {
         trades: separerPointsMorts(trades.sort((a, b) => a.entree_t - b.entree_t)),
         source: "positions",
         compte,
+        contexte: ctx,
         avertissements,
       };
     }
@@ -300,7 +335,7 @@ export function lireRapportMt5(texte) {
     avertissements.push(
       "Aucune table exploitable trouvée dans le rapport MT5 (ni Positions, ni Transactions/Deals).",
     );
-    return { trades: [], source: "aucune", compte, avertissements };
+    return { trades: [], source: "aucune", compte, contexte: ctx, avertissements };
   }
 
   const deals = tables.transactions
@@ -376,6 +411,7 @@ export function lireRapportMt5(texte) {
     avertissements.push("Une position MT5 reste ouverte en fin de rapport : elle est ignorée.");
   return {
     trades: separerPointsMorts(trades.sort((a, b) => a.entree_t - b.entree_t)),
+    contexte: ctx,
     source: "transactions",
     compte,
     avertissements,

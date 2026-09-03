@@ -65,10 +65,33 @@ def operations(lignes):
     return ops
 
 
+def contexte(lignes):
+    """Le symbole sur lequel le test a tourné, et le robot qui l'a exécuté.
+
+    MT5 lance l'expert sur le SYMBOLE DU GRAPHIQUE, pas sur celui que son nom annonce.
+    Un robot HongKong50 déposé sur un graphique Germany40 tourne sans broncher et rend un
+    rapport d'apparence normale : 94 trades au lieu de 67, dix journées communes sur 94,
+    et la conclusion — à tort — qu'une correction récente avait tout cassé.
+    """
+    texte = "\n".join(lignes)
+    expert = re.search(r"Sivula_\S*?_\d{6}_\w+", texte)
+    symbole = re.search(r"Symbole:\s*\n?\s*([A-Za-z#][\w#.]{1,24})", texte)
+    if not expert or not symbole:
+        return None
+    attendu = expert.group(0).split("_")[1]
+    norm = lambda x: re.sub(r"[^a-z0-9]", "", x.lower())
+    return expert.group(0), symbole.group(1), attendu, norm(attendu) in norm(symbole.group(1))
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
     lignes = lignes_du_pdf(sys.argv[1])
+    ctx = contexte(lignes)
+    if ctx and not ctx[3]:
+        sys.exit(f"Le robot « {ctx[0]} » a tourné sur le symbole {ctx[1]} : MT5 exécute "
+                 f"l'expert sur le symbole DU GRAPHIQUE. Ce rapport ne décrit pas {ctx[2]} "
+                 f"— rejouez le test sur un graphique {ctx[2]}.")
     ops = operations(lignes)
     entrees = [o for o in ops if o["dir"] == "in"]
     sorties = [o for o in ops if o["dir"] == "out"]

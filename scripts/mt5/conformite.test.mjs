@@ -9,6 +9,7 @@ import { lireConformite } from "./conformite.mjs";
 import { genererMQ5 } from "../../robot-mt5.js";
 import { REFERENCES } from "./references.mjs";
 import { etatDepuisReference } from "./etat-depuis-reference.mjs";
+import { contexteRapport, lireRapportMt5 } from "./parse-mt5.mjs";
 
 const JOURNAL = [
   "bruit du testeur avant",
@@ -90,4 +91,32 @@ test("le robot généré émet les quatre types de ligne", () => {
   }
   // le journal ne doit rien coûter quand il est éteint
   assert.match(src, /void Conf\(string ligne\)\s*\{\s*if\(!InpConformite\) return;/);
+});
+
+test("un rapport joué sur le mauvais symbole est signalé, pas exploité", () => {
+  // MT5 exécute l'expert sur le symbole DU GRAPHIQUE. Un robot HongKong50 déposé sur un
+  // graphique Germany40 rend un rapport d'apparence normale : 94 trades au lieu de 67,
+  // dix journées communes sur 94, et la conclusion — à tort — qu'une correction récente
+  // avait tout cassé. Une heure perdue, et une accusation portée contre du code sain.
+  const faux = contexteRapport(
+    "Expert: Sivula_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
+  );
+  assert.equal(faux.attendu, "HongKong50");
+  assert.equal(faux.symbole, "#Germany40");
+  assert.equal(faux.concorde, false);
+
+  // le « # » du courtier et la casse ne doivent pas déclencher de faux positif
+  const bon = contexteRapport(
+    "Expert: Sivula_Japan225_Achat_mediane_10_SL2_RR1p5_260904_0930\nSymbole: #Japan225\n",
+  );
+  assert.equal(bon.concorde, true);
+});
+
+test("l'avertissement remonte au lecteur de rapport", () => {
+  const r = lireRapportMt5(
+    "Expert: Sivula_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
+  );
+  assert.ok(r.avertissements.some((a) => /symbole DU GRAPHIQUE/.test(a)),
+    "aucun avertissement sur le symbole");
+  assert.equal(r.contexte.concorde, false);
 });
