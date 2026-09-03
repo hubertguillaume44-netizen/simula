@@ -178,7 +178,7 @@ export function genererMQ5(cfg, ctx = {}) {
    // retirait des trades que la mesure prend.
    double haut1 = H_(SEC_SIGNAL, 1);
    bool rebond = (haut1 >= l1 && c1 < l1);
-   if(!(croisement || rebond)) { g_raison = "ni croisement ni rebond"; return false; }`
+   if(!(croisement || rebond)) { g_raison = StringFormat("ni croisement ni rebond : c2=%s l2=%s c1=%s l1=%s haut1=%s", DoubleToString(c2, _Digits), DoubleToString(l2, _Digits), DoubleToString(c1, _Digits), DoubleToString(l1, _Digits), DoubleToString(haut1, _Digits)); return false; }`
       : `   // croisement : la clôture passe AU-DESSUS de la ligne (elle était dessous avant)
    bool croisement = (c2 <= l2 && c1 > l1);
    // rebond, port exact de rebond() : le BAS touche la ligne et la clôture reste
@@ -186,10 +186,10 @@ export function genererMQ5(cfg, ctx = {}) {
    // retirait des trades que la mesure prend.
    double bas1 = L_(SEC_SIGNAL, 1);
    bool rebond = (bas1 <= l1 && c1 > l1);
-   if(!(croisement || rebond)) { g_raison = "ni croisement ni rebond"; return false; }`)
+   if(!(croisement || rebond)) { g_raison = StringFormat("ni croisement ni rebond : c2=%s l2=%s c1=%s l1=%s bas1=%s", DoubleToString(c2, _Digits), DoubleToString(l2, _Digits), DoubleToString(c1, _Digits), DoubleToString(l1, _Digits), DoubleToString(bas1, _Digits)); return false; }`)
     : (vente
-      ? `   if(!(c2 >= l2 && c1 < l1)) { g_raison = "pas de croisement"; return false; }`
-      : `   if(!(c2 <= l2 && c1 > l1)) { g_raison = "pas de croisement"; return false; }`);
+      ? `   if(!(c2 >= l2 && c1 < l1)) { g_raison = StringFormat("pas de croisement : c2=%s l2=%s c1=%s l1=%s", DoubleToString(c2, _Digits), DoubleToString(l2, _Digits), DoubleToString(c1, _Digits), DoubleToString(l1, _Digits)); return false; }`
+      : `   if(!(c2 <= l2 && c1 > l1)) { g_raison = StringFormat("pas de croisement : c2=%s l2=%s c1=%s l1=%s", DoubleToString(c2, _Digits), DoubleToString(l2, _Digits), DoubleToString(c1, _Digits), DoubleToString(l1, _Digits)); return false; }`);
 
   return `//+------------------------------------------------------------------+
 //|  ${nom}
@@ -565,8 +565,9 @@ bool Signal()
    double l2 = LigneAgr(SEC_SIGNAL, M_SIGNAL, PER_SIGNAL, 2);
    if(c1 <= 0.0 || c2 <= 0.0 || l1 <= 0.0 || l2 <= 0.0)
    {
-      g_raison = StringFormat("données incomplètes (c1=%.2f c2=%.2f l1=%.2f l2=%.2f, %d bougies agrégées)",
-                              c1, c2, l1, l2, g_n);
+      g_raison = StringFormat("données incomplètes (c1=%s c2=%s l1=%s l2=%s, %d bougies agrégées)",
+                              DoubleToString(c1, _Digits), DoubleToString(c2, _Digits),
+                              DoubleToString(l1, _Digits), DoubleToString(l2, _Digits), g_n);
       return false;
    }
 
@@ -1056,10 +1057,19 @@ void OnTick()
          double dc1 = C_(SEC_SIGNAL, 1), dc2 = C_(SEC_SIGNAL, 2);
          double dl1 = LigneAgr(SEC_SIGNAL, M_SIGNAL, PER_SIGNAL, 1);
          double dl2 = LigneAgr(SEC_SIGNAL, M_SIGNAL, PER_SIGNAL, 2);
-         PrintFormat("DIAG %s | %s | c1=%.2f c2=%.2f ligne1=%.2f ligne2=%.2f | agr=%d | %s",
+         // %.2f rendait le journal illisible sur une paire cotée à 5 décimales : la
+         // clôture et la ligne s'y écrivaient toutes deux « 0.86 » alors qu'elles
+         // décident du signal au pip près. On imprime à la précision du symbole.
+         // bas1/haut1 sont indispensables : c'est le BAS qui décide du rebond, et
+         // sans lui un refus « ni croisement ni rebond » reste inexplicable.
+         PrintFormat("DIAG %s | %s | c1=%s c2=%s ligne1=%s ligne2=%s bas1=%s haut1=%s | agr=%d | %s",
                      TimeToString(maintenant, TIME_DATE | TIME_MINUTES),
-                     (sig ? "SIGNAL" : "refus"), dc1, dc2, dl1, dl2, g_n,
-                     (sig ? "" : g_raison));
+                     (sig ? "SIGNAL" : "refus"),
+                     DoubleToString(dc1, _Digits), DoubleToString(dc2, _Digits),
+                     DoubleToString(dl1, _Digits), DoubleToString(dl2, _Digits),
+                     DoubleToString(L_(SEC_SIGNAL, 1), _Digits),
+                     DoubleToString(H_(SEC_SIGNAL, 1), _Digits),
+                     g_n, (sig ? "" : g_raison));
       }
    }
    if(!sig) return;
