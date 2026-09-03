@@ -10,6 +10,7 @@ import { genererMQ5 } from "../../robot-mt5.js";
 import { REFERENCES } from "./references.mjs";
 import { etatDepuisReference } from "./etat-depuis-reference.mjs";
 import { contexteRapport, lireRapportMt5 } from "./parse-mt5.mjs";
+import { readFileSync } from "node:fs";
 import { chargerMoteur } from "./charger-moteur.mjs";
 import { construireConfig } from "./config.mjs";
 
@@ -277,4 +278,24 @@ test("tout refus d'entrée porte un motif", () => {
   assert.match(entrer, /trade\.ResultRetcode\(\)/, "le code de retour du courtier n'est pas journalisé");
   assert.match(entrer, /prix=%s stop=%s objectif=%s/,
     "les prix tentés ne sont pas journalisés : « invalid stops » resterait inexploitable");
+});
+
+test("le relevé de symboles porte les colonnes que l'application cherche", () => {
+  // Sivula bascule sur le format « export brut de terminal » quand l'en-tête contient
+  // Symbol ET Point, et n'y trouve la contrainte que sous le nom StopsLevel. Renommer
+  // une seule de ces colonnes fait relire le fichier comme un relevé retraité, sans
+  // minimum de stop — et le contrôle de faisabilité redevient muet, en silence.
+  const src = readFileSync(new URL("../../Export_Symboles_Sivula.mq5", import.meta.url), "utf8");
+  const entete = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"/);
+  assert.ok(entete, "en-tête introuvable dans le script");
+  const cols = (entete[1] + entete[2]).replace(/\\r\\n/, "").split(";").map((x) => x.trim());
+  for (const c of ["Symbol", "Point", "StopsLevel", "Bid", "Spread", "SwapMode",
+    "SwapLong", "SwapShort", "ContractSize", "FreezeLevel"]) {
+    assert.ok(cols.includes(c), `colonne « ${c} » absente de l'en-tête`);
+  }
+  assert.ok(!cols.includes("Symbole"),
+    "« Symbole » ferait lire le fichier comme un relevé retraité, sans StopsLevel");
+  // le séparateur doit être le point-virgule : l'analyseur ne lit que celui-là
+  assert.ok(!/FileWriteString\(f, "[^"]*,[^"]*Point/.test(src),
+    "l'en-tête semble séparé par des virgules");
 });
