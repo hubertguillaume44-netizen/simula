@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { chargerMoteur } from "./mt5/charger-moteur.mjs";
 import { construireConfig, lirePaliers, PALIERS_REFERENCE } from "./mt5/config.mjs";
-import { lireRapportMt5 } from "./mt5/parse-mt5.mjs";
+import { lireFichierMt5, lireRapportMt5 } from "./mt5/parse-mt5.mjs";
 import { comparer, motifSimula, rNet } from "./mt5/comparer.mjs";
 
 const AIDE = `
@@ -44,6 +44,8 @@ Réglages du moteur (moteur.js à la racine — la spécification)
   --swap <pct/an>      --commission <pct>
   --capital <eur>      --risque <pct>       (repli pour la conversion R → €)
   --depuis <AAAA-MM-JJ>  début de simulation (défaut : 2020-01-01)
+  --suivi-decision     suit la position sur la bougie de décision au lieu de la H1
+                       (l'ancien comportement, pour comparer)
 
 Démonstration
   --demo               fabrique un couple (CSV, rapport MT5) aux écarts connus
@@ -163,12 +165,16 @@ async function main() {
   const cfg = construireConfig(reglages);
   // Invariant 1 : les données de base sont en H1 ; H4 et D1 sont agrégées, jamais lues
   // depuis une autre série. Le robot MT5 fait la même agrégation (InpBougiesAgr).
+  // Le signal est lu sur la bougie de décision, la position suivie sur la H1 — comme
+  // l'application. Mesurer autrement ici ferait mentir l'instrument de mesure.
   const base = reglages.ut === "H1" ? df : moteur.resampler(df, reglages.ut);
-  const sim = moteur.backtester(base, cfg);
+  const sim = o["suivi-decision"]
+    ? moteur.backtester(base, cfg)
+    : moteur.backtesterSuivi(df, cfg, reglages.ut);
   const resumeSim = moteur.resume(sim);
 
   // ---------- Rapport MT5 ----------
-  const texteMt5 = o.mt5 === "-" ? readFileSync(0, "utf8") : readFileSync(o.mt5, "utf8");
+  const texteMt5 = o.mt5 === "-" ? readFileSync(0, "utf8") : lireFichierMt5(o.mt5);
   const rapport = lireRapportMt5(texteMt5);
   if (!rapport.trades.length) {
     console.error("Aucun trade lu dans le rapport MT5.");

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 /**
  * Lecture d'un rapport du testeur de stratégies MetaTrader 5.
  *
@@ -11,6 +13,24 @@
  * où les temps sont des millisecondes epoch lues telles quelles (heure du serveur,
  * sans conversion) : le décalage éventuel est mesuré ensuite par le comparateur.
  */
+
+/**
+ * Lit un rapport MT5 depuis le disque en devinant son encodage.
+ * MetaTrader enregistre ses rapports HTML en **UTF-16 petit-boutiste** : lus en UTF-8,
+ * ils ne donnent que des caractères nuls et le rapport paraît vide. Le copier-coller,
+ * lui, arrive en UTF-8. On tranche sur la marque d'ordre des octets, et à défaut sur la
+ * proportion d'octets nuls aux positions impaires.
+ */
+export function lireFichierMt5(chemin) {
+  const b = readFileSync(chemin);
+  if (b.length >= 2 && b[0] === 0xff && b[1] === 0xfe) return b.toString("utf16le", 2);
+  if (b.length >= 2 && b[0] === 0xfe && b[1] === 0xff) return b.swap16().toString("utf16le", 2);
+  if (b.length >= 3 && b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf) return b.toString("utf8", 3);
+  let nuls = 0;
+  const n = Math.min(b.length, 4096);
+  for (let i = 1; i < n; i += 2) if (b[i] === 0) nuls++;
+  return nuls > n / 4 ? b.toString("utf16le") : b.toString("utf8");
+}
 
 const ENTITES = {
   "&nbsp;": " ",
