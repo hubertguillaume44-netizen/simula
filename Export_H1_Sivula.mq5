@@ -21,7 +21,12 @@
 #property script_show_inputs
 #property strict
 
-input datetime InpDu       = D'2020.01.01';  // Depuis
+// UN AN AVANT le début de la mesure, pas le début lui-même. Le moteur a besoin de
+// 400 jours d'amorce (AMORCE_JOURS) pour ses agrégats, et la médiane du spread porte
+// sur les 6000 dernières bougies H1 — environ 250 séances. Exporter à partir de la
+// date de test donne un moteur sans amorce : plafond de spread inactif au début, et
+// lignes de référence fausses tant que le tampon n'est pas rempli.
+input datetime InpDu       = D'2019.01.01';  // Depuis (≈ 1 an AVANT le début du test)
 input int      InpMaxBarres = 200000;         // Bougies maximum
 
 void OnStart()
