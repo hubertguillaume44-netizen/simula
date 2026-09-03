@@ -24,6 +24,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { chargerMoteur } from "./charger-moteur.mjs";
 import { genererMQ5 } from "../../robot-mt5.js";
+import { REFERENCES } from "./references.mjs";
+import { etatDepuisReference, genererRobot } from "./etat-depuis-reference.mjs";
 
 const M = await chargerMoteur();
 
@@ -118,4 +120,22 @@ test("le filtre de pente et la tendance MTF passent par la même correction", ()
     etat: { fMtf: true, utMtf: "D1", ligneMtf: "mediane", periodeMtf: 5 },
   });
   assert.ok(mtf.includes("M_MEDIANE"), "la tendance MTF n'utilise pas M_MEDIANE");
+});
+
+test("les huit références se régénèrent avec les filtres qu'elles déclarent", () => {
+  // Le drapeau du filtre de tendance supérieure est `btMtf` ; l'écrire `fMtf` le fait
+  // ignorer EN SILENCE. Régénéré ainsi, le robot GOLD partait sans son filtre et MT5
+  // mesurait 629 trades contre 510 au moteur. Rien dans le fichier ne le signalait,
+  // sinon la ligne « Filtres générés : aucun » de l'en-tête — que ce test lit.
+  for (const ref of REFERENCES) {
+    const { source } = genererRobot(ref, "260101_0000");
+    const obtenu = source.match(/Filtres générés : (.*)/)[1].trim();
+    assert.equal(obtenu, ref.filtresAttendus,
+      `${ref.sym} ${ref.variante ?? ""} : en-tête « ${obtenu} »`);
+  }
+});
+
+test("un filtre non transposable est refusé au lieu d'être omis", () => {
+  assert.throws(() => etatDepuisReference({ filtres: [{ type: "pivot", ut: "D1" }] }),
+    /non transposé/);
 });
