@@ -209,3 +209,40 @@ test("le plafond décale l'entrée sans supprimer le signal quand une bougie pas
   // le signal est décalé, pas perdu : ici une bougie de séance existe chaque jour
   assert.equal(avec.length, sans.length, "le plafond a supprimé des trades au lieu de les décaler");
 });
+
+test("le plafond juge la bougie d'entrée, pas la précédente — des deux côtés", () => {
+  // Le pic du rollover est DANS la bougie de 00:00 ; celle de 23:00 est normale.
+  // Juger la bougie précédente rend le plafond aveugle au seul moment qu'il vise.
+  const src = genererMQ5(CFG, { ...CTX, spreadFacteur: 1.5 });
+  assert.match(src, /double barre = SpreadBarre\(0\);/,
+    "le robot lit le spread d'une bougie précédente : le plafond ne verrait plus le pic");
+  assert.match(src, /CopySpread\(_Symbol, PERIOD_H1, shift, 1, sp\)/);
+
+  // et côté moteur : une série dont SEULE la bougie de 00:00 est chère
+  const n = 24 * 400;
+  const t = [], c = [], sp = [];
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    c.push(100);
+    sp.push(new Date(t[i]).getUTCHours() === 0 ? 100 : 10);
+  }
+  const df = { n, t, o: c.slice(), h: c.slice(), l: c.slice(), c, sp, grain: { decimales: 4 } };
+  const seuil = M.seuilSpread(df, 1.5), pct = M.spreadEnPct(df);
+  const minuit = n - new Date(df.t[n - 1]).getUTCHours() - 1;
+  assert.ok(pct[minuit] > seuil[minuit], "la bougie du rollover passerait le plafond");
+  assert.ok(pct[minuit - 1] <= seuil[minuit - 1],
+    "la bougie de 23:00 est chère elle aussi : le gabarit ne sépare pas les deux lectures");
+});
+
+test("le robot compare un spread de BOUGIE, pas celui du tick", () => {
+  // Le spread d'un tick est plus haut et plus nerveux que MqlRates.spread. Le comparer
+  // à un seuil calculé sur des spreads de bougie serrait le plafond côté robot sans
+  // qu'aucun test ne le voie : 10 entrées communes sur 44 sur AUDCAD, 181 sur 491 sur
+  // GOLD — moins bien que sans plafond du tout.
+  const src = genererMQ5(CFG, { ...CTX, spreadFacteur: 1.5 });
+  const bloc = src.slice(src.indexOf("double plafond = SeuilSpread();"),
+    src.indexOf("if(InpPasDebutSemaine)"));
+  assert.ok(!/spreadPct\s*>\s*plafond/.test(bloc),
+    "le plafond est encore comparé au spread du tick (spreadPct)");
+  assert.match(bloc, /barre > plafond/);
+});

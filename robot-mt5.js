@@ -612,6 +612,18 @@ ${tests.join('\n\n')}
 double   g_seuilSpread = 0.0;
 datetime g_seuilJour   = 0;
 
+// Spread d'une bougie H1 en % de son cours — la même grandeur que la colonne « spread »
+// du CSV (MqlRates.spread), donc le même chiffre que celui du moteur. Décalage 0 = la
+// bougie en cours, telle qu'elle est connue à cet instant : aucune information future.
+double SpreadBarre(int shift)
+{
+   int sp[]; double cl[];
+   if(CopySpread(_Symbol, PERIOD_H1, shift, 1, sp) < 1) return 0.0;
+   if(CopyClose(_Symbol, PERIOD_H1, shift, 1, cl) < 1) return 0.0;
+   if(sp[0] <= 0 || cl[0] <= 0.0) return 0.0;
+   return sp[0] * SymbolInfoDouble(_Symbol, SYMBOL_POINT) / cl[0] * 100.0;
+}
+
 double SeuilSpread()
 {
    if(InpSpreadFacteur <= 0.0) return 0.0;
@@ -657,12 +669,23 @@ bool ExecutionAutorisee()
       return false;
    }
    double plafond = SeuilSpread();
-   if(plafond > 0.0 && spreadPct > plafond)
+   if(plafond > 0.0)
    {
-      if(InpDiagnostic)
-         Print("Entrée en attente : spread ", DoubleToString(spreadPct, 4), " % > plafond ",
-               DoubleToString(plafond, 4), " % — on réessaie sur les bougies suivantes du jour");
-      return false;
+      // Le spread comparé est celui de la BOUGIE en cours (MqlRates.spread, décalage 0),
+      // pas celui du tick. C'est la grandeur que porte la colonne du CSV, donc celle que
+      // le moteur juge et fait payer. Comparer le spread du tick — plus haut et plus
+      // nerveux — à un seuil calculé sur des spreads de bougie rendait le plafond bien
+      // plus serré côté robot : sur AUDCAD 10 entrées communes sur 44, et sur GOLD
+      // 181 sur 491 contre 422 sans aucun plafond.
+      double barre = SpreadBarre(0);
+      if(barre > 0.0 && barre > plafond)
+      {
+         if(InpDiagnostic)
+            Print("Entrée en attente : spread de la bougie close ", DoubleToString(barre, 4),
+                  " % > plafond ", DoubleToString(plafond, 4),
+                  " % — on réessaie sur les bougies suivantes du jour");
+         return false;
+      }
    }
 
    if(InpPasDebutSemaine)

@@ -1048,6 +1048,12 @@ export function backtesterSuivi(df, cfg, ut) {
   const facteur = Number(cfg.spread_max_facteur) || 0;
   const seuil = facteur > 0 ? seuilSpread(df, facteur) : null;
   const sp = seuil ? spreadEnPct(df) : null;
+  // Le spread jugé est celui de la bougie sur laquelle on entre — le même que le moteur
+  // fait déjà PAYER à l'entrée (spreadDe). Ce n'est pas un regard en avant : c'est le
+  // champ `spread` de MqlRates, que le robot lit en direct sur la bougie en cours au
+  // moment où il place l'ordre. Le lire sur la bougie précédente, en revanche, rend le
+  // plafond aveugle : le pic du rollover est DANS la bougie de 00:00, la bougie de
+  // 23:00 est normale, et le plafond ne refusait plus rien.
   const acceptable = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
 
   const parSeau = new Map();
