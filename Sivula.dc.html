@@ -6595,10 +6595,40 @@ GROUPES = {
     const v = Number(this.state.gSpreadFacteur);
     return Number.isFinite(v) && v >= 0 ? v : this.M.SPREAD_FACTEUR;
   }
+  // Plage réellement mesurable d'un instrument, mise en cache : le calcul balaie toute
+  // la série et serait refait des milliers de fois pendant un scan.
+  plageDe(sym) {
+    this._plages = this._plages || {};
+    if (this._plages[sym] === undefined) {
+      const h1 = this.serieH1(sym);
+      this._plages[sym] = h1 ? this.M.plageExploitable(h1) : null;
+    }
+    return this._plages[sym];
+  }
+  // Instruments dont la plage a été rognée, pour l'afficher : une mesure restreinte en
+  // silence est exactement ce qu'on reproche à l'ancienne colonne de spread.
+  restrictions(syms) {
+    const j = (t) => new Date(t).toISOString().slice(0, 7);
+    return (syms || []).map((sym) => {
+      const p = this.plageDe(sym);
+      if (!p || p.complete) return null;
+      return { sym, debut: p.debut, fin: p.fin, texte: j(p.debut) + ' → ' + j(p.fin) };
+    }).filter(Boolean);
+  }
   mesurer(sym, cfg, ut, repli) {
     const h1 = this.serieH1(sym);
     const u = ut || this.state.ut;
     const c = { ...cfg, spread_max_facteur: this.facteurSpread() };
+    // Une bougie sans spread est refusée par le moteur, et une journée entière sans
+    // spread perd son signal sans laisser de trace. Sur les exports du courtier,
+    // Germany40 et BITCOIN n'ont aucun spread avant 2022 : mesurer là revenait à
+    // publier trois ans de vide comme un résultat. On borne la mesure à ce que la
+    // donnée porte réellement.
+    const p = this.plageDe(sym);
+    if (p && !p.complete) {
+      c.debut = Math.max(Number(c.debut) || 0, p.debut);
+      c.fin = c.fin ? Math.min(Number(c.fin), p.fin) : p.fin;
+    }
     if (!h1) return repli ? this.M.backtester(repli, c) : [];
     return this.M.backtesterSuivi(h1, c, u);
   }
@@ -6821,8 +6851,15 @@ GROUPES = {
   periodeScan(f) {
     const jma = (ms) => new Date(ms).toLocaleDateString('fr-FR');
     const plancher = 'depuis le ' + jma(f && f.debut ? f.debut : this.DEBUT);
-    if (!f || !f.premier) return plancher + ' → fin de vos fichiers';
-    return plancher + ' · trades du ' + jma(f.premier) + ' au ' + jma(f.dernier);
+    // Une plage rognée faute de spread doit se lire ICI, à côté de la période annoncée :
+    // sans ça le scan affiche « depuis le 01/01/2020 » pour un instrument mesuré à partir
+    // de 2022, et le chiffre décrit autre chose que ce qu'il prétend.
+    const r = (f && f.restrictions) || [];
+    const rogne = r.length
+      ? ' · ⚠ ' + r.map((x) => x.sym + ' ' + x.texte).join(', ') + ' (spread absent avant)'
+      : '';
+    if (!f || !f.premier) return plancher + ' → fin de vos fichiers' + rogne;
+    return plancher + ' · trades du ' + jma(f.premier) + ' au ' + jma(f.dernier) + rogne;
   }
 
   // saisie d'un palier : la valeur est ramenée DANS le champ, pas seulement au
@@ -8991,7 +9028,15 @@ GROUPES = {
           // mesurerait sans plafond tout en exportant des robots qui en portent un —
           // c'est mot pour mot le défaut de gEchelles, une mesure qui décrit autre
           // chose que ce que le robot exécute
-          cfg: { ...cfg, spread_max_facteur: this.facteurSpread() } });
+          cfg: (() => {
+            const c = { ...cfg, spread_max_facteur: this.facteurSpread() };
+            const p = this.plageDe(sym);
+            if (p && !p.complete) {
+              c.debut = Math.max(Number(c.debut) || 0, p.debut);
+              c.fin = p.fin;
+            }
+            return c;
+          })() });
       }
       this._grille = { periodes, sls, rrs };
       // le noyau reçoit la H1 : c'est le pas de suivi. `df` (agrégé) reste utilisé
@@ -9135,6 +9180,9 @@ GROUPES = {
         ligne: lignes.map((x) => LIGNES[x] || x).join(', '), ut: s.ut,
         grille: 'période = ' + fmt(periodes) + ' · SL = ' + fmt(sls) + ' % · R/R = ' + fmt(rrs),
         seuils: s.tradesMin + ' / ' + s.segMin,
+        // instruments dont la donnée ne couvre pas toute la période demandée : ils
+        // ont été mesurés sur une plage plus courte, et il faut que ça se lise
+        restrictions: this.restrictions(Array.from(new Set(total.map((r) => r.sym)))),
         // période réellement couverte : la date plancher demandée, et le premier trade
         // effectivement trouvé (un instrument peut n'avoir d'historique que plus tard)
         debut: this.DEBUT,

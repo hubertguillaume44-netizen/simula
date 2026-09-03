@@ -238,6 +238,61 @@ export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENET
   });
 }
 
+// Plage de dates sur laquelle la série est réellement mesurable.
+//
+// Un spread à zéro n'est pas un spread nul : c'est une information absente. Le moteur
+// refuse alors la bougie — elle ne peut pas passer le plafond — et si toute une journée
+// est à zéro, le signal du jour disparaît sans trace. Mesuré sur les exports du
+// 3 septembre 2026 : la M1 du courtier ne remonte pas au-delà de 2022 pour Germany40 et
+// BITCOIN, qui portent 100 % de bougies sans spread sur 2019-2021. Mesurer dessus
+// revenait à mesurer trois ans de vide et à publier le résultat comme s'il valait
+// quelque chose.
+//
+// On rend la PLUS LONGUE suite continue de mois sains, pas seulement un début : BITCOIN
+// est troué des deux côtés — 2019-01 à 2022-02, puis de nouveau 2026-08 et 2026-09 —
+// et ne vaut qu'entre les deux.
+//
+// Le balayage est mensuel : Germany40 passe de 59 % de trous en septembre 2021 à 0 % en
+// octobre, une granularité annuelle jetterait quinze mois de bonnes données. Un mois
+// sous le seuil compte comme sain — les quelques bougies trouées qu'il contient sont
+// refusées une par une, ce qui est le comportement voulu.
+export function plageExploitable(df, seuilPct = 20) {
+  const vide = { debut: df.n ? df.t[0] : 0, fin: df.n ? df.t[df.n - 1] : 0, complete: true };
+  const sp = spreadEnPct(df);
+  if (!sp || !df.n) return vide;
+
+  const mois = new Map();
+  for (let i = 0; i < df.n; i++) {
+    const d = new Date(df.t[i]);
+    const k = d.getUTCFullYear() * 12 + d.getUTCMonth();
+    if (!mois.has(k)) mois.set(k, [0, 0]);
+    const e = mois.get(k);
+    e[0]++;
+    if (!(sp[i] > 0)) e[1]++;
+  }
+  const cles = [...mois.keys()].sort((a, b) => a - b);
+  const sain = (k) => { const [n, z] = mois.get(k); return n > 0 && (100 * z) / n < seuilPct; };
+
+  let meilleur = null, courant = null;
+  for (const k of cles) {
+    if (sain(k)) {
+      if (courant === null) courant = { a: k, b: k };
+      else courant.b = k;
+      if (!meilleur || courant.b - courant.a > meilleur.b - meilleur.a) meilleur = { ...courant };
+    } else courant = null;
+  }
+  if (!meilleur) return { debut: vide.fin, fin: vide.fin, complete: false };
+
+  const debut = Date.UTC(Math.floor(meilleur.a / 12), meilleur.a % 12, 1);
+  // fin EXCLUSIVE : le premier instant du mois qui suit le dernier mois sain
+  const fin = Date.UTC(Math.floor((meilleur.b + 1) / 12), (meilleur.b + 1) % 12, 1);
+  return {
+    debut: Math.max(debut, df.t[0]),
+    fin: Math.min(fin, df.t[df.n - 1] + 3600000),
+    complete: debut <= df.t[0] && fin > df.t[df.n - 1],
+  };
+}
+
 export function decouper(df, debut, fin) {
   if (debut === undefined && fin === undefined) return df;
   const d0 = debut !== undefined ? debut - AMORCE_JOURS * 86400000 : -Infinity;
@@ -868,6 +923,11 @@ export function backtester(df, cfg) {
   };
   const i0 = cfg.debut ? df.t.findIndex((x) => x >= cfg.debut) : 0;
   const depart = i0 < 0 ? df.n : i0;
+  // Borne HAUTE des entrées : aucune position n'est ouverte à partir de `fin`, mais
+  // celles déjà ouvertes sont suivies jusqu'à leur sortie. Sert aux séries dont la
+  // colonne de spread s'arrête avant la fin des cours — sur BITCOIN, août et septembre
+  // 2026 n'ont aucun spread, et mesurer dessus revenait à mesurer du vide.
+  const finEntrees = Number(cfg.fin) || Infinity;
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
@@ -958,6 +1018,7 @@ export function backtester(df, cfg) {
       continue;
     }
 
+    if (df.t[i] >= finEntrees) continue;
     if (!signal[i] || (autorise && !autorise[i])) continue;
     if (delai && (i - derniere) < delai) continue;
 

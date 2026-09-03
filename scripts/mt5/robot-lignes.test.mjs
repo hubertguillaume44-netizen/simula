@@ -259,3 +259,57 @@ test("le robot ne tente l'entrée qu'une fois par bougie H1", () => {
   assert.match(reprise, /if\(!nouvelleH1\) return;/,
     "la reprise d'un signal en attente s'exécute encore en cours de bougie");
 });
+
+test("la plage exploitable exclut les mois sans spread, des deux côtés", () => {
+  // Germany40 et BITCOIN n'ont aucun spread avant 2022 (la M1 du courtier ne remonte
+  // pas si loin) ; BITCOIN en manque AUSSI sur ses deux derniers mois. Mesurer là
+  // revenait à publier des années de vide comme un résultat.
+  const n = 24 * 30 * 40;                       // ~40 mois
+  const t = [], c = [], sp = [];
+  for (let i = 0; i < n; i++) {
+    const ms = Date.UTC(2021, 0, 1) + i * 3600000;
+    const mois = new Date(ms).getUTCFullYear() * 12 + new Date(ms).getUTCMonth();
+    const troue = mois < 2022 * 12 + 2 || mois >= 2023 * 12 + 6;   // avant mars 2022, après juin 2023
+    t.push(ms); c.push(100); sp.push(troue ? 0 : 10);
+  }
+  const df = { n, t, o: c.slice(), h: c.slice(), l: c.slice(), c, sp, grain: { decimales: 4 } };
+  const p = M.plageExploitable(df);
+  assert.equal(p.complete, false);
+  assert.equal(new Date(p.debut).toISOString().slice(0, 7), "2022-03");
+  // `fin` est EXCLUSIVE : le premier instant du mois qui suit le dernier mois sain.
+  // Juin 2023 est donc bien mesuré, juillet ne l'est pas.
+  assert.equal(new Date(p.fin).toISOString().slice(0, 7), "2023-07");
+
+  // série saine : plage entière, et le drapeau le dit
+  const sain = { ...df, sp: sp.map(() => 10) };
+  assert.equal(M.plageExploitable(sain).complete, true);
+});
+
+test("cfg.fin arrête les ENTRÉES sans tronquer les positions ouvertes", () => {
+  const n = 24 * 400;
+  const t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 100, a = 24680;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.004;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.001); l.push(Math.min(ouv, px) * 0.999);
+    sp.push(10);
+  }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 0.5, rr: 2, paliers: [] });
+  const tout = M.backtesterSuivi(df, cfg, "D1");
+  const coupe = Date.UTC(2021, 6, 1);
+  const borne = M.backtesterSuivi(df, { ...cfg, fin: coupe }, "D1");
+  assert.ok(tout.length > borne.length, "la borne n'a rien retiré : test sans portée");
+  for (const tr of borne) assert.ok(tr.entree_t < coupe, "une entrée dépasse la borne");
+  // les trades d'avant la borne sont identiques, position ouverte comprise
+  const avant = tout.filter((x) => x.entree_t < coupe);
+  assert.equal(borne.length, avant.length);
+  for (let i = 0; i < borne.length; i++) {
+    assert.equal(borne[i].entree_t, avant[i].entree_t);
+    assert.equal(borne[i].sortie_t, avant[i].sortie_t, "une sortie a été tronquée par la borne");
+  }
+});
