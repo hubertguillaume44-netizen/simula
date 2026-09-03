@@ -746,6 +746,12 @@ bool ExecutionAutorisee()
       // plus serré côté robot : sur AUDCAD 10 entrées communes sur 44, et sur GOLD
       // 181 sur 491 contre 422 sans aucun plafond.
       double barre = SpreadBarre(0);
+      // Un spread NUL n'est pas un spread bon marché : c'est l'absence de cotation. Le
+      // moteur refuse la bougie (acceptable() exige sp > 0) ; le robot l'acceptait, et
+      // dépensait sa tentative de l'heure sur une bougie où l'ordre ne pouvait pas
+      // passer. Vu sur HongKong50 le 4 novembre 2020 : tentative à 00:00 avec un spread
+      // de 0.000000, acceptée, ordre refusé, journée décalée de deux heures.
+      if(barre <= 0.0) { g_confRefus = "pas de cotation sur la bougie"; return false; }
       if(InpDiagnostic)
       {
          datetime hB[]; CopyTime(_Symbol, PERIOD_H1, 0, 1, hB);
@@ -1221,12 +1227,16 @@ void OnTick()
    {
       if(!nouvelleH1) return;
       g_derniereH1 = bH1[0];
-      bool ok1 = ExecutionAutorisee();
       // T = tentative d'entrée sur une bougie H1 précise. « reprise » : le signal était
-      // en attente depuis une bougie antérieure du même jour.
+      // en attente depuis une bougie antérieure du même jour. Le verdict porté est celui
+      // de l'ORDRE, pas seulement du garde-fou : écrite avant l'appel à Entrer(), la
+      // ligne montrait « accepté » sur trois tentatives d'affilée qui n'avaient rien
+      // exécuté, et le journal ne disait pas pourquoi.
+      bool ok1 = ExecutionAutorisee();
+      bool entre1 = ok1 && Entrer();
       Conf(StringFormat("T|%s|%s|%s|%d|reprise|%s", ConfH(bH1[0]),
-           DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), ok1 ? 1 : 0, g_confRefus));
-      if(ok1 && Entrer()) seauEnAttente = -1;
+           DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), entre1 ? 1 : 0, g_confRefus));
+      if(entre1) seauEnAttente = -1;
       return;
    }
    g_derniereH1 = bH1[0];
@@ -1291,9 +1301,10 @@ void OnTick()
    }
    if(!sig) return;
    bool ok = ExecutionAutorisee();
+   bool entre = ok && Entrer();
    Conf(StringFormat("T|%s|%s|%s|%d|premiere|%s", ConfH(bH1[0]),
-        DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), ok ? 1 : 0, g_confRefus));
-   if(!ok || !Entrer())
+        DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), entre ? 1 : 0, g_confRefus));
+   if(!entre)
    {
       // le signal n'est pas perdu : on le réessaiera dans le même seau
       seauEnAttente = seau;

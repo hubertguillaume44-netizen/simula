@@ -10,6 +10,9 @@ import { genererMQ5 } from "../../robot-mt5.js";
 import { REFERENCES } from "./references.mjs";
 import { etatDepuisReference } from "./etat-depuis-reference.mjs";
 import { contexteRapport, lireRapportMt5 } from "./parse-mt5.mjs";
+import { chargerMoteur } from "./charger-moteur.mjs";
+
+const M = await chargerMoteur();
 
 const JOURNAL = [
   "bruit du testeur avant",
@@ -143,4 +146,51 @@ test("le journal de conformité part dans son propre fichier, pas dans celui du 
     "les \\r\\n ont été interprétés à la génération : le fichier sortirait sur une seule ligne");
   // et il ne coûte rien quand il est éteint
   assert.match(src, /void Conf\(string ligne\)\s*\{\s*if\(!InpConformite\) return;/);
+});
+
+test("un spread nul est refusé par le robot comme par le moteur", () => {
+  // Un spread à zéro n'est pas un spread bon marché : c'est l'absence de cotation.
+  // `acceptable()` du moteur exige sp > 0 ; le robot l'acceptait et dépensait sa
+  // tentative de l'heure sur une bougie où l'ordre ne pouvait pas passer. Vu sur
+  // HongKong50 le 4 novembre 2020 : tentative à 00:00 avec un spread de 0.000000,
+  // « acceptée », ordre refusé, et la journée décalée de deux heures.
+  const ref = REFERENCES.find((r) => r.sym === "HongKong50");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260904_TEST", magic: 1, paliers: [], spreadFacteur: 1.5 },
+  );
+  assert.match(src, /if\(barre <= 0\.0\) \{ g_confRefus = "pas de cotation sur la bougie"; return false; \}/);
+
+  // et côté moteur : une bougie sans spread ne peut pas être choisie
+  const n = 24 * 400;
+  const t = [], c = [], sp = [];
+  for (let i = 0; i < n; i++) {
+    const ms = Date.UTC(2021, 0, 1) + i * 3600000;
+    t.push(ms); c.push(100);
+    sp.push(new Date(ms).getUTCHours() === 0 ? 0 : 10);   // 00:00 non coté
+  }
+  const df = { n, t, o: c.slice(), h: c.slice(), l: c.slice(), c, sp, grain: { decimales: 2 } };
+  const seuil = M.seuilSpread(df, 1.5), pct = M.spreadEnPct(df);
+  const minuit = n - new Date(df.t[n - 1]).getUTCHours() - 1;
+  assert.equal(pct[minuit], 0);
+  assert.ok(!(pct[minuit] > 0 && pct[minuit] <= seuil[minuit]),
+    "le moteur accepterait une bougie non cotée");
+});
+
+test("la ligne T porte le sort de l'ORDRE, pas seulement celui du garde-fou", () => {
+  // Écrite avant l'appel à Entrer(), elle montrait « accepté » sur trois tentatives
+  // d'affilée qui n'avaient rien exécuté — et le journal ne disait pas pourquoi.
+  const ref = REFERENCES.find((r) => r.sym === "HongKong50");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260904_TEST", magic: 1, paliers: [], spreadFacteur: 1.5 },
+  );
+  for (const bloc of ["entre1 = ok1 && Entrer()", "entre = ok && Entrer()"]) {
+    assert.ok(src.includes(bloc), `le sort de l'ordre n'est pas capturé : ${bloc}`);
+  }
+  // le verdict journalisé doit être celui de l'entrée
+  assert.ok(src.includes("entre1 ? 1 : 0") && src.includes("entre ? 1 : 0"),
+    "la ligne T journalise encore le verdict du garde-fou au lieu de celui de l'ordre");
 });
