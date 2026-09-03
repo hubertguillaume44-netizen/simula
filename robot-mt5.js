@@ -653,6 +653,11 @@ double SeuilSpread()
    ArrayResize(v, m);
    ArraySort(v);
    g_seuilSpread = v[m / 2] * InpSpreadFacteur;
+   if(InpDiagnostic)
+      PrintFormat("DIAGSEUIL %s | mediane=%s | plafond=%s | releves=%d/%d | point=%s",
+                  TimeToString(jour, TIME_DATE), DoubleToString(v[m / 2], 6),
+                  DoubleToString(g_seuilSpread, 6), m, n,
+                  DoubleToString(point, 8));
    return g_seuilSpread;
 }
 
@@ -680,14 +685,21 @@ bool ExecutionAutorisee()
       // plus serré côté robot : sur AUDCAD 10 entrées communes sur 44, et sur GOLD
       // 181 sur 491 contre 422 sans aucun plafond.
       double barre = SpreadBarre(0);
-      if(barre > 0.0 && barre > plafond)
+      if(InpDiagnostic)
       {
-         if(InpDiagnostic)
-            Print("Entrée en attente : spread de la bougie close ", DoubleToString(barre, 4),
-                  " % > plafond ", DoubleToString(plafond, 4),
-                  " % — on réessaie sur les bougies suivantes du jour");
-         return false;
+         datetime hB[]; CopyTime(_Symbol, PERIOD_H1, 0, 1, hB);
+         double a2 = SymbolInfoDouble(_Symbol, SYMBOL_ASK), b2 = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+         int spB[]; CopySpread(_Symbol, PERIOD_H1, 0, 1, spB);
+         // les trois lectures possibles, côte à côte : c'est la seule façon de savoir
+         // laquelle correspond à la colonne « spread » du CSV
+         PrintFormat("DIAGSPREAD %s | barre=%s | pointsBarre=%d | tick=%s | plafond=%s | %s",
+                     TimeToString(ArraySize(hB) > 0 ? hB[0] : 0, TIME_DATE | TIME_MINUTES),
+                     DoubleToString(barre, 6), ArraySize(spB) > 0 ? spB[0] : -1,
+                     DoubleToString(a2 > 0.0 ? (a2 - b2) / a2 * 100.0 : 0.0, 6),
+                     DoubleToString(plafond, 6),
+                     (barre > 0.0 && barre > plafond) ? "REFUSE" : "ACCEPTE");
       }
+      if(barre > 0.0 && barre > plafond) return false;
    }
 
    if(InpPasDebutSemaine)
