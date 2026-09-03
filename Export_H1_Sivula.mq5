@@ -103,13 +103,24 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
 //| inscrivait un prix que personne ne pouvait traiter, deux heures    |
 //| avant l'entrée réelle du robot.                                    |
 //|                                                                    |
+//| Une bougie compte comme traitable si son OUVERTURE tombe dans la   |
+//| séance, pas si la séance commence quelque part dedans. Les deux    |
+//| lectures ont été mesurées contre le testeur : la stricte donne     |
+//| Germany40 70 % d'entrées sur la même bougie contre 56 %, GOLD 85 % |
+//| contre 83 %, Japan225 91 % contre 90 %. Elle perd seulement sur    |
+//| #HongKong50, et pour une autre raison — celle-ci :                 |
+//|                                                                    |
 //| RÉSERVE : SymbolInfoSessionTrade rend les séances TELLES QU'ELLES  |
 //| SONT CONFIGURÉES AUJOURD'HUI, appliquées à un jour de la semaine.  |
 //| Quand la bourse et le serveur ne changent pas d'heure d'été aux    |
-//| mêmes dates, la séance glisse d'une heure une partie de l'année et |
-//| cette colonne se trompe alors d'une bougie. Le journal de          |
-//| conformité le montre : sur #HongKong50 l'entrée passe à 04:15 le   |
-//| 20 avril et seulement à 05:00 le 4 novembre.                       |
+//| mêmes dates, la séance glisse d'une heure une partie de l'année.   |
+//| Le journal de conformité de #HongKong50 le montre sans ambiguïté : |
+//| MT5 entre à 04:15 d'avril à octobre et à 05:00 de novembre à mars, |
+//| là où la table lue en septembre annonce 05:00 toute l'année. Cette |
+//| colonne est donc juste cinq mois sur douze pour cet instrument.    |
+//| Aucune table statique ne peut couvrir les deux régimes : il        |
+//| faudrait un calendrier par DATE, que MT5 n'expose pas et qu'une    |
+//| exécution du journal de conformité permettrait de reconstituer.    |
 //+------------------------------------------------------------------+
 bool Traitable(string sym, datetime t)
 {
