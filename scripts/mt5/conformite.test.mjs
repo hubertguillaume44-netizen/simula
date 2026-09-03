@@ -278,6 +278,48 @@ test("tout refus d'entrée porte un motif", () => {
   assert.match(entrer, /trade\.ResultRetcode\(\)/, "le code de retour du courtier n'est pas journalisé");
   assert.match(entrer, /prix=%s stop=%s objectif=%s/,
     "les prix tentés ne sont pas journalisés : « invalid stops » resterait inexploitable");
+
+  // Même exigence sur le garde-fou, et pour la même raison : sur GOLD, 2 947 refus sur
+  // 3 243 sortaient sans motif parce que le plafond de spread et « position déjà
+  // ouverte » étaient les deux seuls chemins muets. Les distinguer était impossible,
+  // alors que ce sont deux causes opposées — l'une se corrige, l'autre s'explique.
+  const garde = src.slice(src.indexOf("bool ExecutionAutorisee()"), src.indexOf("double Volume("));
+  const g = garde.split("return false;");
+  assert.ok(g.length > 4, "moins de quatre chemins d'échec : le test ne couvre rien");
+  for (let i = 0; i < g.length - 1; i++) {
+    assert.match(g[i], /g_confRefus = /,
+      `un chemin d'échec d'ExecutionAutorisee() ne renseigne pas le motif (bloc ${i + 1})`);
+  }
+});
+
+test("la sortie est journalisée, avec ses frais séparés", () => {
+  // La demande d'origine était de comparer entrées, sorties et frais SÉPARÉMENT. Le
+  // journal ne portait que les entrées : une entrée juste avec une sortie fausse donnait
+  // le même nombre de trades et un R différent, sans que rien ne le nomme.
+  const ref = REFERENCES.find((r) => r.sym === "GOLD");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260904_TEST", magic: 1, paliers: [], spreadFacteur: 1.5 },
+  );
+  assert.match(src, /Conf\(StringFormat\("S\|/, "aucune ligne de sortie");
+  assert.match(src, /DEAL_SWAP/, "le swap n'est pas journalisé");
+  assert.match(src, /DEAL_COMMISSION/, "la commission n'est pas journalisée");
+  assert.match(src, /DEAL_REASON/, "le motif de sortie n'est pas journalisé : stop et objectif se confondent");
+  // le ticket doit être retenu à l'entrée, sinon la sortie n'est jamais rattachée
+  assert.match(src, /g_posTicket = tk;/);
+  assert.match(src, /SurveillerSortie\(\);/);
+
+  // et le lecteur doit savoir les relire
+  const { S } = lireConformite(
+    "CONF|S|2021.03.11 05:00|2021.03.11 07:42|1761.44|312.50|-4.20|-1.10|DEAL_REASON_TP\n");
+  assert.equal(S.size, 1);
+  const s0 = [...S.values()][0];
+  assert.equal(s0.prix, 1761.44);
+  assert.equal(s0.resultat, 312.5);
+  assert.equal(s0.swap, -4.2);
+  assert.equal(s0.commission, -1.1);
+  assert.equal(s0.motif, "DEAL_REASON_TP");
 });
 
 test("le relevé de symboles porte les colonnes que l'application cherche", () => {

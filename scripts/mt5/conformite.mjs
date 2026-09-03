@@ -12,6 +12,7 @@
  *   D | date        | signal | c1 | c2 | l1 | l2 | haut1 | bas1 | raison du refus
  *   T | bougie H1   | spread | plafond | accepté | premiere/reprise | raison
  *   E | bougie H1   | heure réelle | prix | stop | objectif | lots
+ *   S | bougie H1   | heure réelle | prix | résultat | swap | commission | motif
  *   P | heure       | parcours % | ancien stop | nouveau stop | extrême atteint
  *
  * On rend, pour chaque journée, la PREMIÈRE divergence et sa nature — signal, bougie
@@ -45,7 +46,7 @@ const horo = (s) => Date.parse(s.trim().replace(/\./g, "-").replace(" ", "T") + 
 
 /** Lit les lignes CONF| du journal, quel que soit le bruit autour. */
 export function lireConformite(texte) {
-  const D = new Map(), T = new Map(), E = new Map(), P = [];
+  const D = new Map(), T = new Map(), E = new Map(), S = new Map(), P = [];
   for (const brute of texte.split("\n")) {
     const i = brute.indexOf("CONF|");
     if (i < 0) continue;
@@ -62,11 +63,18 @@ export function lireConformite(texte) {
     } else if (c[0] === "E") {
       const t = horo(c[1]);
       E.set(jour(t), { t, reel: horo(c[2]), prix: +c[3], sl: +c[4], tp: +c[5], lots: +c[6] });
+    } else if (c[0] === "S") {
+      // La sortie est indexée sur le jour de la BOUGIE de sortie, pas sur celui de
+      // l'entrée : une position ouverte lundi et fermée jeudi doit se retrouver là où
+      // le moteur la ferme, sinon la comparaison des sorties compare deux trades.
+      const t = horo(c[1]);
+      S.set(jour(t), { t, reel: horo(c[2]), prix: +c[3], resultat: +c[4],
+        swap: +c[5], commission: +c[6], motif: c[7] || "" });
     } else if (c[0] === "P") {
       P.push({ t: horo(c[1]), parcours: +c[2], avant: +c[3], apres: +c[4], extreme: +c[5] });
     }
   }
-  return { D, T, E, P };
+  return { D, T, E, S, P };
 }
 
 function main() {
@@ -101,6 +109,7 @@ function main() {
   const autorise = M.autorisePar(sup, cfg.filtres);
   const trades = M.backtesterSuivi(df, cfg, "D1");
   const entrees = new Map(trades.map((t) => [jour(t.entree_t), t]));
+  const sorties = new Map(trades.map((t) => [jour(t.sortie_t), t]));
 
   const sp = M.spreadEnPct(df);
   const seuil = M.seuilSpread(df, cfg.spread_max_facteur);
@@ -164,9 +173,34 @@ function main() {
     }
   }
 
+  // Les SORTIES, comparées à part. Une entrée juste avec une sortie fausse donne le
+  // même nombre de trades et un R différent : sans ce bloc, l'écart restait sans nom.
+  if (conf.S.size) {
+    for (const j of [...new Set([...conf.S.keys(), ...sorties.keys()])].sort((a, b) => a - b)) {
+      const r = conf.S.get(j), m = sorties.get(j);
+      const d = iso(j * 86400000).slice(0, 10);
+      if (!r || !m) { noter(r ? "sortie chez le robot seul" : "sortie chez le moteur seul", d); continue; }
+      if (bougie(r.t) !== bougie(m.sortie_t)) {
+        noter("bougie de sortie différente", `${d} — moteur ${iso(m.sortie_t)} (${m.motif}), robot ${iso(r.t)} (${r.motif})`);
+        continue;
+      }
+      const risque = Math.abs(m.entree - m.sl_initial);
+      const ecart = risque > 0 ? Math.abs(r.prix - m.sortie) / risque : 0;
+      if (ecart > 0.02) {
+        noter("prix de sortie différent",
+          `${d} ${iso(m.sortie_t)} — moteur ${m.sortie} (${m.motif}), robot ${r.prix} (${r.motif}) : ${(ecart * 100).toFixed(1)} % du risque`);
+      }
+    }
+    const frais = [...conf.S.values()].reduce((a, x) => a + x.swap + x.commission, 0);
+    const brut = [...conf.S.values()].reduce((a, x) => a + x.resultat, 0);
+    console.log(`\nfrais du robot : ${frais.toFixed(2)} sur ${brut.toFixed(2)} de résultat `
+      + `(${brut !== 0 ? (100 * frais / Math.abs(brut)).toFixed(1) : "?"} %) — swap et commission, ${conf.S.size} sorties`);
+  }
+
   console.log(`\n${sym}${variante ? " " + variante : ""} — ${communs} journées comparées `
     + `(robot ${conf.D.size}, moteur ${decision.size}) ; `
-    + `${conf.E.size} entrées robot, ${trades.length} moteur`);
+    + `${conf.E.size} entrées robot, ${trades.length} moteur`
+    + (conf.S.size ? ` ; ${conf.S.size} sorties robot` : ""));
   if (!cat.size) { console.log("  aucune divergence."); return 0; }
   console.log("\n  divergences, par nature :");
   for (const [nom, n] of [...cat.entries()].sort((a, b) => b[1] - a[1])) {

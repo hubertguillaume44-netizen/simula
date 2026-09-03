@@ -209,7 +209,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  Configuration   : ${esc(cfg.entree)} · ${esc(cfg.ligne)} ${periode} · stop ${sl} % · objectif ${rr} R
 //|  Filtres générés : ${resume.length ? esc(resume.join(' · ')) : 'aucun'}
 //|  Paliers         : ${paliers.length ? paliers.map((x) => x[0] + '→' + x[1]).join(' / ') : 'aucun'}
-//|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
+//|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des spreads d\'ouverture des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
 //|  Durée maximale  : ${nb(etat.btDureeMax, 0) > 0 ? nb(etat.btDureeMax, 0) + ' bougies H1' : 'aucune'}
 //|  Mesuré          : ${nb(cfg.n, 0)} trades · ${nb(cfg.total, 0)} R cumulés · ${nb(cfg.rAn, 0).toFixed(1)} R/an${mesureVieille ? ' — MESURE ANTÉRIEURE À LA RÈGLE ACTUELLE, à remesurer' : ''}
 //|  Contrôle hasard : ${esc(ctx.hasard || 'non contrôlé')}
@@ -580,6 +580,7 @@ int OnInit()
    // le dernier seau déjà clos ne doit pas être joué au démarrage : son ouverture est
    // passée, l'ordre partirait au prix courant des heures plus tard
    dernierSeau = SeauCourant(SEC_SIGNAL);
+   SpOuvAmorcer();
    g_lancement = TimeCurrent();
    g_pic = AccountInfoDouble(ACCOUNT_EQUITY);
    return(INIT_SUCCEEDED);
@@ -618,7 +619,7 @@ void ConfOuvrir()
    }
    // en-tête lisible : le harnais l'ignore, un humain en a besoin
    FileWriteString(g_confFic, "# " + _Symbol + " · ${stamp} · D=décision T=tentative "
-                   + "E=entrée P=palier\\r\\n");
+                   + "E=entrée S=sortie P=palier\\r\\n");
    Print("Journal de conformité : Common/Files/", nom);
 }
 
@@ -661,7 +662,8 @@ ${tests.join('\n\n')}
 
 //+------------------------------------------------------------------+
 //| Plafond de spread — port de seuilSpread() (moteur.js)             |
-//|  · médiane des SPREAD_FENETRE dernières bougies H1, en % du prix ;|
+//|  · médiane des spreads d'OUVERTURE des SPREAD_FENETRE dernières   |
+//|    bougies H1, en % du prix — la colonne du CSV, pas l'agrégat ;  |
 //|  · rafraîchie UNE FOIS PAR JOUR, comme le moteur : à chaque tick  |
 //|    il faudrait retrier des milliers de valeurs, et surtout les    |
 //|    deux n'obtiendraient pas le même nombre au même moment ;       |
@@ -683,6 +685,82 @@ double SpreadBarre(int shift)
    return sp[0] * SymbolInfoDouble(_Symbol, SYMBOL_POINT) / cl[0] * 100.0;
 }
 
+// Fenêtre glissante des spreads d'OUVERTURE des bougies H1 CLOSES, en % du cours.
+//
+// CopySpread(PERIOD_H1, 1, N) rendait l'agrégat de la bougie close — une AUTRE grandeur
+// que celle qu'on compare, et systématiquement plus basse. Mesuré sur GOLD, journal du
+// 4 septembre 2026 : plafond du robot / plafond du moteur, médiane 0,978 sur 3 243
+// tentatives (0,933 en 2021). Reconstruit sur l'export MT5 natif — dont la colonne
+// Spread EST cet agrégat — le rapport tombe à 1,0000 pile, 2 002 valeurs égales à 2e-5
+// près : la preuve que le robot médianisait l'agrégat pendant que le moteur médianisait
+// l'ouverture. 34 des 73 bougies d'entrée divergentes venaient de là.
+//
+// On tient donc nous-mêmes la série : un relevé par bougie H1, poussé à sa clôture.
+double   g_spOuv[];        // anneau, en % du cours
+int      g_spOuvN = 0;     // relevés détenus (<= SPREAD_FENETRE)
+int      g_spOuvI = 0;     // prochaine écriture
+int      g_spOuvPts = 0;   // spread d'ouverture de la bougie EN COURS, en points
+
+void SpOuvPousser(double v)
+{
+   if(ArraySize(g_spOuv) != SPREAD_FENETRE)
+   { ArrayResize(g_spOuv, SPREAD_FENETRE); ArrayInitialize(g_spOuv, 0.0); }
+   g_spOuv[g_spOuvI] = v;
+   g_spOuvI = (g_spOuvI + 1) % SPREAD_FENETRE;
+   if(g_spOuvN < SPREAD_FENETRE) g_spOuvN++;
+}
+
+// Amorçage : les SPREAD_FENETRE bougies H1 qui PRÉCÈDENT le lancement, reconstituées
+// depuis la M1 exactement comme l'export le fait — spread de la M1 dont l'horodatage
+// ÉGALE l'heure, sinon repli sur l'agrégat H1. Sans cet amorçage le plafond resterait
+// inactif pendant les 250 premiers jours du test, là où le moteur l'a dès la première
+// journée mesurée.
+void SpOuvAmorcer()
+{
+   ArrayResize(g_spOuv, SPREAD_FENETRE); ArrayInitialize(g_spOuv, 0.0);
+   g_spOuvN = 0; g_spOuvI = 0;
+
+   datetime hT[]; double hC[]; int hS[];
+   int nT = CopyTime(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, hT);
+   int nC = CopyClose(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, hC);
+   int nS = CopySpread(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, hS);
+   int n = MathMin(nT, MathMin(nC, nS));
+   if(n < 1) { Print("Amorçage du plafond de spread : aucune bougie H1 disponible."); return; }
+
+   int mS[]; datetime mT[];
+   int nmS = CopySpread(_Symbol, PERIOD_M1, hT[0], hT[n - 1] + 3599, mS);
+   int nmT = CopyTime(_Symbol, PERIOD_M1, hT[0], hT[n - 1] + 3599, mT);
+   int nm = MathMin(nmS, nmT);
+   if(nm < 1)
+      Print("Amorçage du plafond de spread : pas de M1 sur la fenêtre — repli sur "
+            "l'agrégat H1, le plafond sera plus serré que celui du moteur.");
+
+   double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   int j = 0, repli = 0;
+   for(int i = 0; i < n; i++)
+   {
+      while(j < nm && mT[j] < hT[i]) j++;
+      int pts = hS[i];                                   // repli : l'agrégat, comme l'export
+      if(j < nm && mT[j] == hT[i]) pts = mS[j]; else repli++;
+      SpOuvPousser(pts > 0 && hC[i] > 0.0 ? pts * point / hC[i] * 100.0 : 0.0);
+   }
+   PrintFormat("Amorçage du plafond de spread : %d bougies H1, dont %d sans M1 (%.1f %%).",
+               n, repli, n > 0 ? 100.0 * repli / n : 0.0);
+}
+
+// Clôture d'une bougie H1 : on range son spread d'OUVERTURE, divisé par SA clôture —
+// la grandeur exacte que porte la colonne « spread » du CSV mesuré.
+void SpOuvCloturer()
+{
+   double cl[];
+   if(g_spOuvPts > 0 && CopyClose(_Symbol, PERIOD_H1, 1, 1, cl) > 0 && cl[0] > 0.0)
+      SpOuvPousser(g_spOuvPts * SymbolInfoDouble(_Symbol, SYMBOL_POINT) / cl[0] * 100.0);
+   else
+      SpOuvPousser(0.0);                                 // pas de cotation : relevé absent
+   int sp0[];
+   g_spOuvPts = (CopySpread(_Symbol, PERIOD_H1, 0, 1, sp0) > 0) ? sp0[0] : 0;
+}
+
 double SeuilSpread()
 {
    if(InpSpreadFacteur <= 0.0) return 0.0;
@@ -692,30 +770,61 @@ double SeuilSpread()
    if(jour == g_seuilJour) return g_seuilSpread;
    g_seuilJour = jour;
 
-   int sp[]; double cl[];
-   // décalage 1 : la bougie en cours ne compte pas (invariant 2)
-   int nSp = CopySpread(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, sp);
-   int nCl = CopyClose(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, cl);
-   int n = MathMin(nSp, nCl);
+   int n = g_spOuvN;
    if(n < 100) { g_seuilSpread = 0.0; return 0.0; }   // trop peu de relevés : pas de plafond
 
-   double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   // l'anneau se lit du plus ancien au plus récent ; l'ordre n'importe qu'au tri près,
+   // mais le COMPTE si : un relevé à zéro est une absence, pas un spread nul
    double v[]; ArrayResize(v, n); int m = 0;
-   for(int i = 0; i < n; i++)
+   int debut = (n < SPREAD_FENETRE) ? 0 : g_spOuvI;
+   for(int k = 0; k < n; k++)
    {
-      if(sp[i] <= 0 || cl[i] <= 0.0) continue;
-      v[m++] = sp[i] * point / cl[i] * 100.0;
+      double x = g_spOuv[(debut + k) % SPREAD_FENETRE];
+      if(x > 0.0) v[m++] = x;
    }
    if(m < 100) { g_seuilSpread = 0.0; return 0.0; }
    ArrayResize(v, m);
    ArraySort(v);
    g_seuilSpread = v[m / 2] * InpSpreadFacteur;
    if(InpDiagnostic)
-      PrintFormat("DIAGSEUIL %s | mediane=%s | plafond=%s | releves=%d/%d | point=%s",
+      PrintFormat("DIAGSEUIL %s | mediane=%s | plafond=%s | releves=%d/%d",
                   TimeToString(jour, TIME_DATE), DoubleToString(v[m / 2], 6),
-                  DoubleToString(g_seuilSpread, 6), m, n,
-                  DoubleToString(point, 8));
+                  DoubleToString(g_seuilSpread, 6), m, n);
    return g_seuilSpread;
+}
+
+// Position ouverte par CE robot, pour repérer sa sortie.
+//
+// Le journal ne portait que les entrées : un écart de R sans écart d'entrée restait
+// muet, alors que la demande initiale était de comparer entrées, sorties et frais
+// SÉPARÉMENT. On ne passe pas par OnTradeTransaction : le testeur ne l'appelle pas
+// dans tous les modes de modélisation, et il faudrait le vérifier plutôt que le croire.
+ulong g_posTicket = 0;
+
+void SurveillerSortie()
+{
+   if(g_posTicket == 0) return;
+   if(PositionSelectByTicket(g_posTicket)) return;        // toujours ouverte
+   ulong t = g_posTicket; g_posTicket = 0;
+   if(!HistorySelectByPosition(t)) return;
+   for(int i = HistoryDealsTotal() - 1; i >= 0; i--)
+   {
+      ulong d = HistoryDealGetTicket(i);
+      if(d == 0 || HistoryDealGetInteger(d, DEAL_ENTRY) != DEAL_ENTRY_OUT) continue;
+      datetime hb[]; CopyTime(_Symbol, PERIOD_H1, 0, 1, hb);
+      // S = sortie : bougie H1 visée, instant réel, prix, résultat, frais, motif.
+      // Les frais sont à part parce qu'ils s'expliquent à part : le swap court avec le
+      // temps, la commission avec le volume, et le moteur ne modélise pas les mêmes.
+      Conf(StringFormat("S|%s|%s|%s|%s|%s|%s|%s",
+           ConfH(ArraySize(hb) > 0 ? hb[0] : 0),
+           ConfH((datetime)HistoryDealGetInteger(d, DEAL_TIME)),
+           ConfP(HistoryDealGetDouble(d, DEAL_PRICE)),
+           DoubleToString(HistoryDealGetDouble(d, DEAL_PROFIT), 2),
+           DoubleToString(HistoryDealGetDouble(d, DEAL_SWAP), 2),
+           DoubleToString(HistoryDealGetDouble(d, DEAL_COMMISSION), 2),
+           EnumToString((ENUM_DEAL_REASON)HistoryDealGetInteger(d, DEAL_REASON))));
+      break;
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -766,7 +875,14 @@ bool ExecutionAutorisee()
                      DoubleToString(plafond, 6),
                      (barre > 0.0 && barre > plafond) ? "REFUSE" : "ACCEPTE");
       }
-      if(barre > 0.0 && barre > plafond) return false;
+      if(barre > 0.0 && barre > plafond)
+      {
+         // Le motif manquait : 2 947 refus du journal GOLD sortaient sans raison,
+         // impossible de séparer le plafond de la position déjà ouverte.
+         g_confRefus = StringFormat("spread %s > plafond %s",
+                       DoubleToString(barre, 6), DoubleToString(plafond, 6));
+         return false;
+      }
    }
 
    if(InpPasDebutSemaine)
@@ -780,7 +896,11 @@ bool ExecutionAutorisee()
    for(int i = PositionsTotal() - 1; i >= 0; i--)
       if(PositionGetTicket(i) > 0 && PositionGetString(POSITION_SYMBOL) == _Symbol
          && PositionGetInteger(POSITION_MAGIC) == (long)InpMagic) n++;
-   if(n >= InpMaxPositions) return false;
+   if(n >= InpMaxPositions)
+   {
+      g_confRefus = StringFormat("%d position(s) déjà ouverte(s) sur %d", n, InpMaxPositions);
+      return false;
+   }
 
    return true;
 }
@@ -1203,6 +1323,15 @@ bool Entrer()
    // sur un marché dont la séance ouvre en cours d'heure — HongKong50 à 03:31 — les deux
    // diffèrent de plusieurs dizaines de minutes alors que c'est la MÊME bougie.
    {
+      // le ticket de la position, pour journaliser sa sortie ; en couverture il vaut
+      // celui de l'ordre, en compensation il faut le retrouver dans la liste
+      g_posTicket = 0;
+      for(int i = PositionsTotal() - 1; i >= 0; i--)
+      {
+         ulong tk = PositionGetTicket(i);
+         if(tk > 0 && PositionGetString(POSITION_SYMBOL) == _Symbol
+            && PositionGetInteger(POSITION_MAGIC) == (long)InpMagic) { g_posTicket = tk; break; }
+      }
       datetime hb[]; CopyTime(_Symbol, PERIOD_H1, 0, 1, hb);
       Conf(StringFormat("E|%s|%s|%s|%s|%s|%s",
            ConfH(ArraySize(hb) > 0 ? hb[0] : 0), ConfH(TimeCurrent()),
@@ -1216,6 +1345,7 @@ void OnTick()
 {
    // pas dessiné dans le testeur : cela ralentirait le backtest
    if(!MQLInfoInteger(MQL_TESTER)) Tableau();
+   SurveillerSortie();
    GererPaliers();
    GererDuree();
 
@@ -1230,6 +1360,9 @@ void OnTick()
    datetime bH1[];
    if(CopyTime(_Symbol, PERIOD_H1, 0, 1, bH1) < 1) return;
    bool nouvelleH1 = (bH1[0] != g_derniereH1);
+   // une bougie vient de se clore : on range son spread d'ouverture AVANT toute
+   // décision, sinon la fenêtre du plafond saute les bougies où OnTick sort tôt
+   if(nouvelleH1) SpOuvCloturer();
 
    // une évaluation par seau clos : l'entrée tombe à l'ouverture de la bougie H1
    // qui suit cette clôture, comme l'entrée « à l'open suivant » du moteur

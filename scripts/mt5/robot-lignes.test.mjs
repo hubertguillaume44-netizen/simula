@@ -151,11 +151,24 @@ test("le robot et le moteur partagent la même fenêtre de médiane du spread", 
 test("le plafond de spread est écrit dans le robot, et le seuil est bien un multiple", () => {
   const src = genererMQ5(CFG, { ...CTX, spreadFacteur: 1.5 });
   assert.match(src, /input double InpSpreadFacteur\s+= 1\.50;/);
-  assert.match(src, /Plafond spread {2}: 1\.50 × médiane des 6000 dernières H1/);
+  assert.match(src, /Plafond spread {2}: 1\.50 × médiane des spreads d'ouverture des 6000 dernières H1/);
   // le seuil doit multiplier la médiane : l'oublier rendait le plafond quatre fois
   // trop serré et faisait tomber AUDCAD de 46 à 28 trades
   assert.match(src, /g_seuilSpread = v\[m \/ 2\] \* InpSpreadFacteur;/);
-  assert.match(src, /CopySpread\(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, sp\)/);
+  // La médiane porte sur les spreads d'OUVERTURE, tenus dans g_spOuv — pas sur
+  // CopySpread(PERIOD_H1), qui rend l'agrégat de la bougie close. Les deux grandeurs
+  // diffèrent : mesuré sur le journal GOLD du 4 septembre 2026, le plafond du robot
+  // valait 0,978 fois celui du moteur en médiane (0,933 en 2021), et reconstruit sur
+  // l'agrégat de l'export natif le rapport tombait à 1,0000 pile. 34 des 73 bougies
+  // d'entrée divergentes venaient de cet écart de grandeur.
+  assert.match(src, /double x = g_spOuv\[\(debut \+ k\) % SPREAD_FENETRE\];/);
+  assert.doesNotMatch(src.slice(src.indexOf("double SeuilSpread()")),
+    /CopySpread\(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE/,
+    "SeuilSpread rebâtit la médiane sur l'agrégat H1 au lieu des spreads d'ouverture");
+  // l'amorçage relit la M1 : sans lui le plafond resterait inactif 250 jours
+  assert.match(src, /CopySpread\(_Symbol, PERIOD_M1, hT\[0\], hT\[n - 1\] \+ 3599, mS\)/);
+  // le relevé rangé est celui de l'ouverture divisé par la clôture de SA bougie
+  assert.match(src, /g_spOuvPts \* SymbolInfoDouble\(_Symbol, SYMBOL_POINT\) \/ cl\[0\] \* 100\.0/);
   // sans facteur, aucun plafond
   const sans = genererMQ5(CFG, { ...CTX, spreadFacteur: 0 });
   assert.match(sans, /input double InpSpreadFacteur\s+= 0\.00;/);
