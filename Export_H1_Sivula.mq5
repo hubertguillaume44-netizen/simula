@@ -3,11 +3,17 @@
 //|  Écrit l'historique H1 du symbole du graphique dans un CSV lu     |
 //|  par Sivula, AVEC la colonne de spread.                           |
 //|                                                                   |
-//|  Le spread est connu bougie par bougie (champ spread de           |
-//|  MqlRates). Sans cette colonne, Sivula retombe sur le spread      |
-//|  MOYEN du relevé, qui sous-estime l'heure du rollover — celle où  |
-//|  les entrées tombent, et où le spread vaut deux à trois fois sa   |
-//|  moyenne. C'est l'écart que le comparateur MT5 mesurait.          |
+//|  Le spread écrit est celui de la bougie M1 qui OUVRE l'heure —    |
+//|  pas le champ spread de la bougie H1. Les deux diffèrent, et le   |
+//|  journal du testeur le prouve : sur AUDCAD 2020, à l'ouverture    |
+//|  d'une heure de séance le robot voit 12 points là où la H1 en     |
+//|  annonce 25, et à 00:00 il en voit 112 là où la H1 en annonce 50. |
+//|  Le champ de la H1 est une valeur agrégée sur l'heure ; elle est  |
+//|  DEUX FOIS trop haute en séance et DEUX FOIS trop basse au        |
+//|  rollover. Or c'est à l'ouverture de la bougie que l'ordre part : |
+//|  c'est ce spread-là que la mesure doit payer, et celui-là seul    |
+//|  que le robot peut retrouver. Avec l'ancienne colonne, aucun      |
+//|  réglage ne pouvait faire coïncider Sivula et le testeur.         |
 //|                                                                   |
 //|  Utilisation : glisser sur le graphique, une fois par symbole.    |
 //|  Le fichier atterrit dans MQL5/Files du terminal.                 |
@@ -47,10 +53,25 @@ void OnStart()
    int dec = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
    FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
 
-   int sansSpread = 0;
+   // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
+   // horodatage. C'est l'instant exact où le robot place son ordre.
+   MqlRates m1[];
+   ArraySetAsSeries(m1, false);
+   int nM1 = CopyRates(_Symbol, PERIOD_M1, InpDu, TimeCurrent(), m1);
+   if(nM1 <= 0)
+      Print("Aucune bougie M1 : le spread écrit sera celui de la H1, plus grossier. "
+            "Ouvrez le graphique en M1, faites-le défiler vers la gauche, puis relancez.");
+
+   int sansSpread = 0, sansM1 = 0, iM1 = 0;
    for(int i = 0; i < n; i++)
    {
-      if(r[i].spread <= 0) sansSpread++;
+      // les deux séries sont croissantes : une seule passe suffit
+      while(iM1 < nM1 && m1[iM1].time < r[i].time) iM1++;
+      int sp = r[i].spread;
+      if(iM1 < nM1 && m1[iM1].time == r[i].time) sp = m1[iM1].spread;
+      else sansM1++;
+
+      if(sp <= 0) sansSpread++;
       FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d\r\n",
          TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(r[i].open,  dec),
@@ -58,9 +79,17 @@ void OnStart()
          DoubleToString(r[i].low,   dec),
          DoubleToString(r[i].close, dec),
          r[i].tick_volume,
-         r[i].spread));
+         sp));
    }
    FileClose(f);
+
+   // Une M1 manquante n'est pas neutre : la bougie retombe sur le spread agrégé de la
+   // H1, et Sivula n'entrera pas au même moment que le robot sur cette bougie-là.
+   if(sansM1 > 0)
+      PrintFormat("Attention : %d bougies sur %d sans M1 correspondante (%.0f %%) — "
+                  "spread de la H1 utilisé pour celles-ci. Faites défiler le graphique "
+                  "M1 vers la gauche pour charger tout l'historique, puis relancez.",
+                  sansM1, n, 100.0 * sansM1 / n);
 
    PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s", _Symbol, n, nom);
    // Un spread à zéro n'est pas un spread nul : c'est un historique importé par le
