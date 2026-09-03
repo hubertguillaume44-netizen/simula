@@ -19,7 +19,9 @@ const ENTREES = {
   croisement_prix: 'CROISEMENT',
   croisement_ou_rebond: 'CROISEMENT_OU_REBOND',
 };
-const LIGNES = { ema: 'EMA', ma: 'SMA', mediane: 'MEDIANE' };
+// tenkan et kijun sont le même calcul que mediane dans moteur.js (ligne() les regroupe).
+// Sans ces alias ils tombaient sur le repli 'EMA' et le robot traçait une autre ligne.
+const LIGNES = { ema: 'EMA', ma: 'SMA', mediane: 'MEDIANE', tenkan: 'MEDIANE', kijun: 'MEDIANE' };
 // secondes par bougie agrégée, sur la même horloge que le moteur
 const SECONDES = { H1: 3600, H4: 14400, D1: 86400, W1: 604800 };
 
@@ -421,13 +423,18 @@ double LigneAgr(long sec, int mode, int per, int shift)
 
    if(mode == M_MEDIANE)
    {
-      // médiane des clôtures, comme le moteur : tri, pas de moyenne
-      double v[]; ArrayResize(v, per);
-      for(int i = 0; i < per; i++) v[i] = g_c[fin - i];
-      ArraySort(v);
-      int m = per / 2;
-      if(per % 2 == 1) return v[m];
-      return (v[m - 1] + v[m]) / 2.0;
+      // Port de medianeBrut() : (plus haut + plus bas) / 2 sur la période — le point
+      // milieu du canal (Tenkan), PAS la médiane statistique des clôtures. Le tri des
+      // clôtures qui était ici donnait une autre ligne : sur AUDCAD 2020 elle s'écartait
+      // de la vraie jusqu'à 1041 points, décalait 7 croisements sur 15 d'un jour et
+      // en supprimait ou en inventait autant.
+      double hi = -DBL_MAX, lo = DBL_MAX;
+      for(int i = 0; i < per; i++)
+      {
+         if(g_h[fin - i] > hi) hi = g_h[fin - i];
+         if(g_l[fin - i] < lo) lo = g_l[fin - i];
+      }
+      return (hi + lo) / 2.0;
    }
    if(mode == M_SMA)
    {
