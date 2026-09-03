@@ -250,6 +250,12 @@ input bool   InpPasDebutSemaine = true;  // Interdire dimanche et les premières
 input int    InpSlippagePoints  = 20;    // Déviation maximale acceptée
 input int    InpBougiesAgr      = 400;   // Bougies agrégées conservées (≥ période la plus longue + marge)
 input bool   InpDiagnostic      = false; // Journal détaillé : pourquoi chaque journée n'a pas déclenché
+// Journal de CONFORMITÉ : une ligne par décision, par tentative d'entrée, par entrée et
+// par déplacement de stop, dans un format que scripts/mt5/conformite.mjs diffe contre le
+// moteur. Trouver un écart demandait jusqu'ici un aller-retour par hypothèse — trois
+// exécutions du testeur pour trois suppositions, dont deux fausses. Une seule exécution
+// avec ce journal donne la première divergence de chaque journée, et sa nature.
+input bool   InpConformite      = false; // Journal de conformité (à differ contre le moteur)
 input string InpDiagDu          = "2020.01.01"; // Diagnostic à partir de cette date
 input string InpDiagAu          = "2020.12.31"; // Diagnostic jusqu'à cette date
 input ulong  InpMagic           = ${nb(ctx.magic, 20260901)};
@@ -580,6 +586,19 @@ int OnInit()
 
 //+------------------------------------------------------------------+
 string g_raison = "";     // pourquoi la journée n'a pas déclenché
+// contexte de la dernière tentative d'entrée, pour le journal de conformité
+double g_confSp = 0.0, g_confPlaf = 0.0;
+string g_confRefus = "";
+
+// Une ligne = un fait, champs séparés par « | », ordre STABLE. Le lecteur côté harnais
+// s'appuie dessus : ajouter un champ au milieu casse la comparaison en silence.
+void Conf(string ligne)
+{
+   if(!InpConformite) return;
+   Print("CONF|", ligne);
+}
+string ConfH(datetime t) { return TimeToString(t, TIME_DATE | TIME_MINUTES); }
+string ConfP(double x)   { return DoubleToString(x, _Digits); }
 bool Signal()
 {
    g_raison = "";
@@ -664,18 +683,22 @@ double SeuilSpread()
 //+------------------------------------------------------------------+
 bool ExecutionAutorisee()
 {
+   g_confRefus = "";
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-   if(ask <= 0.0 || bid <= 0.0) return false;
+   if(ask <= 0.0 || bid <= 0.0) { g_confRefus = "pas de cotation"; return false; }
 
    double spreadPct = (ask - bid) / ask * 100.0;
    if(InpSpreadMaxPct > 0.0 && spreadPct > InpSpreadMaxPct)
    {
       Print("Entrée refusée : spread ", DoubleToString(spreadPct, 4), " % > ",
             DoubleToString(InpSpreadMaxPct, 4), " %");
+      g_confRefus = "plafond absolu";
       return false;
    }
    double plafond = SeuilSpread();
+   g_confPlaf = plafond;
+   g_confSp = SpreadBarre(0);
    if(plafond > 0.0)
    {
       // Le spread comparé est celui de la BOUGIE en cours (MqlRates.spread, décalage 0),
@@ -705,8 +728,8 @@ bool ExecutionAutorisee()
    if(InpPasDebutSemaine)
    {
       MqlDateTime t; TimeToStruct(TimeCurrent(), t);
-      if(t.day_of_week == 0) return false;
-      if(t.day_of_week == 1 && t.hour < 2) return false;
+      if(t.day_of_week == 0) { g_confRefus = "dimanche"; return false; }
+      if(t.day_of_week == 1 && t.hour < 2) { g_confRefus = "lundi avant 02:00"; return false; }
    }
 
    int n = 0;
@@ -825,7 +848,13 @@ void GererPaliers()
 
       nouveau = NormalizeDouble(nouveau, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS));
       if(sl <= 0.0 || d * nouveau > d * sl + _Point / 2.0)
+      {
+         // P = palier armé. Le parcours EXTRÊME atteint, l'ancien stop et le nouveau :
+         // c'est ce qu'il faut pour savoir si le robot sécurise là où le moteur sécurise.
+         Conf(StringFormat("P|%s|%s|%s|%s|%s", ConfH(TimeCurrent()),
+              DoubleToString(parcours, 2), ConfP(sl), ConfP(nouveau), ConfP(extreme)));
          trade.PositionModify(ticket, nouveau, tp);
+      }
    }
 }
 
@@ -1109,7 +1138,17 @@ bool Entrer()
 #endif
    {
       Print("Ordre refusé : ", trade.ResultRetcodeDescription(), " — signal gardé en attente");
+      g_confRefus = "ordre refusé : " + trade.ResultRetcodeDescription();
       return false;
+   }
+   // E = entrée effective : la bougie H1 visée, puis l'instant réel du fill.
+   // sur un marché dont la séance ouvre en cours d'heure — HongKong50 à 03:31 — les deux
+   // diffèrent de plusieurs dizaines de minutes alors que c'est la MÊME bougie.
+   {
+      datetime hb[]; CopyTime(_Symbol, PERIOD_H1, 0, 1, hb);
+      Conf(StringFormat("E|%s|%s|%s|%s|%s|%s",
+           ConfH(ArraySize(hb) > 0 ? hb[0] : 0), ConfH(TimeCurrent()),
+           ConfP(prix), ConfP(stop), ConfP(objectif), DoubleToString(lots, 2)));
    }
    return true;
 }
@@ -1144,7 +1183,12 @@ void OnTick()
    {
       if(!nouvelleH1) return;
       g_derniereH1 = bH1[0];
-      if(ExecutionAutorisee() && Entrer()) seauEnAttente = -1;
+      bool ok1 = ExecutionAutorisee();
+      // T = tentative d'entrée sur une bougie H1 précise. « reprise » : le signal était
+      // en attente depuis une bougie antérieure du même jour.
+      Conf(StringFormat("T|%s|%s|%s|%d|reprise|%s", ConfH(bH1[0]),
+           DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), ok1 ? 1 : 0, g_confRefus));
+      if(ok1 && Entrer()) seauEnAttente = -1;
       return;
    }
    g_derniereH1 = bH1[0];
@@ -1174,6 +1218,15 @@ void OnTick()
    // Une seule exécution suffit alors à savoir pourquoi une date de la mesure n'a pas
    // déclenché — au lieu d'enchaîner les hypothèses.
    bool sig = Signal();
+   // D = décision de la journée close. Les six valeurs qui la déterminent y sont, pour
+   // que le harnais sache si un désaccord vient du signal ou de son exécution.
+   Conf(StringFormat("D|%s|%d|%s|%s|%s|%s|%s|%s|%s",
+        ConfH(TimeCurrent()), sig ? 1 : 0,
+        ConfP(C_(SEC_SIGNAL, 1)), ConfP(C_(SEC_SIGNAL, 2)),
+        ConfP(LigneAgr(SEC_SIGNAL, M_SIGNAL, PER_SIGNAL, 1)),
+        ConfP(LigneAgr(SEC_SIGNAL, M_SIGNAL, PER_SIGNAL, 2)),
+        ConfP(H_(SEC_SIGNAL, 1)), ConfP(L_(SEC_SIGNAL, 1)),
+        sig ? "" : g_raison));
    if(InpDiagnostic)
    {
       datetime dDu = StringToTime(InpDiagDu), dAu = StringToTime(InpDiagAu);
@@ -1199,7 +1252,10 @@ void OnTick()
       }
    }
    if(!sig) return;
-   if(!ExecutionAutorisee() || !Entrer())
+   bool ok = ExecutionAutorisee();
+   Conf(StringFormat("T|%s|%s|%s|%d|premiere|%s", ConfH(bH1[0]),
+        DoubleToString(g_confSp, 6), DoubleToString(g_confPlaf, 6), ok ? 1 : 0, g_confRefus));
+   if(!ok || !Entrer())
    {
       // le signal n'est pas perdu : on le réessaiera dans le même seau
       seauEnAttente = seau;
