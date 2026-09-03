@@ -10,6 +10,14 @@
  * `LigneAgr(86400, MODE, 5, 1 + recul)` : unité D1, période 5, et le recul en
  * décalage de bougies. `periode` vient de `periodeMtf`, pas de la période du signal.
  *
+ * `stopMini` est la distance minimale de stop du courtier, en unités de PRIX
+ * (StopsLevel × Point), relevée par Export_Symboles_Sivula.mq5. Elle ne mord que sur
+ * BITCOIN — 200,00, soit 1,00 % du cours de 2022 contre 0,25 % de celui d'aujourd'hui.
+ * Le testeur y a refusé 928 ordres « invalid stops » sur 2022-2023 et aucun ensuite ;
+ * en la respectant, le moteur passe de 420 à 352 trades contre 355 au testeur, et de
+ * 66 trades en trop à zéro. Ailleurs elle vaut 20,00 ou moins, très en dessous des
+ * stops mesurés, et ne change rien.
+ *
  * `nSivula` / `rSivula` sont les chiffres que Sivula affichait AU MOMENT DE L'EXPORT
  * (en-tête « Mesuré »), avant les corrections de suivi H1. Ils servent de repère
  * historique, pas de cible.
@@ -29,6 +37,7 @@ export const REFERENCES = [
     sl: 0.5,
     rr: 2,
     filtres: [{ type: "pente", ut: "D1", ligne: "ma", periode: 5, recul: 20, sens: "hausse" }],
+    stopMini: 0,
     magic: 20232580382,
     spreadReleve: 0.0753,
     filtresAttendus: "pente D1 recul 20",
@@ -46,6 +55,7 @@ export const REFERENCES = [
     sl: 0.6,
     rr: 3,
     filtres: [{ type: "tendance_mtf", ut: "D1", ligne: "mediane", periode: 5 }],
+    stopMini: 0,
     magic: 20557409899,
     spreadReleve: 0.0219,
     filtresAttendus: "tendance D1 mediane 5",
@@ -63,6 +73,7 @@ export const REFERENCES = [
     sl: 0.5,
     rr: 1.5,
     filtres: [],
+    stopMini: 0,
     magic: 20254055770,
     spreadReleve: 0.0219,
     filtresAttendus: "aucun",
@@ -79,6 +90,7 @@ export const REFERENCES = [
     sl: 1,
     rr: 1.5,
     filtres: [{ type: "pente", ut: "D1", ligne: "ma", periode: 5, recul: 8, sens: "hausse" }],
+    stopMini: 1.0,
     magic: 20441607771,
     spreadReleve: 0.0228,
     filtresAttendus: "pente D1 recul 8",
@@ -95,6 +107,7 @@ export const REFERENCES = [
     sl: 2,
     rr: 1.5,
     filtres: [{ type: "pente", ut: "D1", ligne: "ema", periode: 5, recul: 3, sens: "hausse" }],
+    stopMini: 0.1,
     magic: 20562978049,
     spreadReleve: 0.0363,
     filtresAttendus: "pente D1 recul 3",
@@ -111,6 +124,7 @@ export const REFERENCES = [
     sl: 0.7,
     rr: 2,
     filtres: [{ type: "pente", ut: "D1", ligne: "mediane", periode: 5, recul: 15, sens: "hausse" }],
+    stopMini: 0,
     magic: 20352539978,
     spreadReleve: 0.1272,
     filtresAttendus: "pente D1 recul 15",
@@ -127,6 +141,7 @@ export const REFERENCES = [
     sl: 1,
     rr: 2,
     filtres: [],
+    stopMini: 200.0,
     magic: 20783258791,
     spreadReleve: 0.06,
     filtresAttendus: "aucun",
@@ -143,6 +158,7 @@ export const REFERENCES = [
     sl: 0.8,
     rr: 1.5,
     filtres: [{ type: "pente", ut: "D1", ligne: "ema", periode: 5, recul: 20, sens: "hausse" }],
+    stopMini: 20.0,
     magic: 20345541699,
     spreadReleve: 0.144,
     filtresAttendus: "pente D1 recul 20",
