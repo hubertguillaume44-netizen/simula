@@ -557,10 +557,11 @@ double AdxAgr(long sec, int per, int shift)
 }
 
 //+------------------------------------------------------------------+
-void OnDeinit(const int reason) { PanneauNettoyer(); ChartRedraw(0); }
+void OnDeinit(const int reason) { ConfFermer(); PanneauNettoyer(); ChartRedraw(0); }
 
 int OnInit()
 {
+   ConfOuvrir();
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetDeviationInPoints(InpSlippagePoints);
    trade.SetTypeFillingBySymbol(_Symbol);
@@ -590,12 +591,49 @@ string g_raison = "";     // pourquoi la journée n'a pas déclenché
 double g_confSp = 0.0, g_confPlaf = 0.0;
 string g_confRefus = "";
 
+// Le journal part dans SON PROPRE fichier, pas dans le journal du testeur.
+//
+// Passé par Print(), il se noyait dans le journal général : 473 Mo pour une journée de
+// tests, toutes exécutions mélangées, et le fichier récupéré était celui d'une exécution
+// antérieure sans que rien ne le signale. Ici, un fichier par symbole et par build, dans
+// le dossier COMMUN du terminal — le même quel que soit l'agent de test :
+//
+//   …/MetaQuotes/Terminal/Common/Files/<SYMBOLE>_conformite_<build>.csv
+//
 // Une ligne = un fait, champs séparés par « | », ordre STABLE. Le lecteur côté harnais
 // s'appuie dessus : ajouter un champ au milieu casse la comparaison en silence.
+int g_confFic = INVALID_HANDLE;
+
+void ConfOuvrir()
+{
+   if(!InpConformite || g_confFic != INVALID_HANDLE) return;
+   string nom = _Symbol + "_conformite_${stamp}.csv";
+   StringReplace(nom, "#", "");
+   g_confFic = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI | FILE_COMMON);
+   if(g_confFic == INVALID_HANDLE)
+   {
+      Print("Journal de conformité : écriture impossible (", GetLastError(),
+            ") — les lignes partiront dans le journal du testeur.");
+      return;
+   }
+   // en-tête lisible : le harnais l'ignore, un humain en a besoin
+   FileWriteString(g_confFic, "# " + _Symbol + " · ${stamp} · D=décision T=tentative "
+                   + "E=entrée P=palier\\r\\n");
+   Print("Journal de conformité : Common/Files/", nom);
+}
+
+void ConfFermer()
+{
+   if(g_confFic == INVALID_HANDLE) return;
+   FileClose(g_confFic);
+   g_confFic = INVALID_HANDLE;
+}
+
 void Conf(string ligne)
 {
    if(!InpConformite) return;
-   Print("CONF|", ligne);
+   if(g_confFic != INVALID_HANDLE) FileWriteString(g_confFic, "CONF|" + ligne + "\\r\\n");
+   else Print("CONF|", ligne);
 }
 string ConfH(datetime t) { return TimeToString(t, TIME_DATE | TIME_MINUTES); }
 string ConfP(double x)   { return DoubleToString(x, _Digits); }

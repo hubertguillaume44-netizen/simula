@@ -120,3 +120,27 @@ test("l'avertissement remonte au lecteur de rapport", () => {
     "aucun avertissement sur le symbole");
   assert.equal(r.contexte.concorde, false);
 });
+
+test("le journal de conformité part dans son propre fichier, pas dans celui du testeur", () => {
+  // Passé par Print(), il se noyait dans le journal général : 473 Mo pour une journée de
+  // tests, toutes exécutions mélangées, et le fichier récupéré s'est révélé être celui
+  // d'une exécution ANTÉRIEURE — sans que rien ne le signale. Un fichier par symbole et
+  // par build, dans le dossier commun du terminal, supprime la question.
+  const ref = REFERENCES.find((r) => r.sym === "HongKong50");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260904_TEST", magic: 1, paliers: [], spreadFacteur: 1.5 },
+  );
+  assert.match(src, /_conformite_260904_TEST\.csv/);
+  assert.match(src, /FILE_COMMON/, "le fichier n'irait pas dans le dossier commun : "
+    + "chaque agent de test a son propre bac à sable, introuvable");
+  assert.match(src, /StringReplace\(nom, "#", ""\)/, "le # de #HongKong50 n'est pas retiré du nom");
+  assert.match(src, /int OnInit\(\)\s*\{\s*ConfOuvrir\(\);/);
+  assert.match(src, /OnDeinit\(const int reason\) \{ ConfFermer\(\);/);
+  // les fins de ligne doivent rester des ÉCHAPPEMENTS dans le MQL5, pas de vrais sauts
+  assert.ok(src.includes('"CONF|" + ligne + "\\r\\n"'),
+    "les \\r\\n ont été interprétés à la génération : le fichier sortirait sur une seule ligne");
+  // et il ne coûte rien quand il est éteint
+  assert.match(src, /void Conf\(string ligne\)\s*\{\s*if\(!InpConformite\) return;/);
+});
