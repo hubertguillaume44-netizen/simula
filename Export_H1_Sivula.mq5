@@ -30,40 +30,55 @@ input datetime InpDu       = D'2019.01.01';  // Depuis (≈ 1 an AVANT le début
 input int      InpMaxBarres = 200000;         // Bougies maximum
 // Sept ans de M1 = plusieurs millions de barres : sur un VPS à ligne lente le
 // téléchargement prend des minutes. Augmentez si le script rend la main trop tôt.
-input int      InpAttenteSec = 300;           // Attente max du téléchargement, par unité (s)
+input int      InpAttenteSec = 1800;          // Attente max du téléchargement, par unité (s)
 
 //+------------------------------------------------------------------+
 //| Force le téléchargement d'un historique et attend qu'il arrive.   |
 //|                                                                   |
-//| Faire défiler le graphique à la main ne marche pas sur un VPS :   |
-//| c'est lent, et ça échoue sans rien dire. CopyRates sur une plage  |
-//| DEMANDE l'historique au serveur, mais rend d'abord ce qu'il a en  |
-//| cache pendant que le téléchargement se poursuit en arrière-plan.  |
-//| Il faut donc redemander jusqu'à ce que la série soit synchronisée |
-//| ET remonte assez loin. Sept ans de M1 font des millions de barres :|
-//| plusieurs minutes sur une ligne lente, d'où l'attente longue.     |
+//| MT5 étend son historique PAR L'ARRIÈRE, en repartant du présent.  |
+//| Demander directement une plage vieille de sept ans ne déclenche   |
+//| rien : le terminal répond avec ce qu'il a et n'élargit pas sa     |
+//| base — observé sur un VPS, « plus ancienne barre : 2026.07.17 »   |
+//| répété à l'identique toutes les dix secondes.                     |
+//|                                                                   |
+//| On demande donc un NOMBRE croissant de barres comptées depuis     |
+//| maintenant. Chaque palier oblige le terminal à remonter d'un cran |
+//| et à réclamer le morceau manquant au serveur.                     |
 //+------------------------------------------------------------------+
 bool AttendreHistorique(ENUM_TIMEFRAMES tf, string nomTf, datetime depuis, int secondesMax)
 {
    uint fin = GetTickCount() + (uint)secondesMax * 1000;
    datetime premiere = 0;
-   int annonce = 0;
+   int paliers[] = {50000, 200000, 500000, 1000000, 2000000, 4000000, 8000000};
+   int p = 0;
+
    while(GetTickCount() < fin && !IsStopped())
    {
-      MqlRates tmp[];
-      CopyRates(_Symbol, tf, depuis, depuis + 86400, tmp);   // déclenche la demande
       premiere = (datetime)SeriesInfoInteger(_Symbol, tf, SERIES_FIRSTDATE);
-      bool sync = (bool)SeriesInfoInteger(_Symbol, tf, SERIES_SYNCHRONIZED);
-      if(sync && premiere > 0 && premiere <= depuis) return true;
-      if(++annonce % 10 == 0)
-         PrintFormat("%s : téléchargement en cours… plus ancienne barre disponible : %s",
-                     nomTf, premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune");
-      Sleep(1000);
+      if(premiere > 0 && premiere <= depuis
+         && (bool)SeriesInfoInteger(_Symbol, tf, SERIES_SYNCHRONIZED))
+      {
+         PrintFormat("%s : historique complet depuis %s.", nomTf, TimeToString(premiere, TIME_DATE));
+         return true;
+      }
+
+      // demande par le nombre, pas par la date : c'est ce qui fait remonter la base
+      datetime t[];
+      int lu = CopyTime(_Symbol, tf, 0, paliers[p], t);
+      PrintFormat("%s : %d barres demandées, %d reçues — plus ancienne : %s",
+                  nomTf, paliers[p], lu,
+                  premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune");
+
+      // le palier a porté ses fruits : on garde le même tant qu'il progresse
+      if(lu >= paliers[p] && p < ArraySize(paliers) - 1) p++;
+      Sleep(3000);
    }
-   PrintFormat("%s : historique incomplet après %d s. Plus ancienne barre : %s (demandé : %s).",
+   PrintFormat("%s : ARRÊT après %d s. Plus ancienne barre : %s, demandé : %s. "
+               "Augmentez InpAttenteSec, ou passez par Affichage > Symboles (Ctrl+U), "
+               "onglet Barres, période %s, et cliquez Demander.",
                nomTf, secondesMax,
                premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune",
-               TimeToString(depuis, TIME_DATE));
+               TimeToString(depuis, TIME_DATE), nomTf);
    return false;
 }
 
