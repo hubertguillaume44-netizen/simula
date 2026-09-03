@@ -6615,10 +6615,33 @@ GROUPES = {
       return { sym, debut: p.debut, fin: p.fin, texte: j(p.debut) + ' → ' + j(p.fin) };
     }).filter(Boolean);
   }
+  // Distance minimale de stop du courtier, en unités de PRIX (StopsLevel × Point).
+  //
+  // `distanceStopMini` la rend en POURCENTAGE du cours du jour : cela suffit à prévenir
+  // qu'une configuration est irréaliste, pas à mesurer. La contrainte est absolue. Sur
+  // BITCOIN elle vaut 200,00 — 0,25 % à 81 000, mais 1,00 % à 20 000. Un stop de 1 %
+  // était donc pile à la limite pendant tout 2022, et le testeur a refusé 928 ordres
+  // « invalid stops » sur 2022-2023 et aucun ensuite. Le moteur comptait les 66 trades
+  // correspondants ; en les retirant il tombe à 352 contre 355 au testeur, et l'écart de
+  // résultat passe de 26,0 à 10,1 R.
+  //
+  // Mesurée depuis le cours SANS le spread côté moteur : le courtier compare le stop au
+  // BID. Journal à l'appui — plus petite distance acceptée 248,36, plus grande refusée
+  // 260,30, pour un minimum annoncé de 200,00 ; l'écart est exactement le spread.
+  stopMiniDe(sym) {
+    this._stopMini = this._stopMini || {};
+    if (this._stopMini[sym] === undefined) {
+      const c = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+      let l = null;
+      try { l = this.ligneCourtier(c, sym); } catch (e) { l = null; }
+      this._stopMini[sym] = (l && l.stopsLevel && l.point) ? l.stopsLevel * l.point : 0;
+    }
+    return this._stopMini[sym];
+  }
   mesurer(sym, cfg, ut, repli) {
     const h1 = this.serieH1(sym);
     const u = ut || this.state.ut;
-    const c = { ...cfg, spread_max_facteur: this.facteurSpread() };
+    const c = { ...cfg, spread_max_facteur: this.facteurSpread(), stop_mini: this.stopMiniDe(sym) };
     // Une bougie sans spread est refusée par le moteur, et une journée entière sans
     // spread perd son signal sans laisser de trace. Sur les exports du courtier,
     // Germany40 et BITCOIN n'ont aucun spread avant 2022 : mesurer là revenait à
@@ -9029,7 +9052,8 @@ GROUPES = {
           // c'est mot pour mot le défaut de gEchelles, une mesure qui décrit autre
           // chose que ce que le robot exécute
           cfg: (() => {
-            const c = { ...cfg, spread_max_facteur: this.facteurSpread() };
+            const c = { ...cfg, spread_max_facteur: this.facteurSpread(),
+              stop_mini: this.stopMiniDe(sym) };
             const p = this.plageDe(sym);
             if (p && !p.complete) {
               c.debut = Math.max(Number(c.debut) || 0, p.debut);

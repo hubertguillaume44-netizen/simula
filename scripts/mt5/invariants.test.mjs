@@ -306,3 +306,39 @@ test("une bougie qui arme un palier ET le touche est comptée ambiguë", () => {
     `la lecture basse doit rendre moins que la haute (${b2.R} vs ${bougie.R})`);
   assert.ok(b2.motif.startsWith("be"), `sortie au palier attendue, obtenu « ${b2.motif} »`);
 });
+
+test("un stop plus court que le minimum du courtier ne donne pas de trade", () => {
+  // Le minimum est une distance de PRIX (StopsLevel × Point), pas un pourcentage. Sur
+  // BITCOIN il vaut 200,00 : 0,25 % à 81 000, mais 1,00 % à 20 000. Un stop de 1 % était
+  // donc pile à la limite pendant tout 2022 — le testeur a refusé 928 ordres « invalid
+  // stops » sur 2022-2023 et aucun ensuite, quand le moteur les comptait tous.
+  const n = 24 * 300;
+  const t = [], o = [], h = [], l = [], c = [];
+  let px = 1000, a = 777;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.01;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.002); l.push(Math.min(ouv, px) * 0.998);
+  }
+  const df = { n, t, o, h, l, c, v: t.map(() => 100), sp: t.map(() => 0), grain: { decimales: 2 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 2, paliers: [] });
+  const sans = M.backtesterSuivi(df, cfg, "D1");
+  assert.ok(sans.length > 10, "gabarit sans trades : test sans portée");
+  // le cours tourne autour de 1000, donc un stop de 1 % vaut environ 10 : un minimum de
+  // 20 doit tout refuser, un minimum de 1 ne doit rien changer
+  assert.equal(M.backtesterSuivi(df, { ...cfg, stop_mini: 20 }, "D1").length, 0,
+    "un minimum au-dessus de tous les stops laisse encore passer des trades");
+  assert.equal(M.backtesterSuivi(df, { ...cfg, stop_mini: 1 }, "D1").length, sans.length,
+    "un minimum sous tous les stops a supprimé des trades");
+
+  // la distance est mesurée depuis le cours SANS le spread : le courtier compare au bid
+  const avecSpread = { ...df, sp: t.map(() => 500) };   // 5 points de spread
+  const q = M.nettoyer(avecSpread);
+  const ref = M.backtesterSuivi(q, cfg, "D1");
+  const borne = M.backtesterSuivi(q, { ...cfg, stop_mini: 1 }, "D1");
+  assert.equal(borne.length, ref.length,
+    "le spread a été compté dans la distance : le minimum mordrait trop tôt");
+});

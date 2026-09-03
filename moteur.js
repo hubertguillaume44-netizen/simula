@@ -945,6 +945,7 @@ export function backtester(df, cfg) {
   // colonne de spread s'arrête avant la fin des cours — sur BITCOIN, août et septembre
   // 2026 n'ont aucun spread, et mesurer dessus revenait à mesurer du vide.
   const finEntrees = Number(cfg.fin) || Infinity;
+  const stopMini = Number(cfg.stop_mini) || 0;
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
@@ -1065,6 +1066,18 @@ export function backtester(df, cfg) {
 
     px = df.o[i] * (1 + d * spreadDe(i));
     sl0 = px * (1 - d * slPct);
+    // Distance minimale de stop imposée par le courtier (StopsLevel × Point), en unités
+    // de PRIX et non en pourcentage : il refuse l'ordre en dessous. C'est une distance
+    // absolue, donc son poids relatif dépend du cours — sur BITCOIN elle vaut 200,00,
+    // soit 0,25 % à 81 000 mais 1,00 % à 20 000. Un stop de 1 % était donc pile à la
+    // limite pendant tout 2022, et le testeur a refusé 928 ordres « invalid stops » sur
+    // 2022-2023 et aucun ensuite. Le moteur les comptait tous.
+    //
+    // Mesurée depuis df.o[i], le cours SANS le spread : le courtier compare le stop au
+    // BID, pas au prix d'entrée qui inclut le spread. Les chiffres du journal le
+    // disent — plus petite distance acceptée 248,36, plus grande refusée 260,30, pour
+    // un minimum annoncé de 200,00. L'écart est exactement le spread de l'instrument.
+    if (stopMini > 0 && Math.abs(df.o[i] - sl0) < stopMini) continue;
     sl = sl0;
     tp = px + (px - sl0) * rr;
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? df.l[i] : df.h[i];
