@@ -112,7 +112,7 @@ export function genererMQ5(cfg, ctx = {}) {
    {
       double c = C_(${s}, 1), l = ${appelLigne(s, m, per, 1)};
       if(c <= 0.0 || l <= 0.0) return false;
-      if(${vente ? 'c >= l' : 'c <= l'}) { g_raison = StringFormat("tendance supérieure : clôture %.2f vs ligne %.2f", c, l); return false; }
+      if(${vente ? 'c >= l' : 'c <= l'}) { g_raison = StringFormat("tendance supérieure : clôture %s vs ligne %s", DoubleToString(c, _Digits), DoubleToString(l, _Digits)); return false; }
    }`);
     resume.push('tendance ' + (etat.utMtf || 'D1') + ' ' + (etat.ligneMtf || 'ema') + ' ' + per);
   }
@@ -150,7 +150,7 @@ export function genererMQ5(cfg, ctx = {}) {
    {
       double c = C_(${s}, 1), m = ${appelLigne(s, 'SMA', per, 1)};
       if(c <= 0.0 || m <= 0.0) return false;
-      if(${vente ? 'c >= m' : 'c <= m'}) { g_raison = StringFormat("MM : clôture %.2f vs MM %.2f", c, m); return false; }
+      if(${vente ? 'c >= m' : 'c <= m'}) { g_raison = StringFormat("MM : clôture %s vs MM %s", DoubleToString(c, _Digits), DoubleToString(m, _Digits)); return false; }
    }`);
     resume.push((vente ? 'sous' : 'au-dessus') + ' MM ' + (etat.utMa || 'D1') + ' ' + per);
   }
@@ -164,7 +164,7 @@ export function genererMQ5(cfg, ctx = {}) {
    {
       double a = ${appelLigne(s, m, per, 1)}, b = ${appelLigne(s, m, per, 1 + recul)};
       if(a <= 0.0 || b <= 0.0) return false;
-      if(${vente ? 'a >= b' : 'a <= b'}) { g_raison = StringFormat("pente : %.2f vs %.2f", a, b); return false; }
+      if(${vente ? 'a >= b' : 'a <= b'}) { g_raison = StringFormat("pente : %s vs %s", DoubleToString(a, _Digits), DoubleToString(b, _Digits)); return false; }
    }`);
     resume.push('pente ' + (etat.utPente || 'H4') + ' recul ' + recul);
   }
