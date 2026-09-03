@@ -47,6 +47,7 @@ const horo = (s) => Date.parse(s.trim().replace(/\./g, "-").replace(" ", "T") + 
 /** Lit les lignes CONF| du journal, quel que soit le bruit autour. */
 export function lireConformite(texte) {
   const D = new Map(), T = new Map(), E = new Map(), S = new Map(), P = [];
+  const sorties = [];
   for (const brute of texte.split("\n")) {
     const i = brute.indexOf("CONF|");
     if (i < 0) continue;
@@ -68,13 +69,18 @@ export function lireConformite(texte) {
       // l'entrée : une position ouverte lundi et fermée jeudi doit se retrouver là où
       // le moteur la ferme, sinon la comparaison des sorties compare deux trades.
       const t = horo(c[1]);
-      S.set(jour(t), { t, reel: horo(c[2]), prix: +c[3], resultat: +c[4],
-        swap: +c[5], commission: +c[6], motif: c[7] || "" });
+      const s = { t, reel: horo(c[2]), prix: +c[3], resultat: +c[4],
+        swap: +c[5], commission: +c[6], motif: c[7] || "" };
+      sorties.push(s);
+      // Indexée par jour pour l'appariement, mais AUSSI gardée entière : deux positions
+      // peuvent se clore le même jour, et la Map n'en garderait qu'une. Les frais
+      // totalisés sur la Map annonçaient -124,8 % du résultat au lieu de 30 %.
+      S.set(jour(t), s);
     } else if (c[0] === "P") {
       P.push({ t: horo(c[1]), parcours: +c[2], avant: +c[3], apres: +c[4], extreme: +c[5] });
     }
   }
-  return { D, T, E, S, P };
+  return { D, T, E, S, P, sorties };
 }
 
 function main() {
@@ -191,10 +197,13 @@ function main() {
           `${d} ${iso(m.sortie_t)} — moteur ${m.sortie} (${m.motif}), robot ${r.prix} (${r.motif}) : ${(ecart * 100).toFixed(1)} % du risque`);
       }
     }
-    const frais = [...conf.S.values()].reduce((a, x) => a + x.swap + x.commission, 0);
-    const brut = [...conf.S.values()].reduce((a, x) => a + x.resultat, 0);
-    console.log(`\nfrais du robot : ${frais.toFixed(2)} sur ${brut.toFixed(2)} de résultat `
-      + `(${brut !== 0 ? (100 * frais / Math.abs(brut)).toFixed(1) : "?"} %) — swap et commission, ${conf.S.size} sorties`);
+    // sur TOUTES les sorties, pas sur la Map par jour
+    const sw = conf.sorties.reduce((a, x) => a + x.swap, 0);
+    const co = conf.sorties.reduce((a, x) => a + x.commission, 0);
+    const brut = conf.sorties.reduce((a, x) => a + x.resultat, 0);
+    console.log(`\nfrais du robot, sur ${conf.sorties.length} sorties : brut ${brut.toFixed(2)}, `
+      + `swap ${sw.toFixed(2)}, commission ${co.toFixed(2)} → net ${(brut + sw + co).toFixed(2)} `
+      + `(les frais pèsent ${brut !== 0 ? (100 * (sw + co) / Math.abs(brut)).toFixed(1) : "?"} % du brut)`);
   }
 
   console.log(`\n${sym}${variante ? " " + variante : ""} — ${communs} journées comparées `

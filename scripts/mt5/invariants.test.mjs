@@ -342,3 +342,48 @@ test("un stop plus court que le minimum du courtier ne donne pas de trade", () =
   assert.equal(borne.length, ref.length,
     "le spread a été compté dans la distance : le minimum mordrait trop tôt");
 });
+
+test("un signal empêché par la position en cours est repris plus tard dans la journée, une seule fois", () => {
+  // Le robot garde le seau en attente et réessaie à CHAQUE bougie H1 du même jour tant
+  // que l'ordre ne passe pas — y compris quand ce qui l'empêche est sa propre position
+  // encore ouverte. Le moteur ne marquait qu'une bougie par journée : si sa position se
+  // fermait après elle, la journée était perdue. Mesuré sur le journal GOLD du
+  // 4 septembre 2026 : 1 393 des 3 167 tentatives du robot sont refusées pour « position
+  // déjà ouverte » puis reprises plus tard le même jour, et le moteur en perdait 79 —
+  // 462 trades contre 538. Après reprise : 529 contre 538.
+  //
+  // Le pendant est tout aussi nécessaire : UNE entrée par signal. Marquer toutes les
+  // bougies sans ce garde-fou faisait rentrer le moteur à chaque sortie, 1 130 trades.
+  const n = 24 * 300;
+  const t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 100, a = 20260904;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.01;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.002); l.push(Math.min(ouv, px) * 0.998);
+    sp.push(10);
+  }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [] });
+  const trades = M.backtesterSuivi(df, cfg, "D1");
+  assert.ok(trades.length > 20, "gabarit sans trades : le test ne prouve rien");
+
+  const jour = (ms) => Math.floor(ms / 86400000);
+  // jamais deux entrées le même jour : un signal ne se joue qu'une fois
+  const jours = trades.map((x) => jour(x.entree_t));
+  assert.equal(new Set(jours).size, jours.length,
+    "deux entrées la même journée : le signal a été rejoué après une sortie");
+  // et jamais d'entrée sur la bougie même d'une sortie précédente
+  const sorties = new Set(trades.map((x) => x.sortie_t));
+  for (const x of trades) {
+    assert.ok(!sorties.has(x.entree_t),
+      "entrée sur la bougie même d'une sortie : la reprise doit suivre d'une bougie");
+  }
+  // au moins une entrée qui n'est PAS la première bougie exécutable du jour : sinon
+  // la reprise n'est pas exercée et le test ne couvre rien
+  const reprises = trades.filter((x) => new Date(x.entree_t).getUTCHours() > 1);
+  assert.ok(reprises.length > 0, "aucune reprise en cours de journée : règle non exercée");
+});

@@ -255,6 +255,51 @@ export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENET
   });
 }
 
+// Bougies RECONSTITUÉES : celles que le courtier n'a pas cotées et qu'il a rebâties
+// depuis une unité plus grossière. Elles se reconnaissent à deux signes ensemble, dont
+// aucun ne suffit seul :
+//
+//   · aucun spread relevé, alors que la série en porte ailleurs ;
+//   · la bougie englobe le haut ET le bas de TOUTE sa journée.
+//
+// Une heure ne peut pas contenir l'amplitude d'une journée entière et n'avoir laissé
+// aucune trace de son spread. Mesuré sur GOLD : 838 des 1 057 journées portant une
+// bougie de 00:00 sont dans ce cas, avec 10,7 fois le volume d'une heure ordinaire et
+// 4,4 fois son amplitude — la journée déguisée en heure.
+//
+// Exiger les DEUX conditions importe : une heure calme peut légitimement contenir toute
+// l'amplitude d'une journée calme, et une heure creuse peut légitimement n'avoir aucun
+// spread relevé. Prise seule, chaque condition écarterait des bougies vraies.
+export function bougiesReconstituees(df) {
+  const sp = spreadEnPct(df);
+  if (!sp || !df.n) return null;
+  return memo(df, 'reconstituees', () => {
+    const out = new Uint8Array(df.n);
+    let a = 0;
+    while (a < df.n) {
+      const j = Math.floor(df.t[a] / 86400000);
+      let b = a;
+      while (b < df.n && Math.floor(df.t[b] / 86400000) === j) b++;
+      // sous quatre bougies, la journée est trop mince pour que « englober » veuille
+      // dire quoi que ce soit
+      if (b - a >= 4) {
+        for (let i = a; i < b; i++) {
+          if (sp[i] > 0) continue;
+          let h = -Infinity, l = Infinity;
+          for (let k = a; k < b; k++) {
+            if (k === i) continue;
+            if (df.h[k] > h) h = df.h[k];
+            if (df.l[k] < l) l = df.l[k];
+          }
+          if (df.h[i] >= h && df.l[i] <= l) out[i] = 1;
+        }
+      }
+      a = b;
+    }
+    return out;
+  });
+}
+
 // Plage de dates sur laquelle la série est réellement mesurable.
 //
 // Un spread à zéro n'est pas un spread nul : c'est une information absente. Le moteur
@@ -932,6 +977,13 @@ export function backtester(df, cfg) {
   // Le spread de LA bougie d'entrée quand la série le porte, la moyenne du relevé sinon.
   // C'est la différence entre payer le spread moyen de la journée et celui de l'heure du
   // rollover, où l'entrée tombe et où il est deux à trois fois plus large.
+  // Seau de décision porté par chaque bougie marquée : un signal ne s'exécute qu'UNE
+  // fois. Sans cela, marquer toutes les bougies du jour faisait rentrer le moteur à
+  // chaque sortie — 1 130 trades au lieu de 538. Le robot remet `seauEnAttente` à -1
+  // dès qu'il est entré, et n'y revient plus avant le seau suivant.
+  const seauEnt = cfg.signal_seau || null;
+  let seauEntre = null;
+
   const spreadSerie = spreadEnPct(df);
   const spreadDe = (i) => {
     if (!spreadSerie) return spreadReleve;
@@ -992,6 +1044,23 @@ export function backtester(df, cfg) {
     return nouveau;
   };
 
+  // Une bougie sans spread n'est pas une bougie bon marché : c'est une bougie ABSENTE,
+  // reconstituée par le courtier depuis une unité plus grossière. Le moteur refusait
+  // déjà d'y ENTRER — acceptable() exige sp > 0 — mais il continuait d'y lire un haut
+  // et un bas pour SORTIR. Sur GOLD c'est un contresens mesurable : la bougie de 00:00
+  // englobe le haut ET le bas de TOUTE la journée sur 838 des 1 057 journées concernées,
+  // pour 10,7 fois le volume d'une heure ordinaire et 4,4 fois son amplitude. C'est la
+  // journée entière déguisée en heure, et le moteur y déclenchait stops et objectifs
+  // fantômes : 44 de ses 492 sorties, dont 24 des 84 que le robot place ailleurs.
+  //
+  // Son OUVERTURE reste un vrai prix à un vrai instant — le gap du week-end s'y lit —
+  // mais son haut, son bas et sa clôture appartiennent à la journée, pas à l'heure. On
+  // garde donc le test du gap et on ignore le reste. Les extrêmes ne sont pas perdus :
+  // les bougies suivantes de la journée les portent (aucune des 1 981 journées de GOLD
+  // ne se réduit à sa seule bougie de 00:00). Sans colonne de spread, rien ne change.
+  const reconstituee = bougiesReconstituees(df);
+  const releve = reconstituee ? (i) => !reconstituee[i] : () => true;
+
   const majSecu = (i) => {
     const extreme = vente ? df.l[i] : df.h[i];
     if (trailing && d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
@@ -1009,6 +1078,8 @@ export function backtester(df, cfg) {
         trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, false, vente));
         enPos = false; continue;
       }
+      // bougie reconstituée : ni sortie ni palier ne s'y lisent (voir `releve`)
+      if (!releve(i)) continue;
       // « bougie favorable » : haussière à l'achat, baissière à la vente — c'est elle
       // qui décide si l'extrême favorable est atteint avant le stop
       const haussiere = d * (df.c[i] - df.o[i]) >= 0;
@@ -1062,6 +1133,7 @@ export function backtester(df, cfg) {
 
     if (df.t[i] >= finEntrees) continue;
     if (!signal[i] || (autorise && !autorise[i])) continue;
+    if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
     if (delai && (i - derniere) < delai) continue;
 
     px = df.o[i] * (1 + d * spreadDe(i));
@@ -1081,6 +1153,7 @@ export function backtester(df, cfg) {
     sl = sl0;
     tp = px + (px - sl0) * rr;
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? df.l[i] : df.h[i];
+    if (seauEnt) seauEntre = seauEnt[i];
     iPlusHaut = i;
 
     // la bougie d'entrée peut déjà toucher SL ou TP — et, si elle est baissière,
@@ -1197,15 +1270,34 @@ export function backtesterSuivi(df, cfg, ut) {
     parSeau.get(b).push(i);
   }
   const force = new Array(df.n).fill(false);
+  const seauDe = new Float64Array(df.n).fill(NaN);
   for (let k = 0; k < sup.n; k++) {
     if (!signal[k]) continue;
     if (autorise && !autorise[k]) continue;
     const idx = parSeau.get(sup.t[k]);
     if (!idx) continue;
-    // `parSeau` est rempli à rebours : la dernière poussée est la PREMIÈRE bougie du jour
-    let choisi;
-    for (let z = idx.length - 1; z >= 0; z--) if (acceptable(idx[z])) { choisi = idx[z]; break; }
-    if (choisi !== undefined) force[choisi] = true;
+    // TOUTES les bougies exécutables du seau sont marquées, pas seulement la première.
+    //
+    // Le robot garde le signal en attente et le réessaie à chaque bougie H1 du MÊME jour
+    // tant que l'ordre ne passe pas — y compris quand ce qui l'empêche est sa PROPRE
+    // position encore ouverte (InpMaxPositions). Le moteur ne marquait qu'une bougie :
+    // si sa position se fermait après elle, la journée était perdue, alors que le robot
+    // entrait une ou deux heures plus tard le même jour.
+    //
+    // Mesuré sur le journal GOLD du 4 septembre : 1 393 des 3 167 tentatives du robot
+    // sont refusées pour « position déjà ouverte » puis reprises plus tard dans la
+    // journée, et le moteur en perdait 79 — 462 trades contre 538. Les durées de
+    // détention, elles, se superposaient déjà (médiane 14 h des deux côtés) : ce
+    // n'était donc pas une sortie trop tardive, mais une reprise manquante.
+    //
+    // `backtester` entre à la PREMIÈRE bougie marquée où il n'est pas déjà en position,
+    // et ne peut pas entrer sur la bougie même où il vient de sortir : la reprise suit
+    // la sortie d'une bougie, comme chez le robot.
+    for (let z = idx.length - 1; z >= 0; z--) {
+      if (!acceptable(idx[z])) continue;
+      force[idx[z]] = true;
+      seauDe[idx[z]] = sup.t[k];
+    }
   }
   // le délai est exprimé en bougies de décision : on le convertit en bougies H1
   const bougiesParSeau = ut === 'D1' ? 24 : 4;
@@ -1216,6 +1308,7 @@ export function backtesterSuivi(df, cfg, ut) {
     ...cfg,
     sortie: { ...cfg.sortie, armer_avant: false },
     signal_force: force,
+    signal_seau: seauDe,
     filtres,
   });
 }

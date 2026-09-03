@@ -219,8 +219,16 @@ test("le plafond décale l'entrée sans supprimer le signal quand une bougie pas
     "sans plafond, aucune entrée à 00:00 : le gabarit ne prouve rien");
   assert.equal(avec.filter((x) => new Date(x.entree_t).getUTCHours() === 0).length, 0,
     "avec plafond, une entrée tombe encore sur la bougie du rollover");
-  // le signal est décalé, pas perdu : ici une bougie de séance existe chaque jour
-  assert.equal(avec.length, sans.length, "le plafond a supprimé des trades au lieu de les décaler");
+  // Le signal est décalé, pas perdu : ici une bougie de séance existe chaque jour.
+  // L'égalité stricte ne tient plus depuis que le moteur reprend un signal plus tard
+  // dans la MÊME journée quand sa position se ferme entre-temps — décaler une entrée
+  // d'une heure décale sa sortie, ce qui libère ou occupe des journées suivantes. Le
+  // compte peut donc bouger d'un trade ou deux ; ce qui ne doit PAS arriver, c'est
+  // qu'il baisse : ce serait un signal supprimé par le plafond.
+  assert.ok(avec.length >= sans.length,
+    `le plafond a supprimé des trades au lieu de les décaler : ${avec.length} < ${sans.length}`);
+  assert.ok(avec.length <= sans.length * 1.1,
+    `le plafond a CRÉÉ des trades : ${avec.length} contre ${sans.length}`);
 });
 
 test("le plafond juge la bougie d'entrée, pas la précédente — des deux côtés", () => {
