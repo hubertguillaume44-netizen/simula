@@ -11,6 +11,7 @@ import { REFERENCES } from "./references.mjs";
 import { etatDepuisReference } from "./etat-depuis-reference.mjs";
 import { contexteRapport, lireRapportMt5 } from "./parse-mt5.mjs";
 import { chargerMoteur } from "./charger-moteur.mjs";
+import { construireConfig } from "./config.mjs";
 
 const M = await chargerMoteur();
 
@@ -193,4 +194,62 @@ test("la ligne T porte le sort de l'ORDRE, pas seulement celui du garde-fou", ()
   // le verdict journalisé doit être celui de l'entrée
   assert.ok(src.includes("entre1 ? 1 : 0") && src.includes("entre ? 1 : 0"),
     "la ligne T journalise encore le verdict du garde-fou au lieu de celui de l'ordre");
+});
+
+test("la colonne « session » interdit d'entrer sur une bougie non traitable", () => {
+  // Une bougie peut être COTÉE sans être TRAITABLE. Sur #HongKong50 les bougies de 03:00
+  // et 04:00 portent un spread normal — 0,080 % et 0,019 %, sous le plafond — et l'ordre
+  // y est refusé : la séance de négociation ouvre après la séance de cotation. Le moteur
+  // y inscrivait un prix que personne ne pouvait traiter, deux heures avant l'entrée
+  // réelle du robot.
+  const enTete = "date,open,high,low,close,volume,spread,session";
+  const lignes = [enTete];
+  for (let i = 0; i < 24 * 60; i++) {
+    const d = new Date(Date.UTC(2021, 0, 1) + i * 3600000);
+    const h = d.getUTCHours();
+    const px = (100 + i * 0.01).toFixed(2);
+    lignes.push([
+      d.toISOString().slice(0, 16).replace("T", " ").replace(/-/g, "."),
+      px, px, px, px, 100, 10, h >= 5 ? 1 : 0,   // traitable seulement à partir de 05:00
+    ].join(","));
+  }
+  const df = M.nettoyer(M.texteVersDf(lignes.join("\n")));
+  assert.equal(df.sessRenseigne, true, "la colonne n'a pas été lue");
+  for (let i = 0; i < df.n; i++) {
+    const h = new Date(df.t[i]).getUTCHours();
+    assert.equal(df.sess[i], h >= 5 ? 1 : 0, `bougie ${h}h mal étiquetée`);
+  }
+});
+
+test("sans colonne « session », rien ne change pour les séries déjà exportées", () => {
+  const sans = "date,open,high,low,close,volume,spread\n2021.01.04 03:00,100,101,99,100,10,12";
+  const df = M.nettoyer(M.texteVersDf(sans));
+  assert.equal(df.sessRenseigne, false);
+  assert.equal(df.sess[0], 1, "une série sans la colonne doit rester entièrement traitable");
+});
+
+test("le moteur n'entre jamais hors séance", () => {
+  const n = 24 * 500;
+  const t = [], o = [], h = [], l = [], c = [], sp = [], sess = [];
+  let px = 100, a = 13579;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    const ms = Date.UTC(2021, 0, 1) + i * 3600000;
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.004;
+    t.push(ms); o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.001); l.push(Math.min(ouv, px) * 0.999);
+    sp.push(10);
+    sess.push(new Date(ms).getUTCHours() >= 5 ? 1 : 0);
+  }
+  const df = { n, t, o, h, l, c, sp, sess, grain: { decimales: 2 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 0.5, rr: 2, paliers: [] });
+  const sans = M.backtesterSuivi(df, { ...cfg, sess: undefined }, "D1");
+  const avec = M.backtesterSuivi(df, cfg, "D1");
+  assert.ok(avec.length > 10, "gabarit sans trades : test sans portée");
+  for (const tr of avec) {
+    assert.ok(new Date(tr.entree_t).getUTCHours() >= 5,
+      `entrée à ${new Date(tr.entree_t).getUTCHours()}h, hors séance`);
+  }
+  assert.ok(sans.length >= avec.length);
 });

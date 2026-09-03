@@ -27,7 +27,14 @@ export function texteVersDf(txt) {
   // spread moyen du relevé. On repère la colonne par son nom, jamais par sa position.
   const cols = debut ? lignes[0].split(sep).map((x) => x.trim().toLowerCase().replace(/["']/g, '')) : [];
   let iSp = cols.findIndex((x) => /spread/.test(x));
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [];
+  // Colonne de séance : 1 si l'ordre PEUT partir sur cette bougie, 0 sinon. Une bougie
+  // peut être cotée sans être traitable — sur #HongKong50 les bougies de 03:00 et 04:00
+  // portent un spread normal et l'ordre y est refusé, la séance de négociation ouvrant
+  // après la séance de cotation. Le moteur y inscrivait un prix que personne ne pouvait
+  // traiter. Absente, la colonne vaut 1 partout : les séries déjà exportées gardent leur
+  // comportement.
+  const iSess = cols.findIndex((x) => /session|seance|séance/.test(x));
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [];
   for (let i = debut; i < lignes.length; i++) {
     const p = lignes[i].split(sep);
     if (p.length < 5) continue;
@@ -54,9 +61,11 @@ export function texteVersDf(txt) {
     if ([O, H, L, C].some(Number.isNaN)) continue;
     t.push(ms); o.push(O); h.push(H); l.push(L); c.push(C); v.push(nb(p[5]) || 0);
     // l'index de la colonne est celui de l'en-tête, décalé si date et heure ont été fusionnées
-    sp.push(iSp >= 0 ? (nb(p[iSp - (cols.length > p.length ? 1 : 0)]) || 0) : 0);
+    const decal = cols.length > p.length ? 1 : 0;
+    sp.push(iSp >= 0 ? (nb(p[iSp - decal]) || 0) : 0);
+    sess.push(iSess >= 0 ? (nb(p[iSess - decal]) ? 1 : 0) : 1);
   }
-  return nettoyer({ t, o, h, l, c, v, sp, n: t.length });
+  return nettoyer({ t, o, h, l, c, v, sp, sess, n: t.length });
 }
 
 // ---------- nettoyage (blocs.charger_csv : couper_daily + normaliser_session) ----------
@@ -115,14 +124,18 @@ export function nettoyer(df) {
   if (!df.n) return df;
   const debut = debutIntraday(df.t);
   const { depart, heures } = fenetreHomogene(df.t);
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [];
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [];
   const spSrc = df.sp || df.spreadPts;
+  const sessSrc = df.sess;
   for (let i = 0; i < df.n; i++) {
     const d = new Date(df.t[i]);
     if (debut !== null && df.t[i] < debut) continue;
     if (d.getUTCFullYear() < depart || !heures.has(d.getUTCHours())) continue;
     t.push(df.t[i]); o.push(df.o[i]); h.push(df.h[i]); l.push(df.l[i]); c.push(df.c[i]); v.push(df.v[i]);
     sp.push(spSrc ? (spSrc[i] || 0) : 0);
+    // pas de colonne = pas de restriction : une série exportée avant cette colonne doit
+    // continuer à se mesurer exactement comme avant
+    sess.push(sessSrc ? (sessSrc[i] ? 1 : 0) : 1);
   }
   const grain = mesurerGrain({ h, l, c, n: t.length });
   // Le spread est exporté en POINTS. Un point vaut 10^-décimales du cours : on le
@@ -144,9 +157,13 @@ export function nettoyer(df) {
     // moins d'un quart des bougies renseignées : la série est trop trouée pour servir
     if (vus < t.length / 4) { spreadPct = null; spreadPctMoyen = null; }
   }
-  return { t, o, h, l, c, v, sp, n: t.length, ecartees: df.n - t.length,
+  // `sessRenseigne` distingue « toutes les bougies sont traitables » d'une colonne
+  // absente : sans lui, une série exportée sans la colonne serait indiscernable d'une
+  // série dont le courtier n'aurait fermé aucune heure.
+  const sessRenseigne = !!df.sess && sess.some((x) => !x);
+  return { t, o, h, l, c, v, sp, sess, n: t.length, ecartees: df.n - t.length,
     heuresSession: [...heures].sort((a, b) => a - b), grain,
-    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct };
+    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne };
 }
 
 // Grain de la série : certains exports MT5 arrondissent les prix à 2 décimales.
@@ -1115,7 +1132,16 @@ export function backtesterSuivi(df, cfg, ut) {
   // moment où il place l'ordre. Le lire sur la bougie précédente, en revanche, rend le
   // plafond aveugle : le pic du rollover est DANS la bougie de 00:00, la bougie de
   // 23:00 est normale, et le plafond ne refusait plus rien.
-  const acceptable = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
+  // Deux conditions distinctes, et il faut les deux. Le spread dit ce que l'entrée COÛTE ;
+  // la séance dit si l'ordre PEUT partir. Sur #HongKong50 les bougies de 03:00 et 04:00
+  // portent un spread normal — 0,080 % et 0,019 %, sous le plafond — et l'ordre y est
+  // pourtant refusé : la séance de négociation ouvre après la séance de cotation. Le
+  // moteur y inscrivait un prix que personne ne pouvait traiter, deux heures avant
+  // l'entrée réelle du robot.
+  const sess = df.sess;
+  const traitable = (i) => !sess || sess[i] !== 0;
+  const sousPlafond = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
+  const acceptable = (i) => traitable(i) && sousPlafond(i);
 
   const parSeau = new Map();
   for (let i = df.n - 1; i >= 0; i--) {

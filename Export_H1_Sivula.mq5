@@ -94,6 +94,45 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
 }
 
 //+------------------------------------------------------------------+
+//| L'ordre peut-il partir sur la bougie qui OUVRE à cet instant ?     |
+//|                                                                    |
+//| Une bougie peut être COTÉE sans être TRAITABLE. Sur #HongKong50    |
+//| les bougies de 03:00 et 04:00 portent un spread normal — 0,080 %   |
+//| et 0,019 % — et l'ordre y est refusé : la séance de négociation    |
+//| ouvre après la séance de cotation. Sans cette colonne, Sivula      |
+//| inscrivait un prix que personne ne pouvait traiter, deux heures    |
+//| avant l'entrée réelle du robot.                                    |
+//|                                                                    |
+//| RÉSERVE : SymbolInfoSessionTrade rend les séances TELLES QU'ELLES  |
+//| SONT CONFIGURÉES AUJOURD'HUI, appliquées à un jour de la semaine.  |
+//| Quand la bourse et le serveur ne changent pas d'heure d'été aux    |
+//| mêmes dates, la séance glisse d'une heure une partie de l'année et |
+//| cette colonne se trompe alors d'une bougie. Le journal de          |
+//| conformité le montre : sur #HongKong50 l'entrée passe à 04:15 le   |
+//| 20 avril et seulement à 05:00 le 4 novembre.                       |
+//+------------------------------------------------------------------+
+bool Traitable(string sym, datetime t)
+{
+   MqlDateTime d; TimeToStruct(t, d);
+   ENUM_DAY_OF_WEEK jour = (ENUM_DAY_OF_WEEK)d.day_of_week;
+   int minute = d.hour * 60 + d.min;
+   datetime de, a;
+   bool aucuneSeance = true;
+   for(int k = 0; k < 8; k++)
+   {
+      if(!SymbolInfoSessionTrade(sym, jour, k, de, a)) break;
+      aucuneSeance = false;
+      MqlDateTime dd, aa; TimeToStruct(de, dd); TimeToStruct(a, aa);
+      int m1 = dd.hour * 60 + dd.min, m2 = aa.hour * 60 + aa.min;
+      // une séance qui franchit minuit est rendue avec une fin inférieure au début
+      if(m2 <= m1) { if(minute >= m1 || minute < m2) return true; }
+      else if(minute >= m1 && minute < m2) return true;
+   }
+   // aucune séance déclarée : le courtier ne restreint rien, tout est traitable
+   return aucuneSeance;
+}
+
+//+------------------------------------------------------------------+
 //| Exporte un symbole. Rend false si rien n'a pu être écrit.         |
 //+------------------------------------------------------------------+
 bool Exporter(string sym)
@@ -133,7 +172,7 @@ bool Exporter(string sym)
    }
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
+   FileWriteString(f, "date,open,high,low,close,volume,spread,session\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
@@ -145,7 +184,7 @@ bool Exporter(string sym)
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
-   int sansSpread = 0, sansM1 = 0, iM1 = 0;
+   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0;
    for(int i = 0; i < n; i++)
    {
       // les deux séries sont croissantes : une seule passe suffit
@@ -154,15 +193,17 @@ bool Exporter(string sym)
       if(iM1 < nM1 && m1[iM1].time == r[i].time) sp = m1[iM1].spread;
       else sansM1++;
 
+      int seance = Traitable(sym, r[i].time) ? 1 : 0;
+      if(seance == 0) horsSeance++;
       if(sp <= 0) sansSpread++;
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d\r\n",
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d\r\n",
          TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(r[i].open,  dec),
          DoubleToString(r[i].high,  dec),
          DoubleToString(r[i].low,   dec),
          DoubleToString(r[i].close, dec),
          r[i].tick_volume,
-         sp));
+         sp, seance));
    }
    FileClose(f);
 
@@ -186,6 +227,8 @@ bool Exporter(string sym)
       PrintFormat("%s : ATTENTION %d bougies sur %d sans spread (%.1f %%) — Sivula "
                   "utilisera le spread du relevé sur cette partie.",
                   sym, sansSpread, n, 100.0 * sansSpread / n);
+   PrintFormat("%s : %d bougies sur %d hors séance de négociation (%.1f %%) — Sivula "
+               "n'y entrera pas.", sym, horsSeance, n, 100.0 * horsSeance / n);
    return true;
 }
 
