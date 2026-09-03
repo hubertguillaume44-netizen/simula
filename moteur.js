@@ -960,35 +960,42 @@ export function backtester(df, cfg) {
   // « d × valeur croissante », donc une seule écriture pour les deux sens.
   const d = vente ? -1 : 1;
   let iPlusHaut = -1;
-  const majSecu = (i) => {
+  // Niveau de stop que l'extrême d'une bougie JUSTIFIERAIT, sans rien modifier.
+  // Séparé de majSecu parce qu'il faut pouvoir le connaître AVANT de tester la sortie :
+  // c'est lui qui décide si la bougie est ambiguë. Rend le stop courant si rien ne bouge.
+  const niveauSecu = (extreme) => {
     if (trailing) {
-      const extreme = vente ? df.l[i] : df.h[i];
-      if (d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
-      const cand = plusHaut * (1 - d * trailing);
-      if (d * cand > d * sl) { sl = cand; be = 1; }
-    } else if (etapes.length && d * tp > d * px) {
-      const extreme = vente ? df.l[i] : df.h[i];
-      const parcours = (extreme - px) / (tp - px) * 100;
-      let nouveau = sl;
-      for (const [seuil, niveau] of etapes) {
-        if (parcours >= seuil) {
-          // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
-          // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
-          // chemin déjà sécurisée vers l'objectif. Continu en 0.
-          let cand = niveau < 0
-            ? px + (niveau / 100) * (px - sl0)
-            : px + (niveau / 100) * (tp - px);
-          // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
-          // le chemin parcouru. Un stop posé pile sur le plus haut touché
-          // encaisserait un simple passage intrabar comme un gain acquis.
-          const part = Math.min(seuil, parcours) * 0.9;
-          const atteint = px + (part / 100) * (tp - px);
-          if (d * cand > d * atteint) cand = atteint;
-          if (d * cand > d * nouveau) nouveau = cand;
-        }
-      }
-      if (d * nouveau > d * sl) { sl = nouveau; be = d * nouveau > d * px ? 2 : 1; }
+      const haut = d * extreme > d * plusHaut ? extreme : plusHaut;
+      const cand = haut * (1 - d * trailing);
+      return d * cand > d * sl ? cand : sl;
     }
+    if (!etapes.length || d * tp <= d * px) return sl;
+    const parcours = (extreme - px) / (tp - px) * 100;
+    let nouveau = sl;
+    for (const [seuil, niveau] of etapes) {
+      if (parcours < seuil) continue;
+      // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
+      // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
+      // chemin déjà sécurisée vers l'objectif. Continu en 0.
+      let cand = niveau < 0
+        ? px + (niveau / 100) * (px - sl0)
+        : px + (niveau / 100) * (tp - px);
+      // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
+      // le chemin parcouru. Un stop posé pile sur le plus haut touché
+      // encaisserait un simple passage intrabar comme un gain acquis.
+      const part = Math.min(seuil, parcours) * 0.9;
+      const atteint = px + (part / 100) * (tp - px);
+      if (d * cand > d * atteint) cand = atteint;
+      if (d * cand > d * nouveau) nouveau = cand;
+    }
+    return nouveau;
+  };
+
+  const majSecu = (i) => {
+    const extreme = vente ? df.l[i] : df.h[i];
+    if (trailing && d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
+    const nouveau = niveauSecu(extreme);
+    if (d * nouveau > d * sl) { sl = nouveau; be = trailing ? 1 : (d * nouveau > d * px ? 2 : 1); }
   };
 
   for (let i = Math.max(depart, 1); i < df.n; i++) {
@@ -1009,17 +1016,34 @@ export function backtester(df, cfg) {
       // bougie ambiguë : elle contient le stop ET l'objectif. L'ordre réel des
       // mouvements y est inconnu, donc le sort du trade est décidé par une
       // convention, pas par la donnée. Compté pour pouvoir le dire.
-      const ambigu = d * df.l[i] <= d * sl && d * df.h[i] >= d * tp
+      const pire = vente ? df.h[i] : df.l[i], mieux = vente ? df.l[i] : df.h[i];
+      // Stop que l'extrême de CETTE bougie justifie. Une bougie peut monter assez pour
+      // armer un palier PUIS redescendre le toucher : la H1 ne dit pas dans quel ordre.
+      // Le moteur ne le voyait pas — il testait la sortie avec l'ancien stop, encaissait
+      // l'objectif, et n'armait qu'ensuite. Mesuré sur BITCOIN le 23 avril 2025 : haut
+      // 94 036 (objectif 92 920 atteint) et bas 90 954 (point mort 91 098 touché) dans la
+      // MÊME heure. Le moteur inscrivait +2,00 R, le testeur 0,00 R.
+      const slArme = niveauSecu(mieux);
+      const ambigu = (d * pire <= d * sl && d * mieux >= d * tp)
+        || (d * pire <= d * slArme && d * mieux >= d * tp)
         || (vente && df.h[i] >= sl && df.l[i] <= tp);
+      // en lecture BASSE, le stop testé est celui que la bougie a armé : on tranche
+      // contre soi. En lecture haute, l'ancien stop, comme avant.
+      const slTeste = prudent ? slArme : sl;
       let sortie = null;
       for (const q of ordre) {
-        const pire = vente ? df.h[i] : df.l[i], mieux = vente ? df.l[i] : df.h[i];
-        if (q === 'sl' && d * pire <= d * sl) { sortie = ['sl', sl]; break; }
+        if (q === 'sl' && d * pire <= d * slTeste) { sortie = ['sl', slTeste]; break; }
         if (q === 'tp' && d * mieux >= d * tp) { sortie = ['tp', tp]; break; }
       }
       if (sortie) {
         let motif = sortie[0];
-        if (motif === 'sl') motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : 'sl';
+        if (motif === 'sl') {
+          // le palier armé PAR cette bougie compte : sans ça, une sortie au point mort
+          // se serait étiquetée « sl » et aurait fait croire à une perte pleine
+          const niv = d * slTeste > d * px ? 2 : d * slTeste > d * sl0 ? 1 : 0;
+          const b = Math.max(be, niv);
+          motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
+        }
         const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambigu, vente);
         // sortie par le stop dans la bougie même qui a fixé le plus haut : le gain
         // suppose que le stop a suivi le sommet tick par tick, ce que H1 ne dit pas
@@ -1051,11 +1075,20 @@ export function backtester(df, cfg) {
     const haussiere = d * (df.c[i] - df.o[i]) >= 0;
     if (!haussiere && !prudent && armerAvant) majSecu(i);
     const pire0 = vente ? df.h[i] : df.l[i], mieux0 = vente ? df.l[i] : df.h[i];
-    const ambigu0 = d * pire0 <= d * sl && d * mieux0 >= d * tp;
+    // Même règle que sur les bougies suivantes : la bougie d'entrée peut monter assez
+    // pour armer un palier PUIS redescendre le toucher, et la H1 ne dit pas dans quel
+    // ordre. C'est le cas le plus fréquent, l'entrée et le palier tombant dans la même
+    // heure — sur BITCOIN, 31 trades sur 420 contre 2 comptés auparavant.
+    const slArme0 = niveauSecu(mieux0);
+    const ambigu0 = (d * pire0 <= d * sl && d * mieux0 >= d * tp)
+      || (d * pire0 <= d * slArme0 && d * mieux0 >= d * tp);
+    const slTeste0 = prudent ? slArme0 : sl;
     for (const q of ((haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'])) {
-      if (q === 'sl' && d * pire0 <= d * sl) {
-        const motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : 'sl';
-        trades.push(clore(df, i, i, px, sl, sl0, motif, be, ambigu0, vente)); enPos = false; break;
+      if (q === 'sl' && d * pire0 <= d * slTeste0) {
+        const niv = d * slTeste0 > d * px ? 2 : d * slTeste0 > d * sl0 ? 1 : 0;
+        const b = Math.max(be, niv);
+        const motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
+        trades.push(clore(df, i, i, px, slTeste0, sl0, motif, b, ambigu0, vente)); enPos = false; break;
       }
       if (q === 'tp' && d * mieux0 >= d * tp) { trades.push(clore(df, i, i, px, tp, sl0, 'tp', 0, ambigu0, vente)); enPos = false; break; }
     }

@@ -273,3 +273,36 @@ test("les paliers ne s'arment plus depuis le haut d'une bougie qu'on teste ensui
   const h1 = M.resume(M.backtesterSuivi(DF, cfg, "D1"));
   assert.ok(h1.n > 0);
 });
+
+test("une bougie qui arme un palier ET le touche est comptée ambiguë", () => {
+  // Une bougie peut monter assez pour armer un palier PUIS redescendre le toucher : la
+  // H1 ne dit pas dans quel ordre. Le moteur ne le voyait pas — il testait la sortie avec
+  // l'ANCIEN stop, encaissait l'objectif, et n'armait qu'ensuite. Mesuré sur BITCOIN le
+  // 23 avril 2025 : haut 94 036 (objectif 92 920 atteint) et bas 90 954 (point mort
+  // 91 098 touché) dans la même heure. Le moteur inscrivait +2,00 R, le testeur 0,00 R.
+  const t = [], o = [], h = [], l = [], c = [];
+  const poser = (i, O, H, L, C) => { t[i] = Date.UTC(2021, 0, 4) + i * 3600000;
+    o[i] = O; h[i] = H; l[i] = L; c[i] = C; };
+  // bougies plates, puis un croisement, puis la bougie ambiguë. Le signal est décalé
+  // d'une bougie (invariant 5) : croisement clôturé en 39, entrée à l'ouverture de 40.
+  for (let i = 0; i < 42; i++) poser(i, 100, 100.1, 99.9, 100);
+  poser(39, 100, 103, 99.9, 103);          // croisement à la hausse
+  // bougie d'entrée : ouvre à 103, monte à 112 (objectif atteint), redescend à 102,9
+  poser(40, 103, 112, 102.9, 104);
+  poser(41, 104, 104.1, 103.9, 104);
+  const df = { n: 42, t, o, h, l, c, sp: t.map(() => 0), grain: { decimales: 2 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [[25, 0]] });
+  const tr = M.backtester(df, { ...cfg, sortie: { ...cfg.sortie, armer_avant: false } });
+  const bougie = tr.find((x) => x.entree_t === t[40]);
+  assert.ok(bougie, "aucun trade sur la bougie visée : gabarit sans portée");
+  assert.equal(bougie.ambigu, true,
+    "la bougie arme le palier ET le touche, et n'est pas comptée ambiguë");
+
+  // en lecture BASSE le stop testé est celui que la bougie a armé : on tranche contre soi
+  const basse = M.backtester(df, { ...cfg, sortie: { ...cfg.sortie, armer_avant: false, prudent: true } });
+  const b2 = basse.find((x) => x.entree_t === t[40]);
+  assert.ok(b2.R < bougie.R,
+    `la lecture basse doit rendre moins que la haute (${b2.R} vs ${bougie.R})`);
+  assert.ok(b2.motif.startsWith("be"), `sortie au palier attendue, obtenu « ${b2.motif} »`);
+});
