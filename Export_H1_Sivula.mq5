@@ -84,6 +84,23 @@ bool AttendreHistorique(ENUM_TIMEFRAMES tf, string nomTf, datetime depuis, int s
 
 void OnStart()
 {
+   // Le plafond « Barres max dans le graphique » borne aussi l'HISTORIQUE que le
+   // terminal conserve, pas seulement l'affichage. À 50 000, CopyTime rend 50 009
+   // barres quoi qu'on demande et la plus ancienne date ne recule jamais — la boucle
+   // tourne alors indéfiniment sans que rien n'indique pourquoi. Observé sur le VPS.
+   long maxBarres = TerminalInfoInteger(TERMINAL_MAXBARS);
+   long besoin = (TimeCurrent() - InpDu) / 60;   // ordre de grandeur en barres M1
+   if(maxBarres < besoin)
+   {
+      PrintFormat("ARRÊT : « Barres max dans le graphique » vaut %I64d, il en faut environ "
+                  "%I64d pour couvrir la M1 depuis %s.", maxBarres, besoin,
+                  TimeToString(InpDu, TIME_DATE));
+      Print("Outils > Options > Graphiques > « Barres max dans le graphique » = Illimité, "
+            "PUIS REDÉMARREZ le terminal : le réglage ne s'applique à l'historique déjà "
+            "chargé qu'au démarrage. Relancez ce script ensuite.");
+      return;
+   }
+
    // L'ordre compte : la M1 est la plus longue à venir, on la lance en premier.
    PrintFormat("%s : demande de l'historique depuis %s. Laissez le script travailler.",
                _Symbol, TimeToString(InpDu, TIME_DATE));
