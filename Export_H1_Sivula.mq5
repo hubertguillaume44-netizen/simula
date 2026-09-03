@@ -28,25 +28,61 @@
 // lignes de référence fausses tant que le tampon n'est pas rempli.
 input datetime InpDu       = D'2019.01.01';  // Depuis (≈ 1 an AVANT le début du test)
 input int      InpMaxBarres = 200000;         // Bougies maximum
+// Sept ans de M1 = plusieurs millions de barres : sur un VPS à ligne lente le
+// téléchargement prend des minutes. Augmentez si le script rend la main trop tôt.
+input int      InpAttenteSec = 300;           // Attente max du téléchargement, par unité (s)
+
+//+------------------------------------------------------------------+
+//| Force le téléchargement d'un historique et attend qu'il arrive.   |
+//|                                                                   |
+//| Faire défiler le graphique à la main ne marche pas sur un VPS :   |
+//| c'est lent, et ça échoue sans rien dire. CopyRates sur une plage  |
+//| DEMANDE l'historique au serveur, mais rend d'abord ce qu'il a en  |
+//| cache pendant que le téléchargement se poursuit en arrière-plan.  |
+//| Il faut donc redemander jusqu'à ce que la série soit synchronisée |
+//| ET remonte assez loin. Sept ans de M1 font des millions de barres :|
+//| plusieurs minutes sur une ligne lente, d'où l'attente longue.     |
+//+------------------------------------------------------------------+
+bool AttendreHistorique(ENUM_TIMEFRAMES tf, string nomTf, datetime depuis, int secondesMax)
+{
+   uint fin = GetTickCount() + (uint)secondesMax * 1000;
+   datetime premiere = 0;
+   int annonce = 0;
+   while(GetTickCount() < fin && !IsStopped())
+   {
+      MqlRates tmp[];
+      CopyRates(_Symbol, tf, depuis, depuis + 86400, tmp);   // déclenche la demande
+      premiere = (datetime)SeriesInfoInteger(_Symbol, tf, SERIES_FIRSTDATE);
+      bool sync = (bool)SeriesInfoInteger(_Symbol, tf, SERIES_SYNCHRONIZED);
+      if(sync && premiere > 0 && premiere <= depuis) return true;
+      if(++annonce % 10 == 0)
+         PrintFormat("%s : téléchargement en cours… plus ancienne barre disponible : %s",
+                     nomTf, premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune");
+      Sleep(1000);
+   }
+   PrintFormat("%s : historique incomplet après %d s. Plus ancienne barre : %s (demandé : %s).",
+               nomTf, secondesMax,
+               premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune",
+               TimeToString(depuis, TIME_DATE));
+   return false;
+}
 
 void OnStart()
 {
-   // Forcer le chargement : sur un terminal frais, l'historique n'est pas encore là et
-   // CopyRates ne renvoie qu'une poignée de bougies récentes.
-   datetime tt[];
-   for(int essai = 0; essai < 40; essai++)
-   {
-      if(CopyTime(_Symbol, PERIOD_H1, InpDu, 1, tt) > 0) break;
-      Sleep(500);
-   }
+   // L'ordre compte : la M1 est la plus longue à venir, on la lance en premier.
+   PrintFormat("%s : demande de l'historique depuis %s. Laissez le script travailler.",
+               _Symbol, TimeToString(InpDu, TIME_DATE));
+   AttendreHistorique(PERIOD_M1, "M1", InpDu, InpAttenteSec);
+   AttendreHistorique(PERIOD_H1, "H1", InpDu, InpAttenteSec);
 
    MqlRates r[];
    ArraySetAsSeries(r, false);
    int n = CopyRates(_Symbol, PERIOD_H1, InpDu, TimeCurrent(), r);
    if(n <= 0)
    {
-      Print("Aucune bougie H1 disponible depuis ", TimeToString(InpDu),
-            ". Ouvrez le graphique en H1 et faites-le défiler vers la gauche, puis relancez.");
+      Print("Aucune bougie H1 depuis ", TimeToString(InpDu),
+            ". Vérifiez que le symbole est dans l'Observation du marché, puis relancez ; "
+            "si le message « historique incomplet » est apparu, augmentez InpAttenteSec.");
       return;
    }
    if(n > InpMaxBarres) n = InpMaxBarres;
@@ -64,8 +100,9 @@ void OnStart()
    ArraySetAsSeries(m1, false);
    int nM1 = CopyRates(_Symbol, PERIOD_M1, InpDu, TimeCurrent(), m1);
    if(nM1 <= 0)
-      Print("Aucune bougie M1 : le spread écrit sera celui de la H1, plus grossier. "
-            "Ouvrez le graphique en M1, faites-le défiler vers la gauche, puis relancez.");
+      Print("Aucune bougie M1 : le spread écrit sera celui de la H1 — la valeur agrégée, "
+            "deux fois trop haute en séance et deux fois trop basse au rollover. "
+            "Augmentez InpAttenteSec et relancez plutôt que d'exporter ainsi.");
 
    int sansSpread = 0, sansM1 = 0, iM1 = 0;
    for(int i = 0; i < n; i++)
@@ -96,7 +133,13 @@ void OnStart()
                   "M1 vers la gauche pour charger tout l'historique, puis relancez.",
                   sansM1, n, 100.0 * sansM1 / n);
 
-   PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s", _Symbol, n, nom);
+   PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s — de %s à %s",
+               _Symbol, n, nom,
+               TimeToString(r[0].time, TIME_DATE),
+               TimeToString(r[n - 1].time, TIME_DATE));
+   PrintFormat("Plus ancienne barre disponible — H1 : %s | M1 : %s",
+               TimeToString((datetime)SeriesInfoInteger(_Symbol, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
+               TimeToString((datetime)SeriesInfoInteger(_Symbol, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
    // Un spread à zéro n'est pas un spread nul : c'est un historique importé par le
    // courtier sans cette information. Sivula le détecte et retombe sur le relevé, mais
    // autant le savoir tout de suite plutôt que de croire la série complète.
