@@ -291,6 +291,8 @@ long     dernierSeau = -1;      // seau du dernier signal évalué
 // était perdu : le seau était consommé et jamais réévalué. On le garde en attente et on
 // réessaie aux ticks suivants du MÊME seau — c'est l'entrée « à l'ouverture suivante ».
 long     seauEnAttente = -1;
+// bougie H1 de la dernière tentative d'entrée : une seule par bougie, comme le moteur
+datetime g_derniereH1  = 0;
 // pic d'équité depuis le lancement : sert à afficher le creux réellement traversé,
 // le seul chiffre comparable au « creux une fois sur vingt » de la mesure
 double   g_pic = 0.0;
@@ -1108,15 +1110,32 @@ void OnTick()
    GererPaliers();
    GererDuree();
 
+   // Une tentative d'entrée par BOUGIE H1, jamais plusieurs dans la même. Le moteur
+   // n'entre qu'à l'ouverture d'une bougie : en réessayant à chaque tick, le robot
+   // entrait en cours de bougie dès que le spread retombait — 00:37 là où le moteur
+   // entrait à 01:00. Mesuré sur les rapports du 3 septembre : sur AUDCAD, 14 des 44
+   // entrées de MT5 ne tombaient sur AUCUN horodatage de bougie H1 du fichier, et sur
+   // GOLD 234 sur 542. Les seuils de spread, eux, étaient d'accord : des entrées MT5
+   // retrouvées dans le fichier, 27 sur 30 et 307 sur 308 passaient aussi le plafond
+   // du moteur. C'était donc le MOMENT de la tentative, pas le plafond.
+   datetime bH1[];
+   if(CopyTime(_Symbol, PERIOD_H1, 0, 1, bH1) < 1) return;
+   bool nouvelleH1 = (bH1[0] != g_derniereH1);
+
    // une évaluation par seau clos : l'entrée tombe à l'ouverture de la bougie H1
    // qui suit cette clôture, comme l'entrée « à l'open suivant » du moteur
    long seau = SeauCourant(SEC_SIGNAL);
-   // reprise d'un signal en attente : même seau, marché désormais ouvert
+   // reprise d'un signal en attente : même seau, bougie SUIVANTE. Le signal n'est pas
+   // perdu — il attend l'ouverture d'une bougie où l'ordre passe (marché ouvert, spread
+   // sous le plafond) — mais il ne s'exécute plus au milieu d'une bougie.
    if(seau >= 0 && seau == seauEnAttente && seau == dernierSeau)
    {
+      if(!nouvelleH1) return;
+      g_derniereH1 = bH1[0];
       if(ExecutionAutorisee() && Entrer()) seauEnAttente = -1;
       return;
    }
+   g_derniereH1 = bH1[0];
    // Tracé AVANT le garde-fou : quand l'agrégation échoue, « seau » vaut -1 et OnTick
    // sortait en silence — le journal restait vide précisément dans le cas à instruire.
    // Une ligne par bougie H1 au maximum, pour ne pas noyer le journal.

@@ -246,3 +246,16 @@ test("le robot compare un spread de BOUGIE, pas celui du tick", () => {
     "le plafond est encore comparé au spread du tick (spreadPct)");
   assert.match(bloc, /barre > plafond/);
 });
+
+test("le robot ne tente l'entrée qu'une fois par bougie H1", () => {
+  // Le moteur n'entre qu'à l'ouverture d'une bougie. En réessayant à chaque tick, le
+  // robot entrait au milieu d'une bougie dès que le spread retombait : sur AUDCAD,
+  // 14 des 44 entrées de MT5 ne tombaient sur aucun horodatage H1 du fichier, et sur
+  // GOLD 234 sur 542 — alors même que les deux plafonds de spread étaient d'accord.
+  const src = genererMQ5(CFG, { ...CTX, spreadFacteur: 1.5 });
+  assert.match(src, /bool nouvelleH1 = \(bH1\[0\] != g_derniereH1\);/);
+  const reprise = src.slice(src.indexOf("if(seau >= 0 && seau == seauEnAttente"),
+    src.indexOf("g_derniereH1 = bH1[0];", src.indexOf("if(seau >= 0 && seau == seauEnAttente")));
+  assert.match(reprise, /if\(!nouvelleH1\) return;/,
+    "la reprise d'un signal en attente s'exécute encore en cours de bougie");
+});
