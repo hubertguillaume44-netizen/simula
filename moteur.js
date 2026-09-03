@@ -202,6 +202,42 @@ export function spreadEnPct(df) {
   }
   return vus >= df.n / 4 ? out : null;
 }
+// Seuil de spread « pic » : la médiane des `fenetre` dernières bougies, rafraîchie une
+// fois par jour. C'est un multiple de cette médiane qui sert de plafond, jamais la
+// médiane elle-même : le spread s'élargit d'année en année, donc un seuil calé sur la
+// médiane de TOUTE la série ne mord plus du tout sur les années récentes (mesuré sur
+// AUDCAD : 92 % des bougies de 2021 passent, 0 % de celles de 2025) et laisse 20 à 54 %
+// des journées sans aucune bougie éligible. Ce qu'on veut refuser, c'est le pic du
+// rollover — trois à huit fois la normale —, pas la moitié haute d'une distribution.
+//
+// Rafraîchi une fois par jour et non à chaque bougie : le robot MQL5 fait de même (il
+// ne peut pas retrier six mille spreads à chaque tick), et les deux doivent obtenir le
+// même nombre, sinon ils n'entrent pas au même moment.
+export const SPREAD_FENETRE = 250 * 24;
+export const SPREAD_FACTEUR = 1.5;
+
+export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENETRE) {
+  const sp = spreadEnPct(df);
+  if (!sp) return null;
+  return memo(df, 'seuilSpread|' + facteur + '|' + fenetre, () => {
+    const out = new Float64Array(df.n);
+    let jour = null, med = 0;
+    for (let i = 0; i < df.n; i++) {
+      const j = Math.floor(df.t[i] / 86400000);
+      if (jour === null || j !== jour) {
+        const a = Math.max(0, i - fenetre);
+        const v = [];
+        for (let k = a; k < i; k++) if (sp[k] > 0) v.push(sp[k]);
+        // sous 100 relevés la médiane n'a pas de sens : le seuil reste inactif
+        if (v.length >= 100) { v.sort((x, y) => x - y); med = v[v.length >> 1] * facteur; }
+        jour = j;
+      }
+      out[i] = med;
+    }
+    return out;
+  });
+}
+
 export function decouper(df, debut, fin) {
   if (debut === undefined && fin === undefined) return df;
   const d0 = debut !== undefined ? debut - AMORCE_JOURS * 86400000 : -Infinity;
@@ -1002,23 +1038,41 @@ export function backtesterSuivi(df, cfg, ut) {
     if (j === 0) return false;
     return !(j === 1 && d.getUTCHours() < 2);
   };
-  const premiere = new Map();
+  // Plafond de spread : on n'entre pas sur la bougie du rollover, où le spread vaut
+  // trois à huit fois sa normale. Le signal n'est pas perdu, il attend la première
+  // bougie du MÊME jour qui repasse sous le plafond — c'est exactement ce que fait le
+  // robot, qui garde le seau en attente et réessaie aux ticks suivants (InpSpreadMaxPct).
+  // Quand aucune bougie du jour ne passe, les deux renoncent : le repli sur la première
+  // bougie ferait entrer Simula là où le robot n'entre pas (mesuré à 1,5× : 0 à 2 % des
+  // signaux sur cinq instruments, 30 % sur BITCOIN dont le spread est très large).
+  const facteur = Number(cfg.spread_max_facteur) || 0;
+  const seuil = facteur > 0 ? seuilSpread(df, facteur) : null;
+  const sp = seuil ? spreadEnPct(df) : null;
+  const acceptable = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
+
+  const parSeau = new Map();
   for (let i = df.n - 1; i >= 0; i--) {
     if (!executable(i)) continue;
-    premiere.set(seau(df.t[i]), i);
+    const b = seau(df.t[i]);
+    if (!parSeau.has(b)) parSeau.set(b, []);
+    parSeau.get(b).push(i);
   }
   const force = new Array(df.n).fill(false);
   for (let k = 0; k < sup.n; k++) {
     if (!signal[k]) continue;
     if (autorise && !autorise[k]) continue;
-    const i = premiere.get(sup.t[k]);
-    if (i !== undefined) force[i] = true;
+    const idx = parSeau.get(sup.t[k]);
+    if (!idx) continue;
+    // `parSeau` est rempli à rebours : la dernière poussée est la PREMIÈRE bougie du jour
+    let choisi;
+    for (let z = idx.length - 1; z >= 0; z--) if (acceptable(idx[z])) { choisi = idx[z]; break; }
+    if (choisi !== undefined) force[choisi] = true;
   }
   // le délai est exprimé en bougies de décision : on le convertit en bougies H1
-  const parSeau = ut === 'D1' ? 24 : 4;
+  const bougiesParSeau = ut === 'D1' ? 24 : 4;
   const filtres = (cfg.filtres || [])
     .filter((f) => f.type === 'delai_bougies' && f.actif !== false)
-    .map((f) => ({ ...f, n: f.n * parSeau }));
+    .map((f) => ({ ...f, n: f.n * bougiesParSeau }));
   return backtester(df, {
     ...cfg,
     sortie: { ...cfg.sortie, armer_avant: false },

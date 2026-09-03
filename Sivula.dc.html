@@ -3431,6 +3431,10 @@ class Component extends DCLogic {
     // sélectionnée. Le scan mesurait donc sans sécurisation, et exportait des robots
     // qui, eux, gèrent leur stop.
     gEchelles: '25>0 50>25 75>50 ; 50>0 75>50 ; 25>-25 50>25 75>50',
+    // Plafond de spread à l'entrée, en multiple de la médiane récente. On n'entre pas
+    // sur la bougie du rollover, où le spread vaut trois à huit fois sa normale ; le
+    // signal attend la première bougie du jour qui repasse dessous. 0 = aucun plafond.
+    gSpreadFacteur: 1.5,
     gSls: '0,5 0,6 0,7 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,5 2,0 2,5 3,0',
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
@@ -3939,6 +3943,7 @@ class Component extends DCLogic {
     try {
       txt = mod.genererMQ5(v, { risquePct: Number(this.state.risquePct) || 1,
         ut: v.ut || etat.ut || this.state.ut, hasard, etat, spreadMaxPct, stamp, magic,
+        spreadFacteur: this.facteurSpread(),
         mesureVieille: (v._mv || 'e1') !== this.MOTEUR_V,
         // les heures que le nettoyage de la mesure a gardées : le robot doit agréger
         // exactement les mêmes bougies, sinon ses D1 ne sont pas celles du backtest
@@ -6583,11 +6588,19 @@ GROUPES = {
   // Mesuré sur huit configurations de référence face au testeur MT5 : l'erreur absolue
   // moyenne passe de 22 800 € à 6 900 €, et la surestimation systématique
   // (8 configurations sur 8) disparaît.
+  // Le plafond de spread traverse TOUTES les mesures : le robot exporté le porte
+  // (InpSpreadFacteur), donc une mesure faite sans lui décrirait autre chose que ce
+  // que le robot exécute. Un seul endroit le pose, ici.
+  facteurSpread() {
+    const v = Number(this.state.gSpreadFacteur);
+    return Number.isFinite(v) && v >= 0 ? v : this.M.SPREAD_FACTEUR;
+  }
   mesurer(sym, cfg, ut, repli) {
     const h1 = this.serieH1(sym);
     const u = ut || this.state.ut;
-    if (!h1) return repli ? this.M.backtester(repli, cfg) : [];
-    return this.M.backtesterSuivi(h1, cfg, u);
+    const c = { ...cfg, spread_max_facteur: this.facteurSpread() };
+    if (!h1) return repli ? this.M.backtester(repli, c) : [];
+    return this.M.backtesterSuivi(h1, c, u);
   }
 
   // Fermeture ou rechargement de l'onglet. Un scan est une boucle qui vit dans la
@@ -8974,7 +8987,11 @@ GROUPES = {
           // l'unité de décision voyage avec la variante : le noyau en a besoin pour
           // savoir sur quelle bougie lire le signal, la H1 restant le pas de suivi
           ut: etatV.ut || this.state.ut,
-          cfg });
+          // le plafond de spread voyage AVEC la configuration : sans lui le scan
+          // mesurerait sans plafond tout en exportant des robots qui en portent un —
+          // c'est mot pour mot le défaut de gEchelles, une mesure qui décrit autre
+          // chose que ce que le robot exécute
+          cfg: { ...cfg, spread_max_facteur: this.facteurSpread() } });
       }
       this._grille = { periodes, sls, rrs };
       // le noyau reçoit la H1 : c'est le pas de suivi. `df` (agrégé) reste utilisé

@@ -11,6 +11,7 @@
  */
 import { genererMQ5, nomRobot } from "../../robot-mt5.js";
 import { PALIERS_REFERENCE } from "./references.mjs";
+import { SPREAD_FACTEUR } from "../../moteur.js";
 
 export function etatDepuisReference(ref) {
   const etat = { btBE: true, typeSecu: "be_progressif", btSens: ref.sens || "achat", btDureeMax: 0 };
@@ -39,6 +40,8 @@ export function genererRobot(ref, stamp) {
   const source = genererMQ5(cfg, {
     etat: etatDepuisReference(ref), stamp, magic: ref.magic,
     paliers: PALIERS_REFERENCE, spreadMaxPct: ref.spreadReleve,
+    // le plafond de spread doit être le MÊME que celui de la mesure
+    spreadFacteur: SPREAD_FACTEUR,
   });
   const ligne = source.match(/Filtres générés : (.*)/);
   const obtenu = (ligne ? ligne[1] : "").trim();

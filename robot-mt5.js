@@ -22,6 +22,10 @@ const ENTREES = {
 // tenkan et kijun sont le même calcul que mediane dans moteur.js (ligne() les regroupe).
 // Sans ces alias ils tombaient sur le repli 'EMA' et le robot traçait une autre ligne.
 const LIGNES = { ema: 'EMA', ma: 'SMA', mediane: 'MEDIANE', tenkan: 'MEDIANE', kijun: 'MEDIANE' };
+// Doit valoir SPREAD_FENETRE de moteur.js : c'est la même fenêtre de calcul des deux
+// côtés, sinon la médiane du spread diffère et le robot n'attend pas la même bougie.
+// scripts/mt5/robot-lignes.test.mjs vérifie l'égalité.
+export const SPREAD_FENETRE = 250 * 24;
 // secondes par bougie agrégée, sur la même horloge que le moteur
 const SECONDES = { H1: 3600, H4: 14400, D1: 86400, W1: 604800 };
 
@@ -92,6 +96,9 @@ export function genererMQ5(cfg, ctx = {}) {
   const paliers = (ctx.paliers && ctx.paliers.length ? ctx.paliers : []).slice(0, 3);
   const p = (i, j) => (paliers[i] ? nb(paliers[i][j], 0) : 0);
   const spreadMax = Math.max(0.01, nb(ctx.spreadMaxPct, 0.05));
+  // le facteur du plafond de spread : le MÊME que celui de la mesure, sinon le robot
+  // n'attend pas les mêmes bougies que le moteur et n'entre pas au même moment.
+  const facteurSpread = nb(ctx.spreadFacteur, 0).toFixed(2);
   // La mesure inscrite dans l'en-tête et dans le tableau de bord vient de la ligne validée.
   // Si elle a été produite sous une règle de moteur antérieure, le robot ne doit pas la
   // présenter comme sa référence : c'est ce chiffre que l'utilisateur compare à son vécu.
@@ -202,6 +209,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  Configuration   : ${esc(cfg.entree)} · ${esc(cfg.ligne)} ${periode} · stop ${sl} % · objectif ${rr} R
 //|  Filtres générés : ${resume.length ? esc(resume.join(' · ')) : 'aucun'}
 //|  Paliers         : ${paliers.length ? paliers.map((x) => x[0] + '→' + x[1]).join(' / ') : 'aucun'}
+//|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
 //|  Durée maximale  : ${nb(etat.btDureeMax, 0) > 0 ? nb(etat.btDureeMax, 0) + ' bougies H1' : 'aucune'}
 //|  Mesuré          : ${nb(cfg.n, 0)} trades · ${nb(cfg.total, 0)} R cumulés · ${nb(cfg.rAn, 0).toFixed(1)} R/an${mesureVieille ? ' — MESURE ANTÉRIEURE À LA RÈGLE ACTUELLE, à remesurer' : ''}
 //|  Contrôle hasard : ${esc(ctx.hasard || 'non contrôlé')}
@@ -227,10 +235,16 @@ export function genererMQ5(cfg, ctx = {}) {
 //--- Risque et exécution
 input double InpRisquePct       = 1.00;   // Risque par trade, en % du capital
 input int    InpTaillePolice    = 9;      // Taille du texte du tableau de bord
-// 0 = aucune limite. Le backtest compte déjà les frais relevés ; un plafond serré
-// rejetait les entrées justement quand le spread s'élargit à l'ouverture — 30 trades
-// perdus sur Spain35, tous des signaux valides.
-input double InpSpreadMaxPct    = 0;  // Spread maximum à l'entrée, % du prix (0 = pas de limite ; relevé : ${spreadMax.toFixed(4)})
+// Plafond de spread, en MULTIPLE de la normale récente — le port de seuilSpread()
+// (moteur.js). La médiane des ${SPREAD_FENETRE} dernières bougies H1, rafraîchie une fois par jour,
+// multipliée par ce facteur. Un plafond ABSOLU ne tenait pas : le spread s'élargit
+// d'année en année, donc un seuil figé finit par tout refuser ou ne plus rien refuser
+// (sur AUDCAD, la médiane de toute la série laisse passer 92 % des bougies de 2021 et
+// 0 % de celles de 2025). Ce qu'on refuse ici, c'est le PIC du rollover — trois à huit
+// fois la normale — et le signal n'est pas perdu : il attend la première bougie du même
+// jour qui repasse sous le plafond. 0 = aucune limite.
+input double InpSpreadFacteur    = ${facteurSpread};  // Plafond = ce facteur × médiane récente du spread (0 = pas de limite)
+input double InpSpreadMaxPct    = 0;  // Plafond ABSOLU en % du prix, s'ajoute au précédent (0 = pas de limite ; relevé : ${spreadMax.toFixed(4)})
 input int    InpMaxPositions    = 1;     // Positions simultanées sur cet instrument
 input bool   InpPasDebutSemaine = true;  // Interdire dimanche et les premières heures du lundi
 input int    InpSlippagePoints  = 20;    // Déviation maximale acceptée
@@ -247,6 +261,7 @@ input ulong  InpMagic           = ${nb(ctx.magic, 20260901)};
 #define PER_SIGNAL      ${periode}
 #define M_SIGNAL        ${mode === 'MEDIANE' ? 'M_MEDIANE' : mode === 'SMA' ? 'M_SMA' : 'M_EMA'}
 #define DUREE_MAX       ${nb(etat.btDureeMax, 0)}   // en bougies H1, comme le moteur
+#define SPREAD_FENETRE  ${SPREAD_FENETRE}   // bougies H1 servant à la médiane du spread
 // Paliers de sécurisation : en PARAMÈTRES et non en constantes, pour pouvoir les mettre
 // à zéro dans le testeur et voir ce que la sécurisation coûte ou rapporte, sans
 // recompiler. Les valeurs par défaut sont celles de la mesure : les changer rend le
@@ -586,6 +601,48 @@ ${tests.join('\n\n')}
 }
 
 //+------------------------------------------------------------------+
+//| Plafond de spread — port de seuilSpread() (moteur.js)             |
+//|  · médiane des SPREAD_FENETRE dernières bougies H1, en % du prix ;|
+//|  · rafraîchie UNE FOIS PAR JOUR, comme le moteur : à chaque tick  |
+//|    il faudrait retrier des milliers de valeurs, et surtout les    |
+//|    deux n'obtiendraient pas le même nombre au même moment ;       |
+//|  · le spread du fichier est en POINTS, le moteur le veut en % du  |
+//|    cours : c'est la clôture de CHAQUE bougie qui sert à convertir.|
+//+------------------------------------------------------------------+
+double   g_seuilSpread = 0.0;
+datetime g_seuilJour   = 0;
+
+double SeuilSpread()
+{
+   if(InpSpreadFacteur <= 0.0) return 0.0;
+
+   datetime maintenant = TimeCurrent();
+   datetime jour = maintenant - (maintenant % 86400);
+   if(jour == g_seuilJour) return g_seuilSpread;
+   g_seuilJour = jour;
+
+   int sp[]; double cl[];
+   // décalage 1 : la bougie en cours ne compte pas (invariant 2)
+   int nSp = CopySpread(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, sp);
+   int nCl = CopyClose(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, cl);
+   int n = MathMin(nSp, nCl);
+   if(n < 100) { g_seuilSpread = 0.0; return 0.0; }   // trop peu de relevés : pas de plafond
+
+   double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   double v[]; ArrayResize(v, n); int m = 0;
+   for(int i = 0; i < n; i++)
+   {
+      if(sp[i] <= 0 || cl[i] <= 0.0) continue;
+      v[m++] = sp[i] * point / cl[i] * 100.0;
+   }
+   if(m < 100) { g_seuilSpread = 0.0; return 0.0; }
+   ArrayResize(v, m);
+   ArraySort(v);
+   g_seuilSpread = v[m / 2] * InpSpreadFacteur;
+   return g_seuilSpread;
+}
+
+//+------------------------------------------------------------------+
 bool ExecutionAutorisee()
 {
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
@@ -597,6 +654,14 @@ bool ExecutionAutorisee()
    {
       Print("Entrée refusée : spread ", DoubleToString(spreadPct, 4), " % > ",
             DoubleToString(InpSpreadMaxPct, 4), " %");
+      return false;
+   }
+   double plafond = SeuilSpread();
+   if(plafond > 0.0 && spreadPct > plafond)
+   {
+      if(InpDiagnostic)
+         Print("Entrée en attente : spread ", DoubleToString(spreadPct, 4), " % > plafond ",
+               DoubleToString(plafond, 4), " % — on réessaie sur les bougies suivantes du jour");
       return false;
    }
 

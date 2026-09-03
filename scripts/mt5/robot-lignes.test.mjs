@@ -23,8 +23,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { chargerMoteur } from "./charger-moteur.mjs";
-import { genererMQ5 } from "../../robot-mt5.js";
+import { genererMQ5, SPREAD_FENETRE as SPREAD_FENETRE_ROBOT } from "../../robot-mt5.js";
 import { REFERENCES } from "./references.mjs";
+import { construireConfig } from "./config.mjs";
 import { etatDepuisReference, genererRobot } from "./etat-depuis-reference.mjs";
 
 const M = await chargerMoteur();
@@ -138,4 +139,73 @@ test("les huit références se régénèrent avec les filtres qu'elles déclaren
 test("un filtre non transposable est refusé au lieu d'être omis", () => {
   assert.throws(() => etatDepuisReference({ filtres: [{ type: "pivot", ut: "D1" }] }),
     /non transposé/);
+});
+
+test("le robot et le moteur partagent la même fenêtre de médiane du spread", () => {
+  // Deux fenêtres différentes donnent deux médianes, donc deux plafonds, donc deux
+  // bougies d'entrée. Le générateur ne peut pas importer moteur.js (il est autonome
+  // et chargé seul par l'application) : l'égalité se vérifie ici.
+  assert.equal(SPREAD_FENETRE_ROBOT, M.SPREAD_FENETRE);
+});
+
+test("le plafond de spread est écrit dans le robot, et le seuil est bien un multiple", () => {
+  const src = genererMQ5(CFG, { ...CTX, spreadFacteur: 1.5 });
+  assert.match(src, /input double InpSpreadFacteur\s+= 1\.50;/);
+  assert.match(src, /Plafond spread {2}: 1\.50 × médiane des 6000 dernières H1/);
+  // le seuil doit multiplier la médiane : l'oublier rendait le plafond quatre fois
+  // trop serré et faisait tomber AUDCAD de 46 à 28 trades
+  assert.match(src, /g_seuilSpread = v\[m \/ 2\] \* InpSpreadFacteur;/);
+  assert.match(src, /CopySpread\(_Symbol, PERIOD_H1, 1, SPREAD_FENETRE, sp\)/);
+  // sans facteur, aucun plafond
+  const sans = genererMQ5(CFG, { ...CTX, spreadFacteur: 0 });
+  assert.match(sans, /input double InpSpreadFacteur\s+= 0\.00;/);
+  assert.match(sans, /Plafond spread {2}: aucun/);
+});
+
+test("seuilSpread rend bien un multiple de la médiane, rafraîchi une fois par jour", () => {
+  // série H1 dont le spread vaut 1 partout SAUF à 00:00 où il vaut 10 : le pic du
+  // rollover, en caricature. Un plafond à 1,5× doit refuser 00:00 et accepter le reste.
+  const n = 24 * 400;
+  const t = [], c = [], sp = [];
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    c.push(100);
+    sp.push(new Date(t[i]).getUTCHours() === 0 ? 100 : 10);
+  }
+  const df = { n, t, o: c.slice(), h: c.slice(), l: c.slice(), c, sp, grain: { decimales: 4 } };
+  const seuil = M.seuilSpread(df, 1.5);
+  assert.ok(seuil, "aucun seuil calculé");
+  const pct = M.spreadEnPct(df);
+  const i = n - 5, minuit = n - new Date(df.t[n - 1]).getUTCHours() - 1;
+  assert.ok(pct[i] <= seuil[i], "une bougie de séance est refusée par le plafond");
+  assert.ok(pct[minuit] > seuil[minuit], "la bougie du rollover passe le plafond");
+  // rafraîchi une fois par jour : constant à l'intérieur d'une journée
+  const j0 = n - 24;
+  for (let k = j0; k < j0 + 24; k++) assert.equal(seuil[k], seuil[j0]);
+});
+
+test("le plafond décale l'entrée sans supprimer le signal quand une bougie passe", () => {
+  const n = 24 * 500;
+  const t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 100, a = 4242;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.004;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.001); l.push(Math.min(ouv, px) * 0.999);
+    sp.push(new Date(t[i]).getUTCHours() === 0 ? 100 : 10);
+  }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 0.5, rr: 2, paliers: [] });
+  const sans = M.backtesterSuivi(df, cfg, "D1");
+  const avec = M.backtesterSuivi(df, { ...cfg, spread_max_facteur: 1.5 }, "D1");
+  assert.ok(sans.length > 20, "gabarit sans trades : test sans portée");
+  assert.ok(sans.some((x) => new Date(x.entree_t).getUTCHours() === 0),
+    "sans plafond, aucune entrée à 00:00 : le gabarit ne prouve rien");
+  assert.equal(avec.filter((x) => new Date(x.entree_t).getUTCHours() === 0).length, 0,
+    "avec plafond, une entrée tombe encore sur la bougie du rollover");
+  // le signal est décalé, pas perdu : ici une bougie de séance existe chaque jour
+  assert.equal(avec.length, sans.length, "le plafond a supprimé des trades au lieu de les décaler");
 });
