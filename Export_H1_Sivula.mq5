@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|  Export_H1_Sivula.mq5                                            |
-//|  Écrit l'historique H1 du symbole du graphique dans un CSV lu     |
-//|  par Sivula, AVEC la colonne de spread.                           |
+//|  Écrit l'historique H1 dans un CSV lu par Sivula, AVEC la         |
+//|  colonne de spread. Un fichier par symbole, dans MQL5/Files.      |
 //|                                                                   |
 //|  Le spread écrit est celui de la bougie M1 qui OUVRE l'heure —    |
 //|  pas le champ spread de la bougie H1. Les deux diffèrent, et le   |
@@ -13,21 +13,30 @@
 //|  rollover. Or c'est à l'ouverture de la bougie que l'ordre part : |
 //|  c'est ce spread-là que la mesure doit payer, et celui-là seul    |
 //|  que le robot peut retrouver. Avec l'ancienne colonne, aucun      |
-//|  réglage ne pouvait faire coïncider Sivula et le testeur.         |
+//|  réglage ne pouvait faire coïncider Sivula et le testeur ; avec   |
+//|  celle-ci, AUDCAD s'apparie à 43 entrées sur 44.                  |
 //|                                                                   |
-//|  Utilisation : glisser sur le graphique, une fois par symbole.    |
-//|  Le fichier atterrit dans MQL5/Files du terminal.                 |
+//|  UTILISATION                                                      |
+//|  Glissez le script sur n'importe quel graphique. L'unité de temps |
+//|  affichée n'a aucune importance : H1 et M1 sont demandées         |
+//|  explicitement, quel que soit le graphique.                       |
+//|  Laissez InpSymboles vide pour n'exporter que le symbole du       |
+//|  graphique, ou listez-en autant que vous voulez, séparés par des  |
+//|  virgules — ils seront traités à la suite, sans autre manipulation.|
 //+------------------------------------------------------------------+
 #property script_show_inputs
 #property strict
 
+// Vide = le symbole du graphique. Sinon une liste : "AUDCAD,GOLD,NZDCAD".
+// Les symboles absents de l'Observation du marché y sont ajoutés automatiquement.
+input string   InpSymboles  = "";             // Symboles (vide = celui du graphique)
 // UN AN AVANT le début de la mesure, pas le début lui-même. Le moteur a besoin de
 // 400 jours d'amorce (AMORCE_JOURS) pour ses agrégats, et la médiane du spread porte
 // sur les 6000 dernières bougies H1 — environ 250 séances. Exporter à partir de la
 // date de test donne un moteur sans amorce : plafond de spread inactif au début, et
 // lignes de référence fausses tant que le tampon n'est pas rempli.
-input datetime InpDu       = D'2019.01.01';  // Depuis (≈ 1 an AVANT le début du test)
-input int      InpMaxBarres = 200000;         // Bougies maximum
+input datetime InpDu        = D'2019.01.01';  // Depuis (≈ 1 an AVANT le début du test)
+input int      InpMaxBarres = 200000;         // Bougies maximum par fichier
 // Sept ans de M1 = plusieurs millions de barres : sur un VPS à ligne lente le
 // téléchargement prend des minutes. Augmentez si le script rend la main trop tôt.
 input int      InpAttenteSec = 1800;          // Attente max du téléchargement, par unité (s)
@@ -45,7 +54,8 @@ input int      InpAttenteSec = 1800;          // Attente max du téléchargement
 //| maintenant. Chaque palier oblige le terminal à remonter d'un cran |
 //| et à réclamer le morceau manquant au serveur.                     |
 //+------------------------------------------------------------------+
-bool AttendreHistorique(ENUM_TIMEFRAMES tf, string nomTf, datetime depuis, int secondesMax)
+bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
+                        datetime depuis, int secondesMax)
 {
    uint fin = GetTickCount() + (uint)secondesMax * 1000;
    datetime premiere = 0;
@@ -54,87 +64,86 @@ bool AttendreHistorique(ENUM_TIMEFRAMES tf, string nomTf, datetime depuis, int s
 
    while(GetTickCount() < fin && !IsStopped())
    {
-      premiere = (datetime)SeriesInfoInteger(_Symbol, tf, SERIES_FIRSTDATE);
+      premiere = (datetime)SeriesInfoInteger(sym, tf, SERIES_FIRSTDATE);
       if(premiere > 0 && premiere <= depuis
-         && (bool)SeriesInfoInteger(_Symbol, tf, SERIES_SYNCHRONIZED))
+         && (bool)SeriesInfoInteger(sym, tf, SERIES_SYNCHRONIZED))
       {
-         PrintFormat("%s : historique complet depuis %s.", nomTf, TimeToString(premiere, TIME_DATE));
+         PrintFormat("%s %s : historique complet depuis %s.", sym, nomTf,
+                     TimeToString(premiere, TIME_DATE));
          return true;
       }
 
       // demande par le nombre, pas par la date : c'est ce qui fait remonter la base
       datetime t[];
-      int lu = CopyTime(_Symbol, tf, 0, paliers[p], t);
-      PrintFormat("%s : %d barres demandées, %d reçues — plus ancienne : %s",
-                  nomTf, paliers[p], lu,
+      int lu = CopyTime(sym, tf, 0, paliers[p], t);
+      PrintFormat("%s %s : %d barres demandées, %d reçues — plus ancienne : %s",
+                  sym, nomTf, paliers[p], lu,
                   premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune");
 
       // le palier a porté ses fruits : on garde le même tant qu'il progresse
       if(lu >= paliers[p] && p < ArraySize(paliers) - 1) p++;
       Sleep(3000);
    }
-   PrintFormat("%s : ARRÊT après %d s. Plus ancienne barre : %s, demandé : %s. "
+   PrintFormat("%s %s : ARRÊT après %d s. Plus ancienne barre : %s, demandé : %s. "
                "Augmentez InpAttenteSec, ou passez par Affichage > Symboles (Ctrl+U), "
                "onglet Barres, période %s, et cliquez Demander.",
-               nomTf, secondesMax,
+               sym, nomTf, secondesMax,
                premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune",
                TimeToString(depuis, TIME_DATE), nomTf);
    return false;
 }
 
-void OnStart()
+//+------------------------------------------------------------------+
+//| Exporte un symbole. Rend false si rien n'a pu être écrit.         |
+//+------------------------------------------------------------------+
+bool Exporter(string sym)
 {
-   // Le plafond « Barres max dans le graphique » borne aussi l'HISTORIQUE que le
-   // terminal conserve, pas seulement l'affichage. À 50 000, CopyTime rend 50 009
-   // barres quoi qu'on demande et la plus ancienne date ne recule jamais — la boucle
-   // tourne alors indéfiniment sans que rien n'indique pourquoi. Observé sur le VPS.
-   long maxBarres = TerminalInfoInteger(TERMINAL_MAXBARS);
-   long besoin = (TimeCurrent() - InpDu) / 60;   // ordre de grandeur en barres M1
-   if(maxBarres < besoin)
+   if(!SymbolSelect(sym, true))
    {
-      PrintFormat("ARRÊT : « Barres max dans le graphique » vaut %I64d, il en faut environ "
-                  "%I64d pour couvrir la M1 depuis %s.", maxBarres, besoin,
-                  TimeToString(InpDu, TIME_DATE));
-      Print("Outils > Options > Graphiques > « Barres max dans le graphique » = Illimité, "
-            "PUIS REDÉMARREZ le terminal : le réglage ne s'applique à l'historique déjà "
-            "chargé qu'au démarrage. Relancez ce script ensuite.");
-      return;
+      PrintFormat("%s : symbole inconnu du courtier — vérifiez l'orthographe exacte "
+                  "dans l'Observation du marché (certains portent un « # »).", sym);
+      return false;
    }
 
-   // L'ordre compte : la M1 est la plus longue à venir, on la lance en premier.
-   PrintFormat("%s : demande de l'historique depuis %s. Laissez le script travailler.",
-               _Symbol, TimeToString(InpDu, TIME_DATE));
-   AttendreHistorique(PERIOD_M1, "M1", InpDu, InpAttenteSec);
-   AttendreHistorique(PERIOD_H1, "H1", InpDu, InpAttenteSec);
+   PrintFormat("%s : demande de l'historique depuis %s.", sym, TimeToString(InpDu, TIME_DATE));
+   AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec);
+   AttendreHistorique(sym, PERIOD_H1, "H1", InpDu, InpAttenteSec);
 
    MqlRates r[];
    ArraySetAsSeries(r, false);
-   int n = CopyRates(_Symbol, PERIOD_H1, InpDu, TimeCurrent(), r);
+   int n = CopyRates(sym, PERIOD_H1, InpDu, TimeCurrent(), r);
    if(n <= 0)
    {
-      Print("Aucune bougie H1 depuis ", TimeToString(InpDu),
-            ". Vérifiez que le symbole est dans l'Observation du marché, puis relancez ; "
-            "si le message « historique incomplet » est apparu, augmentez InpAttenteSec.");
-      return;
+      PrintFormat("%s : aucune bougie H1 depuis %s. Si « historique incomplet » est "
+                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(InpDu, TIME_DATE));
+      return false;
    }
    if(n > InpMaxBarres) n = InpMaxBarres;
 
-   string nom = _Symbol + "_H1.csv";
+   // Le « # » de certains symboles (#Japan225) n'est pas valide dans un nom de fichier
+   // sur tous les systèmes, et Sivula reconnaît l'instrument sans lui.
+   string propre = sym;
+   StringReplace(propre, "#", "");
+   string nom = propre + "_H1.csv";
    int f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
-   if(f == INVALID_HANDLE) { Print("Écriture impossible : ", GetLastError()); return; }
+   if(f == INVALID_HANDLE)
+   {
+      PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
+      return false;
+   }
 
-   int dec = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+   int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
    FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
    MqlRates m1[];
    ArraySetAsSeries(m1, false);
-   int nM1 = CopyRates(_Symbol, PERIOD_M1, InpDu, TimeCurrent(), m1);
+   int nM1 = CopyRates(sym, PERIOD_M1, InpDu, TimeCurrent(), m1);
    if(nM1 <= 0)
-      Print("Aucune bougie M1 : le spread écrit sera celui de la H1 — la valeur agrégée, "
-            "deux fois trop haute en séance et deux fois trop basse au rollover. "
-            "Augmentez InpAttenteSec et relancez plutôt que d'exporter ainsi.");
+      PrintFormat("%s : aucune bougie M1 — le spread écrit sera celui de la H1, la valeur "
+                  "agrégée, deux fois trop haute en séance et deux fois trop basse au "
+                  "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
    int sansSpread = 0, sansM1 = 0, iM1 = 0;
    for(int i = 0; i < n; i++)
@@ -157,26 +166,76 @@ void OnStart()
    }
    FileClose(f);
 
+   PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s — de %s à %s",
+               sym, n, nom,
+               TimeToString(r[0].time, TIME_DATE),
+               TimeToString(r[n - 1].time, TIME_DATE));
+   PrintFormat("%s : plus ancienne barre — H1 %s | M1 %s", sym,
+               TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
+               TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
+
    // Une M1 manquante n'est pas neutre : la bougie retombe sur le spread agrégé de la
    // H1, et Sivula n'entrera pas au même moment que le robot sur cette bougie-là.
    if(sansM1 > 0)
-      PrintFormat("Attention : %d bougies sur %d sans M1 correspondante (%.0f %%) — "
-                  "spread de la H1 utilisé pour celles-ci. Faites défiler le graphique "
-                  "M1 vers la gauche pour charger tout l'historique, puis relancez.",
-                  sansM1, n, 100.0 * sansM1 / n);
-
-   PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s — de %s à %s",
-               _Symbol, n, nom,
-               TimeToString(r[0].time, TIME_DATE),
-               TimeToString(r[n - 1].time, TIME_DATE));
-   PrintFormat("Plus ancienne barre disponible — H1 : %s | M1 : %s",
-               TimeToString((datetime)SeriesInfoInteger(_Symbol, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
-               TimeToString((datetime)SeriesInfoInteger(_Symbol, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
+      PrintFormat("%s : ATTENTION %d bougies sur %d sans M1 correspondante (%.1f %%) — "
+                  "spread de la H1 pour celles-ci.", sym, sansM1, n, 100.0 * sansM1 / n);
    // Un spread à zéro n'est pas un spread nul : c'est un historique importé par le
    // courtier sans cette information. Sivula le détecte et retombe sur le relevé, mais
    // autant le savoir tout de suite plutôt que de croire la série complète.
    if(sansSpread > 0)
-      PrintFormat("Attention : %d bougies sur %d n'ont pas de spread (%.0f %%). "
-                  "Sivula utilisera le spread du relevé sur cette partie.",
-                  sansSpread, n, 100.0 * sansSpread / n);
+      PrintFormat("%s : ATTENTION %d bougies sur %d sans spread (%.1f %%) — Sivula "
+                  "utilisera le spread du relevé sur cette partie.",
+                  sym, sansSpread, n, 100.0 * sansSpread / n);
+   return true;
+}
+
+void OnStart()
+{
+   // Le plafond « Barres max dans le graphique » borne aussi l'HISTORIQUE que le
+   // terminal conserve, pas seulement l'affichage. À 50 000, CopyTime rend 50 009
+   // barres quoi qu'on demande et la plus ancienne date ne recule jamais — la boucle
+   // tourne alors indéfiniment sans que rien n'indique pourquoi. Observé sur le VPS.
+   long maxBarres = TerminalInfoInteger(TERMINAL_MAXBARS);
+   long besoin = (TimeCurrent() - InpDu) / 60;   // ordre de grandeur en barres M1
+   if(maxBarres < besoin)
+   {
+      PrintFormat("ARRÊT : « Barres max dans le graphique » vaut %I64d, il en faut environ "
+                  "%I64d pour couvrir la M1 depuis %s.", maxBarres, besoin,
+                  TimeToString(InpDu, TIME_DATE));
+      Print("Outils > Options > Graphiques > « Barres max dans le graphique » = Illimité, "
+            "PUIS REDÉMARREZ le terminal : le réglage ne s'applique à l'historique déjà "
+            "chargé qu'au démarrage. Relancez ce script ensuite.");
+      return;
+   }
+
+   string liste = InpSymboles;
+   StringTrimLeft(liste);
+   StringTrimRight(liste);
+   string syms[];
+   if(StringLen(liste) == 0)
+   {
+      ArrayResize(syms, 1);
+      syms[0] = _Symbol;
+   }
+   else
+   {
+      // virgules, points-virgules ou espaces : on accepte les trois, c'est une saisie
+      StringReplace(liste, ";", ",");
+      StringReplace(liste, " ", ",");
+      int k = StringSplit(liste, ',', syms);
+      if(k <= 0) { Print("Liste de symboles vide après nettoyage."); return; }
+   }
+
+   int faits = 0, rates = 0;
+   for(int i = 0; i < ArraySize(syms); i++)
+   {
+      string s = syms[i];
+      StringTrimLeft(s); StringTrimRight(s);
+      if(StringLen(s) == 0) continue;
+      if(IsStopped()) { Print("Interrompu."); break; }
+      PrintFormat("──── %s (%d/%d) ────", s, i + 1, ArraySize(syms));
+      if(Exporter(s)) faits++; else rates++;
+   }
+   PrintFormat("TERMINÉ : %d fichier(s) écrit(s), %d échec(s). Dossier : MQL5/Files.",
+               faits, rates);
 }
