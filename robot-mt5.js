@@ -1165,6 +1165,8 @@ bool Entrer()
    if(risque < minDist)
    {
       Print("Entrée refusée : stop sous le minimum courtier");
+      g_confRefus = StringFormat("stop %s < minimum courtier %s",
+                    DoubleToString(risque, _Digits), DoubleToString(minDist, _Digits));
       return false;
    }
 
@@ -1172,6 +1174,9 @@ bool Entrer()
    if(lots <= 0.0)
    {
       Print("Entrée refusée : volume calculé nul (risque trop faible pour le lot minimum)");
+      g_confRefus = StringFormat("volume nul (lot min %s, valeur du tick %s)",
+                    DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN), 2),
+                    DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE), 5));
       return false;
    }
 
@@ -1182,7 +1187,16 @@ bool Entrer()
 #endif
    {
       Print("Ordre refusé : ", trade.ResultRetcodeDescription(), " — signal gardé en attente");
-      g_confRefus = "ordre refusé : " + trade.ResultRetcodeDescription();
+      // Les PRIX comptent autant que le motif : « invalid stops » ne dit pas si c'est la
+      // distance, le côté, ou un pas de cotation non respecté. Sans eux, le journal
+      // nomme le refus sans permettre de le reproduire.
+      g_confRefus = StringFormat("ordre refusé %d %s : prix=%s stop=%s objectif=%s lots=%s "
+                    "minCourtier=%s pasVolume=%s",
+                    trade.ResultRetcode(), trade.ResultRetcodeDescription(),
+                    DoubleToString(prix, _Digits), DoubleToString(stop, _Digits),
+                    DoubleToString(objectif, _Digits), DoubleToString(lots, 2),
+                    DoubleToString(minDist, _Digits),
+                    DoubleToString(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP), 2));
       return false;
    }
    // E = entrée effective : la bougie H1 visée, puis l'instant réel du fill.

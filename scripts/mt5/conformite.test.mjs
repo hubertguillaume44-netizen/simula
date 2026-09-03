@@ -253,3 +253,28 @@ test("le moteur n'entre jamais hors séance", () => {
   }
   assert.ok(sans.length >= avec.length);
 });
+
+test("tout refus d'entrée porte un motif", () => {
+  // Sur BITCOIN, 1097 tentatives sur 2866 étaient journalisées SANS motif : les chemins
+  // « volume nul » et « stop sous le minimum courtier » de Entrer() ne renseignaient pas
+  // g_confRefus. Le journal disait qu'il n'y avait pas eu d'entrée sans dire pourquoi,
+  // sur plus d'un tiers des cas — donc sans permettre de conclure.
+  const ref = REFERENCES.find((r) => r.sym === "BITCOIN");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260904_TEST", magic: 1, paliers: [], spreadFacteur: 1.5 },
+  );
+  const entrer = src.slice(src.indexOf("bool Entrer()"), src.indexOf("void OnTick()"));
+  // chaque « return false » de Entrer() doit être précédé d'une affectation du motif
+  const retours = entrer.split("return false;");
+  assert.ok(retours.length > 3, "moins de trois chemins d'échec : le test ne couvre rien");
+  for (let i = 0; i < retours.length - 1; i++) {
+    assert.match(retours[i], /g_confRefus = /,
+      `un chemin d'échec de Entrer() ne renseigne pas le motif (bloc ${i + 1})`);
+  }
+  // et le refus du courtier doit porter les prix, pas seulement le libellé
+  assert.match(entrer, /trade\.ResultRetcode\(\)/, "le code de retour du courtier n'est pas journalisé");
+  assert.match(entrer, /prix=%s stop=%s objectif=%s/,
+    "les prix tentés ne sont pas journalisés : « invalid stops » resterait inexploitable");
+});
