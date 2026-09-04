@@ -9813,21 +9813,46 @@ GROUPES = {
       const t = o.x.tirages;
       const passe5 = c5.k > 0 && o.rang <= c5.k;
       const passe1 = c1.k > 0 && o.rang <= c1.k;
-      // Plancher de résolution : avec t tirages un p ne descend pas sous 1/t. Une ligne
-      // qui échoue ALORS QU'ELLE EST DÉJÀ AU PLANCHER n'a pas été jugée — le calcul ne
-      // permet pas de dire « dans le bruit », seulement « pas tranchable ».
-      const indecidable = !passe5 && o.p <= 1 / t && (1 / m) * 0.05 < 1 / t;
-      const statut = passe1 ? 'net' : passe5 ? 'reel' : indecidable ? 'indecidable'
+      // DEUX raisons de ne pas pouvoir juger une ligne, et la seconde manquait.
+      //
+      // 1. Le plancher de résolution : avec t tirages, un p ne descend pas sous 1/t. Une
+      //    ligne qui échoue ALORS QU'ELLE EST DÉJÀ AU PLANCHER n'a pas été jugée.
+      //
+      // 2. LA PRÉCISION DU TIRAGE. Un p mesuré par simulation est lui-même une variable
+      //    aléatoire : sur t tirages, p̂ = k/t a un écart-type de √(p(1−p)/t). À 550
+      //    tirages et p̂ ≈ 1,3 %, cet écart-type vaut 0,5 % — la moitié de la mesure. La
+      //    barre à franchir, elle, vaut 0,71 % ou 1,43 % selon le RANG de la ligne. Une
+      //    ligne dont l'intervalle de confiance chevauche sa barre n'est pas jugée : elle
+      //    est tirée à pile ou face.
+      //
+      //    Vu sur US30, deux contrôles de la même configuration : 11 tirages sur 850
+      //    (1,29 %) → « se distingue », puis 7 sur 550 (1,27 %) → « douteux ». Le p n'a
+      //    pas bougé ; c'est le rang qui a changé, donc la barre, parce que la ligne
+      //    voisine est passée de 1,18 % à 1,45 % — un tirage d'écart. Prononcer un
+      //    verdict là-dessus, c'est présenter du bruit de simulation comme une mesure.
+      const barre = (o.rang / m) * 0.05;
+      // écart-type de p̂, pris à la barre : c'est là que la décision se joue
+      const et = Math.sqrt(Math.max(barre, 1 / t) * (1 - barre) / t);
+      const troublePres = Math.abs(o.p - barre) < 2 * et;
+      const indecidable = !passe1 && (
+        (!passe5 && o.p <= 1 / t && (1 / m) * 0.05 < 1 / t) || troublePres);
+      const statut = passe1 ? 'net' : (passe5 && !troublePres) ? 'reel'
+        : indecidable ? 'indecidable'
         : o.p <= 0.2 ? 'douteux' : 'bruit';
+      // Combien de tirages il FAUDRAIT pour trancher cette barre-là. On veut que deux
+      // écarts-types tiennent dans la moitié de la barre : t ≥ 16 (1−b) / b.
+      const tiragesPour = Math.ceil((16 * (1 - barre)) / Math.max(barre, 1e-6) / 50) * 50;
       // ce qu'elle aurait valu seule, pour dire ce que la correction a coûté
       const seule = o.p <= 0.01 ? 'net' : o.p <= 0.05 ? 'reel' : o.p <= 0.2 ? 'douteux' : 'bruit';
-      carte.set(o.x, { p: o.p, m, rang: statut, statut, rangBH: o.rang,
+      carte.set(o.x, { p: o.p, m, rang: statut, statut, rangBH: o.rang, tirages: t,
         // la barre que CETTE ligne devait franchir, à son rang : (rang / m) × q.
         // Afficher le seuil du rang de coupe la sous-estimait pour tout rang supérieur,
         // et lui reprochait d'avoir manqué une barre qui n'était pas la sienne.
-        seuil: ((o.rang) / m) * 0.05, seuilNet: ((o.rang) / m) * 0.01, indecidable, seule,
+        seuil: barre, seuilNet: ((o.rang) / m) * 0.01, indecidable, seule, troublePres,
         perdu: !passe5 && (seule === 'net' || seule === 'reel'),
-        tiragesNec: Math.ceil(m / 0.05), pool });
+        // Le nombre de tirages annoncé est celui qui TRANCHE, pas celui qui permet
+        // simplement d'atteindre la barre : `m / 0.05` ne garantissait que la résolution.
+        tiragesNec: Math.max(Math.ceil(m / 0.05), tiragesPour), pool });
     }
     this._bhSig = sig; this._bhVal = carte;
     return carte;
@@ -12202,8 +12227,17 @@ GROUPES = {
                 : rang === 'reel' ? 'se distingue' : rang === 'douteux' ? 'douteux' : 'dans le bruit',
               // ce que la correction a changé, et ce qu'elle ne corrige pas
               corrTxt: !r ? '' : r.statut === 'indecidable'
-                ? 'pas tranchable : ' + r.m + ' tests simultanés demandent '
-                  + r.tiragesNec.toLocaleString('fr-FR') + ' tirages'
+                // Deux raisons de ne pas trancher, et il faut les distinguer : l'une dit
+                // que le tirage ne descend pas assez bas, l'autre qu'il est trop bruité
+                // pour départager. La seconde est la plus fréquente et la plus trompeuse,
+                // parce que le chiffre a l'air net — 1 %, sur 550 tirages, plus ou moins
+                // un demi-point.
+                ? (r.troublePres
+                    ? 'pas tranchable : ' + pct(r.p) + ' contre une barre à ' + pct(r.seuil)
+                      + ', à ' + r.tirages.toLocaleString('fr-FR') + ' tirages près — il en '
+                      + 'faudrait ' + r.tiragesNec.toLocaleString('fr-FR')
+                    : 'pas tranchable : ' + r.m + ' tests simultanés demandent '
+                      + r.tiragesNec.toLocaleString('fr-FR') + ' tirages')
                 : r.statut === 'net' || r.statut === 'reel'
                   ? 'tient parmi ' + r.m + ' tests simultanés (barre ' + pct(r.seuil) + ')'
                   : r.perdu
