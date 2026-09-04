@@ -3052,6 +3052,7 @@
           <span style="font-size:14px" class="text-muted">en {{ btN }} trades, sur {{ btAnnees }}</span>
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
+          <span class="tag {{ btBandeTag }}" title="Le total affiché est celui d'UNE lecture. L'autre lecture existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : confronté au testeur sur GOLD sans palier, le moteur rend 73,4 contre 73,1. Une bande large ne l'est pas : sur la même série AVEC paliers elle vaut 80 R, et il n'y a pas de chiffre unique à annoncer.">{{ btBande }}</span>
           <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
           <span style="display:block;font-size:12px;opacity:.85" title="Résultat moyen par jour de la semaine, et verdict : un jour ne vaut d'être filtré que s'il s'écarte du hasard ET que son classement tient sur la seconde moitié de l'historique. Mesuré sur six configurations dont deux à plus de 500 trades, aucun jour ne passe ce double test.">{{ quandTxt }}</span>
           <span style="display:block;font-size:12px;color:var(--color-accent-700)" title="Une sortie qui repose sur un palier armé dans la bougie même où elle tombe : le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors optimiste. Confronté douze fois au testeur MT5, une configuration sans aucune sortie exposée rend son chiffre exact aux frais près.">{{ btExposes }}</span>
@@ -3470,7 +3471,7 @@ const moisAn = (ms) => {
 class Component extends DCLogic {
   state = { tab: 'accueil', layout: null, montant: null, capital: 76020, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
-    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '',
+    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '', bande: null,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
     fPente: false, fPenteRecul: 3, fPivot: false, regime: null, regimeEnCours: false,
     zoneMarche: 'us', regimes: {}, regimeZone: null, symOuvert: null, symTout: null, triCumul: 'total',
@@ -7375,10 +7376,21 @@ GROUPES = {
     const res = this.M.resume(trades);
     const seg = this.M.segments(trades, 5);
     const courbe = this.M.courbe(trades);
+    // LA BANDE, calculée à chaque test et non plus seulement au scan. Le total affiché
+    // est celui d'UNE lecture ; l'autre existe toujours, et c'est l'écart entre les deux
+    // qui dit ce que MT5 peut rendre. Le taire revenait à présenter un pari comme un
+    // chiffre : sur GOLD à paliers la bande vaut 80 R pour un total de 37, et le testeur
+    // tombe à 34,5. Sans palier elle vaut 0,0 et le testeur rend le chiffre exact.
+    const jumelle = this.mesurer(this.state.btSym,
+      { ...cfg, sortie: { ...cfg.sortie, prudent: !cfg.sortie.prudent } }, this.state.ut, df);
+    const totNet = (a) => a.reduce((x, t) => x + (t.R_net !== undefined ? t.R_net : t.R), 0);
+    const a = totNet(trades), b = totNet(jumelle);
+    const bande = { bas: Math.min(a, b), haut: Math.max(a, b), largeur: Math.abs(a - b),
+      indecidables: trades.filter((t) => t.ambigu).length, n: trades.length };
     // gardés hors état : la comparaison au robot MT5 en a besoin, un setState de plus
     // relancerait un rendu à chaque backtest sans rien changer à l'écran
     this._tradesBt = trades;
-    this.setState({ res, seg, courbe, nTrades: trades.length, signature: sig },
+    this.setState({ res, seg, courbe, bande, nTrades: trades.length, signature: sig },
       () => this.ecrireSession());
   }
 
@@ -12702,6 +12714,16 @@ GROUPES = {
       // celles qui en portent 15 à 16 % dérivent de 12 et 17 R. Le scan cherchant le
       // meilleur résultat sélectionne justement les configurations qui exploitent ce
       // biais : ne pas l'afficher, c'est le laisser choisir à l'aveugle.
+      // Le verdict le plus important de la page : ce chiffre est-il un chiffre, ou un
+      // pari ? Il se lit à côté du total, pas au fond d'une aide.
+      btBande: (() => {
+        const b = s.bande;
+        if (!b || !b.n) return '';
+        if (b.largeur < 0.05) return 'chiffre exact — les deux lectures s\u2019accordent';
+        return 'bande ' + fr(b.bas, 1) + ' … ' + fr(b.haut, 1) + ' R (largeur ' + fr(b.largeur, 1)
+          + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas';
+      })(),
+      btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
       btExposes: res ? (res.exposes
         ? Math.round(res.exposes / Math.max(1, res.n) * 100) + ' % des sorties reposent sur un palier armé dans leur propre bougie ('
           + res.exposes + ' sur ' + res.n + ') : sur celles-là le prix a pu repasser une seconde fois par le niveau, et le résultat est optimiste d\u2019autant'
