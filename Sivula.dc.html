@@ -3055,6 +3055,9 @@
           <span style="font-size:14px" class="text-muted">en {{ btN }} trades, sur {{ btAnnees }}</span>
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
+          <sc-if value="{{ btVarianteRatee }}" hint-placeholder-val="{{ false }}">
+            <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600" title="La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres ci-dessous décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.">Condition de la ligne NON restaurée — ces chiffres ne sont pas ceux de la ligne</span>
+          </sc-if>
           <span class="tag {{ btBandeTag }}" title="Le total affiché est celui d'UNE lecture. L'autre lecture existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : confronté au testeur sur GOLD sans palier, le moteur rend 73,4 contre 73,1. Une bande large ne l'est pas : sur la même série AVEC paliers elle vaut 80 R, et il n'y a pas de chiffre unique à annoncer.">{{ btBande }}</span>
           <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
           <span style="display:block;font-size:12px;opacity:.85" title="Résultat moyen par jour de la semaine, et verdict : un jour ne vaut d'être filtré que s'il s'écarte du hasard ET que son classement tient sur la seconde moitié de l'historique. Mesuré sur six configurations dont deux à plus de 500 trades, aucun jour ne passe ce double test.">{{ quandTxt }}</span>
@@ -3503,7 +3506,7 @@ class Component extends DCLogic {
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
     btSym: null, reglagesOuverts: false, venuDeHisto: null, univers: [],
-    res: null, seg: null, courbe: [], scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
+    res: null, seg: null, courbe: [], varianteRatee: false, scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
     tradesMin: 40, segMin: 3, marche: null, tri: 'total', erreur: null, recherche: '', parSymbole: 1,
     deposes: [], survol: false, messageDepot: null, spreadSaisi: null, swapSaisi: null,
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
@@ -8794,7 +8797,7 @@ GROUPES = {
     const rejoue = !!(this.state.rejeu && this.state.rejeu[this.cleConfig(r)]);
     // Photo des réglages prise à la validation : rien à retrouver, rien à deviner.
     if (!rejoue && r._reg) {
-      const suite = { ...this.state, ...r._reg, ...(forcage || {}), vue: 'backtest', venuDeHisto: r.sym,
+      const suite = { ...this.state, ...r._reg, ...(forcage || {}), varianteRatee: false, vue: 'backtest', venuDeHisto: r.sym,
         btSym: r.sym, btPeriode: r.periode, btSL: r.sl, btRR: r.rr,
         btEntree: r.entree || r._reg.btEntree, btLigne: r.ligne || r._reg.btLigne };
       const fin = { ...this.state, ...suite };
@@ -8834,6 +8837,14 @@ GROUPES = {
       const essais = [];
       if (arch) essais.push(arch);
       for (const a2 of this.state.archives || []) if (a2 !== arch) essais.push(a2);
+      // Puis les scans ENREGISTRÉS. « Scans en mémoire » est plafonné et se vide d'une
+      // session à l'autre ; l'historique, lui, dure. Une ligne rouverte des mois plus tard
+      // doit retrouver sa variante, sinon le backtest s'ouvre sans son filtre.
+      try {
+        for (const run of this.lireRuns()) {
+          if (run && run.type === 'scan' && (run.reglages || run.plan)) essais.push(run);
+        }
+      } catch (e) { /* historique illisible : on se contente des archives */ }
       for (const a2 of essais) {
         const base = this.etatDeReference({ ...this.state, ...(a2 === arch ? g : {}) });
         if (a2 && a2.reglages) {
@@ -8875,6 +8886,9 @@ GROUPES = {
       btLigne: r.ligne || gUtil.btLigne || this.state.btLigne };
     const etatFinal = { ...this.state, ...suite };
     this.setState({ ...suite,
+      // la variante n'a pas été retrouvée alors que la ligne en portait une : les chiffres
+      // qui vont s'afficher ne décrivent PAS la ligne cliquée, et il faut le dire fort
+      varianteRatee: !rejoue && !patchV && !!(r.filtre || r.filtreNom),
       reglagesRejoues: (forcage && forcage.secuPrudent)
         ? (patchV
           ? 'Même configuration que la ligne, mais en LECTURE BASSE : les bougies ambiguës sont tranchées contre vous. Comparez le R obtenu à celui de l\u2019historique — l\u2019écart est la part du résultat qui dépend de l\u2019ordre des mouvements à l\u2019intérieur d\u2019une bougie.'
@@ -9899,6 +9913,17 @@ GROUPES = {
     for (const k of this.REGLAGES) reglages[k] = s[k];
     const run = { id: Date.now(), type: 'scan', date: new Date().toISOString(),
       fiche: s.fiche, testees: s.scanTestes, retenues: garde.length, top: garde, reglages,
+      // Le PLAN de balayage, comme dans « Scans en mémoire ».
+      //
+      // Sans lui, rouvrir une ligne de l'historique dans le backtest ne peut pas
+      // reconstruire sa variante : `conditionsBalayees` a besoin des périodes, des lignes
+      // et des reculs balayés pour retrouver « Tendance supérieure Médiane · 10 ». Le
+      // backtest s'ouvrait alors SANS le filtre de la ligne, sous le même intitulé et
+      // avec d'autres chiffres — 165 trades et +65,7 R là où la ligne annonçait 117
+      // trades et +57,7 R. Les réglages seuls ne suffisent pas : `lancerScan` y éteint
+      // justement filtres, sécurisation, sens et lecture, puisque ce sont les variantes
+      // qui les rallument.
+      plan: (() => { const g = {}; for (const k of this.CHAMPS_PLAN) g[k] = s[k]; return g; })(),
       mv: this.MOTEUR_V };
     this.ecrireRuns([run, ...this.lireRuns()]);
   }
@@ -12761,6 +12786,11 @@ GROUPES = {
           + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas' + vieux;
       })(),
       btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
+      // Une ligne rouverte sans sa condition affiche d'autres chiffres sous le même
+      // intitulé. Le paragraphe explicatif existait déjà, en petit et sous le graphique ;
+      // il se lisait après coup, quand on avait déjà cru au nombre. L'avertissement monte
+      // donc à côté du total, là où le regard se pose.
+      btVarianteRatee: !!s.varianteRatee,
       // Sans sécurisation, et sur une série qui porte la minute des extrêmes, les deux
       // lectures rendent le MÊME chiffre : l'ordre des mouvements est connu, il n'y a
       // plus rien à trancher par convention. Mesuré sur huit configurations et sept
@@ -14222,7 +14252,7 @@ GROUPES = {
           + ' · ' + sec + ' · frais ' + (s.btFrais ? 'compris' : 'exclus')
           + (s.btDelai ? ' · délai ' + s.btDelai : '');
       })(),
-      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null }, () => this.lancerTest()),
+      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null, varianteRatee: false }, () => this.lancerTest()),
       setVueJournal: () => this.setState({ vue: 'journal' }),
       combinaisons: (this.SYMBOLES.length * 5 * 4 * 4).toLocaleString('fr-FR'),
       choixVueLecture: [
