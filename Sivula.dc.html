@@ -1708,8 +1708,12 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-ghost" type="button" onClick="{{ toutUnivers }}">Tout sélectionner</button>
               <button class="btn btn-ghost" type="button" onClick="{{ viderUnivers }}">Tout désélectionner</button>
+              <button class="btn btn-secondary" type="button" onClick="{{ copierPourMt5 }}" title="Copie les noms des instruments sélectionnés — ou du catalogue entier si vous n'en avez sélectionné aucun — séparés par des virgules, dans l'orthographe de VOTRE courtier. À coller dans InpSymboles du script d'export MT5.">Copier pour MT5</button>
             </div>
           </div>
+          <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;color:var(--color-accent-700);margin-top:6px">{{ mt5Copie }}</div>
+          </sc-if>
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
             <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="11">
               <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
@@ -11807,7 +11811,51 @@ GROUPES = {
         ? 'Balaye la grille sur les instruments cochés.'
         : 'Aucun instrument sélectionné : cochez-en au moins un dans la liste ci-dessus.',
       nbTotal: this.SYMBOLES.length,
-      viderUnivers: () => this.setState({ univers: [] }),
+      // La liste des instruments, dans l'orthographe du COURTIER, prête à coller dans
+      // `InpSymboles` du script d'export.
+      //
+      // Recopier cent quarante-huit noms à la main est long et surtout faux : le nom
+      // change d'un compte à l'autre — GOLD ou XAUUSD, US30 ou #USNDAQ100 — et un nom
+      // erroné ne produit pas d'erreur, il produit un fichier MANQUANT qu'on ne remarque
+      // qu'en cherchant pourquoi l'instrument n'apparaît pas. Le relevé de frais du
+      // compte porte déjà le nom exact : on le lit là.
+      copierPourMt5: () => {
+        const choisis = (s.univers && s.univers.length) ? s.univers : [...this.SYMBOLES];
+        const cle = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+        const noms = [], sansReleve = [];
+        for (const sym of choisis) {
+          const l = this.ligneCourtier(cle, sym);
+          // faute de relevé, on garde le nom du catalogue : il est souvent bon, et un
+          // nom présent que le terminal refusera vaut mieux qu'un instrument oublié
+          if (l && l.sym) noms.push(l.sym); else { noms.push(sym); sansReleve.push(sym); }
+        }
+        const txt = [...new Set(noms)].join(',');
+        const dire = (ok) => this.setState({ mt5Copie: (ok ? 'Copié : ' : 'Fichier enregistré : ')
+          + [...new Set(noms)].length + ' instruments, à coller dans InpSymboles.'
+          + (sansReleve.length
+            ? ' ' + sansReleve.length + ' sans relevé de frais — nom du catalogue employé ('
+              + sansReleve.slice(0, 4).join(', ') + (sansReleve.length > 4 ? '…' : '')
+              + '), vérifiez-les dans l\u2019Observation du marché.'
+            : '') });
+        // Le presse-papier est refusé dans certains cadres : on retombe alors sur un
+        // fichier, qui marche partout.
+        const replier = () => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([txt + '\n'], { type: 'text/plain;charset=utf-8' }));
+          a.download = 'symboles-mt5.txt';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+          dire(false);
+        };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(txt).then(() => dire(true), replier);
+          } else replier();
+        } catch (e) { replier(); }
+      },
+      mt5Copie: s.mt5Copie || '',
+      aMt5Copie: !!s.mt5Copie,
+      viderUnivers: () => this.setState({ univers: [], mt5Copie: '' }),
       toutUnivers: () => this.setState({ univers: [...this.SYMBOLES] }),
       sauvEtat: s.sauvEtat || '',
       aSauvEtat: !!s.sauvEtat && !!s.sauvKo,
