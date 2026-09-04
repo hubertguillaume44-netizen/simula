@@ -467,17 +467,47 @@ export function decouper(df, debut, fin) {
   const d0 = debut !== undefined ? debut - AMORCE_JOURS * 86400000 : -Infinity;
   const d1 = fin !== undefined ? fin : Infinity;
   const t = [], o = [], h = [], l = [], c = [], v = [], sp = [];
+  // Ce qui se passe DANS l'heure suit la découpe comme le reste.
+  //
+  // Ces six colonnes étaient perdues ici, et `decouper` est appelé sur CHAQUE série
+  // chargée par la page : les minutes des extrêmes n'atteignaient donc jamais le moteur
+  // dans l'application — seulement dans le harnais en ligne de commande, qui appelle
+  // `nettoyer` directement. D'où des bougies déclarées indécidables et une bande large
+  // sur une série pourtant exportée avec les colonnes. Le défaut était invisible : rien
+  // ne distingue une colonne absente d'une colonne perdue en route.
+  const mh = [], mb = [], eh = [], eb = [], ah = [], ab = [], sess = [];
+  const aMin = !!df.mh && !!df.mb, aExe = !!df.eh && !!df.eb, aApr = !!df.ah && !!df.ab;
+  // La SÉANCE aussi : sans elle, `traitable()` laisse tout passer et le moteur inscrit
+  // des entrées à des heures où le courtier refuse l'ordre — sur #HongKong50, deux
+  // heures avant l'ouverture de la séance de négociation.
+  const aSess = !!df.sess;
   const spSrc = spreadEnPct(df);
   for (let i = 0; i < df.n; i++) {
     if (df.t[i] < d0 || df.t[i] > d1) continue;
     t.push(df.t[i]); o.push(df.o[i]); h.push(df.h[i]); l.push(df.l[i]); c.push(df.c[i]); v.push(df.v[i]);
     if (spSrc) sp.push(spSrc[i] || 0);
+    if (aMin) { mh.push(df.mh[i]); mb.push(df.mb[i]); }
+    if (aExe) { eh.push(df.eh[i]); eb.push(df.eb[i]); }
+    if (aApr) { ah.push(df.ah[i]); ab.push(df.ab[i]); }
+    if (aSess) sess.push(df.sess[i]);
   }
   // heuresSession et ecartees suivent la découpe : le robot exporté les lit pour
   // n'agréger que les heures que la mesure a gardées. Les perdre ici rendait ce filtre
   // silencieusement inopérant — le robot agrégeait des bougies que le backtest écartait.
-  return { t, o, h, l, c, v, n: t.length, grain: df.grain,
+  const n = t.length;
+  // `ordreConnu` et `retourConnu` se RECALCULENT sur la découpe : recopier ceux de la
+  // série entière décrirait des bougies qu'on vient d'écarter.
+  const part = (a, b2) => (a.length === n && n
+    ? a.reduce((k, x, i) => k + (x >= 0 && b2[i] >= 0 ? 1 : 0), 0) / n : 0);
+  const partPx = (a, b2) => (a.length === n && n
+    ? a.reduce((k, x, i) => k + (x > 0 && b2[i] > 0 ? 1 : 0), 0) / n : 0);
+  return { t, o, h, l, c, v, n, grain: df.grain,
     heuresSession: df.heuresSession, ecartees: df.ecartees,
+    ...(aMin ? { mh, mb, ordreConnu: part(mh, mb) } : { ordreConnu: 0 }),
+    ...(aExe ? { eh, eb } : {}),
+    ...(aApr ? { ah, ab, retourConnu: partPx(ah, ab) } : { retourConnu: 0 }),
+    ...(aSess ? { sess } : {}),
+    sessRenseigne: df.sessRenseigne,
     // le spread par bougie suit la découpe, sinon l'entrée retomberait sur la moyenne
     spreadPct: spSrc ? Float32Array.from(sp) : null,
     spreadPctMoyen: df.spreadPctMoyen, spreadRenseigne: df.spreadRenseigne };

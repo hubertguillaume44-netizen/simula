@@ -6766,6 +6766,22 @@ GROUPES = {
 
   // série H1 brute : les données de base (invariant 1), spread par bougie compris
   serieH1(sym) { return (this.dfs && this.dfs[sym]) || null; }
+  // Une série est COMPLÈTE quand elle porte la minute des deux extrêmes. C'est cette
+  // colonne-là qui décide : sans elle, une bougie contenant à la fois le stop et
+  // l'objectif ne dit pas dans quel ordre le prix les a touchés, et les deux lectures
+  // divergent. `haut_apres` / `bas_apres` resserrent encore, mais ne changent pas la
+  // nature de la réponse — on ne déclasse donc pas une série qui n'aurait qu'elles en
+  // moins, sous peine de faire re-télécharger cent quarante-cinq séries pour un gain
+  // mesuré à 7,5 % des indécidables.
+  //
+  // La série n'est chargée en mémoire que si elle a servi : sans elle on ne sait pas,
+  // et `null` se distingue de `false` — on n'affiche pas « ancienne » sur une série
+  // qu'on n'a pas ouverte.
+  serieComplete(sym) {
+    const df = this.serieH1(sym);
+    if (!df) return null;
+    return df.ordreConnu > 0.99;
+  }
 
   // TOUT backtest passe par ici. Le signal est lu sur la bougie de décision (ut),
   // la position est suivie sur la H1 — la bougie journalière ne dit que O/H/L/C, donc
@@ -10470,7 +10486,22 @@ GROUPES = {
       // le stockage retomberait sur le spread moyen sans que rien ne le signale
       sp: brut.sp ? Float32Array.from(brut.sp) : null,
       t: Float64Array.from(brut.t || []),
-      o: f32(brut.o), h: f32(brut.h), l: f32(brut.l), c: f32(brut.c), v: f32(brut.v) };
+      o: f32(brut.o), h: f32(brut.h), l: f32(brut.l), c: f32(brut.c), v: f32(brut.v),
+      // CE QUI SE PASSE DANS L'HEURE, et la séance. Ces colonnes étaient jetées à
+      // l'enregistrement : au rechargement, une série exportée avec les minutes
+      // revenait comme une série ancienne, ses bougies redevenaient indécidables, et
+      // la bande de lecture se rouvrait. Rien ne le signalait — une colonne perdue ne
+      // se distingue pas d'une colonne absente.
+      //
+      // Les types sont serrés : les minutes tiennent dans un octet signé (0 à 59, -1
+      // pour « inconnu »), la séance dans un octet, les prix en Float32 comme le reste.
+      // Le surcoût est de 18 octets par bougie contre 28 aujourd'hui — la place se gère
+      // dans « Libérer de la place », l'exactitude ne se gère nulle part.
+      ...(brut.sess ? { sess: Int8Array.from(brut.sess) } : {}),
+      ...(brut.mh && brut.mb
+        ? { mh: Int8Array.from(brut.mh), mb: Int8Array.from(brut.mb) } : {}),
+      ...(brut.eh && brut.eb ? { eh: f32(brut.eh), eb: f32(brut.eb) } : {}),
+      ...(brut.ah && brut.ab ? { ah: f32(brut.ah), ab: f32(brut.ab) } : {}) };
   }
   decompacter(b) {
     if (!b || !b.compact) return b;
@@ -10479,7 +10510,13 @@ GROUPES = {
     const ar = (x) => (!x ? [] : (x.length !== undefined ? Array.from(x) : Object.values(x)));
     return { n: b.n, heuresSession: b.heuresSession, ecartees: b.ecartees,
       sp: b.sp ? ar(b.sp) : null,
-      t: ar(b.t), o: ar(b.o), h: ar(b.h), l: ar(b.l), c: ar(b.c), v: ar(b.v) };
+      t: ar(b.t), o: ar(b.o), h: ar(b.h), l: ar(b.l), c: ar(b.c), v: ar(b.v),
+      // Absentes des enregistrements d'avant : leur absence doit rester une absence,
+      // jamais un tableau de zéros — un zéro dirait « pas de M1 » là où on ne sait rien.
+      ...(b.sess ? { sess: ar(b.sess) } : {}),
+      ...(b.mh && b.mb ? { mh: ar(b.mh), mb: ar(b.mb) } : {}),
+      ...(b.eh && b.eb ? { eh: ar(b.eh), eb: ar(b.eb) } : {}),
+      ...(b.ah && b.ab ? { ah: ar(b.ah), ab: ar(b.ab) } : {}) };
   }
   async garderSerie(sym, brut) {
     this._serieSet = null;
@@ -14075,10 +14112,12 @@ GROUPES = {
             ...(() => {
               const a = seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym);
               return { bougies: a ? 'présent' : 'absent',
-                bougiesCls: a ? 'tag tag-accent' : 'tag tag-outline',
-                bougiesAide: a
-                  ? 'Les bougies H1 de cet instrument sont dans ce navigateur : il est scannable.'
-                  : 'Aucune bougie H1 pour cet instrument : il ne peut pas être scanné. Cochez-le pour l\u2019ajouter à votre liste de téléchargement.' };
+                bougiesCls: !a ? 'tag tag-outline' : (this.serieComplete(sym) ? 'tag tag-accent' : 'tag tag-neutral'),
+                bougiesAide: !a
+                  ? 'Aucune bougie H1 pour cet instrument : il ne peut pas être scanné. Cochez-le pour l\u2019ajouter à votre liste de téléchargement.'
+                  : this.serieComplete(sym)
+                    ? 'Série COMPLÈTE : elle porte la minute des extrêmes et ce que le prix a fait après le second. Sivula peut promettre le chiffre exact du testeur — les deux lectures s\u2019accordent.'
+                    : 'Série ANCIENNE : elle n\u2019a pas les colonnes qui disent ce qui s\u2019est passé DANS l\u2019heure. Le scan fonctionne, mais sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula doit choisir une convention — d\u2019où un écart entre les deux lectures. Ré-exportez-la avant de valider une configuration pour la production.' };
             })(),
             aBougies: seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym),
             supprBougiesTxt: this.state.serieSuppr === sym ? 'Confirmer' : 'Supprimer',

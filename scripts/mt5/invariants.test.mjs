@@ -1162,3 +1162,46 @@ test("les niveaux de palier précalculés valent exactement la formule, butée c
     .find((x) => x.motif.startsWith("be"));
   assert.equal(basse.sortie, trade.sortie);
 });
+
+test("découper une série n'en perd aucune colonne", () => {
+  // `decouper` est appelé sur CHAQUE série chargée par la page. Il ne gardait que
+  // t/o/h/l/c/v et le spread : la minute des extrêmes, les extrêmes vus par la M1, ce
+  // que le prix a fait après le second extrême et la SÉANCE étaient perdus en route.
+  //
+  // Le défaut était invisible, et c'est ce qui le rendait coûteux : rien ne distingue
+  // une colonne absente d'une colonne perdue. Une série exportée avec les minutes se
+  // mesurait donc comme une série ancienne — bougies déclarées indécidables, bande
+  // large — et le remède qu'on en tirait (ré-exporter) n'y aurait rien changé.
+  const n = 24 * 60;
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [];
+  const mh = [], mb = [], eh = [], eb = [], ah = [], ab = [];
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    o.push(100); h.push(100.5); l.push(99.5); c.push(100.2); v.push(1); sp.push(10);
+    sess.push(i % 24 === 3 ? 0 : 1);
+    mh.push(i % 60); mb.push((i + 30) % 60);
+    eh.push(100.4); eb.push(99.6); ah.push(100.3); ab.push(99.7);
+  }
+  const df = M.nettoyer({ n, t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, ah, ab });
+  assert.ok(df.ordreConnu > 0.9 && df.retourConnu > 0.9, "gabarit incomplet : le test ne prouve rien");
+
+  // Découpe qui écarte réellement des bougies, sinon on ne teste pas la découpe. On
+  // coupe par la FIN : `debut` recule de 400 jours d'amorce, et sur une série courte il
+  // ne retire donc rien — le test passerait sans rien prouver.
+  const coupe = M.decouper(df, undefined, df.t[Math.floor(df.n / 2)]);
+  assert.ok(coupe.n > 0 && coupe.n < df.n, `découpe sans effet : ${coupe.n} sur ${df.n}`);
+  for (const col of ['mh', 'mb', 'eh', 'eb', 'ah', 'ab', 'sess']) {
+    assert.ok(Array.isArray(coupe[col]) || ArrayBuffer.isView(coupe[col]),
+      `colonne « ${col} » perdue par decouper`);
+    assert.equal(coupe[col].length, coupe.n, `colonne « ${col} » désalignée après découpe`);
+  }
+  // et les parts se RECALCULENT sur la découpe, elles ne se recopient pas
+  assert.ok(coupe.ordreConnu > 0.9, 'ordreConnu perdu ou faux après découpe');
+  assert.ok(coupe.retourConnu > 0.9, 'retourConnu perdu ou faux après découpe');
+
+  // une série SANS ces colonnes ne doit pas s'en inventer
+  const nu = M.nettoyer({ n, t, o, h, l, c, v, sp });
+  const coupeNu = M.decouper(nu, undefined, nu.t[Math.floor(nu.n / 2)]);
+  assert.equal(coupeNu.ordreConnu, 0);
+  assert.equal(coupeNu.retourConnu, 0);
+});
