@@ -27,7 +27,35 @@ export function texteVersDf(txt) {
   // spread moyen du relevé. On repère la colonne par son nom, jamais par sa position.
   const cols = debut ? lignes[0].split(sep).map((x) => x.trim().toLowerCase().replace(/["']/g, '')) : [];
   let iSp = cols.findIndex((x) => /spread/.test(x));
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [];
+  // Colonne de séance : 1 si l'ordre PEUT partir sur cette bougie, 0 sinon. Une bougie
+  // peut être cotée sans être traitable — sur #HongKong50 les bougies de 03:00 et 04:00
+  // portent un spread normal et l'ordre y est refusé, la séance de négociation ouvrant
+  // après la séance de cotation. Le moteur y inscrivait un prix que personne ne pouvait
+  // traiter. Absente, la colonne vaut 1 partout : les séries déjà exportées gardent leur
+  // comportement.
+  const iSess = cols.findIndex((x) => /session|seance|séance/.test(x));
+  // ORDRE DES EXTRÊMES : la minute, dans l'heure, où la bougie a fait son plus haut et
+  // celle où elle a fait son plus bas. Deux entiers qui ferment l'indécision du
+  // backtest — une bougie H1 dit ce que le prix a touché, jamais dans quel ordre, et
+  // c'est ce seul ordre qui décide du sort d'un trade quand une bougie arme un palier
+  // puis redescend le toucher. Absentes, le moteur retombe sur une convention de
+  // lecture et le dit : les séries déjà exportées gardent leur comportement.
+  const iMH = cols.findIndex((x) => /min_haut|minhaut/.test(x));
+  const iMB = cols.findIndex((x) => /min_bas|minbas/.test(x));
+  // Le haut et le bas VUS PAR LA M1 — ceux que le testeur MT5 rejoue. Ils ne sont pas
+  // toujours ceux de la bougie H1 : le courtier stocke des H1 reconstituées dont les
+  // extrêmes n'ont jamais existé à la minute. Le SIGNAL se lit sur la H1 du courtier,
+  // comme le robot ; l'EXÉCUTION doit se lire sur la M1, comme le testeur.
+  const iEH = cols.findIndex((x) => /m1_haut|m1haut/.test(x));
+  const iEB = cols.findIndex((x) => /m1_bas|m1bas/.test(x));
+  // Ce que le prix a fait APRÈS le second extrême de l'heure. L'ordre des deux extrêmes
+  // ne ferme pas tout : quand le palier s'arme sur le SECOND, ce qui se passe entre lui
+  // et la clôture reste inconnu, et c'est le dernier écart face au testeur. Ces deux
+  // colonnes le tranchent dans le sens utile — voir `backtester`.
+  const iAH = cols.findIndex((x) => /haut_apres|hautapres/.test(x));
+  const iAB = cols.findIndex((x) => /bas_apres|basapres/.test(x));
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
+    eh = [], eb = [], ah = [], ab = [];
   for (let i = debut; i < lignes.length; i++) {
     const p = lignes[i].split(sep);
     if (p.length < 5) continue;
@@ -54,9 +82,24 @@ export function texteVersDf(txt) {
     if ([O, H, L, C].some(Number.isNaN)) continue;
     t.push(ms); o.push(O); h.push(H); l.push(L); c.push(C); v.push(nb(p[5]) || 0);
     // l'index de la colonne est celui de l'en-tête, décalé si date et heure ont été fusionnées
-    sp.push(iSp >= 0 ? (nb(p[iSp - (cols.length > p.length ? 1 : 0)]) || 0) : 0);
+    const decal = cols.length > p.length ? 1 : 0;
+    sp.push(iSp >= 0 ? (nb(p[iSp - decal]) || 0) : 0);
+    sess.push(iSess >= 0 ? (nb(p[iSess - decal]) ? 1 : 0) : 1);
+    // -1 = inconnu, et le rester : le haut et le bas dans la même minute ne disent pas
+    // dans quel ordre ils sont venus
+    const lireMin = (k) => {
+      if (k < 0) return -1;
+      const x = nb(p[k - decal]);
+      return Number.isFinite(x) && x >= 0 && x < 60 ? x : -1;
+    };
+    mh.push(lireMin(iMH));
+    mb.push(lireMin(iMB));
+    // 0 = pas de M1 sur cette heure : on garde l'extrême H1, seul disponible
+    const px = (k) => { if (k < 0) return 0; const x = nb(p[k - decal]); return Number.isFinite(x) && x > 0 ? x : 0; };
+    eh.push(px(iEH)); eb.push(px(iEB));
+    ah.push(px(iAH)); ab.push(px(iAB));
   }
-  return nettoyer({ t, o, h, l, c, v, sp, n: t.length });
+  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, ah, ab, n: t.length });
 }
 
 // ---------- nettoyage (blocs.charger_csv : couper_daily + normaliser_session) ----------
@@ -115,14 +158,32 @@ export function nettoyer(df) {
   if (!df.n) return df;
   const debut = debutIntraday(df.t);
   const { depart, heures } = fenetreHomogene(df.t);
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [];
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
+    eh = [], eb = [], ah = [], ab = [];
   const spSrc = df.sp || df.spreadPts;
+  const sessSrc = df.sess;
+  const mhSrc = df.mh, mbSrc = df.mb, ehSrc = df.eh, ebSrc = df.eb;
+  const ahSrc = df.ah, abSrc = df.ab;
   for (let i = 0; i < df.n; i++) {
     const d = new Date(df.t[i]);
     if (debut !== null && df.t[i] < debut) continue;
     if (d.getUTCFullYear() < depart || !heures.has(d.getUTCHours())) continue;
     t.push(df.t[i]); o.push(df.o[i]); h.push(df.h[i]); l.push(df.l[i]); c.push(df.c[i]); v.push(df.v[i]);
     sp.push(spSrc ? (spSrc[i] || 0) : 0);
+    // pas de colonne = pas de restriction : une série exportée avant cette colonne doit
+    // continuer à se mesurer exactement comme avant
+    sess.push(sessSrc ? (sessSrc[i] ? 1 : 0) : 1);
+    mh.push(mhSrc ? (mhSrc[i] ?? -1) : -1);
+    mb.push(mbSrc ? (mbSrc[i] ?? -1) : -1);
+    // faute de M1, l'extrême d'exécution EST celui de la bougie H1
+    eh.push(ehSrc && ehSrc[i] > 0 ? ehSrc[i] : df.h[i]);
+    eb.push(ebSrc && ebSrc[i] > 0 ? ebSrc[i] : df.l[i]);
+    // 0 = colonne absente. Ne PAS retomber sur l'extrême de la bougie : ce serait
+    // affirmer que le prix est revenu jusque-là après son second extrême, ce qu'aucune
+    // donnée ne dit. L'absence doit rester une absence, et le moteur déclare alors la
+    // bougie indécidable comme avant.
+    ah.push(ahSrc && ahSrc[i] > 0 ? ahSrc[i] : 0);
+    ab.push(abSrc && abSrc[i] > 0 ? abSrc[i] : 0);
   }
   const grain = mesurerGrain({ h, l, c, n: t.length });
   // Le spread est exporté en POINTS. Un point vaut 10^-décimales du cours : on le
@@ -144,9 +205,26 @@ export function nettoyer(df) {
     // moins d'un quart des bougies renseignées : la série est trop trouée pour servir
     if (vus < t.length / 4) { spreadPct = null; spreadPctMoyen = null; }
   }
-  return { t, o, h, l, c, v, sp, n: t.length, ecartees: df.n - t.length,
+  // `sessRenseigne` distingue « toutes les bougies sont traitables » d'une colonne
+  // absente : sans lui, une série exportée sans la colonne serait indiscernable d'une
+  // série dont le courtier n'aurait fermé aucune heure.
+  const sessRenseigne = !!df.sess && sess.some((x) => !x);
+  // Part des bougies dont l'ORDRE des extrêmes est connu. C'est elle qui dit si la
+  // mesure est déterminée par la donnée ou par une convention de lecture : à 100 %,
+  // les deux lectures rendent le même chiffre.
+  const ordreConnu = mh.some((x) => x >= 0)
+    ? mh.reduce((a, x, i) => a + (x >= 0 && mb[i] >= 0 ? 1 : 0), 0) / (t.length || 1)
+    : 0;
+  // Part des bougies pour lesquelles on sait ce que le prix a fait APRÈS son second
+  // extrême. C'est la donnée qui referme le dernier indécidable ; une série exportée
+  // avant ces colonnes doit pouvoir le dire, sinon l'utilisateur ne comprend pas
+  // pourquoi sa bande reste large.
+  const retourConnu = ah.some((x) => x > 0)
+    ? ah.reduce((a, x, i) => a + (x > 0 && ab[i] > 0 ? 1 : 0), 0) / (t.length || 1)
+    : 0;
+  return { t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, ah, ab, n: t.length, ecartees: df.n - t.length,
     heuresSession: [...heures].sort((a, b) => a - b), grain,
-    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct };
+    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu, retourConnu };
 }
 
 // Grain de la série : certains exports MT5 arrondissent les prix à 2 décimales.
@@ -202,6 +280,166 @@ export function spreadEnPct(df) {
   }
   return vus >= df.n / 4 ? out : null;
 }
+// Seuil de spread « pic » : la médiane des `fenetre` dernières bougies, rafraîchie une
+// fois par jour. C'est un multiple de cette médiane qui sert de plafond, jamais la
+// médiane elle-même : le spread s'élargit d'année en année, donc un seuil calé sur la
+// médiane de TOUTE la série ne mord plus du tout sur les années récentes (mesuré sur
+// AUDCAD : 92 % des bougies de 2021 passent, 0 % de celles de 2025) et laisse 20 à 54 %
+// des journées sans aucune bougie éligible. Ce qu'on veut refuser, c'est le pic du
+// rollover — trois à huit fois la normale —, pas la moitié haute d'une distribution.
+//
+// Rafraîchi une fois par jour et non à chaque bougie : le robot MQL5 fait de même (il
+// ne peut pas retrier six mille spreads à chaque tick), et les deux doivent obtenir le
+// même nombre, sinon ils n'entrent pas au même moment.
+export const SPREAD_FENETRE = 250 * 24;
+export const SPREAD_FACTEUR = 1.5;
+
+export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENETRE) {
+  const sp = spreadEnPct(df);
+  if (!sp) return null;
+  return memo(df, 'seuilSpread|' + facteur + '|' + fenetre, () => {
+    const out = new Float64Array(df.n);
+    let jour = null, med = 0;
+    for (let i = 0; i < df.n; i++) {
+      const j = Math.floor(df.t[i] / 86400000);
+      if (jour === null || j !== jour) {
+        const a = Math.max(0, i - fenetre);
+        const v = [];
+        for (let k = a; k < i; k++) if (sp[k] > 0) v.push(sp[k]);
+        // sous 100 relevés la médiane n'a pas de sens : le seuil reste inactif
+        if (v.length >= 100) { v.sort((x, y) => x - y); med = v[v.length >> 1] * facteur; }
+        jour = j;
+      }
+      out[i] = med;
+    }
+    return out;
+  });
+}
+
+// Bougies RECONSTITUÉES : celles que le courtier n'a pas cotées et qu'il a rebâties
+// depuis une unité plus grossière. Elles se reconnaissent à deux signes ensemble, dont
+// aucun ne suffit seul :
+//
+//   · aucun spread relevé, alors que la série en porte ailleurs ;
+//   · la bougie englobe le haut ET le bas de TOUTE sa journée.
+//
+// Une heure ne peut pas contenir l'amplitude d'une journée entière et n'avoir laissé
+// aucune trace de son spread. Mesuré sur GOLD : 838 des 1 057 journées portant une
+// bougie de 00:00 sont dans ce cas, avec 10,7 fois le volume d'une heure ordinaire et
+// 4,4 fois son amplitude — la journée déguisée en heure.
+//
+// Exiger les DEUX conditions importe : une heure calme peut légitimement contenir toute
+// l'amplitude d'une journée calme, et une heure creuse peut légitimement n'avoir aucun
+// spread relevé. Prise seule, chaque condition écarterait des bougies vraies.
+export function bougiesReconstituees(df) {
+  const sp = spreadEnPct(df);
+  if (!sp || !df.n) return null;
+  // La MINUTE des extrêmes tranche directement : quand l'export a bien lu la M1 mais
+  // n'y trouve qu'un seul relevé pour toute l'heure, il écrit la même minute des deux
+  // côtés, ou -1 s'il n'en trouve aucun. Une heure sans spread ET sans le moindre
+  // détail à la minute est une heure que le courtier n'a pas cotée : le moteur refuse
+  // déjà d'y entrer, il doit refuser aussi d'y lire un haut et un bas.
+  //
+  // Ce signal remplace l'englobement, qui était brittle : le 28 janvier 2020, la bougie
+  // de 00:00 de GOLD porte le bas de toute la journée, 278 033 de volume contre 21 392
+  // pour l'heure suivante, aucun spread et aucune minute — mais son plus haut est
+  // inférieur de DEUX CENTIMES à celui de 02:00. L'englobement la manquait, et le
+  // moteur y déclenchait un stop fantôme.
+  const mh = df.mh, mb = df.mb;
+  const aMinutes = !!mh && !!mb && mh.some((x) => x >= 0);
+  return memo(df, 'reconstituees', () => {
+    const out = new Uint8Array(df.n);
+    if (aMinutes) {
+      for (let i = 0; i < df.n; i++) {
+        if (sp[i] > 0) continue;
+        if (mh[i] < 0 || mb[i] < 0 || mh[i] === mb[i]) out[i] = 1;
+      }
+      return out;
+    }
+    // Série exportée avant ces colonnes : on retombe sur l'englobement de la journée,
+    // le seul indice disponible. Deux signes exigés ensemble — une heure calme peut
+    // légitimement contenir toute l'amplitude d'un jour calme, et une heure creuse peut
+    // légitimement n'avoir aucun spread relevé.
+    let a = 0;
+    while (a < df.n) {
+      const j = Math.floor(df.t[a] / 86400000);
+      let b = a;
+      while (b < df.n && Math.floor(df.t[b] / 86400000) === j) b++;
+      // sous quatre bougies, la journée est trop mince pour que « englober » veuille
+      // dire quoi que ce soit
+      if (b - a >= 4) {
+        for (let i = a; i < b; i++) {
+          if (sp[i] > 0) continue;
+          let h = -Infinity, l = Infinity;
+          for (let k = a; k < b; k++) {
+            if (k === i) continue;
+            if (df.h[k] > h) h = df.h[k];
+            if (df.l[k] < l) l = df.l[k];
+          }
+          if (df.h[i] >= h && df.l[i] <= l) out[i] = 1;
+        }
+      }
+      a = b;
+    }
+    return out;
+  });
+}
+
+// Plage de dates sur laquelle la série est réellement mesurable.
+//
+// Un spread à zéro n'est pas un spread nul : c'est une information absente. Le moteur
+// refuse alors la bougie — elle ne peut pas passer le plafond — et si toute une journée
+// est à zéro, le signal du jour disparaît sans trace. Mesuré sur les exports du
+// 3 septembre 2026 : la M1 du courtier ne remonte pas au-delà de 2022 pour Germany40 et
+// BITCOIN, qui portent 100 % de bougies sans spread sur 2019-2021. Mesurer dessus
+// revenait à mesurer trois ans de vide et à publier le résultat comme s'il valait
+// quelque chose.
+//
+// On rend la PLUS LONGUE suite continue de mois sains, pas seulement un début : BITCOIN
+// est troué des deux côtés — 2019-01 à 2022-02, puis de nouveau 2026-08 et 2026-09 —
+// et ne vaut qu'entre les deux.
+//
+// Le balayage est mensuel : Germany40 passe de 59 % de trous en septembre 2021 à 0 % en
+// octobre, une granularité annuelle jetterait quinze mois de bonnes données. Un mois
+// sous le seuil compte comme sain — les quelques bougies trouées qu'il contient sont
+// refusées une par une, ce qui est le comportement voulu.
+export function plageExploitable(df, seuilPct = 20) {
+  const vide = { debut: df.n ? df.t[0] : 0, fin: df.n ? df.t[df.n - 1] : 0, complete: true };
+  const sp = spreadEnPct(df);
+  if (!sp || !df.n) return vide;
+
+  const mois = new Map();
+  for (let i = 0; i < df.n; i++) {
+    const d = new Date(df.t[i]);
+    const k = d.getUTCFullYear() * 12 + d.getUTCMonth();
+    if (!mois.has(k)) mois.set(k, [0, 0]);
+    const e = mois.get(k);
+    e[0]++;
+    if (!(sp[i] > 0)) e[1]++;
+  }
+  const cles = [...mois.keys()].sort((a, b) => a - b);
+  const sain = (k) => { const [n, z] = mois.get(k); return n > 0 && (100 * z) / n < seuilPct; };
+
+  let meilleur = null, courant = null;
+  for (const k of cles) {
+    if (sain(k)) {
+      if (courant === null) courant = { a: k, b: k };
+      else courant.b = k;
+      if (!meilleur || courant.b - courant.a > meilleur.b - meilleur.a) meilleur = { ...courant };
+    } else courant = null;
+  }
+  if (!meilleur) return { debut: vide.fin, fin: vide.fin, complete: false };
+
+  const debut = Date.UTC(Math.floor(meilleur.a / 12), meilleur.a % 12, 1);
+  // fin EXCLUSIVE : le premier instant du mois qui suit le dernier mois sain
+  const fin = Date.UTC(Math.floor((meilleur.b + 1) / 12), (meilleur.b + 1) % 12, 1);
+  return {
+    debut: Math.max(debut, df.t[0]),
+    fin: Math.min(fin, df.t[df.n - 1] + 3600000),
+    complete: debut <= df.t[0] && fin > df.t[df.n - 1],
+  };
+}
+
 export function decouper(df, debut, fin) {
   if (debut === undefined && fin === undefined) return df;
   const d0 = debut !== undefined ? debut - AMORCE_JOURS * 86400000 : -Infinity;
@@ -745,7 +983,10 @@ export function tirageHasard(df, cfg, nEntrees, tirages, graine) {
 // Tableau des bougies autorisées par les filtres. Comme le signal, il ne dépend que
 // des filtres — donc il était recalculé à l'identique pour chaque stop, chaque objectif,
 // chaque sécurisation et chaque durée de la grille : mille fois le même travail.
-function autorisePar(df, filtres) {
+// exporté : le harnais doit pouvoir reproduire EXACTEMENT la permission du moteur.
+// La recalculer à côté revenait à mesurer une autre configuration — scripts/moment-entree.mjs
+// ignorait les filtres, donc mesurait sans eux cinq des huit configurations de référence.
+export function autorisePar(df, filtres) {
   const actifs = (filtres || []).filter((f) => f.actif !== false && f.type !== 'delai_bougies');
   if (!actifs.length) return null;
   const cle = 'autorise|' + actifs.map((f) => [f.type, f.ut, f.ligne, f.periode, f.seuil,
@@ -798,6 +1039,12 @@ export function backtester(df, cfg) {
   // quoi sécuriser ou gagner, on tranche toujours en défaveur (stop d'abord, palier
   // posé seulement en fin de bougie). Donne la borne basse du résultat.
   const prudent = !!cfg.sortie.prudent;
+  // Armer le palier depuis le HAUT de la bougie puis tester le stop contre son BAS
+  // suppose que le haut est venu en premier — précisément ce que la bougie ne dit pas.
+  // C'était un pis-aller du suivi en Daily, où sans lui aucun point mort n'apparaissait
+  // jamais. Sur un suivi H1 il n'a plus lieu d'être : il transforme des gagnants en
+  // points morts sur la foi d'un ordre inconnu. `backtesterSuivi` le désactive.
+  const armerAvant = cfg.sortie.armer_avant !== false;
   // sortie sur le temps : une position qui n'a atteint ni son stop ni son objectif
   // au bout de N bougies est fermée au cours de clôture. Sans elle, un trade qui
   // stagne paie le portage indéfiniment et immobilise le capital.
@@ -815,6 +1062,25 @@ export function backtester(df, cfg) {
   // Le spread de LA bougie d'entrée quand la série le porte, la moyenne du relevé sinon.
   // C'est la différence entre payer le spread moyen de la journée et celui de l'heure du
   // rollover, où l'entrée tombe et où il est deux à trois fois plus large.
+  // Seau de décision porté par chaque bougie marquée : un signal ne s'exécute qu'UNE
+  // fois. Sans cela, marquer toutes les bougies du jour faisait rentrer le moteur à
+  // chaque sortie — 1 130 trades au lieu de 538. Le robot remet `seauEnAttente` à -1
+  // dès qu'il est entré, et n'y revient plus avant le seau suivant.
+  const seauEnt = cfg.signal_seau || null;
+  let seauEntre = null;
+
+  // MT5 arrondit TOUT prix au tick du symbole — NormalizeDouble(prix, digits) — avant de
+  // le poser comme stop ou objectif. Le moteur gardait des flottants bruts, et un stop à
+  // 1 576,9098 ne se déclenchait pas sur un bas à 1 576,91 pile.
+  //
+  // Vu au journal du 6 septembre 2026, GOLD ma 7 du 30 janvier 2020 : palier armé à
+  // 1 576,91, la bougie de 08:00 descend exactement à 1 576,91, le robot sort au point
+  // mort et le moteur tient jusqu'à 11:00. Le cas n'est pas rare : avec un stop serré,
+  // les niveaux de palier tombent souvent sur un tick rond, et c'est précisément là que
+  // le prix vient les chercher.
+  const pasPrix = df.grain && df.grain.decimales >= 0 ? Math.pow(10, -df.grain.decimales) : 0;
+  const auTick = pasPrix > 0 ? (v) => Math.round(v / pasPrix) * pasPrix : (v) => v;
+
   const spreadSerie = spreadEnPct(df);
   const spreadDe = (i) => {
     if (!spreadSerie) return spreadReleve;
@@ -823,9 +1089,31 @@ export function backtester(df, cfg) {
   };
   const i0 = cfg.debut ? df.t.findIndex((x) => x >= cfg.debut) : 0;
   const depart = i0 < 0 ? df.n : i0;
+  // Borne HAUTE des entrées : aucune position n'est ouverte à partir de `fin`, mais
+  // celles déjà ouvertes sont suivies jusqu'à leur sortie. Sert aux séries dont la
+  // colonne de spread s'arrête avant la fin des cours — sur BITCOIN, août et septembre
+  // 2026 n'ont aucun spread, et mesurer dessus revenait à mesurer du vide.
+  const finEntrees = Number(cfg.fin) || Infinity;
+  const stopMini = Number(cfg.stop_mini) || 0;
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
+  // Le stop que les paliers JUSTIFIENT, distinct de celui qui est réellement POSÉ.
+  //
+  // Un stop ne se place que du bon côté du marché : le courtier refuse un stop au-dessus
+  // du cours pour un achat, et le robot réessaie tant qu'il refuse. Vu au journal du
+  // 18 février 2020 sur GOLD — la bougie de 00:00, hors séance, monte à 1 605,00 et le
+  // palier réclame un stop à 1 590,48 ; le prix rouvre à 1 583 et les quatorze heures
+  // suivantes plafonnent à 1 589,28. Le robot réémet sa demande CHAQUE MINUTE de 01:00 à
+  // 15:00, sans succès, jusqu'à ce que la bougie de 15:00 monte à 1 591,83 — le stop se
+  // pose enfin, et se déclenche à 15:40. Le moteur, lui, le posait d'autorité à 00:00 et
+  // fermait le trade à 01:00.
+  let slVoulu = 0;
+  // L'ambiguïté se CUMULE sur toute la durée du trade. Elle n'était relevée que sur la
+  // bougie de sortie : un trade traversant trois bougies indécidables et se refermant
+  // sur une bougie nette était compté comme certain. Sur GOLD, 132 trades sur 492
+  // changent de sortie entre les deux lectures, et le moteur n'en marquait que 6.
+  let ambiguTrade = false;
 
   // remonte le stop d'après le plus haut de la bougie i (trailing ou paliers).
   // Appelée deux fois par bougie : avant le test de sortie quand la bougie est
@@ -838,67 +1126,321 @@ export function backtester(df, cfg) {
   // « d × valeur croissante », donc une seule écriture pour les deux sens.
   const d = vente ? -1 : 1;
   let iPlusHaut = -1;
-  const majSecu = (i) => {
+  // Niveau de stop que l'extrême d'une bougie JUSTIFIERAIT, sans rien modifier.
+  // Séparé de majSecu parce qu'il faut pouvoir le connaître AVANT de tester la sortie :
+  // c'est lui qui décide si la bougie est ambiguë. Rend le stop courant si rien ne bouge.
+  const niveauSecu = (extreme) => {
     if (trailing) {
-      const extreme = vente ? df.l[i] : df.h[i];
-      if (d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
-      const cand = plusHaut * (1 - d * trailing);
-      if (d * cand > d * sl) { sl = cand; be = 1; }
-    } else if (etapes.length && d * tp > d * px) {
-      const extreme = vente ? df.l[i] : df.h[i];
-      const parcours = (extreme - px) / (tp - px) * 100;
-      let nouveau = sl;
-      for (const [seuil, niveau] of etapes) {
-        if (parcours >= seuil) {
-          // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
-          // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
-          // chemin déjà sécurisée vers l'objectif. Continu en 0.
-          let cand = niveau < 0
-            ? px + (niveau / 100) * (px - sl0)
-            : px + (niveau / 100) * (tp - px);
-          // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
-          // le chemin parcouru. Un stop posé pile sur le plus haut touché
-          // encaisserait un simple passage intrabar comme un gain acquis.
-          const part = Math.min(seuil, parcours) * 0.9;
-          const atteint = px + (part / 100) * (tp - px);
-          if (d * cand > d * atteint) cand = atteint;
-          if (d * cand > d * nouveau) nouveau = cand;
-        }
-      }
-      if (d * nouveau > d * sl) { sl = nouveau; be = d * nouveau > d * px ? 2 : 1; }
+      const haut = d * extreme > d * plusHaut ? extreme : plusHaut;
+      const cand = auTick(haut * (1 - d * trailing));
+      return d * cand > d * sl ? cand : sl;
+    }
+    if (!etapes.length || d * tp <= d * px) return sl;
+    const parcours = (extreme - px) / (tp - px) * 100;
+    let nouveau = sl;
+    for (const [seuil, niveau] of etapes) {
+      if (parcours < seuil) continue;
+      // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
+      // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
+      // chemin déjà sécurisée vers l'objectif. Continu en 0.
+      let cand = niveau < 0
+        ? px + (niveau / 100) * (px - sl0)
+        : px + (niveau / 100) * (tp - px);
+      // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
+      // le chemin parcouru. Un stop posé pile sur le plus haut touché
+      // encaisserait un simple passage intrabar comme un gain acquis.
+      const part = Math.min(seuil, parcours) * 0.9;
+      const atteint = px + (part / 100) * (tp - px);
+      if (d * cand > d * atteint) cand = atteint;
+      cand = auTick(cand);
+      if (d * cand > d * nouveau) nouveau = cand;
+    }
+    return nouveau;
+  };
+
+  // Une bougie sans spread n'est pas une bougie bon marché : c'est une bougie ABSENTE,
+  // reconstituée par le courtier depuis une unité plus grossière. Le moteur refusait
+  // déjà d'y ENTRER — acceptable() exige sp > 0 — mais il continuait d'y lire un haut
+  // et un bas pour SORTIR. Sur GOLD c'est un contresens mesurable : la bougie de 00:00
+  // englobe le haut ET le bas de TOUTE la journée sur 838 des 1 057 journées concernées,
+  // pour 10,7 fois le volume d'une heure ordinaire et 4,4 fois son amplitude. C'est la
+  // journée entière déguisée en heure, et le moteur y déclenchait stops et objectifs
+  // fantômes : 44 de ses 492 sorties, dont 24 des 84 que le robot place ailleurs.
+  //
+  // Son OUVERTURE reste un vrai prix à un vrai instant — le gap du week-end s'y lit —
+  // mais son haut, son bas et sa clôture appartiennent à la journée, pas à l'heure. On
+  // garde donc le test du gap et on ignore le reste. Les extrêmes ne sont pas perdus :
+  // les bougies suivantes de la journée les portent (aucune des 1 981 journées de GOLD
+  // ne se réduit à sa seule bougie de 00:00). Sans colonne de spread, rien ne change.
+  // ————— l'ordre des extrêmes, quand la donnée le porte —————
+  //
+  // Deux colonnes de l'export — la minute du plus haut et celle du plus bas dans
+  // l'heure — suffisent à trancher ce qu'une bougie H1 laissait indécidable. Le chemin
+  // d'une bougie est alors : ouverture → premier extrême → second extrême → clôture,
+  // et le sort du trade s'en déduit sans convention.
+  //
+  //   HAUT d'abord : l'objectif s'il est atteint ; sinon le palier s'arme au sommet et
+  //                  la descente qui suit le touche s'il est franchi.
+  //   BAS d'abord  : l'ancien stop s'il est atteint — le palier n'existe pas encore ;
+  //                  sinon la remontée donne l'objectif, ou arme le palier, et seule
+  //                  une clôture repassée dessous le fait jouer.
+  //
+  // À -1 (colonne absente, ou les deux extrêmes dans la même minute) on ne sait pas, et
+  // le moteur retombe sur la lecture haute ou basse — en le disant, via `ambigu`.
+  const mhCol = df.mh, mbCol = df.mb;
+  // L'égalité vaut ignorance, et le test est ICI, pas seulement dans le lecteur de CSV :
+  // un df construit à la main — un test, un worker de scan — passerait sinon à côté de
+  // la règle, et le moteur lirait « bas d'abord » sur deux extrêmes simultanés.
+  // Extrêmes d'EXÉCUTION : ceux que le testeur rejoue. Le signal continue de se lire sur
+  // la bougie du courtier — c'est ce que fait le robot, qui appelle CopyRates — mais le
+  // stop et l'objectif se jouent sur ce que la M1 a réellement coté.
+  //
+  // Vu sur GOLD le 21 janvier 2020 : la H1 de 00:00 porte un bas de 1 546,23, sous le
+  // stop initial d'une position ouverte le 16. Aucune autre heure de la journée ne
+  // descend sous 1 558, et le testeur n'a rien vu — il est sorti au point mort dix
+  // heures plus tard. Le moteur y fermait une perte pleine qui n'a jamais eu lieu.
+  const exH = df.eh || df.h, exL = df.eb || df.l;
+
+  const minutesConnues = (i) =>
+    !!mhCol && !!mbCol && mhCol[i] >= 0 && mbCol[i] >= 0 && mhCol[i] !== mbCol[i];
+  const ordreConnuA = (i) => minutesConnues(i);
+  // L'extrême FAVORABLE est-il venu en premier ? À l'achat c'est le haut, à la vente le
+  // bas — et c'est là que la vente se cassait. Le moteur branchait sur « le haut
+  // d'abord » en le traitant comme favorable dans les deux sens : sur une vente, une
+  // bougie dont le haut précède le bas prenait le palier alors que le stop, situé
+  // AU-DESSUS, était touché en premier.
+  //
+  // Vu au journal du 6 septembre 2026, #Germany40 vente du 2 mai 2022 : entrée à
+  // 13 878,30, stop à 14 017,08 ; la bougie de 10:00 monte à 14 039,79 à la minute 55
+  // puis descend à 13 804,89 à la minute 59. Le haut d'abord, donc le stop d'abord — le
+  // robot sort à -1,00 R. Le moteur y armait le point mort et inscrivait 0,00 R, une
+  // pleine unité de risque d'écart sur ce seul trade.
+  const mieuxDAbord = (i) => (vente ? mbCol[i] < mhCol[i] : mhCol[i] < mbCol[i]);
+  // L'extrême DÉFAVORABLE atteint après le second extrême de l'heure, quand l'export le
+  // fournit — 0 sinon, et 0 veut dire « inconnu », jamais « pas de retour ».
+  const ahCol = df.ah, abCol = df.ab;
+  const apresSecond = (i) => {
+    if (!ahCol || !abCol) return 0;
+    const x = vente ? ahCol[i] : abCol[i];
+    return x > 0 ? x : 0;
+  };
+
+  const reconstituee = bougiesReconstituees(df);
+  // HORS SÉANCE : rien ne s'EXÉCUTE, mais le stop CONTINUE de se déplacer.
+  //
+  // Mesuré sur le journal GOLD du 5 septembre 2026 : des 538 entrées et 538 sorties du
+  // robot, AUCUNE ne tombe hors séance de négociation — mais 103 déplacements de palier
+  // sur 39 553 s'y font. Le courtier cote encore, le stop suit, et seul l'ORDRE attend
+  // la réouverture.
+  //
+  // Le cas qui l'a révélé : position ouverte le 16 janvier 2020 à 1 556,56, stop
+  // 1 547,22. Le 21 à 00:00, hors séance, la bougie monte à 1 568,49 — le palier arme le
+  // point mort à 1 556,56 — puis redescend à 1 546,23, sous le stop INITIAL. Le moteur y
+  // fermait une perte pleine. Le testeur, lui, n'exécute rien : il sort au point mort à
+  // 10:41, dès que le cours revient sur le stop armé, en séance.
+  //
+  // La M1 n'y est pour rien, et je l'ai cru un temps : vérifié sur les sept instruments
+  // et 322 000 bougies, les extrêmes H1 et M1 coïncident partout, cette heure comprise.
+  const sessX = df.sess;
+  const enSeance = cfg.hors_seance === true ? () => true : (i) => !sessX || sessX[i] !== 0;
+  const releve = (reconstituee && cfg.lire_reconstituees === false)
+    ? (i) => enSeance(i) && !reconstituee[i]
+    : enSeance;
+
+  const majSecu = (i, posable = true) => {
+    const extreme = vente ? exL[i] : exH[i];
+    if (trailing && d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
+    const nouveau = niveauSecu(extreme);
+    if (d * nouveau > d * slVoulu) slVoulu = nouveau;
+    // Posé seulement si l'ordre PEUT partir : marché ouvert, et prix repassé au-delà du
+    // niveau. Sinon le courtier refuse et la demande reste en attente — c'est ce que
+    // fait le robot, qui la réémet à chaque tick jusqu'à ce qu'elle passe.
+    if (posable && d * slVoulu > d * sl && d * extreme >= d * slVoulu) {
+      sl = slVoulu;
+      be = trailing ? 1 : (d * sl > d * px ? 2 : 1);
     }
   };
 
   for (let i = Math.max(depart, 1); i < df.n; i++) {
     if (enPos) {
+      // Hors séance : le stop suit, l'ordre attend. `majSecu` d'abord, aucune sortie
+      // ensuite — c'est ce que fait le testeur, vérifié sur 538 sorties dont aucune
+      // hors séance et 103 paliers qui, eux, s'y déplacent.
+      if (!releve(i)) { majSecu(i, false); continue; }
+      // Un stop en attente se pose dès l'OUVERTURE quand le cours y est déjà au-delà :
+      // la modification part au premier tick, avant tout mouvement de la bougie. Ne
+      // tester que l'extrême de la bougie la retardait d'une heure — et sur GOLD le
+      // 23 janvier 2020, cette heure a coûté quatre R. Le palier armé la veille à
+      // 1 558,57 hors séance, la bougie de 01:00 ouvre à 1 558,65 : le stop se pose,
+      // puis le bas à 1 558,41 le déclenche. Le robot sort là, à 01:00 ; le moteur
+      // attendait 04:00, et n'entrait le trade suivant qu'à 05:00 au lieu de 02:00.
+      if (d * slVoulu > d * sl && d * df.o[i] > d * slVoulu) {
+        sl = slVoulu;
+        be = trailing ? 1 : (d * sl > d * px ? 2 : 1);
+      }
       // gap : le SL est un ordre stop, exécuté au cours d'ouverture
       // (rien ne peut être sécurisé avant l'ouverture)
       if (d * df.o[i] <= d * sl) {
-        const gap = vente ? df.o[i] > df.h[i - 1] : df.o[i] < df.l[i - 1];
+        const gap = vente ? df.o[i] > exH[i - 1] : df.o[i] < exL[i - 1];
         const motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : (gap ? 'sl_gap' : 'sl');
-        trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, false, vente));
+        trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, ambiguTrade, vente));
         enPos = false; continue;
       }
       // « bougie favorable » : haussière à l'achat, baissière à la vente — c'est elle
       // qui décide si l'extrême favorable est atteint avant le stop
       const haussiere = d * (df.c[i] - df.o[i]) >= 0;
-      if (!haussiere && !prudent) majSecu(i);
+      if (!haussiere && !prudent && armerAvant) majSecu(i);
       const ordre = (haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'];
       // bougie ambiguë : elle contient le stop ET l'objectif. L'ordre réel des
       // mouvements y est inconnu, donc le sort du trade est décidé par une
       // convention, pas par la donnée. Compté pour pouvoir le dire.
-      const ambigu = d * df.l[i] <= d * sl && d * df.h[i] >= d * tp
-        || (vente && df.h[i] >= sl && df.l[i] <= tp);
+      const pire = vente ? exH[i] : exL[i], mieux = vente ? exL[i] : exH[i];
+      // Stop que l'extrême de CETTE bougie justifie. Une bougie peut monter assez pour
+      // armer un palier PUIS redescendre le toucher : la H1 ne dit pas dans quel ordre.
+      // Le moteur ne le voyait pas — il testait la sortie avec l'ancien stop, encaissait
+      // l'objectif, et n'armait qu'ensuite. Mesuré sur BITCOIN le 23 avril 2025 : haut
+      // 94 036 (objectif 92 920 atteint) et bas 90 954 (point mort 91 098 touché) dans la
+      // MÊME heure. Le moteur inscrivait +2,00 R, le testeur 0,00 R.
+      const voulu = niveauSecu(mieux);
+      const cible = d * voulu > d * slVoulu ? voulu : slVoulu;
+      // posable seulement si le cours de cette bougie repasse dessus
+      const slArme = (d * mieux >= d * cible) ? cible : sl;
+      // Bougie AMBIGUË : celle dont l'issue dépend de l'ORDRE des mouvements, que la
+      // H1 ne dit pas. Deux familles, et l'ancienne condition n'en voyait qu'une.
+      //
+      //   · le stop ET l'objectif sont tous deux atteints — cas classique ;
+      //   · la bougie ARME un palier et redescend jusqu'à lui. Montée d'abord :
+      //     le stop a bougé et la sortie se fait au point mort. Descente d'abord :
+      //     le palier n'était pas encore posé, et la bougie se referme sans sortie,
+      //     ou sur l'ancien stop si elle va jusque-là.
+      //
+      // La seconde manquait, et elle est de loin la plus fréquente : sur GOLD,
+      // 132 trades sur 492 changent de sortie entre lecture haute et lecture basse —
+      // 27 %, pour 79,2 R d'écart — alors que le moteur n'en marquait que 6. Annoncer
+      // « 6 trades indécidables » sur une mesure dont un quart des sorties dépend d'une
+      // convention, c'est vendre une précision qui n'existe pas.
+      //
+      // Vu au journal du robot le 7 avril 2020 : entrée 1 660,31, stop 1 650,35 ; à
+      // 10:00 la bougie monte à 1 668,69, arme le point mort (parcours 28 %) et
+      // redescend le toucher — le robot sort à 0,00, le moteur inscrivait -1 R.
+      //
+      // ————— issues ADMISSIBLES de la bougie, et lecture haute ou basse entre elles —————
+      //
+      // On énumère ce que la bougie AUTORISE, au lieu de supposer un ordre unique. Une
+      // issue est admissible s'il existe un chemin allant de l'ouverture à la clôture,
+      // touchant le haut et le bas, qui la produise :
+      //
+      //   objectif    si l'extrême favorable l'atteint ;
+      //   stop armé   si la bougie arme un palier et redescend jusqu'à lui ;
+      //   ancien stop si l'extrême défavorable l'atteint — la descente d'abord, le
+      //               palier pas encore posé ;
+      //   aucune      si le prix peut avoir touché le stop armé AVANT de l'armer, et
+      //               n'être jamais revenu ensuite.
+      //
+      // La CLÔTURE tranche une partie de l'indécision, et le moteur l'ignorait. Si la
+      // bougie ferme au-delà du stop armé, le prix y est forcément repassé APRÈS
+      // l'extrême qui a armé le palier : la sortie au stop armé devient certaine, et
+      // « aucune issue » cesse d'être admissible. C'est une déduction, pas une
+      // convention — et elle resserre la bande sans rien inventer.
+      // Un palier armé PAR CETTE BOUGIE prend effet dedans : le robot envoie sa demande
+      // au tick qui suit l'extrême et elle passe la plupart du temps. Reporter l'effet à
+      // la bougie suivante rapproche les TOTAUX (BITCOIN -17,4 → -23,2 contre -34,8 au
+      // robot, GOLD 37,3 → 34,8 contre 34,5) mais éloigne chaque trade pris un par un —
+      // sorties divergentes 21 → 37 sur GOLD, 35 → 58 sur BITCOIN. C'est une compensation,
+      // pas une modélisation plus fidèle : on garde la règle qui colle bougie par bougie.
+      const armeActif = slArme !== sl && d * pire <= d * slArme;
+      // la clôture est au-delà du stop armé : le retour a eu lieu après l'armement
+      const armeCertain = slArme !== sl && d * df.c[i] <= d * slArme;
+      const okTp = d * mieux >= d * tp;
+      const okVieux = d * pire <= d * sl;
+      // « aucune sortie » suppose qu'AUCUN niveau actif n'a été franchi. L'objectif et
+      // l'ancien stop le sont dès l'ouverture de la bougie : les atteindre ferme le
+      // trade, quel que soit l'ordre. Seul le stop ARMÉ peut être franchi sans effet,
+      // parce qu'il n'existe pas encore quand le prix passe dessous.
+      const okRien = !okVieux && !okTp && !armeCertain;
+      const issues = (okTp ? 1 : 0) + (armeActif ? 1 : 0) + (okVieux ? 1 : 0) + (okRien ? 1 : 0);
+      const ambigu = issues > 1;
+      // `indecis` : l'ordre des extrêmes est connu ET ne tranche pas. Voir plus bas.
+      let indecis = false;
+      ambiguTrade = ambiguTrade || (ambigu && !ordreConnuA(i));
+
+      // Lecture HAUTE : la meilleure issue admissible — l'objectif, sinon laisser
+      // courir, sinon le stop armé, et l'ancien stop en dernier recours.
+      // Lecture BASSE : la pire — l'ancien stop d'abord, puis le stop armé, puis
+      // laisser courir, l'objectif seulement s'il ne reste que lui.
+      //
+      // L'ancienne règle était inversée sur la famille des paliers : elle testait
+      // l'ANCIEN stop en lecture haute, si bien qu'une bougie qui armait le point mort
+      // et redescendait sortait à -1 R du côté « favorable » et à 0 R du côté
+      // « défavorable ». Vu au journal du robot le 7 avril 2020 : entrée 1 660,31,
+      // stop 1 650,35 ; à 10:00 la bougie monte à 1 668,69, arme le point mort
+      // (parcours 28 %), redescend le toucher — le robot sort à 0,00 et le moteur
+      // inscrivait -1 R alors qu'il se disait en lecture haute.
       let sortie = null;
-      for (const q of ordre) {
-        const pire = vente ? df.h[i] : df.l[i], mieux = vente ? df.l[i] : df.h[i];
-        if (q === 'sl' && d * pire <= d * sl) { sortie = ['sl', sl]; break; }
-        if (q === 'tp' && d * mieux >= d * tp) { sortie = ['tp', tp]; break; }
+      if (ambigu && ordreConnuA(i)) {
+        // l'ordre est connu : plus de convention, la bougie se lit comme elle s'est
+        // déroulée
+        if (mieuxDAbord(i)) {
+          if (okTp) sortie = ['tp', tp];
+          else if (armeActif) sortie = ['sl', slArme];
+          else if (okVieux) sortie = ['sl', sl];
+        } else {
+          if (okVieux) sortie = ['sl', sl];
+          else if (okTp) sortie = ['tp', tp];
+          else if (armeCertain) sortie = ['sl', slArme];
+          // Connaître l'ORDRE des deux extrêmes ne suffit pas ici, et c'est le dernier
+          // résidu face au testeur. L'extrême défavorable est passé le PREMIER, avant
+          // que le palier n'existe : il ne ferme rien. Le palier s'arme ensuite, sur
+          // l'extrême favorable. Entre cet extrême et la clôture, le prix a pu
+          // redescendre toucher le palier puis remonter — deux extrêmes et une clôture
+          // ne peuvent pas le dire, et la clôture au-dessus du palier ne le réfute pas.
+          // Le moteur supposait « non » en silence, ce qui est un pari optimiste ; il
+          // le déclare maintenant indécidable, et les deux lectures en prennent les
+          // bornes comme partout ailleurs.
+          else if (armeActif) {
+            // `bas_apres` / `haut_apres` : l'extrême défavorable atteint APRÈS le second
+            // extrême de l'heure. Il tranche dans UN sens, et c'est le sens utile.
+            //
+            // S'il dépasse le palier, le retour a bien eu lieu après l'armement — c'est
+            // une preuve, pas une convention : le palier s'arme au plus tard sur
+            // l'extrême favorable, qui ouvre la fenêtre. Les DEUX lectures sortent alors
+            // au palier, et la bande se resserre sur le chiffre du testeur.
+            //
+            // S'il ne le dépasse pas, on ne conclut PAS l'inverse : le doute subsiste
+            // sur le seul intervalle allant de l'armement à l'extrême favorable, que ces
+            // colonnes ne couvrent pas. La bougie reste indécidable — c'est ce qui
+            // sépare une donnée d'un pari.
+            const apres = apresSecond(i);
+            if (apres && d * apres <= d * slArme) sortie = ['sl', slArme];
+            else { indecis = true; if (prudent) sortie = ['sl', slArme]; }
+          }
+        }
+      } else if (prudent) {
+        if (okVieux) sortie = ['sl', sl];
+        else if (armeActif) sortie = ['sl', slArme];
+        else if (!okRien && okTp) sortie = ['tp', tp];
+      } else {
+        if (okTp) sortie = ['tp', tp];
+        else if (!okRien) sortie = armeActif ? ['sl', slArme] : (okVieux ? ['sl', sl] : null);
       }
+      void ordre;
+      ambiguTrade = ambiguTrade || indecis;
       if (sortie) {
         let motif = sortie[0];
-        if (motif === 'sl') motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : 'sl';
-        const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambigu, vente);
+        if (motif === 'sl') {
+          // le palier armé PAR cette bougie compte : sans ça, une sortie au point mort
+          // se serait étiquetée « sl » et aurait fait croire à une perte pleine
+          const niv = d * sortie[1] > d * px ? 2 : d * sortie[1] > d * sl0 ? 1 : 0;
+          const b = Math.max(be, niv);
+          motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
+        }
+        const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambiguTrade, vente);
+        // Sortie qui repose sur un palier armé DANS la bougie où elle tombe : le prix a
+        // pu repasser une seconde fois par ce niveau sans que l'ordre des deux extrêmes
+        // le dise. C'est le seul résidu qui subsiste face au testeur, et il est
+        // OPTIMISTE — mesuré de 0,003 à 0,06 R par trade selon l'instrument, contre
+        // 0,0007 sans aucun palier. On le compte pour pouvoir l'annoncer.
+        if (armeActif) tr.palierDansBougie = true;
         // sortie par le stop dans la bougie même qui a fixé le plus haut : le gain
         // suppose que le stop a suivi le sommet tick par tick, ce que H1 ne dit pas
         if (trailing && sortie[0] === 'sl' && i === iPlusHaut) tr.sommet = true;
@@ -906,58 +1448,314 @@ export function backtester(df, cfg) {
         enPos = false; continue;
       }
       if (dureeMax && (i - iEnt) >= dureeMax) {
-        trades.push(clore(df, iEnt, i, px, df.c[i], sl0, 'temps', be, false, vente));
+        trades.push(clore(df, iEnt, i, px, df.c[i], sl0, 'temps', be, ambiguTrade, vente));
         enPos = false; continue;
       }
       majSecu(i);
       continue;
     }
 
+    if (df.t[i] >= finEntrees) continue;
     if (!signal[i] || (autorise && !autorise[i])) continue;
+    if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
     if (delai && (i - derniere) < delai) continue;
 
-    px = df.o[i] * (1 + d * spreadDe(i));
-    sl0 = px * (1 - d * slPct);
+    px = auTick(df.o[i] * (1 + d * spreadDe(i)));
+    sl0 = auTick(px * (1 - d * slPct));
+    // Distance minimale de stop imposée par le courtier (StopsLevel × Point), en unités
+    // de PRIX et non en pourcentage : il refuse l'ordre en dessous. C'est une distance
+    // absolue, donc son poids relatif dépend du cours — sur BITCOIN elle vaut 200,00,
+    // soit 0,25 % à 81 000 mais 1,00 % à 20 000. Un stop de 1 % était donc pile à la
+    // limite pendant tout 2022, et le testeur a refusé 928 ordres « invalid stops » sur
+    // 2022-2023 et aucun ensuite. Le moteur les comptait tous.
+    //
+    // Mesurée depuis df.o[i], le cours SANS le spread : le courtier compare le stop au
+    // BID, pas au prix d'entrée qui inclut le spread. Les chiffres du journal le
+    // disent — plus petite distance acceptée 248,36, plus grande refusée 260,30, pour
+    // un minimum annoncé de 200,00. L'écart est exactement le spread de l'instrument.
+    if (stopMini > 0 && Math.abs(df.o[i] - sl0) < stopMini) continue;
     sl = sl0;
-    tp = px + (px - sl0) * rr;
-    enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? df.l[i] : df.h[i];
+    tp = auTick(px + (px - sl0) * rr);
+    enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? exL[i] : exH[i];
+    slVoulu = sl0;
+    ambiguTrade = false;
+    if (seauEnt) seauEntre = seauEnt[i];
     iPlusHaut = i;
 
     // la bougie d'entrée peut déjà toucher SL ou TP — et, si elle est baissière,
     // avoir sécurisé la position avant d'y redescendre
     const haussiere = d * (df.c[i] - df.o[i]) >= 0;
-    if (!haussiere && !prudent) majSecu(i);
-    const pire0 = vente ? df.h[i] : df.l[i], mieux0 = vente ? df.l[i] : df.h[i];
-    const ambigu0 = d * pire0 <= d * sl && d * mieux0 >= d * tp;
-    for (const q of ((haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'])) {
-      if (q === 'sl' && d * pire0 <= d * sl) {
-        const motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : 'sl';
-        trades.push(clore(df, i, i, px, sl, sl0, motif, be, ambigu0, vente)); enPos = false; break;
+    if (!haussiere && !prudent && armerAvant) majSecu(i);
+    const pire0 = vente ? exH[i] : exL[i], mieux0 = vente ? exL[i] : exH[i];
+    // Même règle que sur les bougies suivantes : la bougie d'entrée peut monter assez
+    // pour armer un palier PUIS redescendre le toucher, et la H1 ne dit pas dans quel
+    // ordre. C'est le cas le plus fréquent, l'entrée et le palier tombant dans la même
+    // heure — sur BITCOIN, 31 trades sur 420 contre 2 comptés auparavant.
+    const voulu0 = niveauSecu(mieux0);
+    const cible0 = d * voulu0 > d * slVoulu ? voulu0 : slVoulu;
+    const slArme0 = (d * mieux0 >= d * cible0) ? cible0 : sl;
+    // MÊME énumération que sur les bougies suivantes. Elle était différente ici — ancien
+    // ordre supposé, ancien stop testé — si bien que la bougie d'entrée et les autres
+    // n'obéissaient pas à la même règle dans la même fonction.
+    const armeActif0 = slArme0 !== sl && d * pire0 <= d * slArme0;
+    const armeCertain0 = slArme0 !== sl && d * df.c[i] <= d * slArme0;
+    const okTp0 = d * mieux0 >= d * tp;
+    const okVieux0 = d * pire0 <= d * sl;
+    const okRien0 = !okVieux0 && !okTp0 && !armeCertain0;
+    const ambigu0 = ((okTp0 ? 1 : 0) + (armeActif0 ? 1 : 0) + (okVieux0 ? 1 : 0) + (okRien0 ? 1 : 0)) > 1;
+    ambiguTrade = ambiguTrade || (ambigu0 && !ordreConnuA(i));
+    let indecis0 = false;
+    let sortie0 = null;
+    if (ambigu0 && ordreConnuA(i)) {
+      if (mieuxDAbord(i)) {
+        if (okTp0) sortie0 = ['tp', tp];
+        else if (armeActif0) sortie0 = ['sl', slArme0];
+        else if (okVieux0) sortie0 = ['sl', sl];
+      } else {
+        if (okVieux0) sortie0 = ['sl', sl];
+        else if (okTp0) sortie0 = ['tp', tp];
+        else if (armeCertain0) sortie0 = ['sl', slArme0];
+        // Même indécidable que sur les bougies suivantes, et il faut le traiter ICI
+        // aussi : l'entrée et l'armement du palier tombent le plus souvent dans la même
+        // heure. Le laisser au seul cas général reviendrait à appliquer deux règles
+        // différentes dans la même fonction — l'erreur que ce bloc avait déjà commise.
+        else if (armeActif0) {
+          // même preuve, même réserve, sur la bougie d'entrée
+          const apres0 = apresSecond(i);
+          if (apres0 && d * apres0 <= d * slArme0) sortie0 = ['sl', slArme0];
+          else { indecis0 = true; if (prudent) sortie0 = ['sl', slArme0]; }
+        }
       }
-      if (q === 'tp' && d * mieux0 >= d * tp) { trades.push(clore(df, i, i, px, tp, sl0, 'tp', 0, ambigu0, vente)); enPos = false; break; }
+    } else if (prudent) {
+      if (okVieux0) sortie0 = ['sl', sl];
+      else if (armeActif0) sortie0 = ['sl', slArme0];
+      else if (!okRien0 && okTp0) sortie0 = ['tp', tp];
+    } else {
+      if (okTp0) sortie0 = ['tp', tp];
+      else if (!okRien0) sortie0 = armeActif0 ? ['sl', slArme0] : (okVieux0 ? ['sl', sl] : null);
     }
-    if (enPos && (haussiere || prudent)) majSecu(i);
+    ambiguTrade = ambiguTrade || indecis0;
+    if (sortie0) {
+      if (sortie0[0] === 'sl') {
+        const niv = d * sortie0[1] > d * px ? 2 : d * sortie0[1] > d * sl0 ? 1 : 0;
+        const b = Math.max(be, niv);
+        trades.push(clore(df, i, i, px, sortie0[1], sl0, b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl', b, ambiguTrade, vente));
+      } else {
+        trades.push(clore(df, i, i, px, tp, sl0, 'tp', 0, ambiguTrade, vente));
+      }
+      enPos = false;
+    }
+    if (enPos) majSecu(i);
+    void haussiere;
   }
 
-  // frais, rapportés au risque du trade (règle du moteur Python)
+  // frais, rapportés au risque du trade
   const frais = cfg.frais || {};
+  const contrat = Number(frais.contrat) || 0;
+  const swapLot = frais.swap_long !== undefined || frais.swap_short !== undefined;
   for (const tr of trades) {
     const slP = Math.abs(tr.entree - tr.sl_initial) / tr.entree * 100;
     // le spread n'est plus déduit ici : il est déjà dans le prix d'entrée, et donc dans
     // le R du trade. Le compter deux fois doublerait le coût réel.
-    const comm = (frais.commission_pct || 0) * 2 / slP;
-    const nuits = (tr.sortie_t - tr.entree_t) / 86400000;
-    // Le relevé ne donne que le swap LONG. À la vente, prendre son opposé transformait
-    // un coût en crédit : la plupart des courtiers facturent le portage dans les DEUX
-    // sens, ils ne vous paient pas pour vendre. Sans relevé du swap court, on garde donc
-    // le coût, jamais le crédit. Un taux positif au comptant (portage favorable) reste
-    // crédité à l'achat, où il est réel.
-    const brut = Number(frais.swap_annuel_pct) || 0;
-    const taux = (tr.sens === 'vente') ? -Math.abs(brut) : brut;
-    const swap = -(taux / 360) * nuits / slP;
+    // `commission_pct` est un tarif PAR JAMBE, en % du notionnel : d'où le × 2.
+    // `commission_par_lot` est déjà l'ALLER-RETOUR, dans la devise du symbole — c'est
+    // ainsi qu'on le mesure sur le journal, qui somme les deux opérations de la
+    // position. Sur GOLD : 6,95 par lot, ajustement R² 0,93 ; le même tarif exprimé en
+    // pourcentage du notionnel donne R² -1,63, c'est-à-dire pire que la moyenne.
+    const comm = (frais.commission_pct || 0) * 2 / slP
+      + (contrat > 0 ? (Number(frais.commission_par_lot) || 0) / (contrat * Math.abs(tr.entree - tr.sl_initial)) : 0);
+    let swap;
+    if (swapLot && contrat > 0) {
+      // ————— modèle exact, calibré sur le journal du robot —————
+      // Le courtier facture un MONTANT par lot et par nuit (SYMBOL_SWAP_LONG/SHORT),
+      // pas un pourcentage annuel du notionnel. La différence n'est pas de forme : sur
+      // GOLD, le taux annuel équivalent va de 12 %/an à 1 800 $ l'once à 4,8 %/an à
+      // 4 470 $, et le modèle en pourcentage se trompait donc d'un facteur 2,5 sur la
+      // durée de la mesure. Mesuré sur les 174 trades de GOLD portant au moins une nuit,
+      // journal du 4 septembre 2026 : le coût par lot et par nuit reste à -60 de 2020 à
+      // 2026 pendant que le prix passe de 1 800 à 4 675, et le taux annuel équivalent
+      // s'effondre de 11,8 % à 4,5 %. C'est bien un montant, pas un taux.
+      //
+      // En R, la conversion de devise s'annule : le swap et le risque sont tous deux
+      // convertis au même cours. Compte en EUR, symbole en USD, et le rapport mesuré /
+      // prédit vaut 1,0000 (p10 0,9965, p90 1,0038) sur 129 trades.
+      //
+      //   swap_R = |swap par lot| × nuits / (taille du contrat × |entrée − stop|)
+      //
+      // Le sens compte : le courtier déclare les deux valeurs et elles ne sont pas
+      // symétriques — GOLD paie -67,90 à l'achat et CRÉDITE +27,00 à la vente. Un signe
+      // positif est un crédit réel, on le garde tel quel.
+      const parLot = tr.sens === 'vente'
+        ? (Number(frais.swap_short) || 0)
+        : (Number(frais.swap_long) || 0);
+      swap = -parLot * nuitsPortage(tr.entree_t, tr.sortie_t)
+        / (contrat * Math.abs(tr.entree - tr.sl_initial));
+    } else {
+      // repli : taux annuel du notionnel (modes 5 et 6 de MT5, « intérêt annuel »), et
+      // tout symbole dont on n'a pas relevé le montant par lot.
+      const nuits = (tr.sortie_t - tr.entree_t) / 86400000;
+      // Sans relevé du swap court, on garde le coût, jamais le crédit : la plupart des
+      // courtiers facturent le portage dans les DEUX sens.
+      const brut = Number(frais.swap_annuel_pct) || 0;
+      const taux = (tr.sens === 'vente') ? -Math.abs(brut) : brut;
+      swap = -(taux / 360) * nuits / slP;
+    }
     tr.R_net = tr.R - comm - swap;
   }
   return trades;
+}
+
+// Nuits de portage facturées entre deux instants, sur l'horloge du serveur.
+//
+// Trois règles, chacune mesurée sur le journal GOLD du 4 septembre 2026 plutôt que
+// supposée. On compare, pour chaque règle, le swap prédit au swap réellement facturé,
+// et on retient celle dont le rapport est le moins dispersé :
+//
+//   toutes les nuits, jeudi ×3           étalement p90/p10 ×3,14
+//   hors samedi/dimanche, jeudi ×3       étalement ×1,14   ← retenue
+//   hors samedi/dimanche, sans triple    étalement ×3,16
+//   hors samedi, jeudi ×3                étalement ×2,09
+//
+// Le triple tombe au minuit du JEUDI, pas du mercredi : sur les trades ne franchissant
+// qu'un seul minuit, le facteur mesuré vaut 2,73 au jeudi et 0,88 à 0,92 les autres
+// jours — un rapport de 3,08. Il est stable de 2020 à 2025 (2,53 à 2,77).
+// Le week-end n'est pas facturé : les compter multipliait le coût par trois sur les
+// positions tenues du vendredi au lundi.
+export function nuitsPortage(debut, fin) {
+  let n = 0;
+  for (let j = Math.ceil(debut / 86400000); j <= Math.floor(fin / 86400000); j++) {
+    const jour = new Date(j * 86400000).getUTCDay();
+    if (jour === 0 || jour === 6) continue;      // samedi et dimanche : pas de portage
+    n += jour === 4 ? 3 : 1;                     // le minuit du jeudi porte trois nuits
+  }
+  return n;
+}
+
+// ---------- suivi de la position sur la H1 ----------
+// Le signal reste lu sur la clôture de l'unité de décision (D1 ou H4) : invariants 2, 3
+// et 5 intacts. Seul change le pas auquel le stop, l'objectif et les paliers sont
+// surveillés — la bougie journalière ne dit que O/H/L/C, donc l'ordre des mouvements y
+// est inconnu et le moteur doit trancher par convention. Sur la H1 cette part
+// indécidable s'effondre (mesuré : 12 % des trades → 3 % sur GOLD, 19 % → 4 % sur
+// BITCOIN), et le résultat cesse d'être systématiquement optimiste.
+//
+// Aucune donnée supplémentaire n'est requise : les H1 SONT les données de base
+// (invariant 1). Les filtres restent évalués sur la bougie de décision, pas sur la H1 :
+// la bascule ne doit changer que le suivi, sinon on comparerait deux règles.
+export function backtesterSuivi(df, cfg, ut) {
+  if (!ut || ut === 'H1') return backtester(df, cfg);
+  const sup = resampler(df, ut);
+  const signal = signalDe(sup, cfg);
+  const autorise = autorisePar(sup, cfg.filtres);
+  const seau = sup.bucket;
+  if (!seau) return backtester(sup, cfg); // repli : série déjà agrégée, rien à reporter
+
+  // Première bougie H1 EXÉCUTABLE de chaque seau : l'ouverture qui suit la clôture du
+  // signal (invariant 5), sauf quand le robot refuserait l'ordre. `InpPasDebutSemaine`
+  // (robot-mt5.js) interdit le dimanche et le lundi avant 02:00 ; le signal n'est pas
+  // perdu pour autant, il est réessayé sur les ticks suivants du MÊME seau. Sans cette
+  // règle, Simula entrait deux heures et un mouvement de prix avant le robot — mesuré :
+  // 90 trades sur 434 concernés sur BITCOIN, 51 sur 489 sur GOLD.
+  const pasDebutSemaine = cfg.pas_debut_semaine !== false;
+  const executable = (i) => {
+    if (!pasDebutSemaine) return true;
+    const d = new Date(df.t[i]);
+    const j = d.getUTCDay();
+    if (j === 0) return false;
+    return !(j === 1 && d.getUTCHours() < 2);
+  };
+  // Plafond de spread : on n'entre pas sur la bougie du rollover, où le spread vaut
+  // trois à huit fois sa normale. Le signal n'est pas perdu, il attend la première
+  // bougie du MÊME jour qui repasse sous le plafond — c'est exactement ce que fait le
+  // robot, qui garde le seau en attente et réessaie aux ticks suivants (InpSpreadMaxPct).
+  // Quand aucune bougie du jour ne passe, les deux renoncent : le repli sur la première
+  // bougie ferait entrer Simula là où le robot n'entre pas (mesuré à 1,5× : 0 à 2 % des
+  // signaux sur cinq instruments, 30 % sur BITCOIN dont le spread est très large).
+  const facteur = Number(cfg.spread_max_facteur) || 0;
+  const seuil = facteur > 0 ? seuilSpread(df, facteur) : null;
+  const sp = seuil ? spreadEnPct(df) : null;
+  // Le spread jugé est celui de la bougie sur laquelle on entre — le même que le moteur
+  // fait déjà PAYER à l'entrée (spreadDe). Ce n'est pas un regard en avant : c'est le
+  // champ `spread` de MqlRates, que le robot lit en direct sur la bougie en cours au
+  // moment où il place l'ordre. Le lire sur la bougie précédente, en revanche, rend le
+  // plafond aveugle : le pic du rollover est DANS la bougie de 00:00, la bougie de
+  // 23:00 est normale, et le plafond ne refusait plus rien.
+  // Deux conditions distinctes, et il faut les deux. Le spread dit ce que l'entrée COÛTE ;
+  // la séance dit si l'ordre PEUT partir. Sur #HongKong50 les bougies de 03:00 et 04:00
+  // portent un spread normal — 0,080 % et 0,019 %, sous le plafond — et l'ordre y est
+  // pourtant refusé : la séance de négociation ouvre après la séance de cotation. Le
+  // moteur y inscrivait un prix que personne ne pouvait traiter, deux heures avant
+  // l'entrée réelle du robot.
+  const sess = df.sess;
+  const traitable = (i) => !sess || sess[i] !== 0;
+  const sousPlafond = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
+  // Fenêtre horaire d'ENTRÉE — troisième condition, du même genre que les deux autres :
+  // elle porte sur la bougie où l'ordre part, pas sur la bougie de décision. Un filtre
+  // `horaire` ordinaire ne peut pas faire ce travail : sur une décision D1 il est
+  // évalué sur la série agrégée, dont toutes les bougies sont à 00:00 — il garderait
+  // tout ou ne garderait rien. Ici le signal n'est pas perdu quand l'heure est exclue,
+  // il attend la première bougie du MÊME jour qui rentre dans la fenêtre, exactement
+  // comme sous le plafond de spread. Bornes en heures serveur, fin EXCLUSIVE, et le
+  // passage par minuit est admis (22 → 6).
+  const fenH = cfg.heures_entree;
+  const hD = fenH ? Number(fenH.debut) : 0, hF = fenH ? Number(fenH.fin) : 0;
+  const dansFenetre = !fenH || !Number.isFinite(hD) || !Number.isFinite(hF) || hD === hF
+    ? () => true
+    : (i) => {
+      const h = new Date(df.t[i]).getUTCHours();
+      return hD < hF ? (h >= hD && h < hF) : (h >= hD || h < hF);
+    };
+  const acceptable = (i) => traitable(i) && sousPlafond(i) && dansFenetre(i);
+
+  const parSeau = new Map();
+  for (let i = df.n - 1; i >= 0; i--) {
+    if (!executable(i)) continue;
+    const b = seau(df.t[i]);
+    if (!parSeau.has(b)) parSeau.set(b, []);
+    parSeau.get(b).push(i);
+  }
+  const force = new Array(df.n).fill(false);
+  const seauDe = new Float64Array(df.n).fill(NaN);
+  for (let k = 0; k < sup.n; k++) {
+    if (!signal[k]) continue;
+    if (autorise && !autorise[k]) continue;
+    const idx = parSeau.get(sup.t[k]);
+    if (!idx) continue;
+    // TOUTES les bougies exécutables du seau sont marquées, pas seulement la première.
+    //
+    // Le robot garde le signal en attente et le réessaie à chaque bougie H1 du MÊME jour
+    // tant que l'ordre ne passe pas — y compris quand ce qui l'empêche est sa PROPRE
+    // position encore ouverte (InpMaxPositions). Le moteur ne marquait qu'une bougie :
+    // si sa position se fermait après elle, la journée était perdue, alors que le robot
+    // entrait une ou deux heures plus tard le même jour.
+    //
+    // Mesuré sur le journal GOLD du 4 septembre : 1 393 des 3 167 tentatives du robot
+    // sont refusées pour « position déjà ouverte » puis reprises plus tard dans la
+    // journée, et le moteur en perdait 79 — 462 trades contre 538. Les durées de
+    // détention, elles, se superposaient déjà (médiane 14 h des deux côtés) : ce
+    // n'était donc pas une sortie trop tardive, mais une reprise manquante.
+    //
+    // `backtester` entre à la PREMIÈRE bougie marquée où il n'est pas déjà en position,
+    // et ne peut pas entrer sur la bougie même où il vient de sortir : la reprise suit
+    // la sortie d'une bougie, comme chez le robot.
+    for (let z = idx.length - 1; z >= 0; z--) {
+      if (!acceptable(idx[z])) continue;
+      force[idx[z]] = true;
+      seauDe[idx[z]] = sup.t[k];
+    }
+  }
+  // le délai est exprimé en bougies de décision : on le convertit en bougies H1
+  const bougiesParSeau = ut === 'D1' ? 24 : 4;
+  const filtres = (cfg.filtres || [])
+    .filter((f) => f.type === 'delai_bougies' && f.actif !== false)
+    .map((f) => ({ ...f, n: f.n * bougiesParSeau }));
+  return backtester(df, {
+    ...cfg,
+    sortie: { ...cfg.sortie, armer_avant: false },
+    signal_force: force,
+    signal_seau: seauDe,
+    filtres,
+  });
 }
 
 function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
@@ -970,8 +1768,102 @@ function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
   };
 }
 
+// Répartition du résultat par JOUR de la semaine ou par HEURE d'entrée.
+//
+// La question « quels sont les meilleurs jours et horaires » a une réponse honnête et
+// une réponse flatteuse. La flatteuse consiste à découper le résultat et à désigner le
+// meilleur seau : sur 44 trades répartis en cinq jours, le meilleur jour l'est toujours,
+// et il ne le restera pas. On calcule donc, pour chaque seau, de combien il s'écarte du
+// hasard.
+//
+// Le test : sous l'hypothèse « ce seau est un tirage au sort parmi tous les trades », la
+// moyenne du seau a pour écart-type σ/√n, corrigé du tirage sans remise. On compare
+// l'écart observé à cet écart-type — c'est le z. Comme on teste K seaux à la fois, le
+// seuil est relevé d'autant (Bonferroni) : |z| > 2,58 pour cinq jours, 3,02 pour
+// vingt-quatre heures. Sans cette correction, tester 24 heures au seuil habituel
+// désigne en moyenne un « meilleur horaire » sur deux séries de pur bruit.
+export function parPeriode(trades, quoi = 'jour') {
+  const col = (t) => (t.R_net !== undefined ? t.R_net : t.R);
+  const N = trades.length;
+  if (!N) return { seaux: [], notables: 0, quoi };
+  const cle = quoi === 'heure'
+    ? (t) => new Date(t.entree_t).getUTCHours()
+    : (t) => new Date(t.entree_t).getUTCDay();
+  const totalG = trades.reduce((a, t) => a + col(t), 0);
+  const moyG = totalG / N;
+  // écart-type de la population des trades
+  const varG = N > 1
+    ? trades.reduce((a, t) => a + (col(t) - moyG) ** 2, 0) / (N - 1)
+    : 0;
+  const sigma = Math.sqrt(varG);
+
+  const par = new Map();
+  for (const t of trades) {
+    const k = cle(t);
+    if (!par.has(k)) par.set(k, []);
+    par.get(k).push(col(t));
+  }
+  // seuil de Bonferroni sur le nombre de seaux RÉELLEMENT peuplés
+  const K = par.size;
+  const seuil = K <= 1 ? Infinity : (K <= 5 ? 2.58 : K <= 12 ? 2.87 : 3.02);
+
+  const seaux = [];
+  for (const [k, v] of [...par.entries()].sort((a, b) => a[0] - b[0])) {
+    const n = v.length;
+    const total = v.reduce((a, x) => a + x, 0);
+    const moy = total / n;
+    // On compare le seau AUX AUTRES, jamais à un ensemble qui le contient : comparé à la
+    // moyenne générale, un seau fortement positif la tire vers le haut et fait passer
+    // tous les autres pour « significativement en dessous ». C'est vrai, et
+    // tautologique.
+    const reste = N - n;
+    const moyAutres = reste > 0 ? (totalG - total) / reste : moy;
+    const se = sigma > 0 && n > 0 && reste > 0
+      ? sigma * Math.sqrt(1 / n + 1 / reste)
+      : 0;
+    const z = se > 0 ? (moy - moyAutres) / se : 0;
+    seaux.push({ cle: k, n, total, moyenne: moy, z, notable: Math.abs(z) > seuil });
+  }
+  // Le seau le plus écarté, et lui seul : c'est la réponse à « y a-t-il un meilleur
+  // jour ». Compter les seaux notables induit en erreur dès qu'un seau fort existe —
+  // son complément paraît alors écarté lui aussi.
+  const fort = seaux.reduce((a, x) => (a === null || Math.abs(x.z) > Math.abs(a.z) ? x : a), null);
+  return { seaux, notables: seaux.filter((x) => x.notable).length, fort,
+    conclut: !!(fort && fort.notable), quoi, moyenne: moyG, seuil, K };
+}
+
+// Le seau retenu tient-il sur la seconde moitié de l'historique ?
+//
+// C'est la seule question qui compte avant de filtrer sur un jour ou une heure : un seau
+// choisi parce qu'il était le meilleur AVANT l'est-il resté APRÈS ? On coupe la série de
+// trades en deux moitiés chronologiques, on classe les seaux sur la première, et on
+// regarde où se place le vainqueur dans la seconde. Un vainqueur qui retombe au milieu
+// du classement était du bruit, et le filtre construit dessus détruira le résultat.
+export function stabilitePeriode(trades, quoi = 'jour') {
+  if (trades.length < 20) return null;
+  const tri = [...trades].sort((a, b) => a.entree_t - b.entree_t);
+  const m = Math.floor(tri.length / 2);
+  const a = parPeriode(tri.slice(0, m), quoi).seaux;
+  const b = parPeriode(tri.slice(m), quoi).seaux;
+  if (a.length < 3 || b.length < 3) return null;
+  const rangB = new Map([...b].sort((x, y) => y.moyenne - x.moyenne).map((x, i) => [x.cle, i]));
+  const meilleurA = [...a].sort((x, y) => y.moyenne - x.moyenne)[0];
+  const pireA = [...a].sort((x, y) => x.moyenne - y.moyenne)[0];
+  const rgMeilleur = rangB.has(meilleurA.cle) ? rangB.get(meilleurA.cle) : null;
+  const rgPire = rangB.has(pireA.cle) ? rangB.get(pireA.cle) : null;
+  return {
+    quoi, seaux: b.length,
+    meilleur: meilleurA.cle, rangMeilleur: rgMeilleur,
+    pire: pireA.cle, rangPire: rgPire,
+    // « tient » : le meilleur de la première moitié reste dans la moitié haute de la
+    // seconde, ET le pire reste dans la moitié basse
+    tient: rgMeilleur !== null && rgPire !== null
+      && rgMeilleur < b.length / 2 && rgPire >= b.length / 2,
+  };
+}
+
 export function resume(trades) {
-  if (!trades.length) return { n: 0, total: 0, winRate: 0, nGains: 0, nPertes: 0, neutres: 0, ambigus: 0, pf: 0, pfMesurable: false, dd: 0, moyenne: 0, rAn: 0, annees: 0 };
+  if (!trades.length) return { n: 0, total: 0, winRate: 0, nGains: 0, nPertes: 0, neutres: 0, ambigus: 0, exposes: 0, pf: 0, pfMesurable: false, dd: 0, moyenne: 0, rAn: 0, annees: 0 };
   const col = (t) => (t.R_net !== undefined ? t.R_net : t.R);
   const n = trades.length;
   // Un palier « point mort » sort à ≈ 0 R : légèrement négatif frais compris,
@@ -997,6 +1889,16 @@ export function resume(trades) {
     // part des trades dont le sort a été décidé par une convention de lecture et non
     // par la donnée : la bougie contenait le stop ET l'objectif
     ambigus: trades.filter((t) => t.ambigu).length,
+    // Sorties EXPOSÉES : celles qui reposent sur un palier armé dans la bougie même où
+    // elles tombent. Le prix a pu y repasser une seconde fois sans que l'ordre des deux
+    // extrêmes le dise, et c'est le seul écart qui subsiste face au testeur MT5.
+    //
+    // Confronté à douze exécutions du testeur : les trois configurations à ZÉRO sortie
+    // exposée rendent le chiffre du testeur à 0,3-0,4 R près, soit le seul arrondi des
+    // frais — sur 403, 44 et 47 trades. Celles qui en portent 15 à 16 % dérivent de 12
+    // et 17 R. Ce n'est PAS la fréquence d'armement qui compte : AUDCAD arme un palier
+    // sur 64 % de ses trades et n'expose aucune sortie, pour 0,4 R d'écart.
+    exposes: trades.filter((t) => t.palierDansBougie).length,
     // trades sortis par le trailing dans la bougie de leur propre plus haut : leur
     // résultat dépend du chemin intra-bougie, inconnu de la donnée
     sommets: trades.filter((t) => t.sommet).length,
