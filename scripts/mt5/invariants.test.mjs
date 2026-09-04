@@ -224,10 +224,33 @@ test("backtesterSuivi — le signal reste sur la bougie de décision, le suivi p
     }
     assert.equal(tr.entree_t, premiere, "l'entrée n'est pas sur la première bougie H1 exécutable du jour");
   }
-  // le suivi plus fin réduit la part indécidable
-  const ambD1 = M.resume(d1).ambigus / d1.length;
-  const ambH1 = M.resume(h1).ambigus / h1.length;
-  assert.ok(ambH1 <= ambD1, `le suivi H1 laisse plus de bougies ambiguës (${ambH1}) que le D1 (${ambD1})`);
+  // Le suivi plus fin réduit la part indécidable — mais cela se mesure en LARGEUR,
+  // pas en compte de trades.
+  //
+  // Compter les trades touchés par au moins une bougie ambiguë ne dit rien : un trade
+  // D1 traverse trois bougies, le même trade en H1 en traverse soixante-douze, et il a
+  // donc mécaniquement plus d'occasions d'en rencontrer une. Ce que le suivi H1 réduit,
+  // c'est l'AMPLEUR de l'indécision : une bougie H1 ambiguë couvre une heure de cours,
+  // une bougie D1 ambiguë en couvre vingt-quatre, et l'écart entre lecture haute et
+  // lecture basse s'en trouve resserré d'autant.
+  const bande = (serie, ut) => {
+    const lire = (prudent) => (ut
+      ? M.backtesterSuivi(DF, { ...cfg, sortie: { ...cfg.sortie, prudent } }, ut)
+      : M.backtester(serie, { ...cfg, sortie: { ...cfg.sortie, prudent } }));
+    const haute = lire(false), basse = new Map(lire(true).map((t) => [t.entree_t, t]));
+    let n = 0, s2 = 0;
+    for (const x of haute) {
+      const y = basse.get(x.entree_t);
+      if (!y) continue;
+      n++; s2 += Math.abs(x.R - y.R);
+    }
+    return n ? s2 / n : 0;
+  };
+  const largeurD1 = bande(base, null);
+  const largeurH1 = bande(null, "D1");
+  assert.ok(largeurH1 < largeurD1,
+    `le suivi H1 n'a pas resserré la bande entre les deux lectures : ${largeurH1.toFixed(4)} R contre ${largeurD1.toFixed(4)} R en D1`);
+  void d1; void h1;
 });
 
 test("backtesterSuivi — en H1 il ne change rien", () => {
@@ -456,4 +479,40 @@ test("le swap se compte par lot et par nuit, pas en pourcentage annuel du notion
     assert.ok(Math.abs(x.R_net - attendu) < 1e-9,
       `commission mal comptée : R_net ${x.R_net} au lieu de ${attendu}`);
   }
+});
+
+test("les issues d'une bougie sont énumérées, et les deux lectures en prennent les bornes", () => {
+  // Une bougie qui contient à la fois le stop et l'objectif autorise les deux issues :
+  // la lecture haute prend l'objectif, la basse le stop, et le trade est marqué ambigu.
+  const n = 24 * 12, t = [], o = [], h = [], l = [], c = [];
+  let px = 100;
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const ouv = px;
+    px *= 1 + (i % 48 < 24 ? 0.0006 : -0.0004);
+    o.push(ouv); c.push(px); h.push(Math.max(ouv, px)); l.push(Math.min(ouv, px));
+  }
+  for (let i = 30; i < n; i += 10) { h[i] = o[i] * 1.03; l[i] = o[i] * 0.97; }
+  const df = { n, t, o, h, l, c, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5, sl: 1, rr: 2, paliers: [] });
+  const lire = (p) => M.backtesterSuivi(df, { ...cfg, sortie: { ...cfg.sortie, prudent: p } }, "D1");
+  const H = lire(false), B = lire(true);
+  assert.ok(H.length > 0, "gabarit sans trades : le test ne prouve rien");
+  assert.deepEqual([...new Set(H.map((x) => x.motif))], ["tp"], "la lecture haute ne prend pas l'objectif");
+  assert.deepEqual([...new Set(B.map((x) => x.motif))], ["sl"], "la lecture basse ne prend pas le stop");
+  assert.equal(H.filter((x) => x.ambigu).length, H.length, "les trades ne sont pas marqués ambigus");
+
+  // « aucune sortie » n'est PAS une issue admissible quand l'objectif est atteint : il
+  // est actif dès l'ouverture de la bougie. L'oublier faisait marquer ambiguë toute
+  // bougie touchant l'objectif — 32 % des trades de GOLD sans le moindre palier, là où
+  // la réponse est zéro : sur les sept instruments de référence, aucune bougie H1 ne
+  // contient à la fois le stop et l'objectif d'une position ouverte.
+  const etroit = { n, t, o, h: h.map((x, i) => (i >= 30 && (i - 30) % 10 === 0 ? o[i] * 1.03 : x)), l: l.slice(), c, grain: { decimales: 4 } };
+  for (let i = 30; i < n; i += 10) etroit.l[i] = o[i] * 0.999;   // l'objectif seul, plus le stop
+  const HH = M.backtesterSuivi(etroit, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, "D1");
+  const BB = M.backtesterSuivi(etroit, { ...cfg, sortie: { ...cfg.sortie, prudent: true } }, "D1");
+  assert.equal(HH.filter((x) => x.ambigu).length, 0,
+    "une bougie qui n'atteint que l'objectif est marquée ambiguë : « aucune sortie » y est comptée à tort");
+  assert.equal(HH.reduce((a, x) => a + x.R, 0).toFixed(6), BB.reduce((a, x) => a + x.R, 0).toFixed(6),
+    "les deux lectures divergent alors qu'aucune bougie n'est indécidable");
 });

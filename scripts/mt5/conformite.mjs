@@ -256,6 +256,24 @@ function main() {
       + `   moteur ${(rm - rmNet).toFixed(1)}`);
     console.log(`  NET    robot ${(brut - coutSwap - coutComm).toFixed(1)}   moteur ${rmNet.toFixed(1)}   `
       + `écart ${(rmNet - (brut - coutSwap - coutComm)).toFixed(1)}`);
+
+    // La bande entre les deux lectures : c'est la promesse du produit. L'ordre des
+    // mouvements à l'intérieur d'une bougie H1 est inconnu, donc le moteur ne peut pas
+    // donner UN chiffre — il donne un intervalle, et ce que MT5 mesure doit tomber
+    // dedans. Une bande qui ne contient pas le chiffre du robot est un défaut de
+    // modèle, pas une incertitude honnête.
+    const lire = (prudent) => M.backtesterSuivi(df, { ...cfg, sortie: { ...cfg.sortie, prudent } }, "D1");
+    const bas = lire(true), haut = lire(false);
+    const totNet = (a2) => a2.reduce((x, t) => x + (t.R_net !== undefined ? t.R_net : t.R), 0);
+    const bNet = totNet(bas), hNet = totNet(haut);
+    const robotNet = brut - coutSwap - coutComm;
+    const dedans = robotNet >= Math.min(bNet, hNet) && robotNet <= Math.max(bNet, hNet);
+    const amb = haut.filter((t) => t.ambigu).length;
+    console.log(`\n  bande des deux lectures, en R net : [${Math.min(bNet, hNet).toFixed(1)} … ${Math.max(bNet, hNet).toFixed(1)}]`
+      + `  largeur ${Math.abs(hNet - bNet).toFixed(1)} R`);
+    console.log(`  robot à ${robotNet.toFixed(1)} : ${dedans ? "DANS la bande" : "HORS de la bande — défaut de modèle"}`
+      + (dedans && Math.abs(hNet - bNet) > 0 ? `, à ${(100 * (robotNet - Math.min(bNet, hNet)) / Math.abs(hNet - bNet)).toFixed(0)} % du bas` : ""));
+    console.log(`  ${amb} trades sur ${haut.length} (${(100 * amb / haut.length).toFixed(0)} %) dont l'issue dépend de l'ordre des mouvements dans une bougie`);
   }
 
   console.log(`\n${sym}${variante ? " " + variante : ""} — ${communs} journées comparées `

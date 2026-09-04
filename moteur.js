@@ -1001,6 +1001,11 @@ export function backtester(df, cfg) {
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
+  // L'ambiguïté se CUMULE sur toute la durée du trade. Elle n'était relevée que sur la
+  // bougie de sortie : un trade traversant trois bougies indécidables et se refermant
+  // sur une bougie nette était compté comme certain. Sur GOLD, 132 trades sur 492
+  // changent de sortie entre les deux lectures, et le moteur n'en marquait que 6.
+  let ambiguTrade = false;
 
   // remonte le stop d'après le plus haut de la bougie i (trailing ou paliers).
   // Appelée deux fois par bougie : avant le test de sortie quand la bougie est
@@ -1075,7 +1080,7 @@ export function backtester(df, cfg) {
       if (d * df.o[i] <= d * sl) {
         const gap = vente ? df.o[i] > df.h[i - 1] : df.o[i] < df.l[i - 1];
         const motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : (gap ? 'sl_gap' : 'sl');
-        trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, false, vente));
+        trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, ambiguTrade, vente));
         enPos = false; continue;
       }
       // bougie reconstituée : ni sortie ni palier ne s'y lisent (voir `releve`)
@@ -1096,27 +1101,89 @@ export function backtester(df, cfg) {
       // 94 036 (objectif 92 920 atteint) et bas 90 954 (point mort 91 098 touché) dans la
       // MÊME heure. Le moteur inscrivait +2,00 R, le testeur 0,00 R.
       const slArme = niveauSecu(mieux);
-      const ambigu = (d * pire <= d * sl && d * mieux >= d * tp)
-        || (d * pire <= d * slArme && d * mieux >= d * tp)
-        || (vente && df.h[i] >= sl && df.l[i] <= tp);
-      // en lecture BASSE, le stop testé est celui que la bougie a armé : on tranche
-      // contre soi. En lecture haute, l'ancien stop, comme avant.
-      const slTeste = prudent ? slArme : sl;
+      // Bougie AMBIGUË : celle dont l'issue dépend de l'ORDRE des mouvements, que la
+      // H1 ne dit pas. Deux familles, et l'ancienne condition n'en voyait qu'une.
+      //
+      //   · le stop ET l'objectif sont tous deux atteints — cas classique ;
+      //   · la bougie ARME un palier et redescend jusqu'à lui. Montée d'abord :
+      //     le stop a bougé et la sortie se fait au point mort. Descente d'abord :
+      //     le palier n'était pas encore posé, et la bougie se referme sans sortie,
+      //     ou sur l'ancien stop si elle va jusque-là.
+      //
+      // La seconde manquait, et elle est de loin la plus fréquente : sur GOLD,
+      // 132 trades sur 492 changent de sortie entre lecture haute et lecture basse —
+      // 27 %, pour 79,2 R d'écart — alors que le moteur n'en marquait que 6. Annoncer
+      // « 6 trades indécidables » sur une mesure dont un quart des sorties dépend d'une
+      // convention, c'est vendre une précision qui n'existe pas.
+      //
+      // Vu au journal du robot le 7 avril 2020 : entrée 1 660,31, stop 1 650,35 ; à
+      // 10:00 la bougie monte à 1 668,69, arme le point mort (parcours 28 %) et
+      // redescend le toucher — le robot sort à 0,00, le moteur inscrivait -1 R.
+      //
+      // ————— issues ADMISSIBLES de la bougie, et lecture haute ou basse entre elles —————
+      //
+      // On énumère ce que la bougie AUTORISE, au lieu de supposer un ordre unique. Une
+      // issue est admissible s'il existe un chemin allant de l'ouverture à la clôture,
+      // touchant le haut et le bas, qui la produise :
+      //
+      //   objectif    si l'extrême favorable l'atteint ;
+      //   stop armé   si la bougie arme un palier et redescend jusqu'à lui ;
+      //   ancien stop si l'extrême défavorable l'atteint — la descente d'abord, le
+      //               palier pas encore posé ;
+      //   aucune      si le prix peut avoir touché le stop armé AVANT de l'armer, et
+      //               n'être jamais revenu ensuite.
+      //
+      // La CLÔTURE tranche une partie de l'indécision, et le moteur l'ignorait. Si la
+      // bougie ferme au-delà du stop armé, le prix y est forcément repassé APRÈS
+      // l'extrême qui a armé le palier : la sortie au stop armé devient certaine, et
+      // « aucune issue » cesse d'être admissible. C'est une déduction, pas une
+      // convention — et elle resserre la bande sans rien inventer.
+      const armeActif = slArme !== sl && d * pire <= d * slArme;
+      // la clôture est au-delà du stop armé : le retour a eu lieu après l'armement
+      const armeCertain = slArme !== sl && d * df.c[i] <= d * slArme;
+      const okTp = d * mieux >= d * tp;
+      const okVieux = d * pire <= d * sl;
+      // « aucune sortie » suppose qu'AUCUN niveau actif n'a été franchi. L'objectif et
+      // l'ancien stop le sont dès l'ouverture de la bougie : les atteindre ferme le
+      // trade, quel que soit l'ordre. Seul le stop ARMÉ peut être franchi sans effet,
+      // parce qu'il n'existe pas encore quand le prix passe dessous.
+      const okRien = !okVieux && !okTp && !armeCertain;
+      const issues = (okTp ? 1 : 0) + (armeActif ? 1 : 0) + (okVieux ? 1 : 0) + (okRien ? 1 : 0);
+      const ambigu = issues > 1;
+      ambiguTrade = ambiguTrade || ambigu;
+
+      // Lecture HAUTE : la meilleure issue admissible — l'objectif, sinon laisser
+      // courir, sinon le stop armé, et l'ancien stop en dernier recours.
+      // Lecture BASSE : la pire — l'ancien stop d'abord, puis le stop armé, puis
+      // laisser courir, l'objectif seulement s'il ne reste que lui.
+      //
+      // L'ancienne règle était inversée sur la famille des paliers : elle testait
+      // l'ANCIEN stop en lecture haute, si bien qu'une bougie qui armait le point mort
+      // et redescendait sortait à -1 R du côté « favorable » et à 0 R du côté
+      // « défavorable ». Vu au journal du robot le 7 avril 2020 : entrée 1 660,31,
+      // stop 1 650,35 ; à 10:00 la bougie monte à 1 668,69, arme le point mort
+      // (parcours 28 %), redescend le toucher — le robot sort à 0,00 et le moteur
+      // inscrivait -1 R alors qu'il se disait en lecture haute.
       let sortie = null;
-      for (const q of ordre) {
-        if (q === 'sl' && d * pire <= d * slTeste) { sortie = ['sl', slTeste]; break; }
-        if (q === 'tp' && d * mieux >= d * tp) { sortie = ['tp', tp]; break; }
+      if (prudent) {
+        if (okVieux) sortie = ['sl', sl];
+        else if (armeActif) sortie = ['sl', slArme];
+        else if (!okRien && okTp) sortie = ['tp', tp];
+      } else {
+        if (okTp) sortie = ['tp', tp];
+        else if (!okRien) sortie = armeActif ? ['sl', slArme] : (okVieux ? ['sl', sl] : null);
       }
+      void ordre;
       if (sortie) {
         let motif = sortie[0];
         if (motif === 'sl') {
           // le palier armé PAR cette bougie compte : sans ça, une sortie au point mort
           // se serait étiquetée « sl » et aurait fait croire à une perte pleine
-          const niv = d * slTeste > d * px ? 2 : d * slTeste > d * sl0 ? 1 : 0;
+          const niv = d * sortie[1] > d * px ? 2 : d * sortie[1] > d * sl0 ? 1 : 0;
           const b = Math.max(be, niv);
           motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
         }
-        const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambigu, vente);
+        const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambiguTrade, vente);
         // sortie par le stop dans la bougie même qui a fixé le plus haut : le gain
         // suppose que le stop a suivi le sommet tick par tick, ce que H1 ne dit pas
         if (trailing && sortie[0] === 'sl' && i === iPlusHaut) tr.sommet = true;
@@ -1124,7 +1191,7 @@ export function backtester(df, cfg) {
         enPos = false; continue;
       }
       if (dureeMax && (i - iEnt) >= dureeMax) {
-        trades.push(clore(df, iEnt, i, px, df.c[i], sl0, 'temps', be, false, vente));
+        trades.push(clore(df, iEnt, i, px, df.c[i], sl0, 'temps', be, ambiguTrade, vente));
         enPos = false; continue;
       }
       majSecu(i);
@@ -1153,6 +1220,7 @@ export function backtester(df, cfg) {
     sl = sl0;
     tp = px + (px - sl0) * rr;
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? df.l[i] : df.h[i];
+    ambiguTrade = false;
     if (seauEnt) seauEntre = seauEnt[i];
     iPlusHaut = i;
 
@@ -1166,19 +1234,37 @@ export function backtester(df, cfg) {
     // ordre. C'est le cas le plus fréquent, l'entrée et le palier tombant dans la même
     // heure — sur BITCOIN, 31 trades sur 420 contre 2 comptés auparavant.
     const slArme0 = niveauSecu(mieux0);
-    const ambigu0 = (d * pire0 <= d * sl && d * mieux0 >= d * tp)
-      || (d * pire0 <= d * slArme0 && d * mieux0 >= d * tp);
-    const slTeste0 = prudent ? slArme0 : sl;
-    for (const q of ((haussiere || prudent) ? ['sl', 'tp'] : ['tp', 'sl'])) {
-      if (q === 'sl' && d * pire0 <= d * slTeste0) {
-        const niv = d * slTeste0 > d * px ? 2 : d * slTeste0 > d * sl0 ? 1 : 0;
-        const b = Math.max(be, niv);
-        const motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
-        trades.push(clore(df, i, i, px, slTeste0, sl0, motif, b, ambigu0, vente)); enPos = false; break;
-      }
-      if (q === 'tp' && d * mieux0 >= d * tp) { trades.push(clore(df, i, i, px, tp, sl0, 'tp', 0, ambigu0, vente)); enPos = false; break; }
+    // MÊME énumération que sur les bougies suivantes. Elle était différente ici — ancien
+    // ordre supposé, ancien stop testé — si bien que la bougie d'entrée et les autres
+    // n'obéissaient pas à la même règle dans la même fonction.
+    const armeActif0 = slArme0 !== sl && d * pire0 <= d * slArme0;
+    const armeCertain0 = slArme0 !== sl && d * df.c[i] <= d * slArme0;
+    const okTp0 = d * mieux0 >= d * tp;
+    const okVieux0 = d * pire0 <= d * sl;
+    const okRien0 = !okVieux0 && !okTp0 && !armeCertain0;
+    ambiguTrade = ambiguTrade
+      || ((okTp0 ? 1 : 0) + (armeActif0 ? 1 : 0) + (okVieux0 ? 1 : 0) + (okRien0 ? 1 : 0)) > 1;
+    let sortie0 = null;
+    if (prudent) {
+      if (okVieux0) sortie0 = ['sl', sl];
+      else if (armeActif0) sortie0 = ['sl', slArme0];
+      else if (!okRien0 && okTp0) sortie0 = ['tp', tp];
+    } else {
+      if (okTp0) sortie0 = ['tp', tp];
+      else if (!okRien0) sortie0 = armeActif0 ? ['sl', slArme0] : (okVieux0 ? ['sl', sl] : null);
     }
-    if (enPos && (haussiere || prudent)) majSecu(i);
+    if (sortie0) {
+      if (sortie0[0] === 'sl') {
+        const niv = d * sortie0[1] > d * px ? 2 : d * sortie0[1] > d * sl0 ? 1 : 0;
+        const b = Math.max(be, niv);
+        trades.push(clore(df, i, i, px, sortie0[1], sl0, b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl', b, ambiguTrade, vente));
+      } else {
+        trades.push(clore(df, i, i, px, tp, sl0, 'tp', 0, ambiguTrade, vente));
+      }
+      enPos = false;
+    }
+    if (enPos) majSecu(i);
+    void haussiere;
   }
 
   // frais, rapportés au risque du trade
