@@ -3042,6 +3042,7 @@
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
           <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
+          <span style="display:block;font-size:12px;opacity:.85" title="Résultat moyen par jour de la semaine, et verdict : un jour ne vaut d'être filtré que s'il s'écarte du hasard ET que son classement tient sur la seconde moitié de l'historique. Mesuré sur six configurations dont deux à plus de 500 trades, aucun jour ne passe ce double test.">{{ quandTxt }}</span>
           <span style="display:block;font-size:12px;color:var(--color-accent-700)" title="Une sortie qui repose sur un palier armé dans la bougie même où elle tombe : le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors optimiste. Confronté douze fois au testeur MT5, une configuration sans aucune sortie exposée rend son chiffre exact aux frais près.">{{ btExposes }}</span>
           <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline">Chiffres périmés — relancez le test</span>
@@ -12511,6 +12512,44 @@ GROUPES = {
         ? 'gagnants / perdants / à l\u2019équilibre — soit ' + fr(res.winRate, 0) + ' % sur les '
           + ((res.nGains || 0) + (res.nPertes || 0)) + ' trades tranchés'
         : '',
+      // MEILLEURS JOURS ET HORAIRES — ou l'absence de meilleurs jours.
+      //
+      // Découper le résultat par jour et désigner le meilleur seau est facile ; ce seau
+      // l'est toujours, et il ne le restera pas. Mesuré sur les six configurations
+      // confrontées au testeur, dont deux à plus de 500 trades : AUCUN jour ne s'écarte
+      // du hasard, et le test de stabilité échoue quatre fois sur six — sur GOLD ema 5,
+      // le meilleur jour de la première moitié de l'historique devient le PIRE de la
+      // seconde. Filtrer là-dessus détruirait le résultat au lieu de l'améliorer.
+      //
+      // On affiche donc les chiffres ET le verdict, jamais le classement seul.
+      quandTxt: (() => {
+        const tr = this._tradesBt;
+        if (!res || !this.M || !tr || !tr.length) return '';
+        const J = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+        const p = this.M.parPeriode(tr, 'jour');
+        if (!p.seaux.length) return '';
+        const st = this.M.stabilitePeriode(tr, 'jour');
+        const lignes = p.seaux.map((x) => J[x.cle].slice(0, 3) + ' ' + x.n + 't '
+          + (x.moyenne >= 0 ? '+' : '') + fr(x.moyenne, 3) + ' R' + (x.notable ? ' ★' : '')).join('   ');
+        // On ne rapporte QUE le jour le plus écarté : compter les jours « notables »
+        // induit en erreur dès qu'un jour fort existe, son complément paraissant écarté
+        // lui aussi.
+        const f = p.fort;
+        let verdict = p.conclut
+          ? 'le ' + J[f.cle] + ' s\u2019écarte vraiment du hasard (z = ' + fr(f.z, 2)
+            + ', seuil ' + fr(p.seuil, 2) + ')'
+          : 'aucun jour ne se distingue du hasard — le plus écarté est le ' + J[f.cle]
+            + ' à z = ' + fr(f.z, 2) + ', pour un seuil de ' + fr(p.seuil, 2)
+            + ' : n\u2019en filtrez aucun';
+        if (st) {
+          verdict += ' — sur la seconde moitié de l\u2019historique, le meilleur jour de la '
+            + 'première finit ' + (st.rangMeilleur + 1) + 'ᵉ sur ' + st.seaux
+            + ' et le pire ' + (st.rangPire + 1) + 'ᵉ : le classement '
+            + (st.tient ? 'TIENT' : 'ne tient pas');
+        }
+        return lignes + '  —  ' + verdict;
+      })(),
+
       // Sorties EXPOSÉES : le seul écart qui subsiste face au testeur MT5, et il est
       // OPTIMISTE. Confronté à douze exécutions : les configurations à ZÉRO sortie
       // exposée rendent le chiffre du testeur à 0,3-0,4 R près sur 403, 44 et 47 trades ;

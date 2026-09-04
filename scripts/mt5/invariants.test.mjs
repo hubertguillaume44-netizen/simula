@@ -880,3 +880,44 @@ test("les sorties EXPOSÉES sont comptées : c'est le seul écart qui reste face
   // le compteur survit au résumé d'une liste vide
   assert.equal(M.resume([]).exposes, 0);
 });
+
+test("« meilleurs jours » : le moteur dit quand il n'y a rien à conclure", () => {
+  // Découper le résultat par jour et désigner le meilleur seau est facile ; ce seau
+  // l'est toujours, et il ne le restera pas. Le test compare l'écart du seau à ce que
+  // le hasard donnerait — σ/√n corrigé du tirage sans remise — avec un seuil relevé du
+  // nombre de seaux testés. Sans cette correction, tester 24 heures au seuil habituel
+  // désigne en moyenne un « meilleur horaire » sur deux séries de pur bruit.
+  //
+  // Mesuré sur les six configurations confrontées au testeur MT5, dont deux à plus de
+  // 500 trades : AUCUN jour ne s'écarte du hasard, et le classement ne tient d'une
+  // moitié d'historique à l'autre que deux fois sur six. Sur GOLD ema 5, le meilleur
+  // jour de la première moitié devient le PIRE de la seconde.
+
+  // 1. du pur bruit ne doit désigner AUCUN jour
+  let seed = 20260906;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  const bruit = [];
+  for (let i = 0; i < 500; i++) {
+    bruit.push({ entree_t: Date.UTC(2021, 0, 4) + i * 86400000 * 1.4,
+      sortie_t: Date.UTC(2021, 0, 4) + i * 86400000 * 1.4 + 3600000,
+      R: (rnd() - 0.45) * 3 });
+  }
+  const p = M.parPeriode(bruit, "jour");
+  assert.ok(p.seaux.length >= 5, "gabarit sans jours : le test ne prouve rien");
+  assert.equal(p.conclut, false, `du bruit pur conclut sur ${p.fort && p.fort.cle}`);
+  assert.ok(p.seuil >= 2.5, "le seuil n'est pas relevé du nombre de seaux testés");
+
+  // 2. un vrai effet, lui, doit ressortir : on ajoute +2 R à tous les mercredis
+  const vrai = bruit.map((t) => (new Date(t.entree_t).getUTCDay() === 3
+    ? { ...t, R: t.R + 2 } : t));
+  const q = M.parPeriode(vrai, "jour");
+  assert.ok(q.conclut, "un effet de +2 R sur un jour entier n'est pas détecté");
+  assert.equal(q.fort.cle, 3, `le jour désigné est ${q.fort.cle} au lieu du mercredi`);
+
+  // 3. la stabilité : l'effet injecté doit tenir d'une moitié à l'autre, le bruit non
+  const stV = M.stabilitePeriode(vrai, "jour");
+  assert.ok(stV && stV.meilleur === 3 && stV.rangMeilleur === 0,
+    "l'effet injecté ne reste pas premier sur la seconde moitié");
+  assert.equal(M.stabilitePeriode(bruit.slice(0, 10), "jour"), null,
+    "la stabilité doit refuser de conclure sous vingt trades");
+});

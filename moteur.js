@@ -1682,6 +1682,100 @@ function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
   };
 }
 
+// Répartition du résultat par JOUR de la semaine ou par HEURE d'entrée.
+//
+// La question « quels sont les meilleurs jours et horaires » a une réponse honnête et
+// une réponse flatteuse. La flatteuse consiste à découper le résultat et à désigner le
+// meilleur seau : sur 44 trades répartis en cinq jours, le meilleur jour l'est toujours,
+// et il ne le restera pas. On calcule donc, pour chaque seau, de combien il s'écarte du
+// hasard.
+//
+// Le test : sous l'hypothèse « ce seau est un tirage au sort parmi tous les trades », la
+// moyenne du seau a pour écart-type σ/√n, corrigé du tirage sans remise. On compare
+// l'écart observé à cet écart-type — c'est le z. Comme on teste K seaux à la fois, le
+// seuil est relevé d'autant (Bonferroni) : |z| > 2,58 pour cinq jours, 3,02 pour
+// vingt-quatre heures. Sans cette correction, tester 24 heures au seuil habituel
+// désigne en moyenne un « meilleur horaire » sur deux séries de pur bruit.
+export function parPeriode(trades, quoi = 'jour') {
+  const col = (t) => (t.R_net !== undefined ? t.R_net : t.R);
+  const N = trades.length;
+  if (!N) return { seaux: [], notables: 0, quoi };
+  const cle = quoi === 'heure'
+    ? (t) => new Date(t.entree_t).getUTCHours()
+    : (t) => new Date(t.entree_t).getUTCDay();
+  const totalG = trades.reduce((a, t) => a + col(t), 0);
+  const moyG = totalG / N;
+  // écart-type de la population des trades
+  const varG = N > 1
+    ? trades.reduce((a, t) => a + (col(t) - moyG) ** 2, 0) / (N - 1)
+    : 0;
+  const sigma = Math.sqrt(varG);
+
+  const par = new Map();
+  for (const t of trades) {
+    const k = cle(t);
+    if (!par.has(k)) par.set(k, []);
+    par.get(k).push(col(t));
+  }
+  // seuil de Bonferroni sur le nombre de seaux RÉELLEMENT peuplés
+  const K = par.size;
+  const seuil = K <= 1 ? Infinity : (K <= 5 ? 2.58 : K <= 12 ? 2.87 : 3.02);
+
+  const seaux = [];
+  for (const [k, v] of [...par.entries()].sort((a, b) => a[0] - b[0])) {
+    const n = v.length;
+    const total = v.reduce((a, x) => a + x, 0);
+    const moy = total / n;
+    // On compare le seau AUX AUTRES, jamais à un ensemble qui le contient : comparé à la
+    // moyenne générale, un seau fortement positif la tire vers le haut et fait passer
+    // tous les autres pour « significativement en dessous ». C'est vrai, et
+    // tautologique.
+    const reste = N - n;
+    const moyAutres = reste > 0 ? (totalG - total) / reste : moy;
+    const se = sigma > 0 && n > 0 && reste > 0
+      ? sigma * Math.sqrt(1 / n + 1 / reste)
+      : 0;
+    const z = se > 0 ? (moy - moyAutres) / se : 0;
+    seaux.push({ cle: k, n, total, moyenne: moy, z, notable: Math.abs(z) > seuil });
+  }
+  // Le seau le plus écarté, et lui seul : c'est la réponse à « y a-t-il un meilleur
+  // jour ». Compter les seaux notables induit en erreur dès qu'un seau fort existe —
+  // son complément paraît alors écarté lui aussi.
+  const fort = seaux.reduce((a, x) => (a === null || Math.abs(x.z) > Math.abs(a.z) ? x : a), null);
+  return { seaux, notables: seaux.filter((x) => x.notable).length, fort,
+    conclut: !!(fort && fort.notable), quoi, moyenne: moyG, seuil, K };
+}
+
+// Le seau retenu tient-il sur la seconde moitié de l'historique ?
+//
+// C'est la seule question qui compte avant de filtrer sur un jour ou une heure : un seau
+// choisi parce qu'il était le meilleur AVANT l'est-il resté APRÈS ? On coupe la série de
+// trades en deux moitiés chronologiques, on classe les seaux sur la première, et on
+// regarde où se place le vainqueur dans la seconde. Un vainqueur qui retombe au milieu
+// du classement était du bruit, et le filtre construit dessus détruira le résultat.
+export function stabilitePeriode(trades, quoi = 'jour') {
+  if (trades.length < 20) return null;
+  const tri = [...trades].sort((a, b) => a.entree_t - b.entree_t);
+  const m = Math.floor(tri.length / 2);
+  const a = parPeriode(tri.slice(0, m), quoi).seaux;
+  const b = parPeriode(tri.slice(m), quoi).seaux;
+  if (a.length < 3 || b.length < 3) return null;
+  const rangB = new Map([...b].sort((x, y) => y.moyenne - x.moyenne).map((x, i) => [x.cle, i]));
+  const meilleurA = [...a].sort((x, y) => y.moyenne - x.moyenne)[0];
+  const pireA = [...a].sort((x, y) => x.moyenne - y.moyenne)[0];
+  const rgMeilleur = rangB.has(meilleurA.cle) ? rangB.get(meilleurA.cle) : null;
+  const rgPire = rangB.has(pireA.cle) ? rangB.get(pireA.cle) : null;
+  return {
+    quoi, seaux: b.length,
+    meilleur: meilleurA.cle, rangMeilleur: rgMeilleur,
+    pire: pireA.cle, rangPire: rgPire,
+    // « tient » : le meilleur de la première moitié reste dans la moitié haute de la
+    // seconde, ET le pire reste dans la moitié basse
+    tient: rgMeilleur !== null && rgPire !== null
+      && rgMeilleur < b.length / 2 && rgPire >= b.length / 2,
+  };
+}
+
 export function resume(trades) {
   if (!trades.length) return { n: 0, total: 0, winRate: 0, nGains: 0, nPertes: 0, neutres: 0, ambigus: 0, exposes: 0, pf: 0, pfMesurable: false, dd: 0, moyenne: 0, rAn: 0, annees: 0 };
   const col = (t) => (t.R_net !== undefined ? t.R_net : t.R);
