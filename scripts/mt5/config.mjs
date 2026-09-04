@@ -43,6 +43,12 @@ export function construireConfig(o) {
       swap_annuel_pct: o.swap ?? 0,
       commission_pct: o.commission ?? 0,
     },
+    // Distance minimale de stop imposée par le courtier (StopsLevel × Point), en unités
+    // de PRIX. `references.mjs` la porte sous le nom `stopMini` depuis qu'elle a été
+    // relevée, mais RIEN ne la transmettait au moteur : le harnais mesurait donc BITCOIN
+    // sans la contrainte que le testeur applique, et comptait 422 trades quand le robot
+    // en prend 355 — le courtier refuse les ordres dont le stop tient dans 200,00.
+    stop_mini: o.stopMini ?? 0,
     debut: o.debut,
   };
 }

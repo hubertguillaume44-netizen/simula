@@ -755,3 +755,37 @@ test("un stop en attente se pose dès l'ouverture quand le cours y est déjà au
     `sortie le ${new Date(porte.sortie_t).toISOString()} au lieu de la bougie qui ouvre au-delà du stop armé`);
   assert.ok(Math.abs(porte.R) < 0.1, `sortie au point mort attendue, R = ${porte.R.toFixed(2)}`);
 });
+
+test("la distance minimale de stop du courtier arrive jusqu'au moteur", () => {
+  // `references.mjs` porte `stopMini` — StopsLevel × Point, en unités de PRIX — depuis
+  // qu'elle a été relevée, mais RIEN ne la transmettait : `construireConfig` ne la
+  // recopiait pas, et le moteur lisait donc toujours 0. Le harnais mesurait BITCOIN sans
+  // la contrainte que le testeur applique et comptait 422 trades là où le robot en prend
+  // 355 : le courtier refuse tout ordre dont le stop tient dans 200,00.
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 2, paliers: [], stopMini: 200 });
+  assert.equal(cfg.stop_mini, 200, "stopMini n'est pas transmis au moteur");
+  assert.equal(construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5, sl: 1, rr: 2 }).stop_mini, 0);
+
+  // et il filtre bien : à 20 000 le stop de 1 % vaut 200, tout juste à la limite ; à
+  // 10 000 il ne vaut que 100 et l'ordre est refusé
+  const n = 24 * 40, t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 9000, seed = 3;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2022, 0, 4) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.48) * 0.01;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.002); l.push(Math.min(ouv, px) * 0.998);
+    sp.push(10);
+  }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 2 } };
+  const sans = M.backtesterSuivi(df, cfg, "D1");
+  const avec = M.backtesterSuivi(df, { ...cfg, stop_mini: 0 }, "D1");
+  assert.ok(sans.length < avec.length,
+    `la contrainte ne filtre rien : ${sans.length} trades avec, ${avec.length} sans`);
+  for (const x of sans) {
+    assert.ok(Math.abs(x.entree - x.sl_initial) >= 200 * 0.99,
+      `trade pris avec un stop de ${Math.abs(x.entree - x.sl_initial).toFixed(2)}, sous le minimum courtier`);
+  }
+});

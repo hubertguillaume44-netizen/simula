@@ -145,7 +145,15 @@ function main() {
     if (exemples.get(nom).length < 3) exemples.get(nom).push(texte);
   };
 
-  const jours = [...new Set([...conf.D.keys(), ...decision.keys()])].sort((a, b) => a - b);
+  // Le robot tourne sur toute la période du testeur, le moteur sur la plage mesurable :
+  // hors de celle-ci il n'y a pas de désaccord, il n'y a rien à comparer. Sans ce
+  // recadrage, BITCOIN affichait 653 « journée absente du moteur » et 101 « sortie chez
+  // le robot seul » qui ne sont que les deux premières années, où le courtier n'a relevé
+  // aucun spread.
+  const jourDans = (j) => j * 86400000 >= debut - 86400000
+    && (!cfg.fin || j * 86400000 < cfg.fin);
+  const jours = [...new Set([...conf.D.keys(), ...decision.keys()])]
+    .filter(jourDans).sort((a, b) => a - b);
   let communs = 0;
   for (const j of jours) {
     const r = conf.D.get(j), m = decision.get(j);
@@ -186,7 +194,7 @@ function main() {
   // Les SORTIES, comparées à part. Une entrée juste avec une sortie fausse donne le
   // même nombre de trades et un R différent : sans ce bloc, l'écart restait sans nom.
   if (conf.S.size) {
-    for (const j of [...new Set([...conf.S.keys(), ...sorties.keys()])].sort((a, b) => a - b)) {
+    for (const j of [...new Set([...conf.S.keys(), ...sorties.keys()])].filter(jourDans).sort((a, b) => a - b)) {
       const r = conf.S.get(j), m = sorties.get(j);
       const d = iso(j * 86400000).slice(0, 10);
       if (!r || !m) { noter(r ? "sortie chez le robot seul" : "sortie chez le moteur seul", d); continue; }
@@ -217,8 +225,17 @@ function main() {
     for (const [, e] of conf.E) E.push(e);
     // apparier entrées et sorties dans l'ordre : une position à la fois, donc la
     // n-ième sortie clôt la n-ième entrée
-    const ent = [...conf.E.values()].sort((a, b) => a.t - b.t);
-    const sor = [...conf.sorties].sort((a, b) => a.t - b.t);
+    // Le robot tourne sur toute la période du testeur ; le moteur, lui, se limite à la
+    // plage réellement mesurable — celle où le courtier a relevé un spread. Comparer les
+    // deux totaux sans recadrer additionne des trades que le moteur n'a jamais eu le
+    // droit de prendre : sur #Germany40 (mesurable à partir d'octobre 2021) le robot en
+    // portait 111 contre 76, sur BITCOIN (mars 2022) 455 contre 422.
+    const dans = (t) => t >= debut && (!cfg.fin || t < cfg.fin);
+    const tousEnt = [...conf.E.values()].sort((a, b) => a.t - b.t);
+    const tousSor = [...conf.sorties].sort((a, b) => a.t - b.t);
+    const garde = tousEnt.map((_, i) => dans(tousEnt[i].t));
+    const ent = tousEnt.filter((_, i) => garde[i]);
+    const sor = tousSor.filter((_, i) => garde[i]);
     // Le courtier tient les frais dans la devise du COMPTE (EUR), le risque se calcule
     // dans celle du SYMBOLE (USD sur GOLD) : diviser l'un par l'autre sous-estimait les
     // frais du robot de 10 %. On lit le cours sur les trades eux-mêmes — le résultat en
