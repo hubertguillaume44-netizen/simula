@@ -1240,6 +1240,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ validesVersPf }}" disabled="{{ sansARanger }}" title="Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.">Tout ranger dans {{ pfNom }}</button>
             <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ viderValides }}" disabled="{{ sansARanger }}" title="Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.">Écarter</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTirages }}" onChange="{{ setNTirages }}"></label>
           </div>
         </div>
         <sc-if value="{{ aARanger }}" hint-placeholder-val="{{ true }}">
@@ -1285,7 +1286,7 @@
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.segs }}</td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.duree }}</td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.etatCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.etatAide }}">{{ vl.etatTxt }}</span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></td>
+                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em">{{ vl.hasTxt }}</button></sc-if><sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></sc-if></td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.frais }}</td>
                 <td style="text-align:right">
                   <div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">
@@ -1313,6 +1314,7 @@
                 <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.exporterRobots }}" title="Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.">{{ ps.robotsTxt }}</button>
                 <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:20ch" value="{{ ps.nom }}" onChange="{{ ps.renommer }}" title="Renommer ce portefeuille">
                 <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.supprimer }}" title="{{ ps.supprAide }}">{{ ps.supprTxt }}</button>
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTirages }}" onChange="{{ setNTirages }}"></label>
               </div>
             </div>
             <div style="overflow:auto">
@@ -1357,7 +1359,7 @@
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.segs }}</td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.duree }}</td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.etatCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.etatAide }}">{{ vl.etatTxt }}</span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></td>
+                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em">{{ vl.hasTxt }}</button></sc-if><sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></sc-if></td>
                 <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.frais }}</td>
                 <td style="text-align:right">
                   <div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">
@@ -2271,7 +2273,7 @@
                           <span class="text-muted" style="font-size:10px" title="Aucune configuration scannée pour cet instrument : lancez un scan qui l'inclut.">Lancez un scan pour agir</span>
                         </sc-if>
                         <sc-if value="{{ tr2.avecAction }}" hint-placeholder-val="{{ true }}">
-                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><sc-if value="{{ tr2.peutRobot }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-accent" title="Télécharge l'Expert Advisor MQL5 de cette configuration exacte : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ tr2.exporterRobotLigne }}">Robot MT5</button></sc-if><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
+                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
                         </sc-if>
                         <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="2">
                           <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
@@ -2318,7 +2320,7 @@
                     <td style="font-size:12px;padding-left:26px">
                       <div style="display:flex;gap:5px;flex-wrap:wrap">
                         <button type="button" class="tag tag-outline" title="Ouvre la fiche détaillée de cette configuration, juste sous le tableau" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.ouvrir }}">Voir la fiche</button>
-                        <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.auBacktest }}">Backtest</button><sc-if value="{{ cb.peutRobot }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-accent" title="Télécharge l'Expert Advisor MQL5 de cette configuration exacte : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ cb.exporterRobotLigne }}">Robot MT5</button></sc-if><sc-if value="{{ cb.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ cb.versBasse }}" title="{{ cb.versBasseAide }}">mesurer en lecture basse</button></sc-if>
+                        <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.auBacktest }}">Backtest</button><sc-if value="{{ cb.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ cb.versBasse }}" title="{{ cb.versBasseAide }}">mesurer en lecture basse</button></sc-if>
                         <sc-if value="{{ cb.aValider }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" title="Valider cette configuration précise" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.valider }}">{{ cb.valideTxt }}</button></sc-if>
                       </div>
                     </td>
@@ -2398,7 +2400,7 @@
             </label>
             <div class="field" style="width:150px">
               <label>Tirages par configuration<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.">?</span></label>
-              <input class="input" type="number" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" min="50" max="2000" step="50" value="{{ nTirages }}" onChange="{{ setNTirages }}">
+              <input class="input" type="number" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" min="200" max="20000" step="100" value="{{ nTirages }}" onChange="{{ setNTirages }}">
             </div>
             <span style="font-size:12px;max-width:60ch;line-height:1.5" class="text-muted">{{ hasardPorte }} {{ tiragesPortee }}</span>
           </div>
@@ -3528,7 +3530,7 @@ class Component extends DCLogic {
     utPente: 'H4', lignePente: 'mediane', utRsi: 'H1', periodeRsi: 14,
     utAdx: 'H1', periodeAdx: 14, utNuage: 'D1', utPivot: 'D1',
     fMa: false, utMa: 'D1', periodeMa: 200,
-    coupureRegime: '2022-01-01', nTirages: 50, hasard: null, pleinRegime: false, workersOk: false, gSens: ['achat'], gLectures: ['favorable', 'prudente'], btSens: 'achat', gSecus: ['aucune'], gTemps: ['jamais'], gDurees: '10 20 40', btDureeMax: 0,
+    coupureRegime: '2022-01-01', nTirages: 200, hasard: null, pleinRegime: false, workersOk: false, gSens: ['achat'], gLectures: ['favorable', 'prudente'], btSens: 'achat', gSecus: ['aucune'], gTemps: ['jamais'], gDurees: '10 20 40', btDureeMax: 0,
     gTrailing: '0,1 0,15 0,2 0,25 0,5 0,75 1,0 1,25 1,5 1,75 2,0',
     gPeriodeMa: '50 100 200', gLigneMtf: ['mediane'], gPeriodeMtf: '9 26',
     gLignePente: ['mediane'], gPenteRecul: '3 5 8 10 15 20',
@@ -4004,8 +4006,11 @@ class Component extends DCLogic {
   async controlerUne(r) {
     if (!this.M || this.state.hasardEnCours) return;
     if (!r || r.sansDonnees || (r.n || 0) < 5) return;
-    // Le nombre de tirages de la décision : 200 au minimum, sinon le test ne peut pas
-    // descendre sous « une chance sur 50 » et aucune ligne ne peut se distinguer.
+    // UN seul réglage pour tous les tirages de la page — celui du champ « tirages par
+    // configuration », modifiable depuis le portefeuille comme depuis le panneau. Deux
+    // nombres différents pour le même contrôle, c'est ce qui rendait la colonne de
+    // décision muette. Plancher à 200 : en dessous, le test ne peut pas descendre sous
+    // « une chance sur 200 », donc pas distinguer une configuration, seulement la condamner.
     const t = Math.max(200, Number(this.state.nTirages) || 200);
     this.setState({ hasardEnCours: true, hasardMsg: null, hasardFait: 0, hasardTotal: 1,
       hasardUne: this.cleFine(r) });
@@ -7664,7 +7669,10 @@ GROUPES = {
       'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
       // les contrôles du hasard déjà faits : sans persistance, chaque rechargement
       // relançait la série et la grille pour des lignes déjà jugées
-      'hasardA', 'hasardB'];
+      'hasardA', 'hasardB',
+      // le nombre de tirages : un réglage qu'on change en connaissance de cause, et qui
+      // ne doit pas retomber à sa valeur d'usine au rechargement suivant
+      'nTirages'];
   }
   ecrireSession() {
     const p = {};
@@ -12510,7 +12518,9 @@ GROUPES = {
       })(),
       nTirages: s.nTirages || 50,
       // pas par 50, plancher à 50 : sous ce seuil le test ne tranche rien
-      setNTirages: (e) => this.setState({ nTirages: Math.max(50, Math.min(2000, Math.round((Number(e.target.value) || 50) / 50) * 50)) }),
+      // Plancher à 200 : un contrôle plus grossier ne peut pas distinguer une
+      // configuration, et la décision l'ignorerait — le champ mentirait sur son effet.
+      setNTirages: (e) => this.setState({ nTirages: Math.max(200, Math.min(20000, Math.round((Number(e.target.value) || 200) / 50) * 50)) }),
       // ce que le nombre de tirages permet de conclure, en clair
       tiragesPortee: (() => {
         const n = s.nTirages || 50;
@@ -13834,10 +13844,19 @@ GROUPES = {
                 : '' };
           })(),
           ...(() => {
+            // La ligne telle que le contrôle du hasard l'attend : les configurations
+            // rangées portent `sid`, le reste de la page `_sid`.
+            const vr = { ...v, _sid: v.sid || v._sid };
+            const ici = !!s.hasardEnCours && s.hasardUne === this.cleFine(vr);
+            const t = Math.max(200, Number(s.nTirages) || 200);
+            const lancer = (e) => { if (e && e.stopPropagation) e.stopPropagation();
+              this.controlerUne(vr); };
             const f = this.meilleurHasardFait(v);
             if (!f) {
-              return { hasTxt: 'non contrôlé', hasCls: 'tag tag-outline',
-                hasAide: 'Le contrôle du hasard n\u2019a pas été fait sur cette configuration : ouvrez la page Historique et lancez-le.' };
+              return { hasTxt: ici ? 'contrôle…' : 'contrôler', hasCls: 'tag tag-outline',
+                hasAFaire: !ici, hasVu: ici, hasIci: ici, hasOccupe: !!s.hasardEnCours, lancerHas: lancer,
+                hasAide: 'Le contrôle du hasard n\u2019a pas encore été fait sur cette configuration. '
+                  + 'Cliquez pour le lancer à ' + t.toLocaleString('fr-FR') + ' tirages — le nombre se règle juste au-dessus du tableau.' };
             }
             const p = f.auDessus / f.tirages;
             // même règle qu'ailleurs : un zéro mesuré s'écrit « 0 % », pas « moins de
@@ -13846,13 +13865,19 @@ GROUPES = {
               : p < 0.01 ? (p * 100).toFixed(2).replace('.', ',') + ' %'
               : p < 0.1 ? (p * 100).toFixed(1).replace('.', ',') + ' %'
               : Math.round(p * 100) + ' %';
-            return { hasTxt: pct,
+            // Un contrôle plus fin est proposé dès que le champ demande plus de tirages
+            // que celui déjà enregistré : c'est ainsi qu'on tranche un cas serré, sans
+            // avoir à effacer quoi que ce soit.
+            const plusFin = t > f.tirages;
+            return { hasTxt: ici ? 'contrôle…' : pct,
               hasCls: 'tag ' + (p <= 0.05 ? 'tag-accent' : p <= 0.2 ? 'tag-outline' : 'tag-neutral'),
+              hasAFaire: plusFin && !ici, hasVu: !(plusFin && !ici), hasIci: ici, hasOccupe: !!s.hasardEnCours, lancerHas: lancer,
               hasAide: (f.auDessus === 0 ? 'Aucun des ' + f.tirages + ' tirages au hasard ne fait'
                 : f.auDessus === 1 ? '1 tirage sur ' + f.tirages + ' fait'
                 : f.auDessus + ' des ' + f.tirages + ' tirages au hasard font')
                 + ' aussi bien. Sous 5 %, le moment d\u2019entrée apporte quelque chose ; au-delà de 20 %, entrer au hasard aurait donné le même résultat.'
-                + ' Contrôle le plus fin enregistré : ' + f.tirages.toLocaleString('fr-FR') + ' tirages.' };
+                + ' Contrôle le plus fin enregistré : ' + f.tirages.toLocaleString('fr-FR') + ' tirages.'
+                + (plusFin ? ' Cliquez pour le refaire à ' + t.toLocaleString('fr-FR') + ' tirages.' : '') };
           })(),
           // la configuration brute, pour l'export du robot
           _v: v,
@@ -15235,7 +15260,7 @@ GROUPES = {
               const dec = this.decisionDe(r, v);
               const fin = dec.controle;
               const controlable = !fin && !r.sansDonnees && (Number(r.n) || 0) >= 5;
-              return { peutRobot: dec.vert,
+              return {
                 // la case de décision EST le bouton de contrôle tant que rien n'est mesuré
                 hasardIci: !!s.hasardEnCours && s.hasardUne === this.cleFine(r),
                 hasardAFaire: controlable && !(s.hasardEnCours && s.hasardUne === this.cleFine(r)),
@@ -15501,13 +15526,6 @@ GROUPES = {
             partielAide: 'Le balayage de cet instrument a été interrompu : seules les combinaisons déjà calculées sont là. Son meilleur résultat n\u2019est pas comparable à celui d\u2019un instrument balayé en entier — relancez le scan pour le compléter.',
             ouvrir: () => this.ouvrirFiche(r.sym, r),
             auBacktest: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.versBacktest(r); },
-            // Le dernier pas du parcours, posé sur la ligne elle-même : scanner, lire le
-            // verdict, exporter. Il fallait jusqu'ici valider, changer d'onglet et retrouver
-            // la ligne dans le Portefeuille pour obtenir le même fichier. Le bouton
-            // n'apparaît que sur une ligne verte — les cinq contrôles ET le contrôle du
-            // hasard — pour qu'aucun robot ne parte d'une configuration non tranchée.
-            exporterRobotLigne: (e) => { if (e && e.stopPropagation) e.stopPropagation();
-              this.exporterRobot(r); },
             ...this.verdictDe(r),
             // les scans déjà enregistrés ont perdu leurs jumelles à l'élagage : ce bouton
             // rouvre la MÊME configuration en lecture basse, sans relancer de scan
@@ -15684,7 +15702,6 @@ GROUPES = {
                 aJumelle: false, jumTxt: '', jumAide: '', jumCouleur: 'var(--color-text)',
                 aLigneBasse: false, bas: { titre: '' },
                 aVersBasse: false, versBasse: () => {}, versBasseAide: '',
-                peutRobot: false, exporterRobotLigne: () => {},
                 hasardIci: false, hasardAFaire: false, hasardVu: true, hasardOccupe: false,
                 aValider: false, valider: () => {}, valideTxt: '',
                 lancerHasard: () => {},
