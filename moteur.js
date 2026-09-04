@@ -1120,6 +1120,35 @@ export function backtester(df, cfg) {
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
+  // Niveaux de palier précalculés pour le trade en cours, seuils croissants.
+  //
+  // Le calcul ne dépend que de px, sl0, tp et des étapes — tous fixés au moment de
+  // l'entrée. Et la butée `Math.min(seuil, parcours)` valait TOUJOURS `seuil` : la
+  // boucle ne l'atteignait qu'après avoir écarté `parcours < seuil`. Rien ne dépendait
+  // donc du parcours, et tout était pourtant refait à chaque bougie de la position.
+  let palierSeuils = null, palierNiveaux = null;
+  const preparerPaliers = () => {
+    if (!etapes.length) { palierSeuils = null; palierNiveaux = null; return; }
+    const tri = [...etapes].sort((a, b) => a[0] - b[0]);
+    palierSeuils = new Float64Array(tri.length);
+    palierNiveaux = new Float64Array(tri.length);
+    for (let k = 0; k < tri.length; k++) {
+      const [seuil, niveau] = tri[k];
+      // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
+      // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
+      // chemin déjà sécurisée vers l'objectif. Continu en 0.
+      let cand = niveau < 0
+        ? px + (niveau / 100) * (px - sl0)
+        : px + (niveau / 100) * (tp - px);
+      // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
+      // le chemin parcouru. Un stop posé pile sur le plus haut touché
+      // encaisserait un simple passage intrabar comme un gain acquis.
+      const atteint = px + ((seuil * 0.9) / 100) * (tp - px);
+      if (d * cand > d * atteint) cand = atteint;
+      palierSeuils[k] = seuil;
+      palierNiveaux[k] = auTick(cand);
+    }
+  };
   // Le stop que les paliers JUSTIFIENT, distinct de celui qui est réellement POSÉ.
   //
   // Un stop ne se place que du bon côté du marché : le courtier refuse un stop au-dessus
@@ -1157,24 +1186,15 @@ export function backtester(df, cfg) {
       const cand = auTick(haut * (1 - d * trailing));
       return d * cand > d * sl ? cand : sl;
     }
-    if (!etapes.length || d * tp <= d * px) return sl;
+    if (!palierSeuils || d * tp <= d * px) return sl;
     const parcours = (extreme - px) / (tp - px) * 100;
+    // Les niveaux sont PRÉCALCULÉS à l'entrée — voir `preparerPaliers`. Ils ne
+    // dépendent que de px, sl0, tp et des étapes, tous fixés pour la durée du trade ;
+    // les recalculer à chaque bougie coûtait 19 % du temps d'un balayage.
     let nouveau = sl;
-    for (const [seuil, niveau] of etapes) {
-      if (parcours < seuil) continue;
-      // niveau négatif = part du RISQUE encore assumée (−100 = stop initial,
-      // −50 = risque réduit de moitié, 0 = point mort) ; positif = part du
-      // chemin déjà sécurisée vers l'objectif. Continu en 0.
-      let cand = niveau < 0
-        ? px + (niveau / 100) * (px - sl0)
-        : px + (niveau / 100) * (tp - px);
-      // Butée STRICTE, en part du chemin : on ne sécurise jamais autant que
-      // le chemin parcouru. Un stop posé pile sur le plus haut touché
-      // encaisserait un simple passage intrabar comme un gain acquis.
-      const part = Math.min(seuil, parcours) * 0.9;
-      const atteint = px + (part / 100) * (tp - px);
-      if (d * cand > d * atteint) cand = atteint;
-      cand = auTick(cand);
+    for (let k = 0; k < palierSeuils.length; k++) {
+      if (parcours < palierSeuils[k]) break;      // seuils croissants : inutile d'aller plus loin
+      const cand = palierNiveaux[k];
       if (d * cand > d * nouveau) nouveau = cand;
     }
     return nouveau;
@@ -1498,6 +1518,7 @@ export function backtester(df, cfg) {
     if (stopMini > 0 && Math.abs(df.o[i] - sl0) < stopMini) continue;
     sl = sl0;
     tp = auTick(px + (px - sl0) * rr);
+    preparerPaliers();
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? exL[i] : exH[i];
     slVoulu = sl0;
     ambiguTrade = false;
@@ -1746,8 +1767,12 @@ export function backtesterSuivi(df, cfg, ut) {
     }
     return m;
   });
-  const force = new Array(df.n).fill(false);
-  const seauDe = new Float64Array(df.n).fill(NaN);
+  // Tableaux typés : deux allocations de 46 000 cases par configuration, et un
+  // `Array().fill(false)` coûte plusieurs fois un `Uint8Array`. Le seau est gardé en
+  // INDICE de la série agrégée plutôt qu'en horodatage — un entier au lieu d'un flottant,
+  // et -1 dit « aucun » sans passer par NaN.
+  const force = new Uint8Array(df.n);
+  const seauDe = new Int32Array(df.n).fill(-1);
   for (let k = 0; k < sup.n; k++) {
     if (!signal[k]) continue;
     if (autorise && !autorise[k]) continue;
@@ -1773,7 +1798,7 @@ export function backtesterSuivi(df, cfg, ut) {
     for (let z = idx.length - 1; z >= 0; z--) {
       if (!acceptable(idx[z])) continue;
       force[idx[z]] = true;
-      seauDe[idx[z]] = sup.t[k];
+      seauDe[idx[z]] = k;   // l'INDICE du seau, pas son horodatage : seule l'égalité est lue
     }
   }
   // le délai est exprimé en bougies de décision : on le convertit en bougies H1

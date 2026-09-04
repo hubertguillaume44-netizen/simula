@@ -1114,3 +1114,51 @@ test("la médiane glissante du plafond de spread donne le MÊME chiffre que le t
   // et le gabarit doit vraiment exercer le seuil, sinon comparer deux zéros ne prouve rien
   assert.ok(attendu.some((x) => x > 0), "aucun seuil actif : le gabarit ne prouve rien");
 });
+
+test("les niveaux de palier précalculés valent exactement la formule, butée comprise", () => {
+  // Les niveaux sont désormais calculés UNE fois à l'entrée au lieu d'être refaits à
+  // chaque bougie — 19 % du temps d'un balayage. L'équivalence tient à une observation :
+  // la butée `Math.min(seuil, parcours)` valait toujours `seuil`, puisque la boucle
+  // n'était atteinte qu'après avoir écarté `parcours < seuil`. Rien ne dépendait du
+  // parcours. Ce test recalcule le niveau attendu à la main, à partir de la définition,
+  // et exige le prix de sortie AU CENTIME.
+  const t = [], o = [], h = [], l = [], c = [], v = [];
+  const poser = (i, O, H, L, C) => { t[i] = Date.UTC(2021, 0, 4) + i * 3600000;
+    o[i] = O; h[i] = H; l[i] = L; c[i] = C; v[i] = 1; };
+  for (let i = 0; i < 44; i++) poser(i, 100, 100.1, 99.9, 100);
+  poser(39, 100, 103, 99.9, 103);          // croisement à la hausse
+  // objectif à 3 R = 106,0. Le haut monte à 105,5 — 83 % du chemin, les trois étapes
+  // s'arment — sans l'atteindre, sinon la sortie serait au TP et ne prouverait rien.
+  poser(40, 103, 105.5, 102.9, 105.2);
+  poser(41, 105.2, 105.3, 104.0, 104.2);   // redescend chercher le palier
+  for (let i = 42; i < 44; i++) poser(i, 104.2, 104.3, 104.1, 104.2);
+  const df = M.nettoyer({ n: 44, t, o, h, l, c, v, sp: t.map(() => 0) });
+  const ETAPES = [[25, 0], [50, 25], [75, 50]];
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: ETAPES });
+  const tr = M.backtester(df, { ...cfg, sortie: { ...cfg.sortie, armer_avant: false } });
+  const trade = tr.find((x) => x.motif.startsWith("be"));
+  assert.ok(trade, "aucune sortie au palier : le gabarit n'exerce pas la règle");
+
+  // la définition, recopiée depuis le commentaire du moteur et évaluée à la main
+  const pas = Math.pow(10, -(df.grain ? df.grain.decimales : 2));
+  const auTick = (x) => Math.round(x / pas) * pas;
+  const px = trade.entree, sl0 = trade.sl_initial;
+  const tp = auTick(px + (px - sl0) * 3);
+  const parcours = (105.5 - px) / (tp - px) * 100;
+  let attendu = sl0;
+  for (const [seuil, niveau] of ETAPES) {
+    if (parcours < seuil) continue;
+    let cand = niveau < 0 ? px + (niveau / 100) * (px - sl0) : px + (niveau / 100) * (tp - px);
+    const atteint = px + ((Math.min(seuil, parcours) * 0.9) / 100) * (tp - px);
+    if (cand > atteint) cand = atteint;
+    cand = auTick(cand);
+    if (cand > attendu) attendu = cand;
+  }
+  assert.ok(Math.abs(trade.sortie - attendu) < pas * 1.5,
+    `sortie au palier ${trade.sortie}, formule ${attendu}`);
+  // et la lecture prudente doit rendre le même prix : la bougie est tranchée
+  const basse = M.backtester(df, { ...cfg, sortie: { ...cfg.sortie, armer_avant: false, prudent: true } })
+    .find((x) => x.motif.startsWith("be"));
+  assert.equal(basse.sortie, trade.sortie);
+});
