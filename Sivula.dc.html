@@ -192,7 +192,7 @@
           <div class="dialog-actions" style="display:flex;gap:10px 14px;justify-content:space-between;align-items:center;flex-wrap:wrap">
             <span style="display:inline-flex;gap:7px;align-items:center;font-size:12px">
               <span class="text-muted" title="Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.">Tirages</span>
-              <input class="input" type="number" step="50" min="50" max="20000" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:9ch" value="{{ dvTiragesVal }}" onChange="{{ setDvTirages }}">
+              <input class="input" type="number" step="50" min="50" max="20000" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:9ch" value="{{ dvTiragesVal }}" onChange="{{ setDvTirages }}" onBlur="{{ finDvTirages }}">
               <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ relancerValid }}">Relancer</button>
             </span>
             <span style="display:inline-flex;gap:10px;align-items:center">
@@ -1240,7 +1240,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ validesVersPf }}" disabled="{{ sansARanger }}" title="Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.">Tout ranger dans {{ pfNom }}</button>
             <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ viderValides }}" disabled="{{ sansARanger }}" title="Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.">Écarter</button>
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTirages }}" onChange="{{ setNTirages }}"></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
           </div>
         </div>
         <sc-if value="{{ aARanger }}" hint-placeholder-val="{{ true }}">
@@ -1314,7 +1314,7 @@
                 <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.exporterRobots }}" title="Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.">{{ ps.robotsTxt }}</button>
                 <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:20ch" value="{{ ps.nom }}" onChange="{{ ps.renommer }}" title="Renommer ce portefeuille">
                 <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.supprimer }}" title="{{ ps.supprAide }}">{{ ps.supprTxt }}</button>
-                <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTirages }}" onChange="{{ setNTirages }}"></label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
               </div>
             </div>
             <div style="overflow:auto">
@@ -2400,7 +2400,7 @@
             </label>
             <div class="field" style="width:150px">
               <label>Tirages par configuration<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.">?</span></label>
-              <input class="input" type="number" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" min="200" max="20000" step="100" value="{{ nTirages }}" onChange="{{ setNTirages }}">
+              <input class="input" type="number" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" min="200" max="20000" step="100" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}">
             </div>
             <span style="font-size:12px;max-width:60ch;line-height:1.5" class="text-muted">{{ hasardPorte }} {{ tiragesPortee }}</span>
           </div>
@@ -4057,6 +4057,33 @@ class Component extends DCLogic {
   // elle survit au rechargement et ne peut pas traverser les comptes (la session est
   // cloisonnée par this.cle). Le tirage étant déterministe, un résumé suffit.
   hasardFait(cle) { return (this.state.hasardFaits || {})[cle] || null; }
+  // UN CHAMP NOMBRE QUI SE LAISSE TAPER.
+  //
+  // Le runtime relie `onChange` à celui de React : il se déclenche à CHAQUE frappe, pas à
+  // la validation du champ. Un champ dont la valeur est bornée à chaque frappe est donc
+  // intapable — pour écrire « 2000 » dans un champ à plancher 200, il faut passer par
+  // « 2 », que la borne remonte aussitôt à 200 en replaçant le curseur. Le champ paraît
+  // bloqué sur sa valeur : c'est exactement ce qui rendait le nombre de tirages
+  // impossible à modifier.
+  //
+  // On garde donc le texte TEL QU'IL EST TAPÉ pendant la saisie, et on ne borne qu'au
+  // moment où le champ est quitté.
+  champNombre(cle, min, max, pas) {
+    const brut = (this.state._champs || {})[cle];
+    return {
+      val: brut !== undefined && brut !== null ? brut : String(this.state[cle] ?? ''),
+      saisir: (e) => this.setState({ _champs: { ...(this.state._champs || {}), [cle]: e.target.value } }),
+      poser: (e) => {
+        const v = Number(String(e.target.value).replace(',', '.'));
+        const n = Number.isFinite(v) && v > 0
+          ? Math.max(min, Math.min(max, pas ? Math.round(v / pas) * pas : Math.round(v)))
+          : this.state[cle];
+        const c = { ...(this.state._champs || {}) };
+        delete c[cle];
+        this.setState({ [cle]: n, _champs: c });
+      },
+    };
+  }
   noterHasard(entrees) {
     this.setState((p) => {
       const m = { ...(p.hasardFaits || {}), ...entrees };
@@ -11985,9 +12012,8 @@ GROUPES = {
       })(),
       // le nombre de tirages se règle DANS la fenêtre : il détermine la finesse du
       // verdict qu'on est en train de lire, et à 200 tirages un p ne descend pas sous 0,5 %
-      dvTiragesVal: s.dvTirages || 200,
-      setDvTirages: (e) => this.setState({ dvTirages: Math.max(50, Math.min(20000,
-        Math.round((Number(e.target.value) || 200) / 50) * 50)) }),
+      ...(() => { const c = this.champNombre('dvTirages', 50, 20000, 50);
+        return { dvTiragesVal: c.val, setDvTirages: c.saisir, finDvTirages: c.poser }; })(),
       relancerValid: () => {
         const d = this.state.dlgValid;
         if (d && !d.encours) this.demanderValidation(d.sym, d.cfg, true);
@@ -12520,7 +12546,9 @@ GROUPES = {
       // pas par 50, plancher à 50 : sous ce seuil le test ne tranche rien
       // Plancher à 200 : un contrôle plus grossier ne peut pas distinguer une
       // configuration, et la décision l'ignorerait — le champ mentirait sur son effet.
-      setNTirages: (e) => this.setState({ nTirages: Math.max(200, Math.min(20000, Math.round((Number(e.target.value) || 200) / 50) * 50)) }),
+      // La borne ne s'applique qu'à la sortie du champ, sinon il est intapable.
+      ...(() => { const c = this.champNombre('nTirages', 200, 20000, 50);
+        return { nTiragesVal: c.val, setNTirages: c.saisir, finNTirages: c.poser }; })(),
       // ce que le nombre de tirages permet de conclure, en clair
       tiragesPortee: (() => {
         const n = s.nTirages || 50;
