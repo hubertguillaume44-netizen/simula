@@ -870,7 +870,7 @@
       </section>
     </sc-if>
 
-    <div style="position:sticky;top:{{ filTop }};z-index:30;background:var(--color-bg);border-bottom:1px solid var(--color-divider);margin:0 -32px;padding:8px 32px;display:flex;gap:14px 26px;align-items:baseline;flex-wrap:wrap;align-self:stretch">
+    <div id="om-fil" style="position:sticky;top:{{ filTop }};z-index:30;background:var(--color-bg);border-bottom:1px solid var(--color-divider);margin:0 -32px;padding:8px 32px;display:flex;gap:14px 26px;align-items:baseline;flex-wrap:wrap;align-self:stretch">
       <sc-if value="{{ aSousOnglets }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:18px;align-items:baseline;flex-wrap:wrap">
           <sc-for list="{{ sousOnglets }}" as="so" hint-placeholder-count="2">
@@ -2818,31 +2818,240 @@
         <button type="button" class="btn btn-ghost" style="min-height:2rem;font-size:12px" onClick="{{ fermerRejoue }}">Fermer</button>
       </div>
       </sc-if>
-      <section class="card blueprint" style="padding:14px 18px;gap:12px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">1 · Quoi tester</div>
-        <button type="button" onClick="{{ basculerBt1 }}" title="Replier ou déplier cette section" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;white-space:nowrap;color:inherit;text-align:left">{{ chevronBt1 }}</button>
-        <sc-if value="{{ ouvBt1 }}" hint-placeholder-val="{{ true }}">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          <div class="field">
-            <label style="font-size:11px;margin-bottom:2px">Instrument</label>
-            <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btSym }}" onChange="{{ setSym }}">
-              <sc-for list="{{ symboles }}" as="sy" hint-placeholder-count="6">
-                <option value="{{ sy.nom }}">{{ sy.etiq }}</option>
-              </sc-for>
-            </select>
+      <!--
+        LA CONFIGURATION À GAUCHE, LA MESURE À DROITE.
+
+        Les deux sections « 1 · Quoi tester » et « 2 · Stratégie » empilaient trois écrans
+        de formulaire AVANT le résultat : changer un stop et en voir l'effet demandait de
+        remonter, modifier, redescendre. Elles deviennent une colonne collante, et la
+        mesure occupe la place qu'elle mérite. Le contenu des champs n'a pas bougé — seule
+        leur disposition change. Les onze filtres et la sécurisation, qui ne se règlent pas
+        à chaque essai, passent derrière un bouton et s'ouvrent en panneau.
+      -->
+      <div style="position:sticky;top:{{ btTopBandeau }};z-index:28;background:var(--color-accent-900);color:var(--color-bg);padding:9px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:38px;line-height:1;letter-spacing:-.01em">{{ btTotal }}</span>
+        <span style="font-size:13px;opacity:.8">{{ btN }} trades · {{ btAnnees }} · {{ btSymNom }}</span>
+        <span style="border:1px solid currentColor;padding:3px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" title="{{ btMotifs }}">{{ btVerdict }}</span>
+        <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
+          <span style="border:1px solid currentColor;padding:3px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Chiffres périmés — relancez le test</span>
+        </sc-if>
+        <sc-if value="{{ aErreur }}" hint-placeholder-val="{{ false }}">
+          <span style="border:1px solid currentColor;padding:3px 9px;font-size:11px">{{ erreur }}</span>
+        </sc-if>
+        <sc-if value="{{ btVarianteRatee }}" hint-placeholder-val="{{ false }}">
+          <span style="border:1px solid currentColor;padding:3px 9px;font-size:11px;max-width:70ch" title="La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.">Condition de la ligne NON restaurée</span>
+        </sc-if>
+        <sc-if value="{{ aEcartLigne }}" hint-placeholder-val="{{ false }}">
+          <span style="border:1px solid currentColor;padding:3px 9px;font-size:11px;white-space:normal;text-align:left;max-width:80ch">{{ ecartLigneTxt }}</span>
+        </sc-if>
+        <span style="margin-inline-start:auto;font-size:11px;opacity:.85;text-align:right;max-width:56ch" title="Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.">{{ btBande }}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start">
+
+        <aside class="blueprint" style="position:sticky;top:{{ btTopAside }};padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Quoi tester</div>
+            <div class="field">
+              <label style="font-size:11px;margin-bottom:2px">Instrument</label>
+              <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btSym }}" onChange="{{ setSym }}">
+                <sc-for list="{{ symboles }}" as="sy" hint-placeholder-count="6">
+                  <option value="{{ sy.nom }}">{{ sy.etiq }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="field"><label style="font-size:11px;margin-bottom:2px">Depuis</label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="text" value="01/01/2020" disabled="{{ true }}"></div>
+              <div class="field">
+                <label style="font-size:11px;margin-bottom:2px">Unité</label>
+                <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ ut }}" onChange="{{ setUt }}">
+                  <sc-for list="{{ uts }}" as="u" hint-placeholder-count="3">
+                    <option value="{{ u.v }}">{{ u.nom }}</option>
+                  </sc-for>
+                </select>
+              </div>
+            </div>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">Bougies Daily coupées, session normalisée{{ sessionInfo }}, amorce de 400 jours avant le 01/01/2020.</span>
           </div>
-          <div class="field"><label style="font-size:11px;margin-bottom:2px">Début de la période</label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="text" value="01/01/2020" disabled="{{ true }}"></div>
-          <div class="field">
-            <label style="font-size:11px;margin-bottom:2px">Unité de temps</label>
-            <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ ut }}" onChange="{{ setUt }}">
-              <sc-for list="{{ uts }}" as="u" hint-placeholder-count="3">
-                <option value="{{ u.v }}">{{ u.nom }}</option>
-              </sc-for>
-            </select>
+
+          <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider);padding-top:11px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+              <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Entrée</div>
+              <button type="button" class="{{ sensCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ basculerSens }}" title="{{ sensAide }}">{{ sensNom }}</button>
+            </div>
+            <div class="field">
+              <label style="font-size:11px;margin-bottom:2px">{{ declencheurNom }}</label>
+              <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btEntree }}" onChange="{{ setEntree }}">
+                <sc-for list="{{ entrees }}" as="en" hint-placeholder-count="5">
+                  <option value="{{ en.v }}">{{ en.nom }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:8px">
+              <div class="field">
+                <label style="font-size:11px;margin-bottom:2px">Ligne balayée<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.">?</span></label>
+                <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btLigne }}" onChange="{{ setLigne }}">
+                  <sc-for list="{{ lignes }}" as="lg" hint-placeholder-count="4">
+                    <option value="{{ lg.v }}">{{ lg.nom }}</option>
+                  </sc-for>
+                </select>
+              </div>
+              <div class="field"><label style="font-size:11px;margin-bottom:2px">Période<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btPeriode }}" onChange="{{ setPeriode }}"></div>
+            </div>
           </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider);padding-top:11px">
+            <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Sortie &amp; risque</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div class="field"><label style="font-size:11px;margin-bottom:2px">Stop %<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btSL }}" step="0.1" min="0.1" onChange="{{ setSL }}"></div>
+              <div class="field"><label style="font-size:11px;margin-bottom:2px">Objectif<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btRR }}" step="0.1" min="0.1" onChange="{{ setRR }}"></div>
+              <div class="field"><label style="font-size:11px;margin-bottom:2px">Risque %<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ risquePct }}" step="0.1" onChange="{{ setRisque }}"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:11px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+              <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Filtres</div>
+              <span class="{{ btFiltresCls }}" style="font-size:10px;padding:1px 6px" title="Nombre de conditions qui doivent être remplies pour autoriser l'entrée">{{ btFiltresTag }}</span>
+            </div>
+            <span style="font-size:11px;line-height:1.45">{{ btFiltresTxt }}</span>
+            <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;align-self:flex-start;padding-inline:10px" onClick="{{ ouvrirFiltres }}">Les {{ btFiltresTotal }} filtres…</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:11px">
+            <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Sécurisation &amp; frais</div>
+            <span style="font-size:11px;line-height:1.45">{{ btSecuTxt }}</span>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fraisInfo }}</span>
+            <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;align-self:flex-start;padding-inline:10px" onClick="{{ ouvrirSecu }}">Modifier…</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:11px">
+            <button class="btn btn-primary" type="button" style="min-height:2.4rem;width:100%" onClick="{{ lancerTest }}">Relancer le test</button>
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;width:100%" onClick="{{ sauverBacktest }}" disabled="{{ perime }}">Sauvegarder ce résultat</button>
+            <sc-if value="{{ aRetourHisto }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;width:100%" onClick="{{ retourHisto }}">↩ Retour à l'historique du scan</button>
+              <span style="font-size:11px" class="text-muted">{{ retourHistoTxt }}</span>
+            </sc-if>
+            <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px" class="text-muted">Réglages modifiés depuis le dernier calcul — relancez le test avant de sauvegarder.</span>
+            </sc-if>
+          </div>
+        </aside>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <section class="card blueprint" style="padding:18px 20px;gap:14px">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <!--
+              LES CINQ CARTES DE CHIFFRES ONT DISPARU. Elles posaient cinq lectures côte à
+              côte sans rien dire ensemble. Ce qu'elles portaient tient en une ligne sous le
+              total, et le seul chiffre qui demandait une place — la régularité — devient la
+              bande d'époques sous la courbe : elle montre si une seule période porte tout.
+            -->
+            <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+              <span style="font-family:var(--font-heading);font-weight:600;font-size:38px;line-height:1;letter-spacing:-.01em">{{ btTotal }}</span>
+              <span style="font-size:13px" class="text-muted">{{ btN }} trades · {{ btAnnees }} · <strong style="color:var(--color-text)">{{ btRAn }} par an</strong></span>
+              <span style="margin-inline-start:auto;font-size:12px;color:var(--color-accent-700)">{{ btSegs }} époques gagnantes</span>
+            </div>
+            <div style="font-size:12px;margin-top:-8px" class="text-muted" title="{{ btWinDetail }}">{{ btPf }} gagné pour 1 perdu · {{ btWin }} gagnants / perdants / à l'équilibre · pire creux {{ btDD }}</div>
+
+            <sc-if value="{{ aBtConseil }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12px;color:var(--color-accent-700)">Pour resserrer la bande : {{ btConseil }}</div>
+            </sc-if>
+
+            <!--
+              LA COURBE DEVIENT LE CONTENU. Elle était haute de 200 px, sans axe ni échelle,
+              étirée par preserveAspectRatio="none" — le tracé ne disait ni combien ni quand.
+              Elle porte maintenant ses graduations en R, ses années, et surtout le PIRE
+              CREUX marqué là où il a eu lieu : il n'existait que comme chiffre dans une case,
+              jamais comme endroit.
+            -->
+            <svg viewBox="0 0 940 300" style="width:100%;height:auto;display:block">
+              <sc-for list="{{ btGradsY }}" as="gy" hint-placeholder-count="5">
+                <line x1="46" y1="{{ gy.y }}" x2="930" y2="{{ gy.y }}" stroke="var(--color-divider)"></line>
+                <text x="40" y="{{ gy.yTxt }}" text-anchor="end" font-size="11" fill="var(--color-neutral-500)" font-family="var(--font-body)">{{ gy.txt }}</text>
+              </sc-for>
+              <sc-for list="{{ btGradsX }}" as="gx" hint-placeholder-count="6">
+                <text x="{{ gx.x }}" y="292" text-anchor="middle" font-size="11" fill="var(--color-neutral-500)" font-family="var(--font-body)">{{ gx.txt }}</text>
+              </sc-for>
+              <sc-if value="{{ aBtCreux }}" hint-placeholder-val="{{ false }}">
+                <rect x="{{ btCreuxX }}" y="{{ btCreuxY }}" width="{{ btCreuxW }}" height="{{ btCreuxH }}" fill="var(--color-accent-300)"></rect>
+              </sc-if>
+              <path d="{{ btAire }}" fill="var(--color-accent)" fill-opacity="0.1" stroke="none"></path>
+              <line x1="46" y1="{{ btZero }}" x2="930" y2="{{ btZero }}" stroke="var(--color-neutral-400)"></line>
+              <path d="{{ btPath }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
+              <sc-if value="{{ aBtCreux }}" hint-placeholder-val="{{ false }}">
+                <line x1="{{ btCreuxX1 }}" y1="{{ btCreuxY1 }}" x2="{{ btCreuxX2 }}" y2="{{ btCreuxY2 }}" stroke="var(--color-accent-900)" stroke-width="1.5"></line>
+                <text x="{{ btCreuxTx }}" y="{{ btCreuxTy }}" text-anchor="{{ btCreuxAncre }}" font-size="12" font-weight="600" fill="var(--color-accent-900)" font-family="var(--font-body)">{{ btCreuxTxt }}</text>
+              </sc-if>
+            </svg>
+
+            <div style="display:flex;gap:4px">
+              <sc-for list="{{ btEpoques }}" as="ep" hint-placeholder-count="5">
+                <div style="flex:1;background:{{ ep.fond }};color:{{ ep.couleur }};padding:5px 8px;font-size:11px;font-weight:600;text-align:center" title="{{ ep.aide }}">{{ ep.txt }}</div>
+              </sc-for>
+            </div>
+            <div style="font-size:11px;line-height:1.45" class="text-muted">{{ btEpoquesTxt }}</div>
+
+            <sc-if value="{{ aBilanLecture }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline;font-size:12px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Jours</span>
+                <span title="{{ quandDetail }}">{{ quandTxt }}</span>
+                <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Sorties</span>
+                <span class="text-muted">{{ btMotifs }}</span>
+              </div>
+            </sc-if>
+          </section>
+
+        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="margin:0;font-family:var(--font-heading);font-size:24px;line-height:1.1;letter-spacing:-.005em">Comparer avec le robot MT5</span>
+            <span style="font-size:12px;max-width:92ch" class="text-muted">Lancez le testeur de stratégie MT5 sur la même fenêtre, puis collez l'onglet « Transactions » ici. Sivula aligne les deux listes et ne signale que les entrées qui divergent.</span>
+          </div>
+          <textarea class="input" rows="4" placeholder="2020.05.19 00:00:00	2	AUDCAD	buy	in	0.66	0.90961 …" style="height:auto;min-height:5.5rem;font-family:Consolas,ui-monospace,monospace;font-size:11px;line-height:1.5;resize:vertical" onChange="{{ bcmpTexte }}"></textarea>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ comparerBcmp }}">Comparer</button>
+            <sc-if value="{{ aBcmpCal }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ bcmpCalibrer }}" title="{{ bcmpCalAide }}">{{ bcmpCalTxt }}</button>
+            </sc-if>
+            <span style="display:inline-flex;gap:6px;align-items:center;font-size:12px">
+              <span class="text-muted" title="Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.">Tolérance</span>
+              <select class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:14ch" value="{{ bcmpTol }}" onChange="{{ setBcmpTol }}">
+                <option value="1">1 h</option>
+                <option value="2">2 h</option>
+                <option value="4">4 h</option>
+                <option value="24">1 jour</option>
+              </select>
+            </span>
+          </div>
+          <sc-if value="{{ aBcmp }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <strong style="font-size:13px">{{ bcmpChiffres }}</strong>
+              <p class="card-body" style="margin:0;font-size:12px;max-width:96ch">{{ bcmpVerdict }}</p>
+              <sc-if value="{{ aBcmpRows }}" hint-placeholder-val="{{ false }}">
+                <div style="max-height:260px;overflow:auto">
+                  <table class="table" style="font-size:12px">
+                    <thead><tr>
+                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Entrée</th>
+                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Côté</th>
+                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Ce que ça veut dire</th>
+                    </tr></thead>
+                    <tbody>
+                      <sc-for list="{{ bcmpRows }}" as="br" hint-placeholder-count="4">
+                        <tr>
+                          <td style="white-space:nowrap">{{ br.quand }}</td>
+                          <td><span class="{{ br.cls }}">{{ br.cote }}</span></td>
+                          <td class="text-muted">{{ br.note }}</td>
+                        </tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
         </div>
-        <p class="card-body" style="margin:0;font-size:11px;line-height:1.45">Mêmes réglages que votre moteur : bougies Daily coupées, session normalisée{{ sessionInfo }}, amorce de 400 jours avant le 01/01/2020. Frais : {{ fraisInfo }}.</p>
 
         <sc-if value="{{ essai }}" hint-placeholder-val="{{ false }}">
           <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:8px">
@@ -2868,53 +3077,24 @@
             <p class="card-body" style="margin:0">L'unité de temps doit être <strong>H1</strong> : Sivula reconstruit H4 et Daily lui-même, et un fichier déjà en Daily fausserait les filtres multi-unités. Pensez à saisir le spread et le swap de votre courtier dans les champs Frais, sinon le résultat sera brut.</p>
           </div>
         </sc-if>
-
-        </sc-if>
-      </section>
-
-      <section class="card blueprint" style="padding:14px 18px;gap:12px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">2 · Stratégie</div>
-        <button type="button" onClick="{{ basculerBt2 }}" title="Replier ou déplier cette section" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;white-space:nowrap;color:inherit;text-align:left">{{ chevronBt2 }}</button>
-        <sc-if value="{{ ouvBt2 }}" hint-placeholder-val="{{ true }}">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap">
-              <h5 style="margin:0;font-family:var(--font-heading);font-size:16px;line-height:1.1">Entrée</h5>
-              <button type="button" class="{{ sensCls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" onClick="{{ basculerSens }}" title="{{ sensAide }}">{{ sensNom }}</button>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;margin-bottom:2px">{{ declencheurNom }}</label>
-              <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btEntree }}" onChange="{{ setEntree }}">
-                <sc-for list="{{ entrees }}" as="en" hint-placeholder-count="5">
-                  <option value="{{ en.v }}">{{ en.nom }}</option>
-                </sc-for>
-              </select>
-            </div>
-            <div class="field">
-              <label style="font-size:11px;margin-bottom:2px">Ligne balayée<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.">?</span></label>
-              <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ btLigne }}" onChange="{{ setLigne }}">
-                <sc-for list="{{ lignes }}" as="lg" hint-placeholder-count="4">
-                  <option value="{{ lg.v }}">{{ lg.nom }}</option>
-                </sc-for>
-              </select>
-            </div>
-            <div class="field"><label style="font-size:11px;margin-bottom:2px">Période de la ligne<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btPeriode }}" onChange="{{ setPeriode }}"></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <h5 style="margin:0;font-family:var(--font-heading);font-size:16px;line-height:1.1">Sortie &amp; risque</h5>
-            <div class="field"><label style="font-size:11px;margin-bottom:2px">Stop (%)<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btSL }}" step="0.1" min="0.1" onChange="{{ setSL }}"></div>
-            <div class="field"><label style="font-size:11px;margin-bottom:2px">Objectif<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btRR }}" step="0.1" min="0.1" onChange="{{ setRR }}"></div>
-            <div class="field"><label style="font-size:11px;margin-bottom:2px">Risque par trade (%)<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.">?</span></label><input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ risquePct }}" step="0.1" onChange="{{ setRisque }}"></div>
-          </div>
         </div>
+      </div>
 
-        <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-divider);padding-top:18px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
-            <h5 style="margin:0;font-family:var(--font-heading);font-size:16px;line-height:1.1">Filtres, sécurisation et frais</h5>
-            <span style="font-size:12px;text-align:right;max-width:70ch" class="text-muted">{{ resumeReglages }}</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
+      <!--
+        LE PANNEAU. Les onze filtres et la sécurisation occupaient la moitié de la page
+        alors qu'on ne les touche pas à chaque essai. Leur contenu n'a pas changé d'une
+        ligne : il a changé d'endroit.
+      -->
+      <sc-if value="{{ aPanneau }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;z-index:80;background:color-mix(in srgb,var(--color-text) 38%,transparent);display:flex;justify-content:flex-end" onClick="{{ fermerPanneau }}">
+          <div style="width:min(940px,96vw);height:100%;overflow:auto;background:var(--color-bg);padding:20px 24px;display:flex;flex-direction:column;gap:12px" onClick="{{ garderPanneau }}">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">{{ panneauTitre }}</span>
+              <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:12px" onClick="{{ fermerPanneau }}">Fermer</button>
+            </div>
+            <span style="font-size:12px" class="text-muted">{{ resumeReglages }}</span>
+            <div style="display:flex;flex-direction:column;gap:4px">
+            <sc-if value="{{ aPanFiltres }}" hint-placeholder-val="{{ true }}">
           <span style="font-size:11px" class="text-muted">Chaque filtre est évalué sur la dernière bougie clôturée de son unité de temps</span>
           <div style="display:grid;grid-template-columns:1.7fr .8fr 1fr 1fr;gap:8px;font-size:13px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding-bottom:2px;border-bottom:1px solid var(--color-divider)" class="text-muted">
             <span>Filtre</span><span>Unité de temps</span><span>Réglage</span><span>Second réglage</span>
@@ -3001,7 +3181,8 @@
             <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ zoneTol }}" step="0.1" min="0.1" onChange="{{ setZoneTol }}">
             <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ zoneMemoire }}" step="50" min="20" onChange="{{ setZoneMemoire }}" placeholder="mémoire (bougies)">
           </div>
-
+            </sc-if>
+            <sc-if value="{{ aPanSecu }}" hint-placeholder-val="{{ false }}">
           <div style="display:grid;grid-template-columns:1.7fr .8fr 1fr 1fr;gap:8px;font-size:13px;align-items:center">
             <label class="radio"><input type="checkbox" checked="{{ btBE }}" onChange="{{ toggleBE }}"><span class="dot"></span>Sécuriser la position en cours de route<span class="aide" title="{{ aideSecu }}">?</span></label>
             <select class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" value="{{ typeSecu }}" onChange="{{ setTypeSecu }}" style="grid-column:span 2">
@@ -3082,153 +3263,13 @@
             <span></span>
             <span style="font-size:12px;grid-column:span 1" class="text-muted">{{ fenetreInfo }}</span>
           </div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" type="button" style="min-height:2.6rem;padding-inline:20px" onClick="{{ lancerTest }}">Lancer le test</button>
-          <button class="btn btn-secondary" type="button" style="min-height:2.6rem;padding-inline:20px" onClick="{{ sauverBacktest }}" disabled="{{ perime }}">Sauvegarder ce résultat</button>
-          <sc-if value="{{ aRetourHisto }}" hint-placeholder-val="{{ false }}">
-            <button class="btn btn-ghost" type="button" style="min-height:2.6rem;padding-inline:20px" onClick="{{ retourHisto }}">↩ Retour à l'historique du scan</button>
-            <span style="font-size:12px;align-self:center" class="text-muted">{{ retourHistoTxt }}</span>
-          </sc-if>
-          <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
-            <span style="font-size:13px;align-self:center" class="text-muted">Réglages modifiés depuis le dernier calcul — relancez le test avant de sauvegarder.</span>
-          </sc-if>
-        </div>
-        </sc-if>
-      </section>
-
-      <section class="card blueprint" style="padding:14px 18px;gap:10px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:32px;line-height:1">{{ btTotal }}</div>
-          <span style="font-size:14px" class="text-muted">en {{ btN }} trades, sur {{ btAnnees }}</span>
-          <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
-          <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
-          <sc-if value="{{ aEcartLigne }}" hint-placeholder-val="{{ false }}">
-            <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600;white-space:normal;text-align:left;max-width:96ch">{{ ecartLigneTxt }}</span>
-          </sc-if>
-          <sc-if value="{{ btVarianteRatee }}" hint-placeholder-val="{{ false }}">
-            <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600" title="La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres ci-dessous décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.">Condition de la ligne NON restaurée — ces chiffres ne sont pas ceux de la ligne</span>
-          </sc-if>
-          <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
-            <span class="tag tag-outline">Chiffres périmés — relancez le test</span>
-          </sc-if>
-          <sc-if value="{{ aErreur }}" hint-placeholder-val="{{ false }}">
-            <span class="tag tag-outline">{{ erreur }}</span>
-          </sc-if>
-        </div>
-
-        <!--
-          CE QUE VAUT CE CHIFFRE — trois lignes étiquetées, plus quatre phrases empilées.
-
-          Les quatre mesures étaient rendues en prose, même taille, trois couleurs, à la
-          suite du total : la bande, puis le compte de bougies ambiguës qui répétait le
-          même fait, puis le tableau des jours en une seule phrase à rallonge, puis les
-          sorties exposées. Rien ne hiérarchisait, et le verdict — la seule chose à lire —
-          se noyait au milieu. On garde exactement les mêmes mesures, on les range.
-        -->
-        <sc-if value="{{ aBilanLecture }}" hint-placeholder-val="{{ true }}">
-          <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline;font-size:12px;padding-top:2px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)">
-            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Ce chiffre vaut</span>
-            <span title="Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : sur GOLD sans palier, le moteur rend 73,4 contre 73,1 au testeur. Une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.">{{ btBande }}</span>
-
-            <sc-if value="{{ aBtConseil }}" hint-placeholder-val="{{ false }}">
-              <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Pour resserrer</span>
-              <span style="color:var(--color-accent-700)">{{ btConseil }}</span>
             </sc-if>
-
-            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Jours</span>
-            <span title="{{ quandDetail }}">{{ quandTxt }}</span>
-          </div>
-        </sc-if>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Par an</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ btRAn }}</div>
-          </div>
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gagnants / perdants / équilibre</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ btWin }}</div>
-            <div style="font-size:10px;line-height:1.35" class="text-muted">{{ btWinDetail }}</div>
-          </div>
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain / perte</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ btPf }}</div>
-          </div>
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Pire creux</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ btDD }}</div>
-          </div>
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Segments positifs</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15;color:var(--color-accent-700)">{{ btSegs }}</div>
-          </div>
-        </div>
-        <div class="blueprint" style="padding:16px 18px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <svg viewBox="0 0 900 210" preserveAspectRatio="none" style="width:100%;height:200px;display:block">
-            <line x1="0" y1="{{ btZero }}" x2="900" y2="{{ btZero }}" stroke="var(--color-divider)"></line>
-            <path d="{{ btPath }}" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
-          </svg>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:8px" class="text-muted">Courbe cumulée en R — calculée sur vos données</div>
-        </div>
-        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="margin:0;font-family:var(--font-heading);font-size:24px;line-height:1.1;letter-spacing:-.005em">Comparer avec le robot MT5</span>
-            <span style="font-size:12px;max-width:92ch" class="text-muted">Lancez le testeur de stratégie MT5 sur la même fenêtre, puis collez l'onglet « Transactions » ici. Sivula aligne les deux listes et ne signale que les entrées qui divergent.</span>
-          </div>
-          <textarea class="input" rows="4" placeholder="2020.05.19 00:00:00	2	AUDCAD	buy	in	0.66	0.90961 …" style="height:auto;min-height:5.5rem;font-family:Consolas,ui-monospace,monospace;font-size:11px;line-height:1.5;resize:vertical" onChange="{{ bcmpTexte }}"></textarea>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ comparerBcmp }}">Comparer</button>
-            <sc-if value="{{ aBcmpCal }}" hint-placeholder-val="{{ false }}">
-              <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ bcmpCalibrer }}" title="{{ bcmpCalAide }}">{{ bcmpCalTxt }}</button>
-            </sc-if>
-            <span style="display:inline-flex;gap:6px;align-items:center;font-size:12px">
-              <span class="text-muted" title="Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.">Tolérance</span>
-              <select class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:14ch" value="{{ bcmpTol }}" onChange="{{ setBcmpTol }}">
-                <option value="1">1 h</option>
-                <option value="2">2 h</option>
-                <option value="4">4 h</option>
-                <option value="24">1 jour</option>
-              </select>
-            </span>
-          </div>
-          <sc-if value="{{ aBcmp }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <strong style="font-size:13px">{{ bcmpChiffres }}</strong>
-              <p class="card-body" style="margin:0;font-size:12px;max-width:96ch">{{ bcmpVerdict }}</p>
-              <sc-if value="{{ aBcmpRows }}" hint-placeholder-val="{{ false }}">
-                <div style="max-height:260px;overflow:auto">
-                  <table class="table" style="font-size:12px">
-                    <thead><tr>
-                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Entrée</th>
-                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Côté</th>
-                      <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Ce que ça veut dire</th>
-                    </tr></thead>
-                    <tbody>
-                      <sc-for list="{{ bcmpRows }}" as="br" hint-placeholder-count="4">
-                        <tr>
-                          <td style="white-space:nowrap">{{ br.quand }}</td>
-                          <td><span class="{{ br.cls }}">{{ br.cote }}</span></td>
-                          <td class="text-muted">{{ br.note }}</td>
-                        </tr>
-                      </sc-for>
-                    </tbody>
-                  </table>
-                </div>
-              </sc-if>
             </div>
-          </sc-if>
+            <button class="btn btn-primary" type="button" style="min-height:2.4rem;align-self:flex-start;padding-inline:20px" onClick="{{ relancerDepuisPanneau }}">Relancer le test</button>
+          </div>
         </div>
-      </section>
+      </sc-if>
+
 
       <section class="card blueprint" style="padding:22px 24px;gap:12px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -3592,7 +3633,7 @@ class Component extends DCLogic {
       compte4: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte5: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 } },
     commDev: { fxpro: { forex: 'EUR', metal: 'EUR', actionUS: 'USD', actionAutre: 'PCT' } }, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
-    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', colsPlus: false,
+    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', colsPlus: false, btPanneau: '',
     manqCoches: [], manqMsg: null, grpTout: [],
     ctrlEnCours: false, ctrlMsg: null, ctrlOk: null,
     robuste: null, ailleurs: null, correl: null, calculEnCours: null, recalcul: null,
@@ -7117,20 +7158,28 @@ GROUPES = {
     e.returnValue = msg;
     return msg;
   };
-  // hauteur réelle de l'en-tête collant : le fil se cale dessous quelle que soit la
-  // largeur de la fenêtre, y compris quand l'en-tête passe sur deux lignes
+  // hauteurs réelles des barres collantes : chaque étage se cale sous le précédent quelle
+  // que soit la largeur de la fenêtre, y compris quand une barre passe sur deux lignes.
+  // Le bandeau de verdict du backtest est un troisième étage : mesurer le fil n'était pas
+  // nécessaire tant qu'il était le dernier.
   suivreHauteurEntete() {
-    const el = document.getElementById('om-sticky');
-    if (!el) return;
-    const lire = () => {
-      const h = Math.round(el.getBoundingClientRect().height);
-      if (h && h !== this.state.hEntete) this.setState({ hEntete: h });
+    this._roEntete = [];
+    const suivre = (id, cle) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const lire = () => {
+        const h = Math.round(el.getBoundingClientRect().height);
+        if (h && h !== this.state[cle]) this.setState({ [cle]: h });
+      };
+      lire();
+      try {
+        const ro = new ResizeObserver(lire);
+        ro.observe(el);
+        this._roEntete.push(ro);
+      } catch (e) { window.addEventListener('resize', lire); }
     };
-    lire();
-    try {
-      this._roEntete = new ResizeObserver(lire);
-      this._roEntete.observe(el);
-    } catch (e) { window.addEventListener('resize', lire); }
+    suivre('om-sticky', 'hEntete');
+    suivre('om-fil', 'hFil');
   }
   componentDidUpdate() {
     // La carte des configurations retenues est remplie PLUS BAS dans le même rendu que
@@ -7149,7 +7198,7 @@ GROUPES = {
     if (this.state.vue === 'historique' && !this.state.scanEnCours) this.mesurerBasses();
   }
   componentWillUnmount() {
-    try { if (this._roEntete) this._roEntete.disconnect(); } catch (e) {}
+    try { for (const ro of this._roEntete || []) ro.disconnect(); } catch (e) {}
     clearInterval(this._autoI);
     try { window.removeEventListener('beforeunload', this.quitter); } catch (e) {}
     if (this._battement) clearInterval(this._battement);
@@ -7718,7 +7767,7 @@ GROUPES = {
   CLE_HASARD = 'simula.hasard.v1';
   get champsSession() {
     return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvS1', 'ouvS2', 'ouvS3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvSymb', 'ouvTele', 'ouvCour', 'ouvMarc',
-      'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'ouvBt1', 'ouvBt2', 'triCout', 'tab', 'vueLecture',
+      'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'triCout', 'tab', 'vueLecture',
       'filtreBougies', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
@@ -11440,13 +11489,60 @@ GROUPES = {
     const fr = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(d).replace('.', ','));
     const sg = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : (x >= 0 ? '+ ' : '− ') + Math.abs(x).toFixed(d).replace('.', ','));
     const res = s.res, seg = s.seg;
-    let btPath = '', btZero = 100;
+    // LA COURBE, avec ses axes et son creux.
+    //
+    // Elle était tracée sur 900 × 200 en `preserveAspectRatio="none"` : le dessin était
+    // étiré verticalement, sans échelle, sans dates, et le pire creux n'existait que comme
+    // un nombre dans une case à côté. On garde exactement les mêmes points ; on leur donne
+    // une marge à gauche pour les graduations en R, une en bas pour les années, et on
+    // marque le creux là où il a eu lieu.
+    const GX0 = 46, GX1 = 930, GY0 = 14, GY1 = 272;
+    let btPath = '', btAire = '', btZero = (GY0 + GY1) / 2;
+    let btGradsY = [], btGradsX = [], creux = null;
     if (s.courbe && s.courbe.length > 1) {
       const eqs = s.courbe.map((p) => p.eq);
       const lo = Math.min(0, ...eqs), hi = Math.max(0, ...eqs);
-      const y = (v) => 200 - (v - lo) / ((hi - lo) || 1) * 190;
+      const y = (v) => GY1 - (v - lo) / ((hi - lo) || 1) * (GY1 - GY0);
+      const x = (i) => GX0 + (i / (s.courbe.length - 1)) * (GX1 - GX0);
       btZero = y(0);
-      btPath = s.courbe.map((p, i) => (i ? 'L' : 'M') + (i / (s.courbe.length - 1) * 900).toFixed(1) + ',' + y(p.eq).toFixed(1)).join(' ');
+      btPath = s.courbe.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.eq).toFixed(1)).join(' ');
+      // le remplissage : le même tracé, refermé sur la ligne du zéro
+      btAire = btPath + ' L' + GX1.toFixed(1) + ',' + btZero.toFixed(1)
+        + ' L' + GX0.toFixed(1) + ',' + btZero.toFixed(1) + ' Z';
+      for (let k = 0; k <= 4; k++) {
+        const v = lo + (hi - lo) * (k / 4);
+        btGradsY.push({ y: y(v).toFixed(1), yTxt: (y(v) + 4).toFixed(1),
+          txt: String(Math.round(v)).replace('-', '\u2212') + ' R' });
+      }
+      // une étiquette par année civile, posée à sa première sortie
+      const vus = new Set();
+      s.courbe.forEach((p, i) => {
+        const an = new Date(p.t).getUTCFullYear();
+        if (!Number.isFinite(an) || vus.has(an)) return;
+        vus.add(an);
+        btGradsX.push({ x: x(i).toFixed(1), txt: String(an) });
+      });
+      // LE PIRE CREUX comme ENDROIT : le plus grand écart entre un sommet et un point
+      // postérieur. C'est l'information qui manquait le plus — le chiffre existait, mais
+      // rien ne disait quand la traversée avait eu lieu, ni combien de temps elle avait duré.
+      let pic = 0, pire = 0, iPic = 0, iBas = 0;
+      s.courbe.forEach((p, i) => {
+        if (p.eq > s.courbe[pic].eq) pic = i;
+        const d = s.courbe[pic].eq - p.eq;
+        if (d > pire) { pire = d; iPic = pic; iBas = i; }
+      });
+      if (pire > 0) {
+        const xa = x(iPic), xb = x(iBas), ya = y(s.courbe[iPic].eq), yb = y(s.courbe[iBas].eq);
+        creux = { x: xa.toFixed(1), y: ya.toFixed(1),
+          w: Math.max(2, xb - xa).toFixed(1), h: Math.max(2, yb - ya).toFixed(1),
+          x1: xa.toFixed(1), y1: ya.toFixed(1), x2: xb.toFixed(1), y2: yb.toFixed(1),
+          // l'étiquette se range à gauche du creux quand il finit près du bord droit
+          tx: (xb > GX1 - 170 ? xa - 8 : xb + 8).toFixed(1), ty: (yb + 4).toFixed(1),
+          ancre: xb > GX1 - 170 ? 'end' : 'start',
+          // en R, l'unité de la ligne de chiffres juste au-dessus : le même creux
+          // annoncé en « stops » ici et en « R » là aurait fait deux mesures d'une seule
+          txt: 'pire creux : ' + pire.toFixed(1).replace('.', ',') + ' R' };
+      }
     }
     const verdict = !res ? ['—', 'tag-neutral']
       : res.total <= 0 ? ['Non retenue', 'tag-outline']
@@ -11874,6 +11970,10 @@ GROUPES = {
       // hauteur mesurée de tout le bloc collant (bandeaux + en-tête) : elle change
       // quand un bandeau apparaît, quand la fenêtre se replie, sans rien à recalculer ici
       filTop: (s.hEntete || 46) + 'px',
+      // les deux étages suivants : le bandeau de verdict du backtest se cale sous le fil,
+      // et la colonne de configuration sous le bandeau
+      btTopBandeau: ((s.hEntete || 46) + (s.hFil || 38)) + 'px',
+      btTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 58) + 'px',
       fil: (() => {
         const nSeries = (s.deposes || []).length;
         const nScan = this.lignesScan.length;
@@ -12838,7 +12938,7 @@ GROUPES = {
         }
         // et pour les sections des autres écrans (Symboles, Courtiers, Portefeuille, Backtest)
         for (const n of ['Symb', 'Tele', 'Cour', 'Marc', 'Vali', 'Cout', 'Redo',
-          'Secu', 'Gril', 'Flux', 'Bt1', 'Bt2']) {
+          'Secu', 'Gril', 'Flux']) {
           const k = 'ouv' + n;
           const v = s[k] === undefined ? true : !!s[k];
           o[k] = v;
@@ -13416,7 +13516,82 @@ GROUPES = {
       btMotifs: res ? 'TP ' + res.tp + ' · SL ' + res.sl + ' · BE ' + res.be + ' · gap ' + res.gap
         + (res.temps ? ' · durée ' + res.temps : '') : '',
       btVerdict: verdict[0], btVerdictTag: verdict[1],
-      btPath, btZero,
+      btSymNom: this.nomComplet(s.btSym),
+      btPath, btZero, btAire, btGradsY, btGradsX,
+      aBtCreux: !!creux,
+      btCreuxX: creux ? creux.x : '0', btCreuxY: creux ? creux.y : '0',
+      btCreuxW: creux ? creux.w : '0', btCreuxH: creux ? creux.h : '0',
+      btCreuxX1: creux ? creux.x1 : '0', btCreuxY1: creux ? creux.y1 : '0',
+      btCreuxX2: creux ? creux.x2 : '0', btCreuxY2: creux ? creux.y2 : '0',
+      btCreuxTx: creux ? creux.tx : '0', btCreuxTy: creux ? creux.ty : '0',
+      btCreuxAncre: creux ? creux.ancre : 'start',
+      btCreuxTxt: creux ? creux.txt : '',
+      // LA BANDE DES CINQ ÉPOQUES, à la place de la carte « segments positifs ».
+      // « 5 / 5 » ne disait pas si les cinq époques pesaient pareil : un total porté par
+      // une seule période se lisait comme une régularité. Chaque barre porte son R et son
+      // intensité suit sa taille — une barre qui écrase les autres se voit d'un coup d'œil.
+      ...(() => {
+        const d = (seg && seg.detail) || [];
+        const vals = d.filter((x) => x !== null && x !== undefined).map((x) => Math.abs(x));
+        const max = vals.length ? Math.max(...vals) : 0;
+        const tot = (seg && seg.detail || []).reduce((a, x) => a + (x || 0), 0);
+        const plusGrosse = max && tot > 0 ? max / tot : 0;
+        return {
+          btEpoques: d.map((v, i) => {
+            if (v === null || v === undefined) {
+              return { txt: '—', fond: 'var(--color-neutral-200)', couleur: 'var(--color-text)',
+                aide: 'Époque ' + (i + 1) + ' : aucun trade.' };
+            }
+            const part = max ? Math.abs(v) / max : 0;
+            const pct = Math.round(28 + part * 62);
+            return { txt: sg(v, 0) + ' R',
+              fond: 'color-mix(in srgb,var(--color-accent' + (v > 0 ? '' : '-900') + ') '
+                + pct + '%,var(--color-bg))',
+              couleur: pct > 62 ? 'var(--color-bg)' : 'var(--color-text)',
+              aide: 'Époque ' + (i + 1) + ' sur ' + d.length + ' — même nombre de trades que les autres, '
+                + 'et ' + sg(v, 1) + ' R de résultat.' };
+          }),
+          btEpoquesTxt: !d.length ? ''
+            : 'Les ' + d.length + ' époques, à nombre de trades égal. '
+              + (plusGrosse >= 0.6
+                ? 'Une seule en porte ' + Math.round(plusGrosse * 100) + ' % : le résultat ne repose pas sur une régularité, mais sur une période.'
+                : 'Aucune barre claire : le résultat ne repose pas sur une seule période.'),
+        };
+      })(),
+      // Le résumé des filtres, pour la colonne : le nom des conditions actives, leur
+      // nombre, et le total balayable. Le tableau complet vit dans le panneau.
+      ...(() => {
+        const on = [];
+        if (s.btMtf) on.push('tendance supérieure');
+        if (s.fPente) on.push('pente');
+        if (s.fRsi) on.push('RSI');
+        if (s.fAdx) on.push('ADX');
+        if (s.fNuage) on.push('Ichimoku');
+        if (s.fPivot) on.push('pivot');
+        if (s.fResist) on.push('plus haut');
+        if (s.fZone) on.push('zones');
+        if (Number(s.btDelai)) on.push('délai ' + s.btDelai);
+        if (Number(s.btFenDeb) || Number(s.btFenFin)) on.push('fenêtre horaire');
+        return { btFiltresTxt: on.length ? on.join(' · ') : 'Aucun filtre : toutes les entrées sont prises.',
+          btFiltresTag: on.length ? on.length + ' actif' + (on.length > 1 ? 's' : '') : 'aucun',
+          btFiltresCls: 'tag ' + (on.length ? 'tag-accent' : 'tag-outline'),
+          btFiltresTotal: 11 };
+      })(),
+      btSecuTxt: !s.btBE ? 'Sans sécurisation : le stop de départ reste en place.'
+        : s.typeSecu === 'trailing' ? 'Stop suiveur à ' + fr(s.trailingPct, 2) + ' % sous le plus haut.'
+        : 'Paliers progressifs.',
+      // Le panneau : un seul, deux contenus. Ouvert par-dessus la page plutôt qu'inséré
+      // dedans — la mesure ne doit pas se déplacer pendant qu'on règle ce qui la produit.
+      aPanneau: !!s.btPanneau,
+      aPanFiltres: s.btPanneau === 'filtres',
+      aPanSecu: s.btPanneau === 'secu',
+      panneauTitre: s.btPanneau === 'secu' ? 'Sécurisation, frais et rythme' : 'Les onze filtres d\u2019entrée',
+      ouvrirFiltres: () => this.setState({ btPanneau: 'filtres' }),
+      ouvrirSecu: () => this.setState({ btPanneau: 'secu' }),
+      fermerPanneau: () => this.setState({ btPanneau: '' }),
+      // le clic sur le panneau lui-même ne doit pas le refermer : seul le fond le fait
+      garderPanneau: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+      relancerDepuisPanneau: () => this.setState({ btPanneau: '' }, () => this.lancerTest()),
       scanRows: scanRowsV, aScan: scanRowsV.length > 0,
       modeLecture: lecture, modeComplet: !lecture,
       // Sept colonnes sur quatorze partent par défaut. Elles ne sont pas supprimées —
