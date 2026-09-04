@@ -23,6 +23,13 @@
     font-size: 10px; font-weight: 600; line-height: 1; user-select: none;
   }
   .aide:hover { background: var(--color-accent); color: var(--color-bg); }
+  /* Les actions d'une fiche ne se montrent qu'au survol. `visibility` et non `display` :
+     la place reste prise, donc la fiche ne saute pas en hauteur quand la souris la
+     traverse — et la grille entière ne se recompose pas à chaque déplacement. */
+  .fiche .agir { visibility: hidden; }
+  .fiche:hover .agir, .fiche:focus-within .agir { visibility: visible; }
+  /* L'override des cases à cocher — carré au lieu de rond, et la coche redessinée —
+     existe déjà plus bas dans cette feuille. Rien à ajouter ici. */
   .survol { position: relative; }
   .survol > .bulle { display: none; }
   .survol:hover > .bulle, .survol:focus-within > .bulle {
@@ -2174,208 +2181,150 @@
           </sc-if>
         </div>
         </sc-if>
-        <sc-if value="{{ aEffetFiltres }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:9px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
-            <span style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Écarter les résultats fragiles<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Ces curseurs ne changent rien à la stratégie : ils retirent du tableau ci-dessous les résultats qui ne tiennent pas le seuil. Rien n'est recalculé, rien n'est perdu.">?</span></span>
-            <span style="font-family:var(--font-heading);font-size:16px">{{ scanTotalTxt }}</span>
-            <span style="font-size:12px" class="text-muted">→ {{ resteFinalTxt }}</span>
-            <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px;margin-inline-start:auto" onClick="{{ basculerFiltre }}" title="Remet à zéro les curseurs ci-dessous : plus aucun résultat n'est écarté de l'affichage. Vos scans ne sont pas touchés.">{{ basculerFiltreTxt }}</button>
-            <button type="button" onClick="{{ basculerH3 }}" title="Replier ou déplier ce cadre" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;margin-inline-start:auto;white-space:nowrap;color:inherit">{{ chevronH3 }}</button>
-          </div>
-          <sc-if value="{{ ouvH3 }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;flex-direction:column;gap:0">
-            <sc-for list="{{ filtresVifs }}" as="fv" hint-placeholder-count="5">
-              <div style="display:grid;grid-template-columns:minmax(150px,1fr) minmax(170px,1fr) 92px 116px;gap:12px;align-items:center;padding:5px 0;border-top:1px solid color-mix(in srgb,var(--color-text) 12%,transparent)">
-                <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-                  <span style="font-size:12px">{{ fv.nom }}</span>
-                  <strong style="font-family:var(--font-heading);font-size:14px">{{ fv.valTxt }}</strong>
+        <!--
+          L'ENTONNOIR À GAUCHE, LES RÉSULTATS À DROITE.
+
+          Le cadre « Écarter les résultats fragiles » vivait au-dessus du tableau : on
+          réglait en haut, on jugeait en bas, jamais les deux à la fois. Ses curseurs
+          n'ont pas changé — ils ont changé de place, et chacun dit désormais POURQUOI son
+          seuil existe et ce qu'il a coûté. Un seuil qu'on ne sait pas justifier est un
+          seuil qu'on met au hasard.
+
+          Le tableau de vingt colonnes devient une grille de fiches : il débordait
+          horizontalement et sa dernière colonne — celle qui portait l'action — devenait
+          inatteignable. La hiérarchie de taille remplace l'alignement : trois chiffres en
+          corps 21 décident, trois en corps 15 renseignent.
+        -->
+        <div style="display:grid;grid-template-columns:400px 1fr;gap:14px;align-items:start">
+
+          <aside class="blueprint" style="position:sticky;top:{{ btTopAside }};padding:14px 16px;display:flex;flex-direction:column;gap:0">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px">
+              <span style="font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">{{ entonnoirTitre }}</span>
+              <span style="font-size:11px" class="text-muted">{{ entonnoirSous }}</span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding:10px 0">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span style="font-size:12px">Lecture des bougies ambiguës</span>
+                <strong style="font-family:var(--font-heading);font-size:19px">{{ lectureRestant }}</strong>
+              </div>
+              <div style="display:flex;gap:0">
+                <sc-for list="{{ choixVueLecture }}" as="vl2" hint-placeholder-count="3">
+                  <button type="button" class="{{ vl2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:11px;padding:4px 2px" title="{{ vl2.aide }}" onClick="{{ vl2.choisir }}">{{ vl2.nom }}</button>
+                </sc-for>
+              </div>
+              <span style="font-size:10px;line-height:1.45" class="text-muted">La lecture basse tranche contre vous ce que la donnée ne dit pas. C’est la seule exigence sans contrepartie : elle ne coûte rien qu’on puisse regretter.</span>
+            </div>
+
+            <sc-for list="{{ filtresVifs }}" as="fv" hint-placeholder-count="7">
+              <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding:10px 0">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                  <span style="font-size:12px">{{ fv.nom }} <strong style="font-family:var(--font-heading);font-size:14px">{{ fv.valTxt }}</strong></span>
+                  <strong style="font-family:var(--font-heading);font-size:19px">{{ fv.restant }}</strong>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px">
                   <button type="button" class="btn btn-secondary" style="min-height:1.5rem;min-width:1.5rem;padding:0;font-size:13px;line-height:1" onClick="{{ fv.moins }}">−</button>
                   <input type="range" min="{{ fv.min }}" max="{{ fv.max }}" step="{{ fv.step }}" value="{{ fv.val }}" onChange="{{ fv.maj }}" style="flex:1;accent-color:var(--color-accent);cursor:pointer">
                   <button type="button" class="btn btn-secondary" style="min-height:1.5rem;min-width:1.5rem;padding:0;font-size:13px;line-height:1" onClick="{{ fv.plus }}">+</button>
                 </div>
-                <span style="font-size:11px;text-align:right;white-space:nowrap" class="text-muted">{{ fv.ecartees }}</span>
-                <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1px;line-height:1.25">
-                  <strong style="font-family:var(--font-heading);font-size:14px">{{ fv.restant }}</strong>
-                  <span style="font-size:10px" class="text-muted">{{ fv.part }}</span>
-                </div>
+                <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fv.ecartees }} · {{ fv.pourquoi }}</span>
               </div>
             </sc-for>
-          </div>
-          <p class="card-body" style="margin:0;font-size:11px">Mettez « Trades minimum » sur « libre » pour voir aussi les combinaisons sans assez de trades. Le TOP, sur la page Scan, garde ses propres seuils.</p>
-          </sc-if>
-        </div>
-        </sc-if>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Lecture</span>
-          <sc-for list="{{ choixVueLecture }}" as="vl2" hint-placeholder-count="3">
-            <button type="button" class="{{ vl2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="{{ vl2.aide }}" onClick="{{ vl2.choisir }}">{{ vl2.nom }}</button>
-          </sc-for>
-          <span style="width:1px;height:18px;background:var(--color-divider);margin-inline:4px"></span>
-          <span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Classer par</span>
-          <sc-for list="{{ ongletsCumul }}" as="oc" hint-placeholder-count="7">
-            <button type="button" class="{{ oc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="{{ oc.aide }}" onClick="{{ oc.choisir }}">{{ oc.nom }}</button>
-          </sc-for>
-        </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-bottom:6px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration, dans la colonne « peut aller au portefeuille ? ». Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n'est mesurable. Montez-le et la case redevient cliquable pour refaire le contrôle plus finement — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
-          <button type="button" class="{{ plusCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ basculerPlus }}" title="Sept colonnes de plus (R par an, profit factor, pire creux, durée moyenne, segments positifs, hors échantillon, avant / après), le détail des réglages de chaque ligne, et le panneau de contrôle du hasard en série. Tout cela sert à creuser un résultat, pas à décider : la décision tient dans les deux dernières colonnes.">{{ plusTxt }}</button>
-        </div>
-        <div style="overflow:auto;max-height:70vh">
-        <!--
-          LES COLONNES SECONDAIRES SE CACHENT PAR CSS, pas par le gabarit.
-          Un `sc-if` entre deux cellules serait sorti de la table par l'analyseur HTML —
-          les colonnes conditionnelles ne se font pas ainsi. Une classe et une règle
-          suffisent, et l'alignement en-tête / cellules ne peut pas se défaire.
-        -->
-        <style>
-          /* `!important` : la règle doit aussi l'emporter sur un `display:block` écrit
-             en style en ligne — les lignes secondaires de la cellule Réglages en portent
-             un, et sans cela elles restaient visibles alors que les colonnes, elles,
-             disparaissaient. */
-          .tbl-simple .col-plus { display: none !important; }
-        </style>
-        <table class="table {{ classeTable }}" style="font-size:13px">
-          <thead><tr>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)" title="Rang dans le classement courant">#</th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);min-width:17ch">Instrument<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="L'action, la paire ou l'indice testé, suivi du nombre de réglages essayés dessus. Cliquez la ligne pour les voir.">?</span></th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);min-width:32ch;width:auto">Réglages<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Le déclencheur d'achat, la ligne de référence et sa longueur, puis la distance du stop en % et l'objectif visé (2 = viser deux fois ce qu'on risque).">?</span></th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;border-left:1px solid var(--color-divider);width:1%;white-space:nowrap;">Trades<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Nombre de fois où la règle s'est déclenchée depuis 2020. Moins de 40 : trop peu pour en tirer une conclusion.">?</span></th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;border-left:1px solid var(--color-divider);width:1%;white-space:nowrap;">R net<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Gain total, compté en « fois le risque ». Si vous risquez 100 € par trade, 12 R veut dire 1 200 € gagnés au total, frais déduits.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;width:1%;white-space:nowrap;">R/an<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Le même gain, mais ramené à une année. C'est le chiffre à utiliser pour comparer deux instruments entre eux.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;width:1%;white-space:nowrap;">PF<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Pour 1 € perdu, combien d'euros gagnés. Au-dessus de 1, vous gagnez ; en dessous de 1,2, la marge est trop mince pour être fiable.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;border-left:1px solid var(--color-divider);width:1%;white-space:nowrap;">Pire<span style="display:block">creux</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="La pire période de pertes qu'il a fallu traverser, comptée en nombre de pertes d'affilée. C'est ce que vous auriez dû encaisser sans abandonner.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;width:1%;white-space:nowrap;">Durée<span style="display:block">moy.</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de temps une position reste ouverte en moyenne. Utile pour savoir si ça vous demande de surveiller tous les jours ou une fois par semaine.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;border-left:1px solid var(--color-divider);width:1%;white-space:nowrap;">Segments<span style="display:block">+</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="On coupe l'historique en 5 tranches de temps égales et on compte celles qui gagnent. 5 sur 5 : régulier. 2 sur 5 : ça n'a marché qu'à certaines époques.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;width:1%;white-space:nowrap;">Hors éch.<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Le résultat obtenu sur la partie de l'historique qui n'a PAS servi à choisir les réglages. C'est le seul chiffre qui n'a pas pu être flatté : regardez-le en premier.">?</span></th>
-            <th class="col-plus" style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center;width:1%;white-space:nowrap;">Avant / après<span style="display:block">{{ coupureTxt }}<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Le résultat coupé en deux à la date charnière, avec le nombre de trades de chaque côté. Un total positif porté par une seule époque n'est pas une régularité : c'est une époque.">?</span></span></th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);border-left:1px solid var(--color-divider);width:1%;white-space:nowrap;">État<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Résultat des cinq contrôles de solidité. Rouge ou orange veut dire que le beau chiffre à côté n'est probablement dû qu'au hasard.">?</span></th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);border-left:1px solid var(--color-divider);text-align:center;width:1%;white-space:nowrap;">Peut aller au<span style="display:block">portefeuille ?</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Croise les deux colonnes précédentes : les cinq contrôles ET le contrôle du hasard doivent être concluants. Le motif du refus s'affiche au survol.">?</span></th>
-          </tr></thead>
-          <tbody>
-            <sc-for list="{{ toutesRows }}" as="tr2" hint-placeholder-count="12">
-              <tr id="{{ tr2.ancre }}" style="cursor:pointer" onClick="{{ tr2.basculer }}">
-                <td class="text-muted">{{ tr2.rang }}</td>
-                <td>
-                  <div style="display:flex;align-items:baseline;gap:8px">
-                    <span class="text-muted" style="font-size:11px">{{ tr2.chevron }}</span>
-                    <div style="display:flex;flex-direction:column;gap:3px">
-                      <strong>{{ tr2.nom }}<span style="margin-left:7px;font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--color-accent-700)" title="{{ tr2.pfAide }}">{{ tr2.pfTxt }}</span></strong>
-                      <span class="text-muted" style="font-size:11px" title="Le n° est la place de l'instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} · {{ tr2.nCombis }}</span>
-                      <span style="font-size:10px;letter-spacing:.06em;color:var(--color-accent-700)" title="{{ tr2.dispoAide }}">{{ tr2.dispoTxt }}</span>
-                      <sc-if value="{{ tr2.aAutreValide }}" hint-placeholder-val="{{ false }}">
-                        <span class="tag tag-accent" style="font-size:10px;align-self:flex-start" title="{{ tr2.autreValideAide }}">{{ tr2.autreValideTxt }}</span>
-                      </sc-if>
-                      <div style="display:flex;gap:4px;flex-wrap:wrap">
-                        <sc-if value="{{ tr2.sansAction }}" hint-placeholder-val="{{ false }}">
-                          <span class="text-muted" style="font-size:10px" title="Aucune configuration scannée pour cet instrument : lancez un scan qui l'inclut.">Lancez un scan pour agir</span>
-                        </sc-if>
-                        <sc-if value="{{ tr2.avecAction }}" hint-placeholder-val="{{ true }}">
-                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
-                        </sc-if>
-                        <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="2">
-                          <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
-                        </sc-for>
-                      </div>
+
+            <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
+              <span style="font-size:12px;line-height:1.5">{{ entonnoirPied }}</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ basculerFiltre }}" title="Remet à zéro les curseurs ci-dessus : plus aucun résultat n’est écarté de l’affichage. Vos scans ne sont pas touchés.">{{ basculerFiltreTxt }}</button>
+                <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ basculerLot }}" title="Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.">{{ lotTxt }}</button>
+              </div>
+            </div>
+          </aside>
+
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Classer par</span>
+              <sc-for list="{{ ongletsCumul }}" as="oc" hint-placeholder-count="7">
+                <button type="button" class="{{ oc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="{{ oc.aide }}" onClick="{{ oc.choisir }}">{{ oc.nom }}</button>
+              </sc-for>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-inline-start:auto" class="text-muted" title="Combien d’entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n’est mesurable. Montez-le et une fiche déjà contrôlée propose de pousser plus loin.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px">
+              <sc-for list="{{ toutesRows }}" as="tr2" hint-placeholder-count="9">
+                <div class="fiche blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:9px;opacity:{{ tr2.opacite }}">
+                  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <strong style="font-size:15px;line-height:1.2">{{ tr2.nom }}</strong>
+                      <span style="font-size:10px" class="text-muted" title="Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} au coût · {{ tr2.nCombis }} mesurées</span>
+                    </div>
+                    <span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;text-align:right;max-width:15ch;line-height:1.3;flex:none" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span>
+                  </div>
+
+                  <sc-if value="{{ tr2.aCourbe }}" hint-placeholder-val="{{ true }}">
+                    <svg viewBox="0 0 300 70" style="width:100%;height:auto;display:block" title="Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.">
+                      <path d="{{ tr2.aire }}" fill="var(--color-accent)" fill-opacity="0.12" stroke="none"></path>
+                      <line x1="0" y1="{{ tr2.zero }}" x2="300" y2="{{ tr2.zero }}" stroke="var(--color-divider)"></line>
+                      <path d="{{ tr2.trace }}" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></path>
+                    </svg>
+                  </sc-if>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">R net</span>
+                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.total }}</strong>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain / perte</span>
+                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.pf }}</strong>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Creux</span>
+                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.dd }}</strong>
                     </div>
                   </div>
-                </td>
-                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
-                <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.n }}</td>
-                <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.total }}<sc-if value="{{ tr2.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ tr2.jumCouleur }}" title="{{ tr2.jumAide }}">{{ tr2.jumTxt }}</span></sc-if></td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.rAn }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.pf }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.dd }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.duree }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.segs }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.oos }}</td>
-                <td class="col-plus" style="text-align:center;white-space:nowrap;font-size:11px;line-height:1.45;color:{{ tr2.regCouleur }}">{{ tr2.regAvantTxt }}<span style="display:block">{{ tr2.regApresTxt }}</span><span style="display:block;font-size:10px;letter-spacing:.04em">{{ tr2.regAlerte }}</span></td>
-<td style="border-left:1px solid var(--color-divider);"><span class="tag {{ tr2.tag }}" title="{{ tr2.motifAide }}">{{ tr2.etat }}</span><sc-if value="{{ tr2.aPartiel }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ tr2.partielAide }}">tronqué</span></sc-if><sc-if value="{{ tr2.aEquiv }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ tr2.equivAide }}">{{ tr2.equivTxt }}</span></sc-if><sc-if value="{{ tr2.aSousBruit }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px;border-color:var(--color-accent);color:var(--color-accent-700)" title="{{ tr2.sousBruitAide }}">stop sous le bruit</span></sc-if><span class="text-muted" style="display:block;font-size:10px;line-height:1.35;margin-top:3px;max-width:22ch" title="{{ tr2.verdictAide }}">{{ tr2.verdictTxt }}</span></td>
-                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><sc-if value="{{ tr2.hasardIci }}" hint-placeholder-val="{{ false }}"><span class="text-muted" style="font-size:9px;letter-spacing:.03em">contrôle…</span></sc-if><sc-if value="{{ tr2.hasardAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ tr2.decCls }}" disabled="{{ tr2.hasardOccupe }}" title="{{ tr2.decAide }}" onClick="{{ tr2.lancerHasard }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3">{{ tr2.decTxt }}</button></sc-if><sc-if value="{{ tr2.hasardVu }}" hint-placeholder-val="{{ true }}"><span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span></sc-if></td>
-              </tr>
-                <sc-if value="{{ tr2.aLigneBasse }}" hint-placeholder-val="{{ false }}">
-                <tr style="background:color-mix(in srgb,var(--color-accent) 4%,transparent)">
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;font-size:11px;color:{{ tr2.bas.couleur }}">{{ tr2.bas.titre }}<span style="display:block;font-weight:600">{{ tr2.bas.ecart }}</span></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.n }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;font-weight:600;color:{{ tr2.bas.couleur }};border-left:1px solid var(--color-divider)">{{ tr2.bas.total }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.rAn }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.pf }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.dd }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.duree }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.segs }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.oos }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ tr2.bas.regAvant }}<span style="display:block">{{ tr2.bas.regApres }}</span></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                </tr>
-                </sc-if>
-              <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
-                <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="4">
-                  <tr style="cursor:pointer;background:color-mix(in srgb,var(--color-accent) 5%,transparent)" onClick="{{ cb.ouvrir }}">
-                    <td class="text-muted" style="font-size:11px">{{ cb.rang }}</td>
-                    <td style="font-size:12px;padding-left:26px">
-                      <div style="display:flex;gap:5px;flex-wrap:wrap">
-                        <button type="button" class="tag tag-outline" title="Ouvre la fiche détaillée de cette configuration, juste sous le tableau" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.ouvrir }}">Voir la fiche</button>
-                        <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.auBacktest }}">Backtest</button><sc-if value="{{ cb.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ cb.versBasse }}" title="{{ cb.versBasseAide }}">mesurer en lecture basse</button></sc-if>
-                        <sc-if value="{{ cb.aValider }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" title="Valider cette configuration précise" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.valider }}">{{ cb.valideTxt }}</button></sc-if>
-                      </div>
-                    </td>
-                    <td>{{ cb.reglages }}<sc-if value="{{ cb.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ cb.variante }}</span></sc-if><span class="col-plus text-muted" style="display:block;font-size:10px;line-height:1.4" title="Filtres actifs lors du scan">{{ cb.filtres }}</span><span class="col-plus text-muted" style="display:block;font-size:10px;line-height:1.4" title="Période réellement couverte par les trades de cette configuration">{{ cb.periodeTestee }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)">{{ cb.ambiguTxt }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8">{{ cb.winTxt }}</span></td>
-                    <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.n }}</td>
-                    <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.total }}<sc-if value="{{ cb.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ cb.jumCouleur }}" title="{{ cb.jumAide }}">{{ cb.jumTxt }}</span></sc-if></td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.rAn }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.pf }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.dd }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.duree }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.segs }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.oos }}</td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap;font-size:11px;line-height:1.45;color:{{ cb.regCouleur }}">{{ cb.regAvantTxt }}<span style="display:block">{{ cb.regApresTxt }}</span><span style="display:block;font-weight:600">{{ cb.regAlerte }}</span></td>
-<td style="border-left:1px solid var(--color-divider);"><span class="tag {{ cb.tag }}" title="{{ cb.motifAide }}">{{ cb.etat }}</span><sc-if value="{{ cb.aPartiel }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ cb.partielAide }}">tronqué</span></sc-if><sc-if value="{{ cb.aEquiv }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ cb.equivAide }}">{{ cb.equivTxt }}</span></sc-if><sc-if value="{{ cb.aSousBruit }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px;border-color:var(--color-accent);color:var(--color-accent-700)" title="{{ cb.sousBruitAide }}">stop sous le bruit</span></sc-if><span class="text-muted" style="display:block;font-size:10px;line-height:1.35;margin-top:3px;max-width:20ch" title="{{ cb.motifAide }}">{{ cb.motif }}</span></td>
-                    <td class="col-plus" style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><span class="{{ cb.hasACls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasAAide }}">{{ cb.hasA }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasAVerdict }}</span></td>
-                    <td class="col-plus" style="text-align:center;white-space:nowrap"><span class="{{ cb.hasBCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasBAide }}">{{ cb.hasB }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasBVerdict }}</span></td>
-                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><sc-if value="{{ cb.hasardIci }}" hint-placeholder-val="{{ false }}"><span class="text-muted" style="font-size:9px;letter-spacing:.03em">contrôle…</span></sc-if><sc-if value="{{ cb.hasardAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ cb.decCls }}" disabled="{{ cb.hasardOccupe }}" title="{{ cb.decAide }}" onClick="{{ cb.lancerHasard }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3">{{ cb.decTxt }}</button></sc-if><sc-if value="{{ cb.hasardVu }}" hint-placeholder-val="{{ true }}"><span class="{{ cb.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ cb.decAide }}">{{ cb.decTxt }}</span></sc-if></td>
-                  </tr>
-                <sc-if value="{{ cb.aLigneBasse }}" hint-placeholder-val="{{ false }}">
-                <tr style="background:color-mix(in srgb,var(--color-accent) 4%,transparent)">
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;font-size:11px;color:{{ cb.bas.couleur }}">{{ cb.bas.titre }}<span style="display:block;font-weight:600">{{ cb.bas.ecart }}</span></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.n }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;font-weight:600;color:{{ cb.bas.couleur }};border-left:1px solid var(--color-divider)">{{ cb.bas.total }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.rAn }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.pf }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.dd }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.duree }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.segs }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.oos }}</td>
-                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ cb.bas.regAvant }}<span style="display:block">{{ cb.bas.regApres }}</span></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
-                </tr>
-                </sc-if>
-                </sc-for>
-                <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
-                  <tr style="background:color-mix(in srgb,var(--color-accent) 5%,transparent)">
-                    <td></td>
-                    <td colSpan="15" style="padding-left:26px">
-                      <button type="button" class="btn btn-ghost" style="min-height:2rem;font-size:12px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
-                    </td>
-                  </tr>
-                </sc-if>
-              </sc-if>
-            </sc-for>
-          </tbody>
-        </table>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée moy.</span>
+                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.duree }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hors éch.</span>
+                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.oos }}</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Avant / après</span>
+                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.regCouleur }}">{{ tr2.regAvantTxt }} / {{ tr2.regApresTxt }}</span>
+                    </div>
+                  </div>
+
+                  <div style="font-size:10px;line-height:1.5" class="text-muted">{{ tr2.reglages }} · {{ tr2.variante }} · {{ tr2.n }} trades · {{ tr2.segs }} époques · {{ tr2.hasardPhrase }}</div>
+                  <sc-if value="{{ tr2.aAlerte }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:10px;line-height:1.5;color:var(--color-accent-900)">{{ tr2.alerteTxt }}</div>
+                  </sc-if>
+
+                  <div class="agir" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding-top:7px;border-top:1px solid var(--color-divider)">
+                    <sc-if value="{{ tr2.aAgir }}" hint-placeholder-val="{{ true }}">
+                      <button type="button" class="{{ tr2.agirCls }}" style="min-height:1.8rem;font-size:11px;padding-inline:10px" disabled="{{ tr2.agirBloque }}" title="{{ tr2.agirAide }}" onClick="{{ tr2.agir }}">{{ tr2.agirTxt }}</button>
+                    </sc-if>
+                    <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Charger cette configuration dans le Backtest et la relancer" onClick="{{ tr2.auBacktest }}">Backtest</button>
+                    <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Ouvrir la fiche détaillée de cet instrument, sous la grille" onClick="{{ tr2.ouvrir }}">La fiche</button>
+                    <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="1">
+                      <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:2px 7px" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ aSansConfig }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
+            </sc-if>
+            <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
+          </div>
         </div>
-        <sc-if value="{{ aSansConfig }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
-        </sc-if>
-        <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
+
         <sc-if value="{{ aPanneauHasard }}" hint-placeholder-val="{{ false }}">
         <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -3608,7 +3557,7 @@ class Component extends DCLogic {
       compte4: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte5: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 } },
     commDev: { fxpro: { forex: 'EUR', metal: 'EUR', actionUS: 'USD', actionAutre: 'PCT' } }, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
-    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', colsPlus: false, btPanneau: '',
+    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '',
     manqCoches: [], manqMsg: null, grpTout: [],
     ctrlEnCours: false, ctrlMsg: null, ctrlOk: null,
     robuste: null, ailleurs: null, correl: null, calculEnCours: null, recalcul: null,
@@ -3944,7 +3893,9 @@ class Component extends DCLogic {
         'Le moment d\u2019entrée bat le hasard (' + dit + '), mais un des cinq contrôles ne passe pas : ' + (w.motifAide || '')]
       : ['non', 'tag tag-neutral',
         'Ni les cinq contrôles ni le contrôle du hasard ne sont concluants — ' + dit + '.'];
-    return { txt: d[0], cls: d[1], aide: d[2], vert: d[1] === 'tag tag-accent', controle: fin,
+    return { txt: d[0], cls: d[1], aide: d[2], vert: d[1] === 'tag tag-accent', controle: fin, fort,
+      // ce que le hasard a rendu, en clair : la fiche l'écrit sous ses chiffres
+      phrase: dit || 'hasard non contrôlé',
       // la finesse du contrôle lu : c'est elle qui dit s'il reste quelque chose à gagner
       // en relançant le tirage à un nombre plus élevé
       tirages: h ? h.tirages : 0 };
@@ -7746,7 +7697,7 @@ GROUPES = {
       'filtreBougies', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
-      'vue', 'derniereVue', 'modeTable', 'colsPlus', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
+      'vue', 'derniereVue', 'modeTable', 'ouvLot', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
       'coupureRegime', 'pleinRegime', 'gEntrees', 'gLignes', 'gFiltres', 'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf',
       'gLignePente', 'gPenteRecul', 'triCumul', 'tTradesMin', 'tSegMin', 'tDdMax', 'tWinMin', 'tOosMin', 'tWfMin', 'tDureeMax', 'sPrudent',
       'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
@@ -11648,9 +11599,25 @@ GROUPES = {
       }
       // le compteur d'un filtre compte les lignes qui ont passé tous les précédents
       let total = 0;
-      for (let i = 0; i < idx.N; i++) if (garde[i]) total++;
-      return { garde, restants, total };
+      // combien d'INSTRUMENTS survivent : c'est le chiffre du pied de l'entonnoir, et il
+      // se compte dans la même passe — le refaire au rendu coûtait un parcours de plus
+      // sur des centaines de milliers de lignes.
+      const vus = new Set();
+      for (let i = 0; i < idx.N; i++) if (garde[i]) { total++; vus.add(idx.grp[i]); }
+      return { garde, restants, total, instr: vus.size };
     });
+    // POURQUOI ce seuil existe, en une phrase. Un curseur qui ne dit pas ce qu'il achète
+    // se règle au hasard : on le pousse jusqu'à ce que le tableau plaise, ce qui est
+    // exactement la façon de fabriquer un résultat qui ne tiendra pas.
+    const POURQUOI = {
+      tTradesMin: 'en dessous, Sivula et le testeur MT5 ne peuvent pas s\u2019accorder : trois trades qui basculent déplacent tout',
+      tSegMin: 'une règle qui n\u2019a marché qu\u2019à une époque a marché par accident',
+      tDdMax: 'le creux est ce qu\u2019il faut traverser sans abandonner ; au-delà, on coupe avant la fin',
+      tWinMin: 'à manier avec précaution : un objectif lointain se contente d\u2019un taux bas, et l\u2019exiger haut écarte justement les configurations qui gagnent gros',
+      tOosMin: 'le filtre le plus honnête : la partie de l\u2019historique qui n\u2019a pas servi à choisir les réglages',
+      tWfMin: 'ce qu\u2019a rendu la plus mauvaise des quatre fenêtres de contrôle — donc ce qu\u2019on encaisse au pire moment d\u2019entrée',
+      tDureeMax: 'une position gardée des semaines paie le portage et bloque le capital, même quand le R est bon',
+    };
     const filtresVifs = this.memo('filtresVifs', sigT, () => DEFS_T.map(([cle, nom, min, max, step, neutre, f, fmtv], k) => {
       const v = vals[k];
       const avant = k === 0 ? idx.N : passe.restants[k - 1];
@@ -11659,7 +11626,9 @@ GROUPES = {
         [cle]: Math.max(min, Math.min(max, f2(st[cle] === undefined ? neutre : Number(st[cle])))),
         symOuvert: null, symTout: null }));
       return { cle, nom, val: v, min, max, step, valTxt: fmtv(v),
-        restant: reste + '', ecartees: avant - reste ? '− ' + (avant - reste) : 'rien écarté',
+        pourquoi: POURQUOI[cle] || '',
+        restant: reste.toLocaleString('fr-FR'),
+        ecartees: avant - reste ? '− ' + (avant - reste).toLocaleString('fr-FR') : 'rien écarté',
         part: (idx.N ? Math.round((reste / idx.N) * 100) : 0) + '%'
           + (s.scanVu ? ' du scan choisi' : ' de l\u2019historique'),
         maj: (e) => { const nv = Number(e.target.value); set(() => nv); },
@@ -13574,10 +13543,10 @@ GROUPES = {
       // elles servent à creuser un résultat — mais elles ne servent pas à DÉCIDER, et
       // les afficher toutes revenait à demander à l'utilisateur de trier lui-même ce qui
       // compte. La décision tient dans le verdict ; le reste est de la documentation.
-      classeTable: s.colsPlus ? '' : 'tbl-simple',
-      plusTxt: s.colsPlus ? 'vue simple' : 'tout afficher',
-      plusCls: s.colsPlus ? 'tag tag-accent' : 'tag tag-outline',
-      basculerPlus: () => this.setState({ colsPlus: !s.colsPlus }),
+      // Le contrôle du hasard en série ne sert plus au quotidien — chaque fiche porte le
+      // sien — mais il balaie encore un scan entier d'un coup. Il vit sous ce bouton.
+      lotTxt: s.ouvLot ? 'masquer le contrôle en lot' : 'contrôle en lot…',
+      basculerLot: () => this.setState({ ouvLot: !s.ouvLot }),
       setModeLecture: () => this.setState({ modeTable: 'lecture' }),
       setModeComplet: () => this.setState({ modeTable: 'complet' }),
       scanEnCours: s.scanEnCours,
@@ -15486,6 +15455,75 @@ GROUPES = {
                 hasardOccupe: !!s.hasardEnCours,
                 lancerHasard: (e) => { if (e && e.stopPropagation) e.stopPropagation();
                   this.controlerUne(r); },
+                // LA COURBE DE LA FICHE. Elle vient de `pa`, le cumul année par année que
+                // le scan enregistre déjà sur chaque ligne : rien n'est recalculé. Deux
+                // instruments au même R net n'ont pas la même allure, et c'est justement
+                // ce qu'une colonne de tableau ne pouvait pas montrer.
+                ...(() => {
+                  const pa = r.pa || [];
+                  const eqs = [];
+                  let eq = 0;
+                  for (let i = 0; i + 1 < pa.length; i += 3) { eq += Number(pa[i + 1]) || 0; eqs.push(eq); }
+                  if (eqs.length < 2) return { aCourbe: false, trace: '', aire: '', zero: 35 };
+                  const lo = Math.min(0, ...eqs), hi = Math.max(0, ...eqs);
+                  const y = (v) => 64 - (v - lo) / ((hi - lo) || 1) * 58;
+                  const x = (i) => 2 + (i / (eqs.length - 1)) * 296;
+                  const d = eqs.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+                  const z = y(0);
+                  return { aCourbe: true, trace: d, zero: z.toFixed(1),
+                    aire: d + ' L298.0,' + z.toFixed(1) + ' L2.0,' + z.toFixed(1) + ' Z' };
+                })(),
+                // CE QUE LA FICHE PROPOSE DE FAIRE, et une seule chose : l'étape suivante
+                // de CETTE fiche. Un bouton « valider » offert sur une ligne dont le
+                // hasard n'a jamais été mesuré invite à ranger au portefeuille un chiffre
+                // dont personne ne sait s'il vaut mieux qu'un tirage au sort.
+                ...(() => {
+                  const dejaLa = dejaValide(r.sym, r);
+                  const mort = r.sansDonnees || (Number(r.n) || 0) < 5;
+                  if (mort) {
+                    return { aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
+                      agirBloque: true, agir: () => {}, opacite: '.62' };
+                  }
+                  if (dejaLa) {
+                    return { aAgir: true, agirTxt: '\u2713 Au portefeuille', agirCls: 'btn btn-secondary',
+                      agirAide: 'Cette configuration est rangée. Cliquez pour l\u2019en retirer.',
+                      agirBloque: false,
+                      agir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                        this.basculerValide(r.sym, r); },
+                      opacite: '1' };
+                  }
+                  if (!fin) {
+                    return { aAgir: true, agirTxt: 'Contrôler le hasard', agirCls: 'btn btn-secondary',
+                      agirAide: dec.aide, agirBloque: !!s.hasardEnCours,
+                      agir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                        this.controlerUne(r); },
+                      opacite: '1' };
+                  }
+                  if (dec.vert) {
+                    return { aAgir: true, agirTxt: 'Ranger au portefeuille', agirCls: 'btn btn-primary',
+                      agirAide: dec.aide, agirBloque: false,
+                      agir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                        this.basculerValide(r.sym, r); },
+                      opacite: '1' };
+                  }
+                  // le hasard ne tranche pas ET le champ demande plus fin : il reste
+                  // quelque chose à gagner en poussant les tirages
+                  if (!dec.fort && plusFin) {
+                    return { aAgir: true,
+                      agirTxt: 'Pousser à ' + tDem.toLocaleString('fr-FR') + ' tirages',
+                      agirCls: 'btn btn-secondary',
+                      agirAide: dec.aide, agirBloque: !!s.hasardEnCours,
+                      agir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                        this.controlerUne(r); },
+                      opacite: '.62' };
+                  }
+                  return { aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
+                    agirBloque: true, agir: () => {}, opacite: '.62' };
+                })(),
+                // le verdict du hasard en clair, plus le motif du refus quand il y en a un
+                hasardPhrase: dec.phrase,
+                aAlerte: !dec.vert && !!fin,
+                alerteTxt: 'Écartée : ' + dec.txt + '.',
                 hasA: A.txt, hasACls: A.cls, hasAAide: A.aide, hasAVerdict: A.verdict || '',
                 hasB: B.txt, hasBCls: B.cls, hasBAide: B.aide, hasBVerdict: B.verdict || '',
                 decTxt: dec.txt, decCls: dec.cls,
@@ -15925,6 +15963,11 @@ GROUPES = {
                 hasardIci: false, hasardAFaire: false, hasardVu: true, hasardOccupe: false,
                 aValider: false, valider: () => {}, valideTxt: '',
                 lancerHasard: () => {},
+                aCourbe: false, trace: '', aire: '', zero: 35,
+                aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
+                agirBloque: true, agir: () => {}, opacite: '.62',
+                hasardPhrase: 'aucune mesure', aAlerte: false, alerteTxt: '',
+                variante: '', ouvrir: () => {},
                 motif: 'aucune configuration mesurée', motifAide: 'Cet instrument n\u2019a produit aucune configuration au-dessus du nombre de trades minimum.',
                 basculer: () => {}, combis: [], aReste: false, resteTxt: '', toutAfficher: () => {} };
             }
@@ -16007,12 +16050,23 @@ GROUPES = {
       // Le panneau de contrôle groupé ne s'ouvre plus de lui-même : la décision se prend
       // ligne par ligne, dans sa colonne. Il reste, sous le même mot que les colonnes
       // détaillées, pour contrôler tout un tableau d'un coup et régler le nombre de tirages.
-      aPanneauHasard: !!(this.aScanData && this.state.colsPlus),
+      aPanneauHasard: !!(this.aScanData && this.state.ouvLot),
       basculerFiltreTxt: 'Remettre les curseurs à zéro',
       filtresVifs,
       ...this.classementConditions(histoTout),
       aEffetFiltres: this.aScanData,
       scanTotalTxt: histoTout.length + ' combinaisons en mémoire',
+      // L'ENTONNOIR : d'où l'on part, ce que chaque exigence coûte, ce qu'il reste.
+      entonnoirTitre: histoTout.length.toLocaleString('fr-FR') + ' mesurées',
+      entonnoirSous: this.pl((s.archives || []).length, 'scan en mémoire', 'scans en mémoire')
+        + ' · ' + this.pl((s.deposes || []).length, 'série', 'séries'),
+      // le premier étage de l'entonnoir : la lecture ne retire aucune ligne, elle décide
+      // laquelle des deux jumelles porte le chiffre — le compte de départ ne bouge pas
+      lectureRestant: histoTout.length.toLocaleString('fr-FR'),
+      entonnoirPied: 'Il reste ' + nBaseToutes.toLocaleString('fr-FR') + ' sur '
+        + histoTout.length.toLocaleString('fr-FR')
+        + (histoTout.length ? ' · ' + (nBaseToutes / histoTout.length * 100).toFixed(1).replace('.', ',') + ' %' : '')
+        + ' · ' + this.pl(passe.instr, 'instrument', 'instruments'),
       resteFinalTxt: nBaseToutes + ' affichées dans le tableau ci-dessous' + nMasqueesTxt
         + (this._nEcartesBas
           ? ' · ' + this.pl(this._nEcartesBas, 'instrument écarté', 'instruments écartés')
