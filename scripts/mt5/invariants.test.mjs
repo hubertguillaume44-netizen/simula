@@ -789,3 +789,50 @@ test("la distance minimale de stop du courtier arrive jusqu'au moteur", () => {
       `trade pris avec un stop de ${Math.abs(x.entree - x.sl_initial).toFixed(2)}, sous le minimum courtier`);
   }
 });
+
+test("à la vente, l'extrême favorable est le BAS — l'ordre des extrêmes se lit en miroir", () => {
+  // Le moteur branchait sur « le haut d'abord » en le traitant comme favorable dans les
+  // deux sens. Sur une VENTE, le stop est AU-DESSUS : une bougie dont le haut précède le
+  // bas y touche donc le stop en premier, et le moteur y prenait le palier.
+  //
+  // Vu au journal du 6 septembre 2026, #Germany40 vente du 2 mai 2022 : entrée à
+  // 13 878,30, stop à 14 017,08 ; la bougie de 10:00 monte à 14 039,79 à la minute 55
+  // puis descend à 13 804,89 à la minute 59. Le haut d'abord, donc le stop d'abord — le
+  // robot sort à -1,00 R quand le moteur armait le point mort et inscrivait 0,00.
+  // Corrigé, l'écart tombe de -12,5 à +3,7 R sur cet instrument et de -10,4 à -2,3 sur
+  // AUDCAD.
+  const n = 24 * 20, t = [], o = [], h = [], l = [], c = [], sp = [], mh = [], mb = [];
+  for (let i = 0; i < n; i++) {
+    const j = Math.floor(i / 24);
+    // un Λ : dix jours de hausse puis dix de baisse — le croisement baissier au sommet
+    const base = j < 10 ? 100 + j : 110 - (j - 10) * 1.2;
+    const px = base + (i % 24) * (j < 10 ? 1 : -1) * 0.04;
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    o.push(px); c.push(px + (j < 10 ? 0.04 : -0.04));
+    h.push(Math.max(px, px + 0.04) + 0.02); l.push(Math.min(px, px + 0.04) - 0.02);
+    sp.push(10); mh.push(20); mb.push(40);          // le HAUT d'abord partout
+  }
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sens: "vente", sl: 1, rr: 4, paliers: [[25, 0], [50, 25], [75, 50]] });
+  const nu = M.backtesterSuivi({ n, t, o, h, l, c, sp, mh, mb, grain: { decimales: 4 } }, cfg, "D1");
+  assert.equal(nu.length, 1, "gabarit inattendu : le test ne prouve rien");
+  const iEnt = t.indexOf(nu[0].entree_t);
+  const px = o[iEnt] * (1 - 10 * 1e-4 / o[iEnt]);
+  const k = iEnt + 3;
+  // la bougie k monte au-delà du stop ET descend assez pour armer le point mort
+  const H = h.slice(), L = l.slice(), C = c.slice(), O = o.slice();
+  O[k] = px; H[k] = px * 1.012; L[k] = px * 0.985; C[k] = px * 0.99;
+  const df = { n, t, o: O, h: H, l: L, c: C, sp, mh, mb, grain: { decimales: 4 } };
+  const tr = M.backtesterSuivi(df, cfg, "D1");
+  const x = tr.find((y) => y.entree_t === nu[0].entree_t);
+  assert.ok(x, "le trade a disparu");
+  assert.equal(x.sortie_t, t[k], "sortie sur une autre bougie que celle qui contient les deux niveaux");
+  assert.equal(x.motif, "sl", `le haut vient en premier : la vente doit sortir au STOP, pas en ${x.motif}`);
+  assert.ok(x.R < -0.9, `R attendu proche de -1, obtenu ${x.R.toFixed(2)}`);
+
+  // et l'inverse : le BAS d'abord, la vente atteint son palier
+  const inv = { ...df, mh: mh.map(() => 40), mb: mb.map(() => 20) };
+  const y = M.backtesterSuivi(inv, cfg, "D1").find((z) => z.entree_t === nu[0].entree_t);
+  assert.ok(y && y.motif !== "sl",
+    `le bas vient en premier : la vente doit sécuriser, obtenu ${y ? y.motif : "rien"}`);
+});

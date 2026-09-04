@@ -1169,14 +1169,19 @@ export function backtester(df, cfg) {
 
   const minutesConnues = (i) =>
     !!mhCol && !!mbCol && mhCol[i] >= 0 && mbCol[i] >= 0 && mhCol[i] !== mbCol[i];
-  // Repli mesuré : le testeur MT5 en modélisation « 1 minute OHLC » rejoue chaque bougie
-  // dans un ordre DÉTERMINÉ par son sens — haussière O→B→H→C, baissière O→H→B→C. Ce
-  // n'est pas une convention de lecture, c'est le comportement du testeur, donc ce que
-  // le robot vit réellement.
-  const testeurMt5 = cfg.ordre_testeur === true;
-  const ordreConnuA = (i) => minutesConnues(i) || testeurMt5;
-  const hautDAbordTesteur = (i) => d * (df.c[i] - df.o[i]) < 0;   // baissière : haut d'abord
-  const hautDAbord = (i) => (minutesConnues(i) ? mhCol[i] < mbCol[i] : hautDAbordTesteur(i));
+  const ordreConnuA = (i) => minutesConnues(i);
+  // L'extrême FAVORABLE est-il venu en premier ? À l'achat c'est le haut, à la vente le
+  // bas — et c'est là que la vente se cassait. Le moteur branchait sur « le haut
+  // d'abord » en le traitant comme favorable dans les deux sens : sur une vente, une
+  // bougie dont le haut précède le bas prenait le palier alors que le stop, situé
+  // AU-DESSUS, était touché en premier.
+  //
+  // Vu au journal du 6 septembre 2026, #Germany40 vente du 2 mai 2022 : entrée à
+  // 13 878,30, stop à 14 017,08 ; la bougie de 10:00 monte à 14 039,79 à la minute 55
+  // puis descend à 13 804,89 à la minute 59. Le haut d'abord, donc le stop d'abord — le
+  // robot sort à -1,00 R. Le moteur y armait le point mort et inscrivait 0,00 R, une
+  // pleine unité de risque d'écart sur ce seul trade.
+  const mieuxDAbord = (i) => (vente ? mbCol[i] < mhCol[i] : mhCol[i] < mbCol[i]);
 
   const reconstituee = bougiesReconstituees(df);
   // HORS SÉANCE : rien ne s'EXÉCUTE, mais le stop CONTINUE de se déplacer.
@@ -1331,7 +1336,7 @@ export function backtester(df, cfg) {
       if (ambigu && ordreConnuA(i)) {
         // l'ordre est connu : plus de convention, la bougie se lit comme elle s'est
         // déroulée
-        if (hautDAbord(i)) {
+        if (mieuxDAbord(i)) {
           if (okTp) sortie = ['tp', tp];
           else if (armeActif) sortie = ['sl', slArme];
           else if (okVieux) sortie = ['sl', sl];
@@ -1424,7 +1429,7 @@ export function backtester(df, cfg) {
     ambiguTrade = ambiguTrade || (ambigu0 && !ordreConnuA(i));
     let sortie0 = null;
     if (ambigu0 && ordreConnuA(i)) {
-      if (hautDAbord(i)) {
+      if (mieuxDAbord(i)) {
         if (okTp0) sortie0 = ['tp', tp];
         else if (armeActif0) sortie0 = ['sl', slArme0];
         else if (okVieux0) sortie0 = ['sl', sl];

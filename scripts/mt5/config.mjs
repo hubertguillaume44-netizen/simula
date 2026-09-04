@@ -20,6 +20,36 @@ export function lirePaliers(txt) {
     .filter((p) => p.length === 2 && p.every(Number.isFinite));
 }
 
+// À la vente, tout filtre de tendance se lit en MIROIR : « au-dessus » devient « en
+// dessous », « hausse » devient « baisse ». Sans cela on vendrait à découvert dans un
+// marché filtré comme haussier — exactement l'inverse du but.
+//
+// L'application le fait déjà dans `cfgCourante`, et le robot généré aussi ; le harnais,
+// lui, passait les filtres de `references.mjs` tels quels — orientés achat. Il comparait
+// donc un robot en miroir à un moteur qui ne l'était pas. Mesuré sur AUDCAD vente :
+// 77 journées où le moteur donnait signal et le robot refusait, 40 où c'était l'inverse,
+// deux ensembles exactement miroirs l'un de l'autre.
+//
+// Les règles sont celles de l'application, à la lettre :
+//   · l'ADX mesure la FORCE du mouvement, pas sa direction : il ne s'inverse pas ;
+//   · le RSI s'inverse par son seuil, 100 − x ;
+//   · « sous résistance » et « zone de résistance » n'ont pas d'équivalent vendeur et
+//     sont retirés.
+export function mirroirVente(filtres) {
+  const out = [];
+  for (const f of filtres || []) {
+    if (f.type === "sous_resistance" || f.type === "zone_resistance") continue;
+    if (f.type === "adx" || f.type === "horaire" || f.type === "delai_bougies") { out.push(f); continue; }
+    if (f.type === "pente") { out.push({ ...f, sens: f.sens === "baisse" ? "hausse" : "baisse" }); continue; }
+    if (f.type === "rsi") {
+      out.push({ ...f, seuil: 100 - Number(f.seuil), sens: f.sens === "au_dessus" ? "en_dessous" : "au_dessus" });
+      continue;
+    }
+    out.push({ ...f, sens: f.sens === "au_dessus" ? "en_dessous" : "au_dessus" });
+  }
+  return out;
+}
+
 export function construireConfig(o) {
   const securisation = o.trailing
     ? { type: "trailing", distance_pct: o.trailing }
@@ -30,7 +60,7 @@ export function construireConfig(o) {
   return {
     sens: o.sens === "vente" ? "vente" : "achat",
     entree: { type: o.entree, ligne: o.ligne, periode: o.periode },
-    filtres: o.filtres ?? [],
+    filtres: o.sens === "vente" ? mirroirVente(o.filtres) : (o.filtres ?? []),
     sortie: {
       sl: { type: "pct", valeur: o.sl },
       tp: { valeur: o.rr },

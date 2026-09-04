@@ -86,7 +86,8 @@ export function lireConformite(texte) {
 function main() {
   const o = args(process.argv.slice(2));
   if (!o.log || !o.csv || !o.ref) {
-    console.error("Usage : --log <journal> --csv <serie.csv> --ref <SYMBOLE[:variante]>");
+    console.error("Usage : --log <journal> --csv <serie.csv> --ref <SYMBOLE[:variante]>"
+      + "\n        [--sens vente] [--sans-palier]");
     process.exit(2);
   }
   const [sym, variante] = String(o.ref).split(":");
@@ -104,7 +105,16 @@ function main() {
   const plage = M.plageExploitable(df);
   const debut = Math.max(Number(o.depuis ? Date.parse(o.depuis) : Date.UTC(2020, 0, 1)), plage.debut);
   const cfg = {
-    ...construireConfig({ ...ref, paliers: PALIERS_REFERENCE, debut }),
+    // Le sens et les paliers se surchargent : la référence est à l'achat avec les trois
+    // paliers, mais un robot de conformité peut tourner à la vente ou sans palier, et
+    // c'est justement ce qu'il faut pouvoir confronter — la vente emprunte un chemin
+    // entièrement en miroir, et le swap n'y est pas symétrique.
+    ...construireConfig({
+      ...ref,
+      sens: o.sens === "vente" ? "vente" : (ref.sens || "achat"),
+      paliers: o["sans-palier"] ? [] : PALIERS_REFERENCE,
+      debut,
+    }),
     spread_max_facteur: Number(o.facteur ?? M.SPREAD_FACTEUR),
     ...(plage.complete ? {} : { fin: plage.fin }),
     // Le portage relevé chez le courtier : sans lui on comparerait le R BRUT du moteur
