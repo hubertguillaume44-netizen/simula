@@ -1021,3 +1021,51 @@ test("connaître l'ordre des extrêmes ne tranche pas quand le palier s'arme en 
   assert.equal(lire(tot, true).R, tranche.R,
     "bougie décidable : les deux lectures doivent rendre le même chiffre");
 });
+
+test("l'extrême atteint APRÈS le second extrême tranche — dans un seul sens, et c'est le bon", () => {
+  // Deux colonnes de plus à l'export (`haut_apres` / `bas_apres`) et le dernier
+  // indécidable se referme, mais dans UN seul sens. Si le prix est REDESCENDU sous le
+  // palier après l'extrême qui l'arme, c'est une preuve : l'armement précède cet
+  // extrême, donc il précède la fenêtre. Si le prix n'est PAS redescendu, ce n'est pas
+  // une preuve du contraire — il reste l'intervalle allant de l'armement à l'extrême,
+  // que ces colonnes ne couvrent pas. Conclure « pas de retour » y serait à nouveau un
+  // pari, et c'est exactement le pari qu'on vient de retirer du moteur.
+  const serie = (apresBas) => {
+    const t = [], o = [], h = [], l = [], c = [], mh = [], mb = [], ah = [], ab = [];
+    const poser = (i, O, H, L, C, a, b, AH, AB) => { t[i] = Date.UTC(2021, 0, 4) + i * 3600000;
+      o[i] = O; h[i] = H; l[i] = L; c[i] = C; mh[i] = a; mb[i] = b; ah[i] = AH; ab[i] = AB; };
+    for (let i = 0; i < 44; i++) poser(i, 100, 100.1, 99.9, 100, 10, 40, 100.1, 99.9);
+    poser(39, 100, 103, 99.9, 103, 55, 5, 103, 99.9);
+    // le BAS d'abord (minute 5), le HAUT ensuite (minute 50) : le palier s'arme en second.
+    // Point mort à 103 ; `bas_apres` décide si le prix y est revenu APRÈS le haut.
+    poser(40, 103, 106, 102.8, 105.5, 50, 5, 106, apresBas);
+    poser(41, 105.5, 110, 105.4, 109.5, 50, 5, 110, 105.4);
+    poser(42, 109.5, 109.6, 109.4, 109.5, 10, 40, 109.6, 109.4);
+    poser(43, 109.5, 109.6, 109.4, 109.5, 10, 40, 109.6, 109.4);
+    return { n: 44, t, o, h, l, c, mh, mb, ah, ab, sp: t.map(() => 0), grain: { decimales: 2 } };
+  };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [[25, 0]] });
+  const lire = (df, prudent) => M.backtester(df,
+    { ...cfg, sortie: { ...cfg.sortie, armer_avant: false, prudent } })[0];
+
+  // le prix EST redescendu à 102,90, sous le point mort de 103 : preuve du retour
+  const revenu = serie(102.9);
+  const rh = lire(revenu, false), rb = lire(revenu, true);
+  assert.equal(rh.ambigu, false, "le retour est prouvé : plus rien d'indécidable");
+  assert.ok(rh.motif.startsWith("be"), `sortie au palier attendue, obtenu « ${rh.motif} »`);
+  assert.equal(rb.R, rh.R, "bougie tranchée : les deux lectures doivent s'accorder");
+
+  // le prix n'est PAS redescendu sous le point mort après le haut : rien n'est prouvé
+  const reste = serie(104.5);
+  const nh = lire(reste, false), nb = lire(reste, true);
+  assert.equal(nh.ambigu, true,
+    "sans retour observé, l'intervalle armement → extrême reste inconnu : le trade doit rester indécidable");
+  assert.ok(nb.R < nh.R, "les deux lectures doivent encore diverger");
+
+  // colonne absente : comportement d'avant, à l'identique
+  const sans = serie(104.5);
+  delete sans.ah; delete sans.ab;
+  assert.equal(lire(sans, false).ambigu, true,
+    "sans les colonnes, la bougie doit rester indécidable comme auparavant");
+});

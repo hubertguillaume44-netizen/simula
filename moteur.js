@@ -48,8 +48,14 @@ export function texteVersDf(txt) {
   // comme le robot ; l'EXÉCUTION doit se lire sur la M1, comme le testeur.
   const iEH = cols.findIndex((x) => /m1_haut|m1haut/.test(x));
   const iEB = cols.findIndex((x) => /m1_bas|m1bas/.test(x));
+  // Ce que le prix a fait APRÈS le second extrême de l'heure. L'ordre des deux extrêmes
+  // ne ferme pas tout : quand le palier s'arme sur le SECOND, ce qui se passe entre lui
+  // et la clôture reste inconnu, et c'est le dernier écart face au testeur. Ces deux
+  // colonnes le tranchent dans le sens utile — voir `backtester`.
+  const iAH = cols.findIndex((x) => /haut_apres|hautapres/.test(x));
+  const iAB = cols.findIndex((x) => /bas_apres|basapres/.test(x));
   const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
-    eh = [], eb = [];
+    eh = [], eb = [], ah = [], ab = [];
   for (let i = debut; i < lignes.length; i++) {
     const p = lignes[i].split(sep);
     if (p.length < 5) continue;
@@ -91,8 +97,9 @@ export function texteVersDf(txt) {
     // 0 = pas de M1 sur cette heure : on garde l'extrême H1, seul disponible
     const px = (k) => { if (k < 0) return 0; const x = nb(p[k - decal]); return Number.isFinite(x) && x > 0 ? x : 0; };
     eh.push(px(iEH)); eb.push(px(iEB));
+    ah.push(px(iAH)); ab.push(px(iAB));
   }
-  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, n: t.length });
+  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, ah, ab, n: t.length });
 }
 
 // ---------- nettoyage (blocs.charger_csv : couper_daily + normaliser_session) ----------
@@ -152,10 +159,11 @@ export function nettoyer(df) {
   const debut = debutIntraday(df.t);
   const { depart, heures } = fenetreHomogene(df.t);
   const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
-    eh = [], eb = [];
+    eh = [], eb = [], ah = [], ab = [];
   const spSrc = df.sp || df.spreadPts;
   const sessSrc = df.sess;
   const mhSrc = df.mh, mbSrc = df.mb, ehSrc = df.eh, ebSrc = df.eb;
+  const ahSrc = df.ah, abSrc = df.ab;
   for (let i = 0; i < df.n; i++) {
     const d = new Date(df.t[i]);
     if (debut !== null && df.t[i] < debut) continue;
@@ -170,6 +178,12 @@ export function nettoyer(df) {
     // faute de M1, l'extrême d'exécution EST celui de la bougie H1
     eh.push(ehSrc && ehSrc[i] > 0 ? ehSrc[i] : df.h[i]);
     eb.push(ebSrc && ebSrc[i] > 0 ? ebSrc[i] : df.l[i]);
+    // 0 = colonne absente. Ne PAS retomber sur l'extrême de la bougie : ce serait
+    // affirmer que le prix est revenu jusque-là après son second extrême, ce qu'aucune
+    // donnée ne dit. L'absence doit rester une absence, et le moteur déclare alors la
+    // bougie indécidable comme avant.
+    ah.push(ahSrc && ahSrc[i] > 0 ? ahSrc[i] : 0);
+    ab.push(abSrc && abSrc[i] > 0 ? abSrc[i] : 0);
   }
   const grain = mesurerGrain({ h, l, c, n: t.length });
   // Le spread est exporté en POINTS. Un point vaut 10^-décimales du cours : on le
@@ -201,9 +215,16 @@ export function nettoyer(df) {
   const ordreConnu = mh.some((x) => x >= 0)
     ? mh.reduce((a, x, i) => a + (x >= 0 && mb[i] >= 0 ? 1 : 0), 0) / (t.length || 1)
     : 0;
-  return { t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, n: t.length, ecartees: df.n - t.length,
+  // Part des bougies pour lesquelles on sait ce que le prix a fait APRÈS son second
+  // extrême. C'est la donnée qui referme le dernier indécidable ; une série exportée
+  // avant ces colonnes doit pouvoir le dire, sinon l'utilisateur ne comprend pas
+  // pourquoi sa bande reste large.
+  const retourConnu = ah.some((x) => x > 0)
+    ? ah.reduce((a, x, i) => a + (x > 0 && ab[i] > 0 ? 1 : 0), 0) / (t.length || 1)
+    : 0;
+  return { t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, ah, ab, n: t.length, ecartees: df.n - t.length,
     heuresSession: [...heures].sort((a, b) => a - b), grain,
-    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu };
+    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu, retourConnu };
 }
 
 // Grain de la série : certains exports MT5 arrondissent les prix à 2 décimales.
@@ -1195,6 +1216,14 @@ export function backtester(df, cfg) {
   // robot sort à -1,00 R. Le moteur y armait le point mort et inscrivait 0,00 R, une
   // pleine unité de risque d'écart sur ce seul trade.
   const mieuxDAbord = (i) => (vente ? mbCol[i] < mhCol[i] : mhCol[i] < mbCol[i]);
+  // L'extrême DÉFAVORABLE atteint après le second extrême de l'heure, quand l'export le
+  // fournit — 0 sinon, et 0 veut dire « inconnu », jamais « pas de retour ».
+  const ahCol = df.ah, abCol = df.ab;
+  const apresSecond = (i) => {
+    if (!ahCol || !abCol) return 0;
+    const x = vente ? ahCol[i] : abCol[i];
+    return x > 0 ? x : 0;
+  };
 
   const reconstituee = bougiesReconstituees(df);
   // HORS SÉANCE : rien ne s'EXÉCUTE, mais le stop CONTINUE de se déplacer.
@@ -1368,7 +1397,23 @@ export function backtester(df, cfg) {
           // Le moteur supposait « non » en silence, ce qui est un pari optimiste ; il
           // le déclare maintenant indécidable, et les deux lectures en prennent les
           // bornes comme partout ailleurs.
-          else if (armeActif) { indecis = true; if (prudent) sortie = ['sl', slArme]; }
+          else if (armeActif) {
+            // `bas_apres` / `haut_apres` : l'extrême défavorable atteint APRÈS le second
+            // extrême de l'heure. Il tranche dans UN sens, et c'est le sens utile.
+            //
+            // S'il dépasse le palier, le retour a bien eu lieu après l'armement — c'est
+            // une preuve, pas une convention : le palier s'arme au plus tard sur
+            // l'extrême favorable, qui ouvre la fenêtre. Les DEUX lectures sortent alors
+            // au palier, et la bande se resserre sur le chiffre du testeur.
+            //
+            // S'il ne le dépasse pas, on ne conclut PAS l'inverse : le doute subsiste
+            // sur le seul intervalle allant de l'armement à l'extrême favorable, que ces
+            // colonnes ne couvrent pas. La bougie reste indécidable — c'est ce qui
+            // sépare une donnée d'un pari.
+            const apres = apresSecond(i);
+            if (apres && d * apres <= d * slArme) sortie = ['sl', slArme];
+            else { indecis = true; if (prudent) sortie = ['sl', slArme]; }
+          }
         }
       } else if (prudent) {
         if (okVieux) sortie = ['sl', sl];
@@ -1474,7 +1519,12 @@ export function backtester(df, cfg) {
         // aussi : l'entrée et l'armement du palier tombent le plus souvent dans la même
         // heure. Le laisser au seul cas général reviendrait à appliquer deux règles
         // différentes dans la même fonction — l'erreur que ce bloc avait déjà commise.
-        else if (armeActif0) { indecis0 = true; if (prudent) sortie0 = ['sl', slArme0]; }
+        else if (armeActif0) {
+          // même preuve, même réserve, sur la bougie d'entrée
+          const apres0 = apresSecond(i);
+          if (apres0 && d * apres0 <= d * slArme0) sortie0 = ['sl', slArme0];
+          else { indecis0 = true; if (prudent) sortie0 = ['sl', slArme0]; }
+        }
       }
     } else if (prudent) {
       if (okVieux0) sortie0 = ['sl', sl];

@@ -234,7 +234,7 @@ bool Exporter(string sym)
    }
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas\r\n");
+   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas,haut_apres,bas_apres\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
@@ -247,6 +247,7 @@ bool Exporter(string sym)
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
    int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0, ecartH1M1 = 0;
+   int renduN = 0, renduFort = 0; double renduTotal = 0.0;
    for(int i = 0; i < n; i++)
    {
       // les deux séries sont croissantes : une seule passe suffit
@@ -306,10 +307,56 @@ bool Exporter(string sym)
          if(m1Haut > 0.0 && (m1Haut < r[i].high - _Point || m1Bas > r[i].low + _Point)) ecartH1M1++;
       }
 
+      // CE QUE LE PRIX A FAIT APRÈS LE SECOND EXTRÊME.
+      //
+      // L'ordre des deux extrêmes ne suffit pas, et c'est le dernier écart face au
+      // testeur. Quand le bas tombe EN PREMIER, il ne ferme rien : le palier n'existe
+      // pas encore. Le haut arrive ensuite et l'arme. Entre ce haut et la clôture, le
+      // prix a pu redescendre toucher le palier puis remonter — deux extrêmes et une
+      // clôture ne le disent pas, et une clôture au-dessus du palier ne le réfute pas.
+      // Mesuré sur les huit configurations de référence : 133 trades sur 538 sur GOLD,
+      // 118 sur 355 sur BITCOIN, pour une bande de 80 R et 54 R.
+      //
+      // Ces deux colonnes ferment le cas dans un sens, et c'est le sens utile : quand
+      // `bas_apres` est SOUS le palier, le retour a eu lieu APRÈS l'armement — c'est
+      // une preuve, puisque l'armement précède le haut qui ouvre la fenêtre. Le moteur
+      // sort alors au palier dans les DEUX lectures. Quand il est au-dessus, le doute
+      // subsiste sur le seul intervalle allant de l'armement au haut, et le moteur
+      // continue à le déclarer indécidable au lieu de parier.
+      double hautApres = 0.0, basApres = 0.0;
+      if(minHaut >= 0 && minBas >= 0)
+      {
+         int depart = (minHaut > minBas) ? minHaut : minBas;
+         int j = iM1;
+         while(j < nM1 && m1[j].time < r[i].time + 3600)
+         {
+            int mn = (int)((m1[j].time - r[i].time) / 60);
+            if(mn >= depart)
+            {
+               if(hautApres <= 0.0 || m1[j].high > hautApres) hautApres = m1[j].high;
+               if(basApres  <= 0.0 || m1[j].low  < basApres)  basApres  = m1[j].low;
+            }
+            j++;
+         }
+         // Part de l'amplitude de l'heure que le prix REND après son second extrême.
+         // C'est elle qui dit si ces colonnes valent leur place : à 0 le prix ne revient
+         // jamais et le doute était sans objet, à 1 il revient toujours et la lecture
+         // optimiste était fausse partout.
+         double ampl = r[i].high - r[i].low;
+         if(ampl > 0.0 && basApres > 0.0 && hautApres > 0.0)
+         {
+            double rendu = (minHaut > minBas)
+               ? (r[i].high - basApres) / ampl     // haut en second : ce qu'on rend vers le bas
+               : (hautApres - r[i].low) / ampl;    // bas en second : ce qu'on rend vers le haut
+            renduTotal += rendu; renduN++;
+            if(rendu > 0.5) renduFort++;
+         }
+      }
+
       int seance = Traitable(sym, r[i].time) ? 1 : 0;
       if(seance == 0) horsSeance++;
       if(sp <= 0) sansSpread++;
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d,%s,%s\r\n",
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d,%s,%s,%s,%s\r\n",
          TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(r[i].open,  dec),
          DoubleToString(r[i].high,  dec),
@@ -317,7 +364,8 @@ bool Exporter(string sym)
          DoubleToString(r[i].close, dec),
          r[i].tick_volume,
          sp, seance, minHaut, minBas,
-         DoubleToString(m1Haut, dec), DoubleToString(m1Bas, dec)));
+         DoubleToString(m1Haut, dec), DoubleToString(m1Bas, dec),
+         DoubleToString(hautApres, dec), DoubleToString(basApres, dec)));
    }
    FileClose(f);
 
@@ -331,6 +379,14 @@ bool Exporter(string sym)
    PrintFormat("%s : ordre des extrêmes — %d bougies sans M1 (%.1f %%), %d où le haut et "
                "le bas tombent dans la même minute (%.1f %%).",
                sym, sansOrdre, 100.0 * sansOrdre / n, memeMinute, 100.0 * memeMinute / n);
+   // Ce que valent les colonnes `haut_apres` / `bas_apres`, mesuré et non supposé : la
+   // part de l'amplitude horaire que le prix REND après son second extrême. À 0 il ne
+   // revient jamais et le doute du backtest était sans objet ; à 1 il revient toujours,
+   // et la lecture optimiste se trompait partout.
+   if(renduN > 0)
+      PrintFormat("%s : retour après le second extrême — moyenne %.1f %% de l'amplitude horaire, "
+                  "et %d heures sur %d (%.1f %%) rendent plus de la moitié",
+                  sym, 100.0 * renduTotal / renduN, renduFort, renduN, 100.0 * renduFort / renduN);
    PrintFormat("%s : %d bougies (%.1f %%) dont les extrêmes H1 n'existent PAS dans la M1 — "
                "le testeur ne les voit pas, Sivula ne les lira pas non plus.",
                sym, ecartH1M1, 100.0 * ecartH1M1 / n);

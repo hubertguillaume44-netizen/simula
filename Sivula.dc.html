@@ -12720,8 +12720,16 @@ GROUPES = {
         const b = s.bande;
         if (!b || !b.n) return '';
         if (b.largeur < 0.05) return 'chiffre exact — les deux lectures s\u2019accordent';
+        // Une bande large sur une série exportée AVANT les colonnes de retour n'est pas
+        // la même nouvelle qu'une bande large sur une série complète : dans le premier
+        // cas il manque une donnée qu'un ré-export suffit à fournir. Le dire ici évite
+        // de conclure « configuration invendable » là où il n'y a qu'un fichier périmé.
+        const df = this.serieH1(s.btSym);
+        const vieux = df && !(df.retourConnu > 0.5)
+          ? ' · série exportée sans les colonnes haut_apres / bas_apres : un ré-export peut resserrer cette bande'
+          : '';
         return 'bande ' + fr(b.bas, 1) + ' … ' + fr(b.haut, 1) + ' R (largeur ' + fr(b.largeur, 1)
-          + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas';
+          + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas' + vieux;
       })(),
       btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
       btExposes: res ? (res.exposes
