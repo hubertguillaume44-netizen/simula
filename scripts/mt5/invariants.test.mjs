@@ -649,3 +649,67 @@ test("le signal se lit sur la bougie du courtier, l'exécution sur ce que la M1 
   const C = M.backtesterSuivi({ ...brut }, cfg, "D1");
   assert.equal(R(C).toFixed(6), R(A).toFixed(6));
 });
+
+test("hors séance le stop suit, mais rien ne s'exécute", () => {
+  // Mesuré sur le journal GOLD du 5 septembre 2026 : des 538 entrées et 538 sorties du
+  // robot, AUCUNE ne tombe hors séance de négociation — mais 103 déplacements de palier
+  // sur 39 553 s'y font. Le courtier cote encore, le stop suit, seul l'ORDRE attend la
+  // réouverture. Le moteur exécutait hors séance : sur GOLD, une position ouverte le
+  // 16 janvier 2020 y fermait une perte pleine sur un bas de 1 546,23 que le testeur
+  // n'a jamais joué, là où il est sorti au point mort dix heures plus tard.
+  const n = 24 * 30, t = [], o = [], h = [], l = [], c = [], sp = [], sess = [];
+  let px = 100, seed = 20260906;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.48) * 0.006;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.001); l.push(Math.min(ouv, px) * 0.999);
+    sp.push(10);
+    sess.push(new Date(t[i]).getUTCHours() === 0 ? 0 : 1);
+  }
+  // la bougie de minuit plonge de 4 % : de quoi toucher n'importe quel stop
+  for (let i = 0; i < n; i++) if (sess[i] === 0) l[i] = o[i] * 0.96;
+  const df = { n, t, o, h, l, c, sp, sess, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [[25, 0], [50, 25], [75, 50]] });
+  const tr = M.backtesterSuivi(df, cfg, "D1");
+  assert.ok(tr.length > 3, "gabarit sans trades : le test ne prouve rien");
+  for (const x of tr) {
+    assert.notEqual(new Date(x.sortie_t).getUTCHours(), 0,
+      `sortie hors séance le ${new Date(x.sortie_t).toISOString()}`);
+    assert.notEqual(new Date(x.entree_t).getUTCHours(), 0,
+      `entrée hors séance le ${new Date(x.entree_t).toISOString()}`);
+  }
+});
+
+test("un stop ne se place pas du mauvais côté du marché", () => {
+  // Le courtier refuse un stop au-dessus du cours pour un achat, et le robot réémet sa
+  // demande jusqu'à ce qu'elle passe. Vu au journal du 18 février 2020 sur GOLD : la
+  // bougie de 00:00 monte à 1 605,00 et le palier réclame un stop à 1 590,48 ; le prix
+  // rouvre à 1 583 et les quatorze heures suivantes plafonnent à 1 589,28. Le robot
+  // réémet CHAQUE MINUTE de 01:00 à 15:00, sans succès, jusqu'à ce que la bougie de
+  // 15:00 monte à 1 591,83 — le stop se pose enfin, et se déclenche à 15:40. Le moteur
+  // le posait d'autorité et fermait le trade à 01:00.
+  const n = 24 * 6, t = [], o = [], h = [], l = [], c = [], sp = [];
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    o.push(100); c.push(100); h.push(100.05); l.push(99.95); sp.push(10);
+  }
+  // un signal simple : le prix monte cinq bougies puis stagne
+  for (let i = 20; i < 26; i++) { o[i] = 100 + (i - 20) * 0.1; c[i] = o[i] + 0.1; h[i] = c[i] + 0.02; l[i] = o[i] - 0.02; }
+  // pic isolé : la bougie 30 monte à 104 puis referme à 100,1 — le palier réclame un
+  // stop bien au-dessus des bougies suivantes, qui plafonnent à 100,2
+  h[30] = 104; c[30] = 100.1; o[30] = 100.05; l[30] = 100;
+  for (let i = 31; i < 60; i++) { o[i] = 100.1; c[i] = 100.1; h[i] = 100.2; l[i] = 100.0; }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 5, paliers: [[25, 0], [50, 25], [75, 50]] });
+  const tr = M.backtesterSuivi(df, cfg, "D1");
+  const apres = tr.filter((x) => x.entree_t <= t[30] && x.sortie_t > t[30]);
+  for (const x of apres) {
+    assert.ok(x.sortie_t > t[31],
+      "le trade se ferme sur un stop que le courtier n'aurait pas accepté : "
+      + `sortie ${new Date(x.sortie_t).toISOString()} juste après le pic isolé`);
+  }
+});

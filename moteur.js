@@ -1065,6 +1065,17 @@ export function backtester(df, cfg) {
 
   const trades = [];
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
+  // Le stop que les paliers JUSTIFIENT, distinct de celui qui est réellement POSÉ.
+  //
+  // Un stop ne se place que du bon côté du marché : le courtier refuse un stop au-dessus
+  // du cours pour un achat, et le robot réessaie tant qu'il refuse. Vu au journal du
+  // 18 février 2020 sur GOLD — la bougie de 00:00, hors séance, monte à 1 605,00 et le
+  // palier réclame un stop à 1 590,48 ; le prix rouvre à 1 583 et les quatorze heures
+  // suivantes plafonnent à 1 589,28. Le robot réémet sa demande CHAQUE MINUTE de 01:00 à
+  // 15:00, sans succès, jusqu'à ce que la bougie de 15:00 monte à 1 591,83 — le stop se
+  // pose enfin, et se déclenche à 15:40. Le moteur, lui, le posait d'autorité à 00:00 et
+  // fermait le trade à 01:00.
+  let slVoulu = 0;
   // L'ambiguïté se CUMULE sur toute la durée du trade. Elle n'était relevée que sur la
   // bougie de sortie : un trade traversant trois bougies indécidables et se refermant
   // sur une bougie nette était compté comme certain. Sur GOLD, 132 trades sur 492
@@ -1168,17 +1179,47 @@ export function backtester(df, cfg) {
   const hautDAbord = (i) => (minutesConnues(i) ? mhCol[i] < mbCol[i] : hautDAbordTesteur(i));
 
   const reconstituee = bougiesReconstituees(df);
-  const releve = (reconstituee && cfg.lire_reconstituees === false) ? (i) => !reconstituee[i] : () => true;
+  // HORS SÉANCE : rien ne s'EXÉCUTE, mais le stop CONTINUE de se déplacer.
+  //
+  // Mesuré sur le journal GOLD du 5 septembre 2026 : des 538 entrées et 538 sorties du
+  // robot, AUCUNE ne tombe hors séance de négociation — mais 103 déplacements de palier
+  // sur 39 553 s'y font. Le courtier cote encore, le stop suit, et seul l'ORDRE attend
+  // la réouverture.
+  //
+  // Le cas qui l'a révélé : position ouverte le 16 janvier 2020 à 1 556,56, stop
+  // 1 547,22. Le 21 à 00:00, hors séance, la bougie monte à 1 568,49 — le palier arme le
+  // point mort à 1 556,56 — puis redescend à 1 546,23, sous le stop INITIAL. Le moteur y
+  // fermait une perte pleine. Le testeur, lui, n'exécute rien : il sort au point mort à
+  // 10:41, dès que le cours revient sur le stop armé, en séance.
+  //
+  // La M1 n'y est pour rien, et je l'ai cru un temps : vérifié sur les sept instruments
+  // et 322 000 bougies, les extrêmes H1 et M1 coïncident partout, cette heure comprise.
+  const sessX = df.sess;
+  const enSeance = cfg.hors_seance === true ? () => true : (i) => !sessX || sessX[i] !== 0;
+  const releve = (reconstituee && cfg.lire_reconstituees === false)
+    ? (i) => enSeance(i) && !reconstituee[i]
+    : enSeance;
 
-  const majSecu = (i) => {
+  const majSecu = (i, posable = true) => {
     const extreme = vente ? exL[i] : exH[i];
     if (trailing && d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
     const nouveau = niveauSecu(extreme);
-    if (d * nouveau > d * sl) { sl = nouveau; be = trailing ? 1 : (d * nouveau > d * px ? 2 : 1); }
+    if (d * nouveau > d * slVoulu) slVoulu = nouveau;
+    // Posé seulement si l'ordre PEUT partir : marché ouvert, et prix repassé au-delà du
+    // niveau. Sinon le courtier refuse et la demande reste en attente — c'est ce que
+    // fait le robot, qui la réémet à chaque tick jusqu'à ce qu'elle passe.
+    if (posable && d * slVoulu > d * sl && d * extreme >= d * slVoulu) {
+      sl = slVoulu;
+      be = trailing ? 1 : (d * sl > d * px ? 2 : 1);
+    }
   };
 
   for (let i = Math.max(depart, 1); i < df.n; i++) {
     if (enPos) {
+      // Hors séance : le stop suit, l'ordre attend. `majSecu` d'abord, aucune sortie
+      // ensuite — c'est ce que fait le testeur, vérifié sur 538 sorties dont aucune
+      // hors séance et 103 paliers qui, eux, s'y déplacent.
+      if (!releve(i)) { majSecu(i, false); continue; }
       // gap : le SL est un ordre stop, exécuté au cours d'ouverture
       // (rien ne peut être sécurisé avant l'ouverture)
       if (d * df.o[i] <= d * sl) {
@@ -1187,8 +1228,6 @@ export function backtester(df, cfg) {
         trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, ambiguTrade, vente));
         enPos = false; continue;
       }
-      // bougie reconstituée : ni sortie ni palier ne s'y lisent (voir `releve`)
-      if (!releve(i)) continue;
       // « bougie favorable » : haussière à l'achat, baissière à la vente — c'est elle
       // qui décide si l'extrême favorable est atteint avant le stop
       const haussiere = d * (df.c[i] - df.o[i]) >= 0;
@@ -1204,7 +1243,10 @@ export function backtester(df, cfg) {
       // l'objectif, et n'armait qu'ensuite. Mesuré sur BITCOIN le 23 avril 2025 : haut
       // 94 036 (objectif 92 920 atteint) et bas 90 954 (point mort 91 098 touché) dans la
       // MÊME heure. Le moteur inscrivait +2,00 R, le testeur 0,00 R.
-      const slArme = niveauSecu(mieux);
+      const voulu = niveauSecu(mieux);
+      const cible = d * voulu > d * slVoulu ? voulu : slVoulu;
+      // posable seulement si le cours de cette bougie repasse dessus
+      const slArme = (d * mieux >= d * cible) ? cible : sl;
       // Bougie AMBIGUË : celle dont l'issue dépend de l'ORDRE des mouvements, que la
       // H1 ne dit pas. Deux familles, et l'ancienne condition n'en voyait qu'une.
       //
@@ -1336,6 +1378,7 @@ export function backtester(df, cfg) {
     sl = sl0;
     tp = px + (px - sl0) * rr;
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? exL[i] : exH[i];
+    slVoulu = sl0;
     ambiguTrade = false;
     if (seauEnt) seauEntre = seauEnt[i];
     iPlusHaut = i;
@@ -1349,7 +1392,9 @@ export function backtester(df, cfg) {
     // pour armer un palier PUIS redescendre le toucher, et la H1 ne dit pas dans quel
     // ordre. C'est le cas le plus fréquent, l'entrée et le palier tombant dans la même
     // heure — sur BITCOIN, 31 trades sur 420 contre 2 comptés auparavant.
-    const slArme0 = niveauSecu(mieux0);
+    const voulu0 = niveauSecu(mieux0);
+    const cible0 = d * voulu0 > d * slVoulu ? voulu0 : slVoulu;
+    const slArme0 = (d * mieux0 >= d * cible0) ? cible0 : sl;
     // MÊME énumération que sur les bougies suivantes. Elle était différente ici — ancien
     // ordre supposé, ancien stop testé — si bien que la bougie d'entrée et les autres
     // n'obéissaient pas à la même règle dans la même fonction.
