@@ -2219,7 +2219,7 @@
           </sc-for>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-          <button type="button" class="{{ plusCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ basculerPlus }}" title="Sept colonnes de plus : R par an, profit factor, pire creux, durée moyenne, segments positifs, hors échantillon, avant / après. Elles servent à creuser un résultat, pas à décider — la décision tient dans le verdict.">{{ plusTxt }}</button>
+          <button type="button" class="{{ plusCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ basculerPlus }}" title="Sept colonnes de plus (R par an, profit factor, pire creux, durée moyenne, segments positifs, hors échantillon, avant / après), le détail des réglages de chaque ligne, et le panneau de contrôle du hasard en série. Tout cela sert à creuser un résultat, pas à décider : la décision tient dans les deux dernières colonnes.">{{ plusTxt }}</button>
         </div>
         <div style="overflow:auto;max-height:70vh">
         <!--
@@ -2228,7 +2228,13 @@
           les colonnes conditionnelles ne se font pas ainsi. Une classe et une règle
           suffisent, et l'alignement en-tête / cellules ne peut pas se défaire.
         -->
-        <style>.tbl-simple .col-plus { display: none; }</style>
+        <style>
+          /* `!important` : la règle doit aussi l'emporter sur un `display:block` écrit
+             en style en ligne — les lignes secondaires de la cellule Réglages en portent
+             un, et sans cela elles restaient visibles alors que les colonnes, elles,
+             disparaissaient. */
+          .tbl-simple .col-plus { display: none !important; }
+        </style>
         <table class="table {{ classeTable }}" style="font-size:13px">
           <thead><tr>
             <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)" title="Rang dans le classement courant">#</th>
@@ -2265,7 +2271,7 @@
                           <span class="text-muted" style="font-size:10px" title="Aucune configuration scannée pour cet instrument : lancez un scan qui l'inclut.">Lancez un scan pour agir</span>
                         </sc-if>
                         <sc-if value="{{ tr2.avecAction }}" hint-placeholder-val="{{ true }}">
-                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><button type="button" class="tag tag-accent" title="{{ tr2.verdictAide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ tr2.verifier }}">{{ tr2.verifierTxt }}</button><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
+                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><sc-if value="{{ tr2.peutRobot }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-accent" title="Télécharge l'Expert Advisor MQL5 de cette configuration exacte : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ tr2.exporterRobotLigne }}">Robot MT5</button></sc-if><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
                         </sc-if>
                         <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="2">
                           <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
@@ -2274,7 +2280,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
+                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.n }}</td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.total }}<sc-if value="{{ tr2.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ tr2.jumCouleur }}" title="{{ tr2.jumAide }}">{{ tr2.jumTxt }}</span></sc-if></td>
                 <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.rAn }}</td>
@@ -2285,7 +2291,7 @@
                 <td class="col-plus" style="text-align:center;white-space:nowrap">{{ tr2.oos }}</td>
                 <td class="col-plus" style="text-align:center;white-space:nowrap;font-size:11px;line-height:1.45;color:{{ tr2.regCouleur }}">{{ tr2.regAvantTxt }}<span style="display:block">{{ tr2.regApresTxt }}</span><span style="display:block;font-size:10px;letter-spacing:.04em">{{ tr2.regAlerte }}</span></td>
 <td style="border-left:1px solid var(--color-divider);"><span class="tag {{ tr2.tag }}" title="{{ tr2.motifAide }}">{{ tr2.etat }}</span><sc-if value="{{ tr2.aPartiel }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ tr2.partielAide }}">tronqué</span></sc-if><sc-if value="{{ tr2.aEquiv }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ tr2.equivAide }}">{{ tr2.equivTxt }}</span></sc-if><sc-if value="{{ tr2.aSousBruit }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px;border-color:var(--color-accent);color:var(--color-accent-700)" title="{{ tr2.sousBruitAide }}">stop sous le bruit</span></sc-if><span class="text-muted" style="display:block;font-size:10px;line-height:1.35;margin-top:3px;max-width:22ch" title="{{ tr2.verdictAide }}">{{ tr2.verdictTxt }}</span></td>
-                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span></td>
+                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><sc-if value="{{ tr2.hasardIci }}" hint-placeholder-val="{{ false }}"><span class="text-muted" style="font-size:9px;letter-spacing:.03em">contrôle…</span></sc-if><sc-if value="{{ tr2.hasardAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ tr2.decCls }}" disabled="{{ tr2.hasardOccupe }}" title="{{ tr2.decAide }}" onClick="{{ tr2.lancerHasard }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3">{{ tr2.decTxt }}</button></sc-if><sc-if value="{{ tr2.hasardVu }}" hint-placeholder-val="{{ true }}"><span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span></sc-if></td>
               </tr>
                 <sc-if value="{{ tr2.aLigneBasse }}" hint-placeholder-val="{{ false }}">
                 <tr style="background:color-mix(in srgb,var(--color-accent) 4%,transparent)">
@@ -2294,13 +2300,13 @@
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;font-size:11px;color:{{ tr2.bas.couleur }}">{{ tr2.bas.titre }}<span style="display:block;font-weight:600">{{ tr2.bas.ecart }}</span></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.n }}</td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;font-weight:600;color:{{ tr2.bas.couleur }};border-left:1px solid var(--color-divider)">{{ tr2.bas.total }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.rAn }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.pf }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.dd }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.duree }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.segs }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.oos }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ tr2.bas.regAvant }}<span style="display:block">{{ tr2.bas.regApres }}</span></td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.rAn }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.pf }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.dd }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.duree }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ tr2.bas.segs }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ tr2.bas.oos }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ tr2.bas.regAvant }}<span style="display:block">{{ tr2.bas.regApres }}</span></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
                 </tr>
@@ -2312,24 +2318,24 @@
                     <td style="font-size:12px;padding-left:26px">
                       <div style="display:flex;gap:5px;flex-wrap:wrap">
                         <button type="button" class="tag tag-outline" title="Ouvre la fiche détaillée de cette configuration, juste sous le tableau" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.ouvrir }}">Voir la fiche</button>
-                        <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.auBacktest }}">Backtest</button><sc-if value="{{ cb.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ cb.versBasse }}" title="{{ cb.versBasseAide }}">mesurer en lecture basse</button></sc-if>
-                        <button type="button" class="tag tag-outline" title="Valider cette configuration précise" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.valider }}">{{ cb.valideTxt }}</button>
+                        <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.auBacktest }}">Backtest</button><sc-if value="{{ cb.peutRobot }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-accent" title="Télécharge l'Expert Advisor MQL5 de cette configuration exacte : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ cb.exporterRobotLigne }}">Robot MT5</button></sc-if><sc-if value="{{ cb.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ cb.versBasse }}" title="{{ cb.versBasseAide }}">mesurer en lecture basse</button></sc-if>
+                        <sc-if value="{{ cb.aValider }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" title="Valider cette configuration précise" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" onClick="{{ cb.valider }}">{{ cb.valideTxt }}</button></sc-if>
                       </div>
                     </td>
-                    <td>{{ cb.reglages }}<sc-if value="{{ cb.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ cb.variante }}</span></sc-if><span class="text-muted" style="display:block;font-size:10px;line-height:1.4" title="Filtres actifs lors du scan">{{ cb.filtres }}</span><span class="text-muted" style="display:block;font-size:10px;line-height:1.4" title="Période réellement couverte par les trades de cette configuration">{{ cb.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)">{{ cb.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8">{{ cb.winTxt }}</span></td>
+                    <td>{{ cb.reglages }}<sc-if value="{{ cb.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ cb.variante }}</span></sc-if><span class="col-plus text-muted" style="display:block;font-size:10px;line-height:1.4" title="Filtres actifs lors du scan">{{ cb.filtres }}</span><span class="col-plus text-muted" style="display:block;font-size:10px;line-height:1.4" title="Période réellement couverte par les trades de cette configuration">{{ cb.periodeTestee }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)">{{ cb.ambiguTxt }}</span><span class="col-plus" style="display:block;font-size:10px;line-height:1.4;opacity:.8">{{ cb.winTxt }}</span></td>
                     <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.n }}</td>
                     <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.total }}<sc-if value="{{ cb.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ cb.jumCouleur }}" title="{{ cb.jumAide }}">{{ cb.jumTxt }}</span></sc-if></td>
-                    <td style="text-align:center;white-space:nowrap">{{ cb.rAn }}</td>
-                    <td style="text-align:center;white-space:nowrap">{{ cb.pf }}</td>
-                    <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.dd }}</td>
-                    <td style="text-align:center;white-space:nowrap">{{ cb.duree }}</td>
-                    <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.segs }}</td>
-                    <td style="text-align:center;white-space:nowrap">{{ cb.oos }}</td>
-                    <td style="text-align:center;white-space:nowrap;font-size:11px;line-height:1.45;color:{{ cb.regCouleur }}">{{ cb.regAvantTxt }}<span style="display:block">{{ cb.regApresTxt }}</span><span style="display:block;font-weight:600">{{ cb.regAlerte }}</span></td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.rAn }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.pf }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.dd }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.duree }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ cb.segs }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap">{{ cb.oos }}</td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap;font-size:11px;line-height:1.45;color:{{ cb.regCouleur }}">{{ cb.regAvantTxt }}<span style="display:block">{{ cb.regApresTxt }}</span><span style="display:block;font-weight:600">{{ cb.regAlerte }}</span></td>
 <td style="border-left:1px solid var(--color-divider);"><span class="tag {{ cb.tag }}" title="{{ cb.motifAide }}">{{ cb.etat }}</span><sc-if value="{{ cb.aPartiel }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ cb.partielAide }}">tronqué</span></sc-if><sc-if value="{{ cb.aEquiv }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="display:inline-block;margin-inline-start:4px;font-size:10px" title="{{ cb.equivAide }}">{{ cb.equivTxt }}</span></sc-if><sc-if value="{{ cb.aSousBruit }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:inline-block;margin-inline-start:4px;font-size:10px;border-color:var(--color-accent);color:var(--color-accent-700)" title="{{ cb.sousBruitAide }}">stop sous le bruit</span></sc-if><span class="text-muted" style="display:block;font-size:10px;line-height:1.35;margin-top:3px;max-width:20ch" title="{{ cb.motifAide }}">{{ cb.motif }}</span></td>
-                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><span class="{{ cb.hasACls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasAAide }}">{{ cb.hasA }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasAVerdict }}</span></td>
-                    <td style="text-align:center;white-space:nowrap"><span class="{{ cb.hasBCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasBAide }}">{{ cb.hasB }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasBVerdict }}</span></td>
-                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><span class="{{ cb.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ cb.decAide }}">{{ cb.decTxt }}</span></td>
+                    <td class="col-plus" style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><span class="{{ cb.hasACls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasAAide }}">{{ cb.hasA }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasAVerdict }}</span></td>
+                    <td class="col-plus" style="text-align:center;white-space:nowrap"><span class="{{ cb.hasBCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ cb.hasBAide }}">{{ cb.hasB }}</span><span class="text-muted" style="display:block;font-size:9px;line-height:1.3;white-space:normal">{{ cb.hasBVerdict }}</span></td>
+                    <td style="border-left:1px solid var(--color-divider);text-align:center;white-space:nowrap"><sc-if value="{{ cb.hasardIci }}" hint-placeholder-val="{{ false }}"><span class="text-muted" style="font-size:9px;letter-spacing:.03em">contrôle…</span></sc-if><sc-if value="{{ cb.hasardAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ cb.decCls }}" disabled="{{ cb.hasardOccupe }}" title="{{ cb.decAide }}" onClick="{{ cb.lancerHasard }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3">{{ cb.decTxt }}</button></sc-if><sc-if value="{{ cb.hasardVu }}" hint-placeholder-val="{{ true }}"><span class="{{ cb.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;display:inline-block;max-width:16ch;line-height:1.3" title="{{ cb.decAide }}">{{ cb.decTxt }}</span></sc-if></td>
                   </tr>
                 <sc-if value="{{ cb.aLigneBasse }}" hint-placeholder-val="{{ false }}">
                 <tr style="background:color-mix(in srgb,var(--color-accent) 4%,transparent)">
@@ -2338,13 +2344,13 @@
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;font-size:11px;color:{{ cb.bas.couleur }}">{{ cb.bas.titre }}<span style="display:block;font-weight:600">{{ cb.bas.ecart }}</span></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.n }}</td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;font-weight:600;color:{{ cb.bas.couleur }};border-left:1px solid var(--color-divider)">{{ cb.bas.total }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.rAn }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.pf }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.dd }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.duree }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.segs }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.oos }}</td>
-                  <td style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ cb.bas.regAvant }}<span style="display:block">{{ cb.bas.regApres }}</span></td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.rAn }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.pf }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.dd }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.duree }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px">{{ cb.bas.segs }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:center;white-space:nowrap;font-size:12px;border-left:1px solid var(--color-divider)">{{ cb.bas.oos }}</td>
+                  <td class="col-plus" style="border-top:1px solid var(--color-accent);padding-top:3px;text-align:right;white-space:nowrap;font-size:11px;line-height:1.35">{{ cb.bas.regAvant }}<span style="display:block">{{ cb.bas.regApres }}</span></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
                   <td style="border-top:1px solid var(--color-accent);padding-top:3px"></td>
                 </tr>
@@ -2367,7 +2373,7 @@
           <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
         </sc-if>
         <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
-        <sc-if value="{{ aScanResultats }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ aPanneauHasard }}" hint-placeholder-val="{{ false }}">
         <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;flex-direction:column;gap:3px">
@@ -3808,18 +3814,90 @@ class Component extends DCLogic {
         if (f && f.tirages) ps.push(f.auDessus / f.tirages);
       }
     }
-    ps.sort((a, b) => a - b);
-    const m = ps.length;
-    const coupe = (q) => {
-      if (!m) return q;
-      let k = 0;
-      ps.forEach((p, i) => { if (p <= ((i + 1) / m) * q) k = i + 1; });
-      return ((k || 1) / m) * q;
-    };
-    const val = { m, c5: coupe(0.05), c1: coupe(0.01) };
+    const val = this.barresBH(ps);
     if (this._bhCol.size > 8) this._bhCol.clear();
     this._bhCol.set(sig, val);
     return val;
+  }
+  // Benjamini-Hochberg sur une liste de p : la barre au-delà de laquelle un p n'est plus
+  // significatif une fois corrigé du nombre de tests. Écrite une fois — la colonne et la
+  // décision la partagent, et elles ne peuvent plus diverger.
+  barresBH(ps) {
+    const l = [...ps].sort((a, b) => a - b);
+    const m = l.length;
+    const coupe = (q) => {
+      if (!m) return q;
+      let k = 0;
+      l.forEach((p, i) => { if (p <= ((i + 1) / m) * q) k = i + 1; });
+      return ((k || 1) / m) * q;
+    };
+    return { m, c5: coupe(0.05), c1: coupe(0.01) };
+  }
+  // La barre de la colonne DÉCISION. Elle porte sur le meilleur contrôle de chaque ligne,
+  // quel qu'en soit le nombre de tirages.
+  //
+  // C'est la correction d'un défaut qui rendait la colonne muette : la décision
+  // interrogeait la mémoire à une clé EXACTE — « cette ligne à 500 tirages » — alors que
+  // le panneau de contrôle, lui, écrivait ses résultats sous le nombre de tirages de son
+  // propre champ (50 par défaut). On pouvait donc contrôler tout le tableau et lire
+  // « à contrôler » sur chaque ligne, sans que rien n'explique pourquoi.
+  seuilBHDecision() {
+    const map = this._retenuesParSym || new Map();
+    const sig = (this._hfRev || 0) + '|' + [...map.keys()].join(',');
+    if (this._bhDec && this._bhDec.sig === sig) return this._bhDec.val;
+    const ps = [];
+    for (const l of map.values()) {
+      for (const r of l) {
+        const f = this.meilleurHasardFait(r);
+        if (f && f.tirages) ps.push(f.auDessus / f.tirages);
+      }
+    }
+    const val = this.barresBH(ps);
+    this._bhDec = { sig, val };
+    return val;
+  }
+  // Le verdict du hasard d'une ligne, lu sur son meilleur contrôle. `null` tant qu'aucun
+  // contrôle n'existe : c'est ce qui distingue « pas encore fait » de « fait, et voilà ».
+  verdictHasard(r) {
+    const f = this.meilleurHasardFait(r);
+    // Sous 200 tirages, le test ne peut pas descendre sous « une chance sur 200 » : il ne
+    // peut donc pas distinguer une configuration, seulement la condamner. Un contrôle
+    // aussi grossier est traité comme absent — sinon il figeait la ligne sur un « non »
+    // que rien ne permettait de prononcer, et retirait le bouton qui aurait pu le lever.
+    if (!f || !f.tirages || f.tirages < 200) return null;
+    const p = f.auDessus / f.tirages;
+    const bh = this.seuilBHDecision();
+    return { p, tirages: f.tirages, auDessus: f.auDessus, bh,
+      verdict: p <= bh.c1 ? 'se distingue nettement' : p <= bh.c5 ? 'se distingue'
+        : p <= 0.2 ? 'douteux' : 'dans le bruit' };
+  }
+  // LA décision d'une ligne, en un seul endroit : le croisement des cinq contrôles et du
+  // contrôle du hasard. La case du tableau l'affiche, le bouton « ranger au portefeuille »
+  // n'apparaît que si elle est verte, et l'export du robot s'y fie. Écrite trois fois,
+  // elle aurait fini par dire trois choses différentes de la même ligne.
+  decisionDe(r, verdictDejaFait) {
+    const w = verdictDejaFait || this.verdict(r);
+    const h = this.verdictHasard(r);
+    const fin = h ? h.verdict : '';
+    const fort = fin === 'se distingue nettement' || fin === 'se distingue';
+    // combien de tirages font aussi bien : la phrase que le panneau affichait
+    const dit = h
+      ? (h.auDessus === 0 ? 'aucun des ' + h.tirages + ' tirages ne fait'
+        : h.auDessus === 1 ? '1 tirage sur ' + h.tirages + ' fait'
+        : h.auDessus + ' des ' + h.tirages + ' tirages font')
+        + ' aussi bien que cette configuration'
+      : '';
+    const d = !fin ? ['contrôler le hasard', 'tag tag-outline',
+        'Rejoue cette configuration avec des entrées tirées au sort, autant de trades qu\u2019elle en a pris, et compare les deux. Cliquez pour lancer le contrôle de cette ligne.']
+      : w.label === 'Validée' && fort ? ['peut aller au portefeuille', 'tag tag-accent',
+        'Les cinq contrôles passent et le moment d\u2019entrée bat le hasard : ' + dit + '.']
+      : w.label === 'Validée' ? ['non — le hasard fait aussi bien', 'tag tag-neutral',
+        'Les cinq contrôles passent, mais entrer à des dates au hasard aurait donné un résultat comparable : ' + dit + '.']
+      : fort ? ['non — ' + (w.motif || 'un contrôle ne passe pas'), 'tag tag-neutral',
+        'Le moment d\u2019entrée bat le hasard (' + dit + '), mais un des cinq contrôles ne passe pas : ' + (w.motifAide || '')]
+      : ['non', 'tag tag-neutral',
+        'Ni les cinq contrôles ni le contrôle du hasard ne sont concluants — ' + dit + '.'];
+    return { txt: d[0], cls: d[1], aide: d[2], vert: d[1] === 'tag tag-accent', controle: fin };
   }
   // Une cellule de contrôle : le chiffre s'il est en mémoire, sinon un tiret. Jamais
   // calculée au rendu — charger la série de chaque ligne figerait la page.
@@ -3884,6 +3962,15 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ hasardEnCours: true, hasardMsg: null, hasardFait: 0, hasardTotal: taches.length });
+    const neuves = await this.tirerHasard(taches);
+    if (Object.keys(neuves).length) this.noterHasard(neuves);
+    this.setState({ hasardEnCours: false, hasardFait: taches.length,
+      hasardMsg: Object.keys(neuves).length + ' contrôle(s) ajouté(s).' });
+  }
+  // Le tirage lui-même, pour une liste de [ligne, nombre de tirages]. Extrait pour que le
+  // contrôle groupé et le contrôle d'UNE ligne fassent exactement le même calcul : deux
+  // copies avaient déjà divergé sur la configuration rejouée.
+  async tirerHasard(taches) {
     const neuves = {};
     for (let i = 0; i < taches.length; i++) {
       const [r, t] = taches[i];
@@ -3893,7 +3980,11 @@ class Component extends DCLogic {
       try { await this.charger(r.sym); df = this.base(r.sym); } catch (e) { continue; }
       if (!df) continue;
       const etat = this.etatDeLigne(r);
-      const cfg = this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat, { entree: r.entree, ligne: r.ligne });
+      // La configuration MESURÉE d'abord, la reconstruction seulement à défaut — comme
+      // dans le contrôle groupé. Reconstruire d'office perdait le filtre de la variante,
+      // rendait les tirages plus faciles à battre, et donc la ligne plus flatteuse.
+      const cfg = this.cfgDeLigne(r)
+        || this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat, { entree: r.entree, ligne: r.ligne });
       let res;
       try { res = this.M.tirageHasard(df, cfg, r.n, t, this.graineDe(r)); } catch (e) { continue; }
       const totaux = res.map((x) => x.total).sort((a, b) => a - b);
@@ -3904,24 +3995,58 @@ class Component extends DCLogic {
         med: totaux[Math.floor(totaux.length / 2)], max: totaux[totaux.length - 1],
         nMed: ns[Math.floor(ns.length / 2)] || 0, etat: { _exact: !!etat._exact } };
     }
+    return neuves;
+  }
+  // Le contrôle du hasard d'UNE ligne, lancé depuis sa case de décision. C'est le geste
+  // que le panneau demandait auparavant pour tout le tableau : la décision se prend ligne
+  // par ligne, et faire tirer quarante configurations pour en lire une seule était la
+  // raison pour laquelle le contrôle n'était jamais fait.
+  async controlerUne(r) {
+    if (!this.M || this.state.hasardEnCours) return;
+    if (!r || r.sansDonnees || (r.n || 0) < 5) return;
+    // Le nombre de tirages de la décision : 200 au minimum, sinon le test ne peut pas
+    // descendre sous « une chance sur 50 » et aucune ligne ne peut se distinguer.
+    const t = Math.max(200, Number(this.state.nTirages) || 200);
+    this.setState({ hasardEnCours: true, hasardMsg: null, hasardFait: 0, hasardTotal: 1,
+      hasardUne: this.cleFine(r) });
+    // Les deux lectures d'abord — c'est le travail que faisait le bouton « Vérifier ».
+    // Il posait la même question que ce bouton-ci sous un autre nom, et l'utilisateur
+    // devait cliquer les deux : ils sont maintenant un seul geste.
+    await this.mesurerBande(r);
+    const neuves = this.hasardFait(this.cleHasardFait(r, t))
+      ? {} : await this.tirerHasard([[r, t]]);
     if (Object.keys(neuves).length) this.noterHasard(neuves);
-    this.setState({ hasardEnCours: false, hasardFait: taches.length,
-      hasardMsg: Object.keys(neuves).length + ' contrôle(s) ajouté(s).' });
+    this.setState({ hasardEnCours: false, hasardFait: 1, hasardUne: null,
+      hasardMsg: (Object.keys(neuves).length || this.meilleurHasardFait(r)) ? null
+        : 'Le contrôle du hasard n\u2019a rien pu mesurer sur ' + this.nomComplet(r.sym)
+          + ' : sa série n\u2019a pas pu être chargée, ou la configuration ne produit aucun trade rejouable.' });
   }
   // Le contrôle enregistré pour CETTE configuration, quel qu'ait été le nombre de
   // tirages : on cherche par préfixe et on garde le plus fin (le plus de tirages).
   // Deviner le suffixe à partir des champs de saisie faisait repasser une ligne
   // contrôlée à « non contrôlé » dès que l'utilisateur changeait ce champ.
   meilleurHasardFait(cfg) {
-    const pre = this.prefixeHasard(cfg) + '|';
+    return this.indexHasard().get(this.prefixeHasard(cfg)) || null;
+  }
+  // L'index préfixe → meilleur contrôle, refait seulement quand la mémoire change.
+  // La recherche par balayage des clés coûtait un parcours de TOUTE la mémoire des
+  // contrôles par appel ; la colonne de décision en fait un par ligne et par rendu.
+  indexHasard() {
+    if (this._idxH && this._idxHRev === (this._hfRev || 0)) return this._idxH;
     const m = this.state.hasardFaits || {};
-    let best = null;
+    const o = new Map();
     for (const k of Object.keys(m)) {
-      if (!k.startsWith(pre)) continue;
       const v = m[k];
-      if (v && v.tirages && (!best || v.tirages > best.tirages)) best = v;
+      if (!v || !v.tirages) continue;
+      // la clé est « préfixe|tirages » et le préfixe contient lui-même des barres :
+      // c'est la DERNIÈRE qui sépare, le nombre de tirages n'en contenant pas
+      const i = k.lastIndexOf('|');
+      const pre = i < 0 ? k : k.slice(0, i);
+      const b = o.get(pre);
+      if (!b || v.tirages > b.tirages) o.set(pre, v);
     }
-    return best;
+    this._idxH = o; this._idxHRev = (this._hfRev || 0);
+    return o;
   }
   // Mémoire des contrôles : rangée dans l'état, donc écrite avec la session du compte —
   // elle survit au rechargement et ne peut pas traverser les comptes (la session est
@@ -9446,7 +9571,10 @@ GROUPES = {
       // publication intermédiaire : les résultats de cet instrument sont visibles
       // immédiatement, et survivent à une interruption du scan
       if (out.length) {
-        for (const r of out) if (!r._sid) { r._sid = this._sid; r._sdate = this._sdate; }
+        // La règle du moteur qui a produit ces chiffres voyage avec la ligne : sans elle,
+        // un robot exporté depuis le tableau s'annonçait « mesure antérieure à la règle
+        // actuelle » alors qu'elle venait d'être calculée.
+        for (const r of out) if (!r._sid) { r._sid = this._sid; r._sdate = this._sdate; r._mv = this.MOTEUR_V; }
         // archive provisoire : le scan en cours existe dans « Scans en mémoire » dès
         // le premier jet, et la publication finale la MET À JOUR au lieu d'en créer une seconde.
         // Elle est construite en LOCAL puis passée explicitement : la relire depuis le state
@@ -9496,7 +9624,8 @@ GROUPES = {
     // marque de ce scan : elle voyage avec chaque ligne, pour distinguer le scan
     // en cours (le TOP) de l'historique complet (le tableau du dessous).
     const sid = this._sid || Date.now(), sdate = this._sdate || new Date().toISOString();
-    for (const r of out) { r._sid = sid; r._sdate = sdate; if (partiels.has(r.sym)) r.partiel = true; }
+    for (const r of out) { r._sid = sid; r._sdate = sdate; r._mv = this.MOTEUR_V;
+      if (partiels.has(r.sym)) r.partiel = true; }
     const courant = [...out].sort((a, b) => b.total - a.total);
     const cumul = new Map();
     for (const r of this.lignesScan) cumul.set(cle(r), r);
@@ -9574,13 +9703,14 @@ GROUPES = {
       //
       // Un scan garde le meilleur de cent mille essais : le hasard aussi produit un
       // meilleur. Tant que la comparaison n'est pas faite, un résultat de tête ne dit
-      // rien — il dit seulement qu'il est le premier d'une liste. En faire un bouton
-      // séparé, dans un autre écran, c'était inviter à l'oublier ; et un résultat qu'on
-      // regarde avant son contrôle est déjà cru.
+      // rien — il dit seulement qu'il est le premier d'une liste.
       //
-      // Il tourne sur les seules lignes retenues, après le scan, et se saute tout seul
-      // si l'utilisateur a déjà lancé un contrôle ou si rien n'est exploitable.
-      if (!this.state.hasardEnCours) this.controlerHasard();
+      // Le contrôle ne se lance PLUS tout seul en fin de scan. Il tirait quarante
+      // configurations pour remplir un panneau qu'il fallait aller lire, au nombre de
+      // tirages de ce panneau — 50 par défaut, trop grossier pour trancher quoi que ce
+      // soit — et il ajoutait ce temps à la fin de chaque scan. L'invitation est
+      // maintenant dans le tableau lui-même : chaque ligne porte « contrôler le hasard »
+      // en toutes lettres dans sa case de décision, et un clic la tranche, elle seule.
     });
   }
 
@@ -9786,21 +9916,18 @@ GROUPES = {
   //   2. les deux lectures s'accordent-elles ? (sinon, le chiffre n'est pas un chiffre)
   //   3. le résultat tient-il hors échantillon ?
   verdictDe(r) {
-    const rang = this.rangHasard(r);
+    // Le hasard n'est PLUS dit ici : la colonne de décision le dit, et elle seule. Cette
+    // ligne-ci l'annonçait « non contrôlé » sur toutes les lignes, toujours — elle
+    // interrogeait le résultat du panneau par identité d'objet, qu'une ligne du tableau
+    // ne peut par construction pas satisfaire. Deux mentions du même contrôle, dont une
+    // qui se trompait.
     const b = (this._bandes || {})[this.cleFine(r)];
     const bits = [];
     let dur = 'ok';
-    if (!rang) { bits.push('hasard non contrôlé'); dur = 'attente'; }
-    else if (rang.statut === 'indecidable') {
-      bits.push('hasard : pas tranchable à ' + (rang.tirages || 0) + ' tirages');
-      dur = 'attente';
-    } else if (rang.statut === 'net' || rang.statut === 'reel') {
-      bits.push('bat le hasard');
-    } else { bits.push('le hasard fait aussi bien'); dur = 'ko'; }
     if (b) {
       if (b.largeur < 0.05) bits.push('chiffre exact');
       else { bits.push('bande ' + b.largeur.toFixed(1).replace('.', ',') + ' R'); if (dur === 'ok') dur = 'attente'; }
-    } else bits.push('lectures non comparées');
+    } else { bits.push('lectures non comparées'); dur = 'attente'; }
     const pos = Number(r.positifs), tot = Number(r.segTotal) || 5;
     if (Number.isFinite(pos)) {
       bits.push(pos + '/' + tot + ' segments');
@@ -9809,20 +9936,18 @@ GROUPES = {
     return {
       verdictTxt: bits.join(' · '),
       verdictCls: dur === 'ok' ? 'tag tag-accent' : dur === 'ko' ? 'tag tag-neutral' : 'tag tag-outline',
-      verdictAide: 'Trois questions dans l\u2019ordre : le hasard fait-il aussi bien '
-        + '(sinon rien d\u2019autre ne compte) · les deux lectures s\u2019accordent-elles '
-        + '(sinon le chiffre n\u2019est pas un chiffre) · le résultat tient-il sur les '
-        + 'segments. « Vérifier » les mesure toutes les trois sur cette ligne.',
-      verifierTxt: this.state.verifEnCours === this.cleFine(r) ? 'Mesure…' : 'Vérifier',
-      verifier: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.verifierLigne(r); },
+      verdictAide: 'Deux questions : les deux lectures des bougies ambiguës '
+        + 's\u2019accordent-elles (sinon le chiffre n\u2019est pas un chiffre) · le résultat '
+        + 'tient-il sur les segments de temps. Le hasard, lui, est jugé dans la dernière '
+        + 'colonne. Les trois se mesurent d\u2019un seul clic, sur la case de décision.',
     };
   }
-  // Mesure les deux lectures de CETTE ligne et garde la bande. Le contrôle du hasard,
-  // lui, passe par `controlerHasard` qui sait déjà mémoriser ses tirages.
-  async verifierLigne(r) {
-    if (!this.M || !r || this.state.verifEnCours) return;
+  // Mesure les deux lectures de CETTE ligne et garde la bande entre elles. Appelée par
+  // `controlerUne`, donc par le seul geste que le tableau propose : il n'y a plus de
+  // bouton « Vérifier » à côté, qui refaisait ce calcul sous un autre nom.
+  async mesurerBande(r) {
+    if (!this.M || !r) return;
     const cle = this.cleFine(r);
-    this.setState({ verifEnCours: cle });
     try {
       await this.charger(r.sym);
       const cfg = this.cfgDeLigne(r)
@@ -9836,9 +9961,7 @@ GROUPES = {
         this._bandes = this._bandes || {};
         this._bandes[cle] = { bas: Math.min(a, c), haut: Math.max(a, c), largeur: Math.abs(a - c) };
       }
-      if (!this.rangHasard(r) && !this.state.hasardEnCours) await this.controlerHasard();
     } catch (e) { /* une ligne invérifiable ne doit pas bloquer les autres */ }
-    this.setState({ verifEnCours: null, scanRev: (this.state.scanRev || 0) + 1 });
   }
   // LA CONFIGURATION DE LA LIGNE, rejouée telle qu'elle a été mesurée.
   //
@@ -13231,7 +13354,7 @@ GROUPES = {
       // les afficher toutes revenait à demander à l'utilisateur de trier lui-même ce qui
       // compte. La décision tient dans le verdict ; le reste est de la documentation.
       classeTable: s.colsPlus ? '' : 'tbl-simple',
-      plusTxt: s.colsPlus ? 'moins de colonnes' : 'toutes les mesures',
+      plusTxt: s.colsPlus ? 'vue simple' : 'tout afficher',
       plusCls: s.colsPlus ? 'tag tag-accent' : 'tag tag-outline',
       basculerPlus: () => this.setState({ colsPlus: !s.colsPlus }),
       setModeLecture: () => this.setState({ modeTable: 'lecture' }),
@@ -15054,13 +15177,19 @@ GROUPES = {
           const k = x.ticker || x.sym;
           nValidesSym.set(k, (nValidesSym.get(k) || 0) + 1);
         }
+        // Le rangement au portefeuille : un seul geste, et seulement sur une ligne déjà
+        // tranchée. Il ouvrait auparavant une fenêtre qui refaisait le tirage au sort —
+        // le même travail que la case de décision, sous un autre nom et un autre nombre
+        // de tirages. La décision est prise dans la colonne ; ce bouton ne fait que ranger.
         const pastillesPf = (sym, cfg) => {
+          if (!cfg) return [];
           const ok = dejaValide(sym, cfg);
-          return [{ nom: ok ? '\u2713 Validé' : 'Valider',
-            aide: ok ? sym + ' est validé — sa configuration est reprise sur la page Portefeuille'
-              : 'Rejoue d\u2019abord cette configuration avec des entrées au hasard, montre le verdict, puis propose la validation',
+          if (!ok && !this.decisionDe(cfg).vert) return [];
+          return [{ nom: ok ? '\u2713 Au portefeuille' : 'Ranger au portefeuille',
+            aide: ok ? sym + ' est rangé — sa configuration est reprise sur la page Portefeuille. Cliquez pour l\u2019en retirer.'
+              : 'Les cinq contrôles passent et le hasard ne fait pas aussi bien : cette configuration peut rejoindre un portefeuille.',
             cls: 'tag ' + (ok ? 'tag-accent' : 'tag-outline'),
-            ajouter: (e) => { e.stopPropagation(); this.demanderValidation(sym, cfg); } }];
+            ajouter: (e) => { e.stopPropagation(); this.basculerValide(sym, cfg); } }];
         };
         const equivIdx = this.indexEquivalentes(histoTout);
         const jumIdx = this.indexJumelles(histoTout);
@@ -15100,24 +15229,23 @@ GROUPES = {
               const A = this.celluleHasard(r, Math.max(50, Number(s.hasardA) || 500));
               const B = this.celluleHasard(r, Math.max(50, Number(s.hasardB) || 1000));
               // La décision croise les deux verdicts : les cinq contrôles ET le hasard.
-              // Un seul des deux ne suffit pas — une ligne peut battre le hasard et
-              // échouer sur l'espérance, ou passer les cinq contrôles par chance.
-              const w = v;                               // déjà calculé en tête de ligne()
-              const fin = B.verdict || A.verdict || '';
-              const fort = fin === 'se distingue nettement' || fin === 'se distingue';
-              const dec = !fin ? ['à contrôler', 'tag tag-outline',
-                  'Le contrôle du hasard n\u2019a pas encore été fait sur cette configuration.']
-                : w.label === 'Validée' && fort ? ['peut aller au portefeuille', 'tag tag-accent',
-                  'Les cinq contrôles passent et le moment d\u2019entrée bat le hasard.']
-                : w.label === 'Validée' ? ['non — le hasard fait aussi bien', 'tag tag-neutral',
-                  'Les cinq contrôles passent, mais entrer à des dates au hasard aurait donné un résultat comparable.']
-                : fort ? ['non — ' + (w.motif || 'un contrôle ne passe pas'), 'tag tag-neutral',
-                  'Le moment d\u2019entrée bat le hasard, mais un des cinq contrôles ne passe pas : ' + (w.motifAide || '')]
-                : ['non', 'tag tag-neutral',
-                  'Ni les cinq contrôles ni le contrôle du hasard ne sont concluants.'];
-              return { hasA: A.txt, hasACls: A.cls, hasAAide: A.aide, hasAVerdict: A.verdict || '',
+              // Elle est calculée par `decisionDe` — une seule écriture, que la case du
+              // tableau, le bouton de rangement au portefeuille et l'export du robot lisent
+              // tous, et qui ne peut donc plus se contredire d'un endroit à l'autre.
+              const dec = this.decisionDe(r, v);
+              const fin = dec.controle;
+              const controlable = !fin && !r.sansDonnees && (Number(r.n) || 0) >= 5;
+              return { peutRobot: dec.vert,
+                // la case de décision EST le bouton de contrôle tant que rien n'est mesuré
+                hasardIci: !!s.hasardEnCours && s.hasardUne === this.cleFine(r),
+                hasardAFaire: controlable && !(s.hasardEnCours && s.hasardUne === this.cleFine(r)),
+                hasardVu: !controlable && !(s.hasardEnCours && s.hasardUne === this.cleFine(r)),
+                hasardOccupe: !!s.hasardEnCours,
+                lancerHasard: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                  this.controlerUne(r); },
+                hasA: A.txt, hasACls: A.cls, hasAAide: A.aide, hasAVerdict: A.verdict || '',
                 hasB: B.txt, hasBCls: B.cls, hasBAide: B.aide, hasBVerdict: B.verdict || '',
-                decTxt: dec[0], decCls: dec[1], decAide: dec[2] };
+                decTxt: dec.txt, decCls: dec.cls, decAide: dec.aide };
             })(),
             variante: r.filtreNom || (r.filtre ? this.nomVariante(r.filtre) : ''),
             aVariante: !!(r.filtreNom || r.filtre),
@@ -15373,6 +15501,13 @@ GROUPES = {
             partielAide: 'Le balayage de cet instrument a été interrompu : seules les combinaisons déjà calculées sont là. Son meilleur résultat n\u2019est pas comparable à celui d\u2019un instrument balayé en entier — relancez le scan pour le compléter.',
             ouvrir: () => this.ouvrirFiche(r.sym, r),
             auBacktest: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.versBacktest(r); },
+            // Le dernier pas du parcours, posé sur la ligne elle-même : scanner, lire le
+            // verdict, exporter. Il fallait jusqu'ici valider, changer d'onglet et retrouver
+            // la ligne dans le Portefeuille pour obtenir le même fichier. Le bouton
+            // n'apparaît que sur une ligne verte — les cinq contrôles ET le contrôle du
+            // hasard — pour qu'aucun robot ne parte d'une configuration non tranchée.
+            exporterRobotLigne: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+              this.exporterRobot(r); },
             ...this.verdictDe(r),
             // les scans déjà enregistrés ont perdu leurs jumelles à l'élagage : ce bouton
             // rouvre la MÊME configuration en lecture basse, sans relancer de scan
@@ -15382,8 +15517,10 @@ GROUPES = {
               + 'mesure la part du résultat qui dépend de l\u2019ordre des mouvements à l\u2019intérieur d\u2019une bougie.',
             versBasse: (e) => { if (e && e.stopPropagation) e.stopPropagation();
               this.versBacktest(r, { secuPrudent: true }); },
-            valider: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.demanderValidation(r.sym, r); },
-            valideTxt: dejaValide(r.sym, r) ? '\u2713 Validé' : 'Contrôler puis valider',
+            valider: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.basculerValide(r.sym, r); },
+            valideTxt: dejaValide(r.sym, r) ? '\u2713 Au portefeuille' : 'Ranger au portefeuille',
+            // même règle que la pastille de la ligne de tête : on ne range que ce qui est tranché
+            aValider: dejaValide(r.sym, r) || this.decisionDe(r, v).vert,
             // repliée, la ligne principale ne montre que la meilleure configuration :
             // sans cette mention, une validation faite plus bas dans le groupe disparaît
             ...(() => {
@@ -15547,6 +15684,10 @@ GROUPES = {
                 aJumelle: false, jumTxt: '', jumAide: '', jumCouleur: 'var(--color-text)',
                 aLigneBasse: false, bas: { titre: '' },
                 aVersBasse: false, versBasse: () => {}, versBasseAide: '',
+                peutRobot: false, exporterRobotLigne: () => {},
+                hasardIci: false, hasardAFaire: false, hasardVu: true, hasardOccupe: false,
+                aValider: false, valider: () => {}, valideTxt: '',
+                lancerHasard: () => {},
                 motif: 'aucune configuration mesurée', motifAide: 'Cet instrument n\u2019a produit aucune configuration au-dessus du nombre de trades minimum.',
                 basculer: () => {}, combis: [], aReste: false, resteTxt: '', toutAfficher: () => {} };
             }
@@ -15626,6 +15767,10 @@ GROUPES = {
         : 'Le TOP ne garde que les configurations qui tiennent en lecture basse — bougies ambiguës tranchées contre vous. Si la liste est vide, aucune ne survit à cette exigence : relancez le scan avec les deux lectures cochées.',
       basculerPrudent: () => this.setState({ sPrudent: s.sPrudent === false }, () => this.ecrireSession()),
       aScanResultats: this.aScanData,
+      // Le panneau de contrôle groupé ne s'ouvre plus de lui-même : la décision se prend
+      // ligne par ligne, dans sa colonne. Il reste, sous le même mot que les colonnes
+      // détaillées, pour contrôler tout un tableau d'un coup et régler le nombre de tirages.
+      aPanneauHasard: !!(this.aScanData && this.state.colsPlus),
       basculerFiltreTxt: 'Remettre les curseurs à zéro',
       filtresVifs,
       ...this.classementConditions(histoTout),
