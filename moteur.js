@@ -299,8 +299,32 @@ export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENET
 export function bougiesReconstituees(df) {
   const sp = spreadEnPct(df);
   if (!sp || !df.n) return null;
+  // La MINUTE des extrêmes tranche directement : quand l'export a bien lu la M1 mais
+  // n'y trouve qu'un seul relevé pour toute l'heure, il écrit la même minute des deux
+  // côtés, ou -1 s'il n'en trouve aucun. Une heure sans spread ET sans le moindre
+  // détail à la minute est une heure que le courtier n'a pas cotée : le moteur refuse
+  // déjà d'y entrer, il doit refuser aussi d'y lire un haut et un bas.
+  //
+  // Ce signal remplace l'englobement, qui était brittle : le 28 janvier 2020, la bougie
+  // de 00:00 de GOLD porte le bas de toute la journée, 278 033 de volume contre 21 392
+  // pour l'heure suivante, aucun spread et aucune minute — mais son plus haut est
+  // inférieur de DEUX CENTIMES à celui de 02:00. L'englobement la manquait, et le
+  // moteur y déclenchait un stop fantôme.
+  const mh = df.mh, mb = df.mb;
+  const aMinutes = !!mh && !!mb && mh.some((x) => x >= 0);
   return memo(df, 'reconstituees', () => {
     const out = new Uint8Array(df.n);
+    if (aMinutes) {
+      for (let i = 0; i < df.n; i++) {
+        if (sp[i] > 0) continue;
+        if (mh[i] < 0 || mb[i] < 0 || mh[i] === mb[i]) out[i] = 1;
+      }
+      return out;
+    }
+    // Série exportée avant ces colonnes : on retombe sur l'englobement de la journée,
+    // le seul indice disponible. Deux signes exigés ensemble — une heure calme peut
+    // légitimement contenir toute l'amplitude d'un jour calme, et une heure creuse peut
+    // légitimement n'avoir aucun spread relevé.
     let a = 0;
     while (a < df.n) {
       const j = Math.floor(df.t[a] / 86400000);

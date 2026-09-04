@@ -572,3 +572,39 @@ test("l'ordre des extrêmes ferme l'indécision : la bande tombe à zéro", () =
   assert.equal(mh2.filter((x) => x.ambigu).length, mh2.length,
     "le haut et le bas dans la même minute ne disent pas l'ordre : le trade doit rester marqué ambigu");
 });
+
+test("une heure sans spread ET sans détail à la minute n'est pas une heure cotée", () => {
+  // Le courtier reconstitue certaines heures depuis une unité plus grossière : pas de
+  // spread, et un seul relevé M1 pour toute l'heure — l'export écrit alors la même
+  // minute pour le haut et pour le bas, ou -1 s'il n'en trouve aucun. Le moteur refusait
+  // déjà d'y ENTRER ; il doit refuser aussi d'y lire un haut et un bas pour sortir.
+  //
+  // Ce signal remplace le test d'englobement de la journée, qui était brittle : sur
+  // GOLD le 28 janvier 2020, la bougie de 00:00 porte le bas de toute la journée,
+  // 278 033 de volume contre 21 392 pour l'heure suivante, aucun spread et aucune
+  // minute — mais son plus haut est inférieur de DEUX CENTIMES à celui de 02:00.
+  // L'englobement la manquait, et le moteur y déclenchait un stop fantôme.
+  const n = 48, t = [], o = [], h = [], l = [], c = [], sp = [], mh = [], mb = [];
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const minuit = i % 24 === 0;
+    o.push(100); c.push(100);
+    // la bougie de minuit couvre toute la journée, sans tout à fait l'englober
+    h.push(minuit ? 104 : 105); l.push(minuit ? 90 : 99);
+    sp.push(minuit ? 0 : 10);
+    mh.push(minuit ? 0 : 5); mb.push(minuit ? 0 : 30);
+  }
+  const df = { n, t, o, h, l, c, sp, mh, mb, grain: { decimales: 2 } };
+  const rec = M.bougiesReconstituees(df);
+  assert.ok(rec, "aucune détection");
+  for (let i = 0; i < n; i++) {
+    assert.equal(rec[i], i % 24 === 0 ? 1 : 0,
+      `bougie ${i} mal classée : ${rec[i]}`);
+  }
+  // une heure creuse mais COTÉE — spread relevé, extrêmes dans la même minute — reste
+  // une vraie bougie : le spread seul ne suffit pas à la disqualifier
+  const creuse = { ...df, sp: sp.map((x, i) => (i % 24 === 0 ? 0 : 10)),
+    mh: mh.map((x, i) => (i % 24 === 1 ? 7 : x)), mb: mb.map((x, i) => (i % 24 === 1 ? 7 : x)) };
+  assert.equal(M.bougiesReconstituees(creuse)[1], 0,
+    "une heure cotée dont les deux extrêmes tombent dans la même minute est prise pour une heure absente");
+});
