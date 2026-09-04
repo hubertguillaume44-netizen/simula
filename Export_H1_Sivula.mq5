@@ -21,15 +21,22 @@
 //|  affichée n'a aucune importance : H1 et M1 sont demandées         |
 //|  explicitement, quel que soit le graphique.                       |
 //|  Laissez InpSymboles vide pour n'exporter que le symbole du       |
-//|  graphique, ou listez-en autant que vous voulez, séparés par des  |
-//|  virgules — ils seront traités à la suite, sans autre manipulation.|
+//|  graphique, mettez « * » pour TOUTE l'Observation du marché, ou   |
+//|  listez-en autant que vous voulez, séparés par des virgules —     |
+//|  ils seront traités à la suite, sans autre manipulation.          |
 //+------------------------------------------------------------------+
 #property script_show_inputs
 #property strict
 
-// Vide = le symbole du graphique. Sinon une liste : "AUDCAD,GOLD,NZDCAD".
+// Vide = le symbole du graphique. « * » = TOUTE l'Observation du marché. Sinon une
+// liste : "AUDCAD,GOLD,NZDCAD".
 // Les symboles absents de l'Observation du marché y sont ajoutés automatiquement.
-input string   InpSymboles  = "";             // Symboles (vide = celui du graphique)
+//
+// L'étoile évite de recopier cent cinquante noms à la main — et surtout de les recopier
+// FAUX : le nom exact d'un symbole varie d'un compte à l'autre (GOLD, XAUUSD, #Germany40,
+// GER40.cash…), et un nom erroné produit un fichier manquant qu'on ne remarque qu'au
+// moment de mesurer. Le terminal, lui, connaît ses propres noms.
+input string   InpSymboles  = "";             // Symboles ("*" = tout, vide = le graphique)
 // UN AN AVANT le début de la mesure, pas le début lui-même. Le moteur a besoin de
 // 400 jours d'amorce (AMORCE_JOURS) pour ses agrégats, et la médiane du spread porte
 // sur les 6000 dernières bougies H1 — environ 250 séances. Exporter à partir de la
@@ -438,6 +445,21 @@ void OnStart()
    {
       ArrayResize(syms, 1);
       syms[0] = _Symbol;
+   }
+   else if(liste == "*")
+   {
+      // Toute l'Observation du marché, dans son ordre. On ne prend PAS le catalogue
+      // complet du courtier : il compte des milliers de lignes dont l'immense majorité
+      // n'intéresse personne, et chacune coûte un téléchargement M1 de plusieurs années.
+      // Ce que l'utilisateur a mis dans son Observation du marché est justement la liste
+      // qu'il a choisie.
+      int n = SymbolsTotal(true);
+      if(n <= 0) { Print("Observation du marché vide : ajoutez-y vos instruments."); return; }
+      ArrayResize(syms, n);
+      for(int i = 0; i < n; i++) syms[i] = SymbolName(i, true);
+      PrintFormat("Observation du marché : %d symboles à exporter. Comptez plusieurs "
+                  "minutes par symbole — la M1 de sept ans doit être téléchargée pour "
+                  "chacun. Laissez le terminal ouvert et connecté.", n);
    }
    else
    {
