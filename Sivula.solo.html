@@ -2827,13 +2827,16 @@
         mesure occupe la place qu'elle mérite. Le contenu des champs n'a pas bougé — seule
         leur disposition change. Les onze filtres et la sécurisation, qui ne se règlent pas
         à chaque essai, passent derrière un bouton et s'ouvrent en panneau.
+
+        Le bandeau de verdict, lui, défile avec la page : seule la configuration reste à
+        l'écran, parce qu'elle sert à agir. Le total, lui, se relit en tête de la mesure.
       -->
-      <div style="position:sticky;top:{{ btTopBandeau }};z-index:28;background:var(--color-accent-900);color:var(--color-bg);padding:9px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
-        <span style="font-family:var(--font-heading);font-weight:600;font-size:38px;line-height:1;letter-spacing:-.01em">{{ btTotal }}</span>
-        <span style="font-size:13px;opacity:.8">{{ btN }} trades · {{ btAnnees }} · {{ btSymNom }}</span>
-        <span style="border:1px solid currentColor;padding:3px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" title="{{ btMotifs }}">{{ btVerdict }}</span>
+      <div style="background:var(--color-accent-900);color:var(--color-bg);padding:7px 16px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1;letter-spacing:-.01em">{{ btTotal }}</span>
+        <span style="font-size:12px;opacity:.8">{{ btN }} trades · {{ btAnnees }} · {{ btSymNom }}</span>
+        <span style="border:1px solid currentColor;padding:2px 7px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" title="{{ btMotifs }}">{{ btVerdict }}</span>
         <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
-          <span style="border:1px solid currentColor;padding:3px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Chiffres périmés — relancez le test</span>
+          <span style="border:1px solid currentColor;padding:2px 7px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Chiffres périmés — relancez le test</span>
         </sc-if>
         <sc-if value="{{ aErreur }}" hint-placeholder-val="{{ false }}">
           <span style="border:1px solid currentColor;padding:3px 9px;font-size:11px">{{ erreur }}</span>
@@ -11970,10 +11973,11 @@ GROUPES = {
       // hauteur mesurée de tout le bloc collant (bandeaux + en-tête) : elle change
       // quand un bandeau apparaît, quand la fenêtre se replie, sans rien à recalculer ici
       filTop: (s.hEntete || 46) + 'px',
-      // les deux étages suivants : le bandeau de verdict du backtest se cale sous le fil,
-      // et la colonne de configuration sous le bandeau
-      btTopBandeau: ((s.hEntete || 46) + (s.hFil || 38)) + 'px',
-      btTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 58) + 'px',
+      // La colonne de configuration se cale sous le fil. Le bandeau de verdict, lui, ne
+      // colle plus : il défile avec la page. Le total est repris en tête de la mesure,
+      // juste à côté de la courbe — le garder à l'écran en permanence coûtait deux
+      // centimètres de hauteur pour un chiffre déjà lisible là où on le regarde.
+      btTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 10) + 'px',
       fil: (() => {
         const nSeries = (s.deposes || []).length;
         const nScan = this.lignesScan.length;
