@@ -444,4 +444,16 @@ test("le swap se compte par lot et par nuit, pas en pourcentage annuel du notion
   // et le taux annuel ne s'applique QUE faute de montant par lot (modes 5 et 6 de MT5)
   const annuel = M.backtesterSuivi(df, { ...cfg, frais: { swap_annuel_pct: -30 } }, "D1");
   assert.ok(dette(annuel) > 0, "le repli en pourcentage annuel ne facture plus rien");
+
+  // La commission est un tarif ALLER-RETOUR par lot, pas un pourcentage du notionnel.
+  // Mesuré sur le journal GOLD du 5 septembre 2026, qui somme les deux jambes de la
+  // position : ajustement R² 0,93 par lot contre -1,63 en pourcentage du notionnel,
+  // c'est-à-dire pire que la moyenne. Converti par le cours implicite lu sur le swap,
+  // le tarif est constant sur sept ans : 6,94 · 6,95 · 6,91 · 7,01 · 7,00 · 6,85 · 6,98.
+  const avecComm = M.backtesterSuivi(df, { ...cfg, frais: { contrat: 100, commission_par_lot: 6.95 } }, "D1");
+  for (const x of avecComm) {
+    const attendu = x.R - 6.95 / (100 * Math.abs(x.entree - x.sl_initial));
+    assert.ok(Math.abs(x.R_net - attendu) < 1e-9,
+      `commission mal comptée : R_net ${x.R_net} au lieu de ${attendu}`);
+  }
 });

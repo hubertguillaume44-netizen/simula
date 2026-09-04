@@ -35,6 +35,18 @@ export const PALIERS_REFERENCE = [
 // sont déclarés en montant (SwapMode 2) et repris tels quels. BITCOIN est en intérêt
 // annuel (SwapMode 5) : le taux reste le modèle, faute de montant.
 //
+// `commission_par_lot` : le tarif ALLER-RETOUR par lot, dans la devise du symbole.
+// Mesuré sur le journal GOLD du 5 septembre 2026, qui somme les frais sur les DEUX
+// jambes de la position : 6,95 par lot. La preuve qu'il s'agit bien d'un tarif par lot
+// et non d'un pourcentage du notionnel tient dans l'ajustement — R² 0,93 par lot contre
+// -1,63 en pourcentage, c'est-à-dire pire que la moyenne.
+//
+// Le montant relevé est dans la devise du COMPTE (EUR) ; converti par le cours implicite
+// que donne le swap, il devient constant sur sept ans : 6,94 · 6,95 · 6,91 · 7,01 · 7,00
+// · 6,85 · 6,98 de 2020 à 2026. Et ce cours implicite reproduit l'EUR/USD réel — 0,848
+// en 2021 (1,18), 0,951 en 2022 (1,05), 0,922 en 2023 (1,08). Deux grandeurs
+// indépendantes, une seule histoire de devise : c'est ce qui valide le modèle.
+//
 // Le signe est celui du courtier : un swap positif est un CRÉDIT réel — GOLD paie
 // -67,90 à l'achat et crédite +27,00 à la vente. Le modèle validé sur le journal GOLD
 // du 4 septembre 2026 rend 1,0000 fois le portage facturé (p10 0,9965, p90 1,0038).
@@ -59,7 +71,7 @@ export const REFERENCES = [
   },
   {
     sym: "GOLD",
-    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00 },
+    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00, commission_par_lot: 6.95 },
     variante: "ema_5_SL0p6_RR3",
     entree: "croisement_ou_rebond",
     ligne: "ema",
@@ -78,7 +90,7 @@ export const REFERENCES = [
   },
   {
     sym: "GOLD",
-    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00 },
+    portage: { contrat: 100, swap_long: -67.90, swap_short: 27.00, commission_par_lot: 6.95 },
     variante: "ma_7_SL0p5_RR1p5",
     entree: "croisement_ou_rebond",
     ligne: "ma",

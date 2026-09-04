@@ -1189,6 +1189,11 @@ export function backtester(df, cfg) {
     const slP = Math.abs(tr.entree - tr.sl_initial) / tr.entree * 100;
     // le spread n'est plus déduit ici : il est déjà dans le prix d'entrée, et donc dans
     // le R du trade. Le compter deux fois doublerait le coût réel.
+    // `commission_pct` est un tarif PAR JAMBE, en % du notionnel : d'où le × 2.
+    // `commission_par_lot` est déjà l'ALLER-RETOUR, dans la devise du symbole — c'est
+    // ainsi qu'on le mesure sur le journal, qui somme les deux opérations de la
+    // position. Sur GOLD : 6,95 par lot, ajustement R² 0,93 ; le même tarif exprimé en
+    // pourcentage du notionnel donne R² -1,63, c'est-à-dire pire que la moyenne.
     const comm = (frais.commission_pct || 0) * 2 / slP
       + (contrat > 0 ? (Number(frais.commission_par_lot) || 0) / (contrat * Math.abs(tr.entree - tr.sl_initial)) : 0);
     let swap;

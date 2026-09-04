@@ -218,6 +218,23 @@ function main() {
     // n-ième sortie clôt la n-ième entrée
     const ent = [...conf.E.values()].sort((a, b) => a.t - b.t);
     const sor = [...conf.sorties].sort((a, b) => a.t - b.t);
+    // Le courtier tient les frais dans la devise du COMPTE (EUR), le risque se calcule
+    // dans celle du SYMBOLE (USD sur GOLD) : diviser l'un par l'autre sous-estimait les
+    // frais du robot de 10 %. On lit le cours sur les trades eux-mêmes — le résultat en
+    // devise du compte divisé par le R, rapporté au risque en devise du symbole — puis
+    // on l'applique à tous. Mesuré sur GOLD, ce cours implicite reproduit l'EUR/USD
+    // réel : 0,848 en 2021 (1,18), 0,951 en 2022 (1,05), 0,922 en 2023 (1,08).
+    const paires = [];
+    for (let i = 0; i < Math.min(ent.length, sor.length); i++) {
+      const rp = ent[i].prix - ent[i].sl;
+      const r = (sor[i].prix - ent[i].prix) / rp;
+      if (!Number.isFinite(r) || Math.abs(r) < 0.2 || !(ent[i].lots > 0) || contrat <= 0) continue;
+      const f = Math.abs(sor[i].resultat / r) / (ent[i].lots * contrat * Math.abs(rp));
+      if (f > 0) paires.push(f);
+    }
+    paires.sort((a2, b2) => a2 - b2);
+    const change = paires.length ? paires[paires.length >> 1] : 1;
+
     let brut = 0, coutSwap = 0, coutComm = 0, k = 0;
     for (let i = 0; i < Math.min(ent.length, sor.length); i++) {
       const risquePrix = ent[i].prix - ent[i].sl;
@@ -225,14 +242,15 @@ function main() {
       if (!Number.isFinite(r)) continue;
       brut += r; k++;
       if (contrat > 0 && ent[i].lots > 0) {
-        const risque = ent[i].lots * contrat * Math.abs(risquePrix);
+        const risque = ent[i].lots * contrat * Math.abs(risquePrix) * change;
         coutSwap += -sor[i].swap / risque;
         coutComm += -sor[i].commission / risque;
       }
     }
     const rm = trades.reduce((a, t) => a + t.R, 0);
     const rmNet = trades.reduce((a, t) => a + (t.R_net !== undefined ? t.R_net : t.R), 0);
-    console.log(`\nR sur ${k} trades robot / ${trades.length} moteur :`);
+    console.log(`\nR sur ${k} trades robot / ${trades.length} moteur `
+      + `(cours ${sym} → devise du compte : ${change.toFixed(4)}) :`);
     console.log(`  brut   robot ${brut.toFixed(1)}   moteur ${rm.toFixed(1)}   écart ${(rm - brut).toFixed(1)}`);
     console.log(`  frais  robot ${(coutSwap + coutComm).toFixed(1)} (portage ${coutSwap.toFixed(1)}, commission ${coutComm.toFixed(1)})`
       + `   moteur ${(rm - rmNet).toFixed(1)}`);
