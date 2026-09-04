@@ -3148,6 +3148,53 @@
           </sc-if>
         </div>
       </section>
+
+      <section class="card blueprint" style="padding:22px 24px;gap:12px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px">Confronter au testeur MT5</div>
+        <div style="font-size:13px;line-height:1.5" class="text-muted">
+          Le robot exporté écrit un journal de conformité quand on met <code>InpConformite</code> à <code>true</code> :
+          une ligne par décision, par tentative d'entrée, par entrée, par sortie et par palier.
+          Déposez ce journal ici et Sivula le confronte, journée par journée, à ce que le moteur
+          décide sur la MÊME série et le MÊME réglage. C'est la seule façon de savoir si un chiffre
+          affiché ici est celui que MT5 rendra.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" accept=".csv,.log,.txt" onChange="{{ deposerJournal }}">
+          <span style="font-size:12px" class="text-muted">{{ confEtat }}</span>
+        </div>
+        <sc-if value="{{ aConf }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Robot MT5, net</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confRobot }}</div>
+            </div>
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Bande des deux lectures</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confBande }}</div>
+            </div>
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confVerdict }}</div>
+            </div>
+          </div>
+          <div style="font-size:13px;line-height:1.6">{{ confDetail }}</div>
+          <sc-if value="{{ aConfDiv }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;line-height:1.6" class="text-muted">
+              <div style="font-weight:600;margin-bottom:4px">Divergences, par nature</div>
+              <sc-for list="{{ confDivergences }}" as="cd" hint-placeholder-count="2">
+                <div style="margin-bottom:6px">
+                  <span style="font-weight:600">{{ cd.n }}</span> · {{ cd.nom }}
+                  <div style="opacity:.8;padding-left:10px">{{ cd.exemple }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </sc-if>
+      </section>
     </div>
     </sc-if>
 
@@ -3423,7 +3470,7 @@ const moisAn = (ms) => {
 class Component extends DCLogic {
   state = { tab: 'accueil', layout: null, montant: null, capital: 76020, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
-    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true,
+    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '',
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
     fPente: false, fPenteRecul: 3, fPivot: false, regime: null, regimeEnCours: false,
     zoneMarche: 'us', regimes: {}, regimeZone: null, symOuvert: null, symTout: null, triCumul: 'total',
@@ -6617,6 +6664,43 @@ GROUPES = {
   }
 
   // base de calcul : H1 brut, ou UT supérieure reconstruite par resampling
+  // ————— confrontation au testeur MT5 —————
+  //
+  // La page pose la MÊME question que le harnais en ligne de commande, avec le MÊME
+  // code : `conformite-noyau.js`. Une seconde implémentation aurait dérivé, comme
+  // `src/lib/moteur.ts` a dérivé de `moteur.js` — et un écart de modèle mesuré ici
+  // n'aurait plus voulu dire la même chose que celui mesuré là-bas.
+  async deposerJournal(fichier) {
+    if (!fichier) return;
+    const sym = this.state.btSym;
+    this.setState({ confMsg: 'Lecture du journal…', conf: null });
+    try {
+      const [texte, noyau] = await Promise.all([fichier.text(), import('./conformite-noyau.js')]);
+      const conf = noyau.lireConformite(texte);
+      if (!noyau.journalUtilisable(conf)) {
+        this.setState({ confMsg: 'Aucune ligne CONF| dans ce fichier. Le robot a-t-il tourné avec InpConformite = true ?' });
+        return;
+      }
+      await this.charger(sym);
+      const df = this.serieH1(sym);
+      if (!df) { this.setState({ confMsg: 'Série H1 absente pour ' + sym + ' : importez-la d\u2019abord.' }); return; }
+      const plage = this.M.plageExploitable(df);
+      const debut = Math.max(this.DEBUT, plage.debut);
+      const cfg = {
+        ...this.cfgCourante(sym),
+        spread_max_facteur: this.facteurSpread(),
+        ...(plage.complete ? {} : { fin: plage.fin }),
+        debut,
+        lire_reconstituees: true,
+      };
+      const res = noyau.confronter({ M: this.M, df, cfg, conf, debut,
+        portage: this.portageDe(this.ligneCourtier(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif, sym)) });
+      this.setState({ conf: { ...res, sym, trades: undefined }, confMsg: '' });
+    } catch (e) {
+      this.setState({ confMsg: 'Journal illisible : ' + String((e && e.message) || e) });
+    }
+  }
+
   base(sym) {
     const df = this.dfs && this.dfs[sym];
     if (!df) return null;
@@ -12459,6 +12543,35 @@ GROUPES = {
       setSL: (e) => this.maj({ btSL: Number(e.target.value) }),
       setRR: (e) => this.maj({ btRR: Number(e.target.value) }),
       setDelai: (e) => this.maj({ btDelai: Number(e.target.value) }),
+      deposerJournal: (e) => this.deposerJournal(e.target.files && e.target.files[0]),
+      confEtat: s.confMsg || (s.conf
+        ? s.conf.communs + ' journées comparées sur ' + s.conf.sym
+        : 'aucun journal déposé'),
+      aConf: !!(s.conf && s.conf.bilan),
+      confRobot: s.conf && s.conf.bilan ? fr(s.conf.bilan.netRobot, 1) + ' R' : '—',
+      confBande: s.conf && s.conf.bilan
+        ? fr(s.conf.bilan.bande[0], 1) + ' … ' + fr(s.conf.bilan.bande[1], 1) + ' R' : '—',
+      // Le verdict tient en un mot, et il n'est pas décoratif : une bande qui ne
+      // contient pas le chiffre du testeur est un DÉFAUT DE MODÈLE, pas une
+      // incertitude honnête. Le dire autrement reviendrait à vendre une promesse
+      // que la mesure ne tient pas.
+      confVerdict: s.conf && s.conf.bilan
+        ? (s.conf.bilan.dedans ? 'MT5 est dans la bande' : 'MT5 est HORS de la bande') : '—',
+      confDetail: (() => {
+        const b = s.conf && s.conf.bilan;
+        if (!b) return '';
+        return 'R brut : robot ' + fr(b.brutRobot, 1) + ', moteur ' + fr(b.brutMoteur, 1)
+          + ' · frais : robot ' + fr(b.fraisRobot, 1) + ' (portage ' + fr(b.portageRobot, 1)
+          + ', commission ' + fr(b.commissionRobot, 1) + '), moteur ' + fr(b.fraisMoteur, 1)
+          + ' · NET : robot ' + fr(b.netRobot, 1) + ', moteur ' + fr(b.netMoteur, 1)
+          + ' (écart ' + fr(b.netMoteur - b.netRobot, 1) + ' R)'
+          + ' — ' + b.nRobot + ' trades robot contre ' + b.nMoteur + ' moteur, dont '
+          + b.ambigus + ' (' + Math.round(100 * b.ambigus / (b.nLecture || 1))
+          + ' %) dont l\u2019issue dépend de l\u2019ordre des mouvements dans une bougie.';
+      })(),
+      aConfDiv: !!(s.conf && s.conf.divergences && s.conf.divergences.length),
+      confDivergences: ((s.conf && s.conf.divergences) || []).slice(0, 8)
+        .map((d) => ({ n: d.n, nom: d.nom, exemple: (d.exemples || [])[0] || '' })),
       setFenDeb: (e) => this.maj({ btFenDeb: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
       setFenFin: (e) => this.maj({ btFenFin: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
       setCroisement: () => this.maj({ btEntree: 'croisement_prix' }),
