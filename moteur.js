@@ -1089,6 +1089,8 @@ export function backtester(df, cfg) {
   // chaque sortie — 1 130 trades au lieu de 538. Le robot remet `seauEnAttente` à -1
   // dès qu'il est entré, et n'y revient plus avant le seau suivant.
   const seauEnt = cfg.signal_seau || null;
+  const candidats = cfg.signal_idx || null;
+  let pCand = 0;
   let seauEntre = null;
 
   // MT5 arrondit TOUT prix au tick du symbole — NormalizeDouble(prix, digits) — avant de
@@ -1497,6 +1499,15 @@ export function backtester(df, cfg) {
       continue;
     }
 
+    // Hors position, seules les bougies CANDIDATES peuvent produire quelque chose. Les
+    // parcourir toutes coûtait 46 % du temps d'un balayage : quarante-six mille tours de
+    // boucle pour, la plupart du temps, quatre comparaisons et un `continue`. La liste
+    // est fournie par `backtesterSuivi` et triée ; on saute d'une candidate à l'autre.
+    if (candidats) {
+      while (pCand < candidats.length && candidats[pCand] < i) pCand++;
+      if (pCand >= candidats.length) break;
+      if (candidats[pCand] > i) { i = candidats[pCand] - 1; continue; }
+    }
     if (df.t[i] >= finEntrees) continue;
     if (!signal[i] || (autorise && !autorise[i])) continue;
     if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
@@ -1771,6 +1782,27 @@ export function backtesterSuivi(df, cfg, ut) {
   // `Array().fill(false)` coûte plusieurs fois un `Uint8Array`. Le seau est gardé en
   // INDICE de la série agrégée plutôt qu'en horodatage — un entier au lieu d'un flottant,
   // et -1 dit « aucun » sans passer par NaN.
+  // Les bougies d'ENTRÉE candidates, mémoïsées sur la série.
+  //
+  // Elles ne dépendent que de l'entrée, des filtres, du plafond de spread et de la
+  // fenêtre horaire — jamais du stop ni de l'objectif. Un balayage typique croise
+  // 9 périodes × 14 stops × 6 objectifs : ce tableau n'a que NEUF valeurs distinctes,
+  // et il était reconstruit 756 fois, chaque construction parcourant les 46 000 bougies
+  // de la série. La clé reprend, à la lettre, les champs dont `signalDe` et
+  // `autorisePar` font déjà leurs propres clés : deux configurations qui partagent cette
+  // clé ont, par construction, le même tableau.
+  const eF = { ...cfg.entree, vente: cfg.sens === 'vente' };
+  const cleFiltres = (cfg.filtres || [])
+    .filter((f) => f.actif !== false && f.type !== 'delai_bougies')
+    .map((f) => [f.type, f.ut, f.ligne, f.periode, f.seuil, f.sens, f.recul, f.lookback,
+      f.marge_pct, f.touches, f.tolerance_pct, f.memoire, f.debut, f.fin, f.ecart].join(','))
+    .join(';');
+  const cleForce = 'force|' + ut + '|' + eF.type + '|' + eF.ligne + '|' + eF.periode
+    + '|' + (eF.vente ? 'v' : 'a') + '|' + cleFiltres + '|' + facteur
+    + '|' + (pasDebutSemaine ? 1 : 0) + '|' + hD + '-' + hF;
+  const { force, seauDe, candidats } = memo(df, cleForce, () => construireForce());
+
+  function construireForce() {
   const force = new Uint8Array(df.n);
   const seauDe = new Int32Array(df.n).fill(-1);
   for (let k = 0; k < sup.n; k++) {
@@ -1797,10 +1829,21 @@ export function backtesterSuivi(df, cfg, ut) {
     // la sortie d'une bougie, comme chez le robot.
     for (let z = idx.length - 1; z >= 0; z--) {
       if (!acceptable(idx[z])) continue;
-      force[idx[z]] = true;
+      force[idx[z]] = 1;
       seauDe[idx[z]] = k;   // l'INDICE du seau, pas son horodatage : seule l'égalité est lue
     }
   }
+  // La LISTE des bougies candidates, dans l'ordre. Elle sort de la même construction
+  // et ne coûte rien de plus ; elle permet à `backtester` de sauter d'une candidate à
+  // la suivante au lieu de parcourir toutes les bougies hors position.
+  let nb = 0;
+  for (let i = 0; i < df.n; i++) if (force[i]) nb++;
+  const candidats = new Int32Array(nb);
+  let z = 0;
+  for (let i = 0; i < df.n; i++) if (force[i]) candidats[z++] = i;
+  return { force, seauDe, candidats };
+  }
+
   // le délai est exprimé en bougies de décision : on le convertit en bougies H1
   const bougiesParSeau = ut === 'D1' ? 24 : 4;
   const filtres = (cfg.filtres || [])
@@ -1811,6 +1854,7 @@ export function backtesterSuivi(df, cfg, ut) {
     sortie: { ...cfg.sortie, armer_avant: false },
     signal_force: force,
     signal_seau: seauDe,
+    signal_idx: candidats,
     filtres,
   });
 }
