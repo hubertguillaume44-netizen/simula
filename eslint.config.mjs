@@ -13,7 +13,10 @@ export default tseslint.config(
       ".vercel/**",
       ".nitro/**",
       "node_modules/**",
-      "src/routeTree.gen.ts",
+      // Runtime tiers, repris tel quel : le corriger reviendrait à en maintenir un fork.
+      "support.js",
+      // Artefact de `npm run app:solo` — construit, jamais édité.
+      "Sivula.solo.html",
     ],
   },
   js.configs.recommended,

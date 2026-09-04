@@ -1,6 +1,17 @@
-import type { DataFrame, Instrument } from "@/lib/types";
+/**
+ * Les séries de DÉMONSTRATION du harnais, portées telles quelles depuis `src/lib/demo.ts`.
+ *
+ * Elles servent à `fixture.mjs`, qui fabrique un couple (CSV H1, rapport MT5) dont on
+ * connaît la vérité terrain : c'est ce qui permet de faire confiance au comparateur avant
+ * de le lâcher sur un vrai rapport. Le générateur est déterministe — même graine, mêmes
+ * bougies — sinon la vérité terrain changerait à chaque exécution.
+ *
+ * Le port a eu lieu quand l'application Vite a été retirée du dépôt : le harnais chargeait
+ * `src/lib/demo.ts` à travers un résolveur d'alias, pour trois fonctions et aucun lien
+ * avec le reste. Ce n'était pas une raison de garder une application entière.
+ */
 
-function mulberry32(seed: number) {
+function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
     a = (Math.imul(a, 1664525) + 1013904223) >>> 0;
@@ -8,23 +19,13 @@ function mulberry32(seed: number) {
   };
 }
 
-function gaussian(rand: () => number) {
+function gaussian(rand) {
   const u = Math.max(1e-12, rand());
   const v = rand();
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
-type Regime = { from: number; drift: number; vol: number };
-
-type Spec = {
-  id: string;
-  label: string;
-  hint: string;
-  start: number;
-  regimes: Regime[];
-};
-
-const SPECS: Spec[] = [
+const SPECS = [
   {
     id: "DEMO-TECH",
     label: "Démo Tech",
@@ -79,14 +80,7 @@ const SPECS: Spec[] = [
   },
 ];
 
-export const DEMO_INSTRUMENTS: Instrument[] = SPECS.map((s) => ({
-  id: s.id,
-  label: s.label,
-  kind: "demo",
-  hint: s.hint,
-}));
-
-function seedFrom(id: string) {
+function seedFrom(id) {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) {
     h ^= id.charCodeAt(i);
@@ -95,20 +89,15 @@ function seedFrom(id: string) {
   return h >>> 0;
 }
 
-function pickRegime(regimes: Regime[], t: number): Regime {
-  let cur = regimes[0]!;
+function pickRegime(regimes, t) {
+  let cur = regimes[0];
   for (const r of regimes) if (t >= r.from) cur = r;
   return cur;
 }
 
-export function generateDemo(spec: Spec): DataFrame {
+export function generateDemo(spec) {
   const rand = mulberry32(seedFrom(spec.id));
-  const t: number[] = [];
-  const o: number[] = [];
-  const h: number[] = [];
-  const l: number[] = [];
-  const c: number[] = [];
-  const v: number[] = [];
+  const t = [], o = [], h = [], l = [], c = [], v = [];
   let px = spec.start;
   const start = Date.UTC(2019, 0, 2, 13, 0);
   const end = Date.UTC(2025, 11, 30, 20, 0);
@@ -140,19 +129,19 @@ export function generateDemo(spec: Spec): DataFrame {
   return { t, o, h, l, c, v, n: t.length };
 }
 
-let cache: Record<string, DataFrame> | null = null;
+let cache = null;
 
-export function demoSeries(): Record<string, DataFrame> {
+export function demoSeries() {
   if (cache) return cache;
   cache = {};
   for (const spec of SPECS) cache[spec.id] = generateDemo(spec);
   return cache;
 }
 
-export function seriesToCsv(id: string, df: DataFrame): string {
+export function seriesToCsv(id, df) {
   const lines = ["datetime,open,high,low,close,volume"];
   for (let i = 0; i < df.n; i++) {
-    const d = new Date(df.t[i]!);
+    const d = new Date(df.t[i]);
     const stamp = `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, "0")}.${String(d.getUTCDate()).padStart(2, "0")} ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
     lines.push(
       `${stamp},${df.o[i]},${df.h[i]},${df.l[i]},${df.c[i]},${df.v[i]}`,
@@ -160,12 +149,3 @@ export function seriesToCsv(id: string, df: DataFrame): string {
   }
   return lines.join("\n");
 }
-
-export const CSV_HELP = `Format attendu (export H1 de votre courtier) :
-
-datetime,open,high,low,close,volume
-2019.01.02 13:00,42.00,42.48,41.90,42.30,798
-
-Séparateurs acceptés : virgule, point-virgule, tabulation.
-Date JJ/MM/AAAA ou AAAA.MM.JJ. L'heure peut être dans une colonne à part.
-Rien n'est envoyé : le fichier est lu ici, dans votre navigateur.`;

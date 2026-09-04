@@ -6,7 +6,8 @@
  * en trop, sorties divergentes). Le harnais doit les retrouver : c'est ce qui
  * permet de lui faire confiance avant de le lancer sur un vrai rapport.
  */
-import { chargerDemo, chargerMoteur } from "./charger-moteur.mjs";
+import { chargerMoteur } from "./charger-moteur.mjs";
+import { demoSeries, seriesToCsv } from "./serie-demo.mjs";
 import { construireConfig } from "./config.mjs";
 
 export const DEBUT = Date.UTC(2020, 0, 1);
@@ -38,11 +39,10 @@ const eur = (x) =>
 export async function fabriquer(options = {}) {
   const opt = { ...DEFAUTS, ...options };
   const moteur = await chargerMoteur();
-  const demo = await chargerDemo();
 
-  const series = demo.demoSeries();
+  const series = demoSeries();
   const id = opt.serie ?? Object.keys(series)[0];
-  const csv = demo.seriesToCsv(id, series[id]);
+  const csv = seriesToCsv(id, series[id]);
 
   const reglages = {
     symbol: opt.symbole,
