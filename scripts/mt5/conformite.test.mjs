@@ -328,6 +328,27 @@ test("la sortie est journalisée, avec ses frais séparés", () => {
   assert.equal(s0.motif, "DEAL_REASON_TP");
 });
 
+test("la séance se lit en chevauchement, et seulement dans l'état d'heure d'été de l'export", () => {
+  // SymbolInfoSessionTrade ne rend que la table du JOUR de l'export, et les deux tables
+  // du courtier ne se déduisent pas l'une de l'autre. Mesuré sur le journal
+  // #HongKong50 du 6 septembre 2026, 67 trades sur six ans : d'avril à septembre le
+  // testeur entre à 04:15, DANS la bougie de 04:00 ; d'octobre à mars il refuse 03:00 et
+  // 04:00 (« market closed ») et entre à 05:00. Ne tester que la minute d'ouverture de
+  // la bougie écartait 04:00 : 38 des 67 trades tombaient sur une bougie tenue pour
+  // fermée, et le résultat changeait de signe — +6,63 R au testeur, -5,30 au moteur.
+  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  const f = src.slice(src.indexOf("bool Traitable("), src.indexOf("bool Exporter("));
+  assert.match(f, /int deb = d\.hour \* 60 \+ d\.min, fin = deb \+ 60;/,
+    "la bougie n'est pas testée sur l'heure entière");
+  assert.match(f, /bool memeSaison = \(HeureEte\(t\) == HeureEte\(TimeCurrent\(\)\)\);/,
+    "la lecture permissive n'est pas restreinte à l'état d'heure d'été de l'export");
+  assert.match(f, /memeSaison \? \(deb < m2 && fin > m1\) : \(deb >= m1 && deb < m2\)/,
+    "le repli hors saison n'est pas la lecture stricte");
+  // et le calcul de l'heure d'été suit bien la règle européenne
+  assert.match(src, /if\(d\.mon < 3 \|\| d\.mon > 10\) return false;/);
+  assert.match(src, /int DernierDimanche\(int annee, int mois\)/);
+});
+
 test("le relevé de symboles porte les colonnes que l'application cherche", () => {
   // Sivula bascule sur le format « export brut de terminal » quand l'en-tête contient
   // Symbol ET Point, et n'y trouve la contrainte que sous le nom StopsLevel. Renommer

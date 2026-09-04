@@ -122,19 +122,59 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
 //| faudrait un calendrier par DATE, que MT5 n'expose pas et qu'une    |
 //| exécution du journal de conformité permettrait de reconstituer.    |
 //+------------------------------------------------------------------+
-// Une bougie H1 est traitable si la séance est ouverte à UN MOMENT QUELCONQUE de
-// l'heure, pas seulement à sa minute d'ouverture.
+// Heure d'été européenne : dernier dimanche de mars 01:00 UTC au dernier dimanche
+// d'octobre 01:00 UTC. Le serveur du courtier la suit — vérifié sur #HongKong50, dont
+// la pause déjeuner tombe à 06:00 l'hiver et à 07:00 l'été, et dont la première bougie
+// cotée de la journée passe de 03:00 à 04:00.
+int DernierDimanche(int annee, int mois)
+{
+   for(int j = 31; j >= 25; j--)
+   {
+      MqlDateTime d; d.year = annee; d.mon = mois; d.day = j;
+      d.hour = 0; d.min = 0; d.sec = 0;
+      datetime t = StructToTime(d);
+      MqlDateTime v; TimeToStruct(t, v);
+      if(v.day == j && v.day_of_week == 0) return j;
+   }
+   return 31;
+}
+
+bool HeureEte(datetime t)
+{
+   MqlDateTime d; TimeToStruct(t, d);
+   if(d.mon < 3 || d.mon > 10) return false;
+   if(d.mon > 3 && d.mon < 10) return true;
+   int dim = DernierDimanche(d.year, d.mon);
+   if(d.mon == 3) return (d.day > dim || (d.day == dim && d.hour >= 1));
+   return (d.day < dim || (d.day == dim && d.hour < 1));
+}
+
+// Une bougie H1 est traitable si la séance couvre UN MOMENT QUELCONQUE de l'heure —
+// mais on ne s'autorise cette lecture que là où la table de séance a réellement été lue.
 //
-// La séance de #HongKong50 ouvre à 04:15 : la bougie de 04:00 était marquée hors
-// séance, alors que le testeur y entre — à 04:15, dans cette même bougie. Mesuré sur
-// le rapport du 6 septembre 2026 : sur 67 trades, 38 tombent sur une bougie que Sivula
-// tenait pour fermée, tous d'avril à octobre, à 04:15 précises. De novembre à mars le
-// testeur entre à 05:00 ; l'heure d'été du serveur décale la séance d'une heure.
+// SymbolInfoSessionTrade ne rend que la table du JOUR de l'export, sans historique, et
+// les deux tables du courtier ne se déduisent pas l'une de l'autre. Mesuré sur le
+// journal #HongKong50 du 6 septembre 2026, 67 trades sur six ans :
+//
+//   avril à septembre   le testeur entre à 04:15, DANS la bougie de 04:00
+//   octobre à mars      il refuse 03:00 et 04:00 (« market closed ») et entre à 05:00
+//
+// La séance ouvre donc à 04:15 l'été. Ne tester que la minute d'ouverture de la bougie
+// écartait 04:00 — 38 des 67 trades tombaient sur une bougie que Sivula tenait pour
+// fermée, et le résultat changeait de signe : +6,63 R au testeur contre -5,30 au moteur.
+//
+// Dans l'autre état d'heure d'été, la table lue ne vaut pas : on garde la lecture
+// STRICTE, celle qui n'ouvre la bougie que si la séance couvre déjà sa première minute.
+// Sur #HongKong50 elle rend exactement le comportement d'hiver — 05:00 première bougie
+// traitable. Vérifié sur les deux saisons de cet instrument ; à revérifier sur un autre
+// courtier, et le seul moyen d'être sûr des deux tables est de relancer cet export après
+// le changement d'heure.
 bool Traitable(string sym, datetime t)
 {
    MqlDateTime d; TimeToStruct(t, d);
    ENUM_DAY_OF_WEEK jour = (ENUM_DAY_OF_WEEK)d.day_of_week;
-   int deb = d.hour * 60 + d.min, fin = deb + 60;   // l'heure entière
+   int deb = d.hour * 60 + d.min, fin = deb + 60;
+   bool memeSaison = (HeureEte(t) == HeureEte(TimeCurrent()));
    datetime de, a;
    bool aucuneSeance = true;
    for(int k = 0; k < 8; k++)
@@ -143,13 +183,12 @@ bool Traitable(string sym, datetime t)
       aucuneSeance = false;
       MqlDateTime dd, aa; TimeToStruct(de, dd); TimeToStruct(a, aa);
       int m1 = dd.hour * 60 + dd.min, m2 = aa.hour * 60 + aa.min;
-      // une séance qui franchit minuit est rendue avec une fin inférieure au début :
-      // on la coupe en deux intervalles pour tester le chevauchement
+      // une séance qui franchit minuit est rendue avec une fin inférieure au début
       if(m2 <= m1)
       {
-         if(deb < m2 || fin > m1) return true;
+         if(memeSaison ? (deb < m2 || fin > m1) : (deb >= m1 || deb < m2)) return true;
       }
-      else if(deb < m2 && fin > m1) return true;
+      else if(memeSaison ? (deb < m2 && fin > m1) : (deb >= m1 && deb < m2)) return true;
    }
    // aucune séance déclarée : le courtier ne restreint rien, tout est traitable
    return aucuneSeance;
