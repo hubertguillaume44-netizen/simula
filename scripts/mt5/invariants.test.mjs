@@ -1205,3 +1205,50 @@ test("découper une série n'en perd aucune colonne", () => {
   assert.equal(coupeNu.ordreConnu, 0);
   assert.equal(coupeNu.retourConnu, 0);
 });
+
+test("toute recopie d'une série passe par la même liste de colonnes", () => {
+  // Trois recopies indépendantes existaient — la découpe, l'enregistrement du
+  // navigateur, l'envoi aux workers du scan — et les trois avaient oublié les mêmes
+  // colonnes, à des moments différents. Le pire cas était le worker : le scan parallèle
+  // rendait d'AUTRES chiffres que le backtest, sur la même configuration, sans que rien
+  // ne le signale. Une liste unique, et ce test qui la tient.
+  const n = 240;
+  const df = { n, t: [], o: [], h: [], l: [], c: [], v: [], sp: [], sess: [],
+    mh: [], mb: [], eh: [], eb: [], ah: [], ab: [] };
+  for (let i = 0; i < n; i++) {
+    df.t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    df.o.push(100); df.h.push(100.5); df.l.push(99.5); df.c.push(100.2);
+    df.v.push(1); df.sp.push(10); df.sess.push(1);
+    df.mh.push(i % 60); df.mb.push((i + 30) % 60);
+    df.eh.push(100.4); df.eb.push(99.6); df.ah.push(100.3); df.ab.push(99.7);
+  }
+  const propre = M.nettoyer(df);
+  const copie = M.copierSerie(propre);
+  for (const k of M.CHAMPS_SERIE) {
+    if (propre[k] === undefined || propre[k] === null) continue;
+    assert.ok(copie[k], `colonne « ${k} » perdue par copierSerie`);
+    assert.equal(copie[k].length, propre[k].length, `colonne « ${k} » désalignée`);
+  }
+  for (const k of M.CHAMPS_META) {
+    if (propre[k] === undefined) continue;
+    assert.deepEqual(copie[k], propre[k], `métadonnée « ${k} » perdue par copierSerie`);
+  }
+
+  // Le mesurable, pas seulement le structurel : une série copiée doit rendre EXACTEMENT
+  // le même backtest que l'originale. C'est ce que le worker doit garantir.
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 2, paliers: [[25, 0]] });
+  const a = M.backtester(propre, cfg), b = M.backtester(copie, cfg);
+  assert.equal(b.length, a.length, "la copie ne rend pas le même nombre de trades");
+  for (let i = 0; i < a.length; i++) {
+    assert.equal(b[i].R, a[i].R, `trade ${i} : R différent après copie`);
+    assert.equal(b[i].ambigu, a[i].ambigu, `trade ${i} : ambiguïté différente après copie`);
+  }
+
+  // une découpe filtrée reste alignée, colonne par colonne
+  const moitie = M.copierSerie(propre, (i) => i >= n / 2);
+  assert.equal(moitie.n, n / 2);
+  for (const k of M.CHAMPS_SERIE) {
+    if (moitie[k]) assert.equal(moitie[k].length, n / 2, `colonne « ${k} » mal filtrée`);
+  }
+});

@@ -227,6 +227,36 @@ export function nettoyer(df) {
     spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu, retourConnu };
 }
 
+// LES COLONNES D'UNE SÉRIE, en un seul endroit.
+//
+// Trois recopies indépendantes existaient — `decouper`, l'enregistrement du navigateur,
+// et l'envoi aux workers du scan — et les trois avaient oublié les mêmes colonnes, à des
+// moments différents. Le défaut ne se voit pas : une colonne perdue ne se distingue pas
+// d'une colonne absente, et le calcul continue en silence avec une convention de lecture
+// au lieu de la donnée. Le pire cas était le worker : le scan parallèle rendait d'autres
+// chiffres que le backtest, sur la même configuration.
+//
+// Toute recopie d'une série passe désormais par cette liste. En ajouter une revient à
+// l'écrire ici, et les trois chemins la portent.
+export const CHAMPS_SERIE = ['t', 'o', 'h', 'l', 'c', 'v', 'sp', 'sess',
+  'mh', 'mb', 'eh', 'eb', 'ah', 'ab', 'spreadPct'];
+export const CHAMPS_META = ['n', 'grain', 'heuresSession', 'ecartees', 'spreadPctMoyen',
+  'spreadRenseigne', 'sessRenseigne', 'ordreConnu', 'retourConnu'];
+
+/** Copie d'une série, colonnes et métadonnées comprises. `garder` filtre les indices. */
+export function copierSerie(df, garder) {
+  if (!df) return df;
+  const out = {};
+  for (const k of CHAMPS_META) if (df[k] !== undefined) out[k] = df[k];
+  for (const k of CHAMPS_SERIE) {
+    const col = df[k];
+    if (!col) continue;
+    out[k] = garder ? Array.from(col).filter((_, i) => garder(i)) : col;
+  }
+  if (garder) out.n = (out.t && out.t.length) || 0;
+  return out;
+}
+
 // Grain de la série : certains exports MT5 arrondissent les prix à 2 décimales.
 // Sur une paire cotée 0,50 cela donne un pas de 2 % du cours : stop et objectif
 // tombent dans le MÊME créneau, les bougies sont plates, et le backtest ne mesure

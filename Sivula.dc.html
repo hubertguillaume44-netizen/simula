@@ -9073,13 +9073,14 @@ GROUPES = {
         w.onmessage = (e) => { if ((e.data || {}).type === 'pret') fini(); };
         w.onerror = () => { ok = false; fini(); };
         try {
-          // sp / spreadPct / grain doivent suivre : sans eux le worker retombe sur le
-          // spread MOYEN du relevé, et un scan parallèle rend d'autres chiffres qu'un
-          // scan séquentiel sans que rien ne le signale.
-          w.postMessage({ type: 'bougies', sym, df: { n: df.n, t: df.t, o: df.o, h: df.h,
-            l: df.l, c: df.c, sp: df.sp, spreadPct: df.spreadPct,
-            spreadPctMoyen: df.spreadPctMoyen, spreadRenseigne: df.spreadRenseigne,
-            grain: df.grain, heuresSession: df.heuresSession } });
+          // TOUTES les colonnes, par `copierSerie` — jamais une liste écrite à la main.
+          //
+          // Celle qui était ici en oubliait sept : la séance, la minute des extrêmes,
+          // les extrêmes vus par la M1, et ce que le prix a fait après le second. Le
+          // scan parallèle rendait donc d'AUTRES chiffres que le backtest sur la même
+          // configuration — précisément ce que le commentaire d'origine mettait en garde
+          // de ne pas faire pour le spread, et qui est arrivé aux colonnes suivantes.
+          w.postMessage({ type: 'bougies', sym, df: this.M.copierSerie(df) });
         } catch (e) { ok = false; fini(); }
       }
     });
@@ -10487,6 +10488,8 @@ GROUPES = {
       sp: brut.sp ? Float32Array.from(brut.sp) : null,
       t: Float64Array.from(brut.t || []),
       o: f32(brut.o), h: f32(brut.h), l: f32(brut.l), c: f32(brut.c), v: f32(brut.v),
+      ordreConnu: brut.ordreConnu, retourConnu: brut.retourConnu,
+      sessRenseigne: brut.sessRenseigne,
       // CE QUI SE PASSE DANS L'HEURE, et la séance. Ces colonnes étaient jetées à
       // l'enregistrement : au rechargement, une série exportée avec les minutes
       // revenait comme une série ancienne, ses bougies redevenaient indécidables, et
@@ -10516,7 +10519,8 @@ GROUPES = {
       ...(b.sess ? { sess: ar(b.sess) } : {}),
       ...(b.mh && b.mb ? { mh: ar(b.mh), mb: ar(b.mb) } : {}),
       ...(b.eh && b.eb ? { eh: ar(b.eh), eb: ar(b.eb) } : {}),
-      ...(b.ah && b.ab ? { ah: ar(b.ah), ab: ar(b.ab) } : {}) };
+      ...(b.ah && b.ab ? { ah: ar(b.ah), ab: ar(b.ab) } : {}),
+      ordreConnu: b.ordreConnu, retourConnu: b.retourConnu, sessRenseigne: b.sessRenseigne };
   }
   async garderSerie(sym, brut) {
     this._serieSet = null;
@@ -14112,12 +14116,18 @@ GROUPES = {
             ...(() => {
               const a = seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym);
               return { bougies: a ? 'présent' : 'absent',
-                bougiesCls: !a ? 'tag tag-outline' : (this.serieComplete(sym) ? 'tag tag-accent' : 'tag tag-neutral'),
+                // TROIS états, pas deux. Une série non ouverte depuis le démarrage n'est
+                // pas « ancienne » : on ne sait pas, et l'annoncer enverrait ré-exporter
+                // cent quarante-cinq séries qui n'en ont peut-être aucun besoin.
+                bougiesCls: !a ? 'tag tag-outline'
+                  : this.serieComplete(sym) === false ? 'tag tag-neutral' : 'tag tag-accent',
                 bougiesAide: !a
                   ? 'Aucune bougie H1 pour cet instrument : il ne peut pas être scanné. Cochez-le pour l\u2019ajouter à votre liste de téléchargement.'
-                  : this.serieComplete(sym)
-                    ? 'Série COMPLÈTE : elle porte la minute des extrêmes et ce que le prix a fait après le second. Sivula peut promettre le chiffre exact du testeur — les deux lectures s\u2019accordent.'
-                    : 'Série ANCIENNE : elle n\u2019a pas les colonnes qui disent ce qui s\u2019est passé DANS l\u2019heure. Le scan fonctionne, mais sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula doit choisir une convention — d\u2019où un écart entre les deux lectures. Ré-exportez-la avant de valider une configuration pour la production.' };
+                  : this.serieComplete(sym) === true
+                    ? 'Série COMPLÈTE : elle porte la minute des extrêmes. Sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula sait lequel a été touché en premier — les deux lectures s\u2019accordent et le chiffre est celui du testeur.'
+                    : this.serieComplete(sym) === false
+                      ? 'Série ANCIENNE : pas de minute des extrêmes. Le scan fonctionne, mais sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula doit choisir une convention — d\u2019où un écart entre les deux lectures. Ré-exportez-la AVANT de valider une configuration pour la production, pas avant de chercher.'
+                      : 'Bougies présentes. L\u2019état des colonnes ne se connaît qu\u2019à l\u2019ouverture de la série : lancez un test sur cet instrument pour le savoir.' };
             })(),
             aBougies: seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym),
             supprBougiesTxt: this.state.serieSuppr === sym ? 'Confirmer' : 'Supprimer',
