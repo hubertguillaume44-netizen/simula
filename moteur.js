@@ -1048,6 +1048,18 @@ export function backtester(df, cfg) {
   const seauEnt = cfg.signal_seau || null;
   let seauEntre = null;
 
+  // MT5 arrondit TOUT prix au tick du symbole — NormalizeDouble(prix, digits) — avant de
+  // le poser comme stop ou objectif. Le moteur gardait des flottants bruts, et un stop à
+  // 1 576,9098 ne se déclenchait pas sur un bas à 1 576,91 pile.
+  //
+  // Vu au journal du 6 septembre 2026, GOLD ma 7 du 30 janvier 2020 : palier armé à
+  // 1 576,91, la bougie de 08:00 descend exactement à 1 576,91, le robot sort au point
+  // mort et le moteur tient jusqu'à 11:00. Le cas n'est pas rare : avec un stop serré,
+  // les niveaux de palier tombent souvent sur un tick rond, et c'est précisément là que
+  // le prix vient les chercher.
+  const pasPrix = df.grain && df.grain.decimales >= 0 ? Math.pow(10, -df.grain.decimales) : 0;
+  const auTick = pasPrix > 0 ? (v) => Math.round(v / pasPrix) * pasPrix : (v) => v;
+
   const spreadSerie = spreadEnPct(df);
   const spreadDe = (i) => {
     if (!spreadSerie) return spreadReleve;
@@ -1099,7 +1111,7 @@ export function backtester(df, cfg) {
   const niveauSecu = (extreme) => {
     if (trailing) {
       const haut = d * extreme > d * plusHaut ? extreme : plusHaut;
-      const cand = haut * (1 - d * trailing);
+      const cand = auTick(haut * (1 - d * trailing));
       return d * cand > d * sl ? cand : sl;
     }
     if (!etapes.length || d * tp <= d * px) return sl;
@@ -1119,6 +1131,7 @@ export function backtester(df, cfg) {
       const part = Math.min(seuil, parcours) * 0.9;
       const atteint = px + (part / 100) * (tp - px);
       if (d * cand > d * atteint) cand = atteint;
+      cand = auTick(cand);
       if (d * cand > d * nouveau) nouveau = cand;
     }
     return nouveau;
@@ -1383,8 +1396,8 @@ export function backtester(df, cfg) {
     if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
     if (delai && (i - derniere) < delai) continue;
 
-    px = df.o[i] * (1 + d * spreadDe(i));
-    sl0 = px * (1 - d * slPct);
+    px = auTick(df.o[i] * (1 + d * spreadDe(i)));
+    sl0 = auTick(px * (1 - d * slPct));
     // Distance minimale de stop imposée par le courtier (StopsLevel × Point), en unités
     // de PRIX et non en pourcentage : il refuse l'ordre en dessous. C'est une distance
     // absolue, donc son poids relatif dépend du cours — sur BITCOIN elle vaut 200,00,
@@ -1398,7 +1411,7 @@ export function backtester(df, cfg) {
     // un minimum annoncé de 200,00. L'écart est exactement le spread de l'instrument.
     if (stopMini > 0 && Math.abs(df.o[i] - sl0) < stopMini) continue;
     sl = sl0;
-    tp = px + (px - sl0) * rr;
+    tp = auTick(px + (px - sl0) * rr);
     enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? exL[i] : exH[i];
     slVoulu = sl0;
     ambiguTrade = false;
