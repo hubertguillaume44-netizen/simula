@@ -328,6 +328,21 @@ test("la sortie est journalisée, avec ses frais séparés", () => {
   assert.equal(s0.motif, "DEAL_REASON_TP");
 });
 
+test("le spread écrit est celui de la PREMIÈRE M1 de l'heure, pas de l'heure pile", () => {
+  // Exiger l'égalité d'horodatage ratait la bougie d'ouverture de la journée : la séance
+  // de #Germany40 ouvre à 03:31, il n'existe donc aucune M1 à 03:00, et l'export
+  // retombait sur l'agrégat H1 — la valeur basse et tardive — au lieu du spread
+  // d'ouverture que le robot paie. Mesuré sur le journal du 6 septembre 2026 : 45
+  // spreads sur 462 s'écartaient de ce que lit le robot, TOUS sur la bougie de 03:00,
+  // jusqu'à 38 fois trop bas (0,00100 écrit contre 0,03793 payé). Sur GOLD, 16 sur
+  // 2 933, tous à 00:00 ou 01:00.
+  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  assert.match(src, /if\(iM1 < nM1 && m1\[iM1\]\.time < r\[i\]\.time \+ 3600\) sp = m1\[iM1\]\.spread;/,
+    "le spread n'est pas repris sur la première M1 de l'heure");
+  assert.doesNotMatch(src, /m1\[iM1\]\.time == r\[i\]\.time\) sp =/,
+    "l'égalité stricte d'horodatage est revenue : la bougie d'ouverture retombera sur l'agrégat H1");
+});
+
 test("la séance se lit en chevauchement, et seulement dans l'état d'heure d'été de l'export", () => {
   // SymbolInfoSessionTrade ne rend que la table du JOUR de l'export, et les deux tables
   // du courtier ne se déduisent pas l'une de l'autre. Mesuré sur le journal

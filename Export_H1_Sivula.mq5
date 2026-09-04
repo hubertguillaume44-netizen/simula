@@ -252,7 +252,17 @@ bool Exporter(string sym)
       // les deux séries sont croissantes : une seule passe suffit
       while(iM1 < nM1 && m1[iM1].time < r[i].time) iM1++;
       int sp = r[i].spread;
-      if(iM1 < nM1 && m1[iM1].time == r[i].time) sp = m1[iM1].spread;
+      // La PREMIÈRE M1 de l'heure, pas celle dont l'horodatage égale l'heure pile.
+      //
+      // Exiger l'égalité ratait la bougie d'ouverture de la journée : la séance de
+      // #Germany40 ouvre à 03:31, il n'existe donc AUCUNE M1 à 03:00, et l'export
+      // retombait sur l'agrégat H1 — la valeur basse et tardive — au lieu du spread
+      // d'ouverture que le robot paie. Mesuré sur le journal du 6 septembre 2026 :
+      // 45 spreads sur 462 s'écartaient de ce que lit le robot, TOUS sur la bougie de
+      // 03:00, jusqu'à 38 fois trop bas — 0,00100 écrit contre 0,03793 payé. Sur GOLD,
+      // 16 sur 2 933, tous à 00:00 ou 01:00. Le moteur croyait donc pouvoir entrer à
+      // l'ouverture là où le robot refusait, plafond dépassé.
+      if(iM1 < nM1 && m1[iM1].time < r[i].time + 3600) sp = m1[iM1].spread;
       else sansM1++;
 
       // ORDRE DES EXTRÊMES — la minute du plus haut et celle du plus bas.
