@@ -3017,6 +3017,17 @@
             <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btDelai }}" onChange="{{ setDelai }}">
             <span style="font-size:12px" class="text-muted">0 = sans limite</span>
           </div>
+
+          <div style="display:grid;grid-template-columns:1.7fr .8fr 1fr 1fr;gap:8px;font-size:13px;align-items:center">
+            <span style="font-size:14px">Fenêtre d'entrée<span class="aide" title="{{ aideFenetre }}">?</span></span>
+            <span style="font-size:12px" class="text-muted">heures serveur</span>
+            <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" min="0" max="24" value="{{ btFenDeb }}" onChange="{{ setFenDeb }}">
+            <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" min="0" max="24" value="{{ btFenFin }}" onChange="{{ setFenFin }}">
+          </div>
+          <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:8px">
+            <span></span>
+            <span style="font-size:12px;grid-column:span 1" class="text-muted">{{ fenetreInfo }}</span>
+          </div>
           </div>
         </div>
 
@@ -3412,7 +3423,7 @@ const moisAn = (ms) => {
 class Component extends DCLogic {
   state = { tab: 'accueil', layout: null, montant: null, capital: 76020, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
-    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFrais: true,
+    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
     fPente: false, fPenteRecul: 3, fPivot: false, regime: null, regimeEnCours: false,
     zoneMarche: 'us', regimes: {}, regimeZone: null, symOuvert: null, symTout: null, triCumul: 'total',
@@ -3943,7 +3954,11 @@ class Component extends DCLogic {
     })();
     let txt = null;
     try {
-      txt = mod.genererMQ5(v, { risquePct: Number(this.state.risquePct) || 1,
+      // La fenêtre d'entrée voyage AVEC la ligne, pas avec l'état courant : un robot
+      // exporté depuis une mesure faite sans fenêtre ne doit pas hériter d'une fenêtre
+      // saisie après coup. `etatDeLigne` rend les réglages de la mesure elle-même.
+      const cfgRobot = { ...v, heures_entree: { debut: Number(etat.btFenDeb) || 0, fin: Number(etat.btFenFin) || 0 } };
+      txt = mod.genererMQ5(cfgRobot, { risquePct: Number(this.state.risquePct) || 1,
         ut: v.ut || etat.ut || this.state.ut, hasard, etat, spreadMaxPct, stamp, magic,
         spreadFacteur: this.facteurSpread(),
         mesureVieille: (v._mv || 'e1') !== this.MOTEUR_V,
@@ -7219,6 +7234,10 @@ GROUPES = {
           : { type: 'be_progressif', etapes: this.paliers(s) },
       },
       frais: s.btFrais ? this.fraisDe(sym || s.btSym) : { spread_pct: 0, swap_annuel_pct: 0, commission_pct: 0 },
+      // Fenêtre horaire d'ENTRÉE : elle porte sur la bougie où l'ordre part, pas sur la
+      // bougie de décision — un filtre `horaire` sur une décision D1 serait évalué sur
+      // des bougies toutes à 00:00. Début égal à fin : inactive.
+      heures_entree: { debut: Number(s.btFenDeb) || 0, fin: Number(s.btFenFin) || 0 },
       debut: this.DEBUT,
     };
   }
@@ -8555,7 +8574,7 @@ GROUPES = {
     return { ...etat,
       btMtf: false, fRsi: false, fAdx: false, fNuage: false, fPente: false,
       fPivot: false, fResist: false, fZone: false, fMa: false,
-      btDureeMax: 0, btSens: 'achat', secuPrudent: false, btBE: false, btDelai: 0 };
+      btDureeMax: 0, btSens: 'achat', secuPrudent: false, btBE: false, btDelai: 0, btFenDeb: 0, btFenFin: 0 };
   }
   // Lecture basse des lignes AFFICHÉES, calculée à la demande.
   //
@@ -9345,7 +9364,7 @@ GROUPES = {
   }
   // tout ce qui change un résultat : sauvegardé et restauré en bloc, jamais champ par champ
   REGLAGES = ['btSym', 'ut', 'btEntree', 'btLigne', 'btPeriode', 'btSL', 'btRR', 'risquePct',
-    'btMtf', 'utMtf', 'ligneMtf', 'periodeMtf', 'btBE', 'btFrais', 'btDelai',
+    'btMtf', 'utMtf', 'ligneMtf', 'periodeMtf', 'btBE', 'btFrais', 'btDelai', 'btFenDeb', 'btFenFin',
     'fRsi', 'utRsi', 'periodeRsi', 'fRsiSeuil',
     'fAdx', 'utAdx', 'periodeAdx', 'fAdxSeuil', 'fNuage', 'utNuage',
     'fMa', 'utMa', 'periodeMa',
@@ -12266,6 +12285,18 @@ GROUPES = {
       aideSecu: 'Déplace le stop pendant que le trade avance. Par paliers : le stop saute à un niveau fixe quand un pourcentage du chemin vers l\u2019objectif est atteint. Suiveur : il colle au plus haut atteint et ne redescend jamais.',
       aideFrais: 'Spread et swap, rapportés au risque du trade. Sans eux le résultat est brut, donc optimiste de plusieurs points de R sur quelques centaines de trades.',
       aideDelai: 'Nombre minimum de bougies entre deux entrées, pour ne pas empiler dix positions sur le même mouvement.',
+      aideFenetre: 'Heures serveur pendant lesquelles l\u2019ordre peut partir. La fin est EXCLUE : 6 et 22 autorisent de 06:00 à 21:59. '
+        + 'Début égal à fin : aucune restriction. Le signal n\u2019est pas perdu quand l\u2019heure est exclue — l\u2019entrée attend la première heure admise du MÊME jour, '
+        + 'comme sous le plafond de spread. Attention : sur les huit configurations de référence, restreindre à 6-22 fait PERDRE de l\u2019argent sept fois sur huit '
+        + '(99 R au total contre −15 R) : les heures écartées coûtent quelques centièmes de pour cent de spread, et le cours bouge davantage pendant les heures d\u2019attente.',
+      btFenDeb: s.btFenDeb, btFenFin: s.btFenFin,
+      fenetreInfo: (() => {
+        const d = Number(s.btFenDeb) || 0, f = Number(s.btFenFin) || 0;
+        if (d === f) return 'aucune restriction — le plafond de spread écarte déjà, tout seul, les heures où l\u2019entrée coûte cher';
+        const hh = (h) => (h < 10 ? '0' + h : h) + ' h';
+        return 'entrées de ' + hh(d) + ' à ' + hh(f) + ' exclue' + (d < f ? '' : ' (passage par minuit)')
+          + ' — les signaux hors fenêtre attendent, ils ne sont pas perdus';
+      })(),
       calcRegime: () => this.calcRegime(),
       sauverBacktest: () => this.sauverBacktest(),
       sauverScan: () => this.sauverScan(),
@@ -12428,6 +12459,8 @@ GROUPES = {
       setSL: (e) => this.maj({ btSL: Number(e.target.value) }),
       setRR: (e) => this.maj({ btRR: Number(e.target.value) }),
       setDelai: (e) => this.maj({ btDelai: Number(e.target.value) }),
+      setFenDeb: (e) => this.maj({ btFenDeb: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
+      setFenFin: (e) => this.maj({ btFenFin: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
       setCroisement: () => this.maj({ btEntree: 'croisement_prix' }),
       toggleMtf: () => this.maj({ btMtf: !s.btMtf }),
       toggleBE: () => this.maj({ btBE: !s.btBE }),

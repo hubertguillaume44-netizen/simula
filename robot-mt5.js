@@ -99,6 +99,13 @@ export function genererMQ5(cfg, ctx = {}) {
   // le facteur du plafond de spread : le MÊME que celui de la mesure, sinon le robot
   // n'attend pas les mêmes bougies que le moteur et n'entre pas au même moment.
   const facteurSpread = nb(ctx.spreadFacteur, 0).toFixed(2);
+  // Fenêtre horaire d'ENTRÉE, portée telle quelle depuis cfg.heures_entree du moteur.
+  // Elle DOIT voyager avec la configuration : un réglage qui existe dans Sivula et pas
+  // dans le robot est exactement la classe d'écart que ce harnais passe son temps à
+  // traquer. Début égal à fin = fenêtre inactive, comme dans le moteur.
+  const fen = cfg.heures_entree || {};
+  const fenD = Math.min(23, Math.max(0, Math.round(nb(fen.debut, 0))));
+  const fenF = Math.min(24, Math.max(0, Math.round(nb(fen.fin, 0))));
   // La mesure inscrite dans l'en-tête et dans le tableau de bord vient de la ligne validée.
   // Si elle a été produite sous une règle de moteur antérieure, le robot ne doit pas la
   // présenter comme sa référence : c'est ce chiffre que l'utilisateur compare à son vécu.
@@ -210,6 +217,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  Filtres générés : ${resume.length ? esc(resume.join(' · ')) : 'aucun'}
 //|  Paliers         : ${paliers.length ? paliers.map((x) => x[0] + '→' + x[1]).join(' / ') : 'aucun'}
 //|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des spreads d\'ouverture des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
+//|  Fenêtre entrée  : ${fenD === fenF ? 'aucune (toutes les heures)' : String(fenD).padStart(2, '0') + ' h → ' + String(fenF).padStart(2, '0') + ' h exclue, heures serveur'}
 //|  Durée maximale  : ${nb(etat.btDureeMax, 0) > 0 ? nb(etat.btDureeMax, 0) + ' bougies H1' : 'aucune'}
 //|  Mesuré          : ${nb(cfg.n, 0)} trades · ${nb(cfg.total, 0)} R cumulés · ${nb(cfg.rAn, 0).toFixed(1)} R/an${mesureVieille ? ' — MESURE ANTÉRIEURE À LA RÈGLE ACTUELLE, à remesurer' : ''}
 //|  Contrôle hasard : ${esc(ctx.hasard || 'non contrôlé')}
@@ -245,6 +253,8 @@ input int    InpTaillePolice    = 9;      // Taille du texte du tableau de bord
 // jour qui repasse sous le plafond. 0 = aucune limite.
 input double InpSpreadFacteur    = ${facteurSpread};  // Plafond = ce facteur × médiane récente du spread (0 = pas de limite)
 input double InpSpreadMaxPct    = 0;  // Plafond ABSOLU en % du prix, s'ajoute au précédent (0 = pas de limite ; relevé : ${spreadMax.toFixed(4)})
+input int    InpHeureEntreeDeb  = ${fenD};  // Fenêtre d'ENTRÉE : heure serveur de début (début = fin : inactive)
+input int    InpHeureEntreeFin  = ${fenF};  // Fenêtre d'ENTRÉE : heure serveur de fin, EXCLUE (23 → jusqu'à 22:59)
 input int    InpMaxPositions    = 1;     // Positions simultanées sur cet instrument
 input bool   InpPasDebutSemaine = true;  // Interdire dimanche et les premières heures du lundi
 input int    InpSlippagePoints  = 20;    // Déviation maximale acceptée
@@ -846,6 +856,29 @@ bool ExecutionAutorisee()
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
    double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
    if(ask <= 0.0 || bid <= 0.0) { g_confRefus = "pas de cotation"; return false; }
+
+   // Fenêtre horaire d'entrée. L'heure jugée est celle de la BOUGIE H1 en cours, pas
+   // celle de TimeCurrent() : c'est la grandeur que le moteur lit dans df.t[i]. Les
+   // deux coïncident dans le testeur, mais seul le temps de la bougie le garantit.
+   // Comme sous le plafond de spread, un refus ne perd pas le signal — le seau reste
+   // en attente et l'entrée repart à la première heure de la fenêtre.
+   if(InpHeureEntreeDeb != InpHeureEntreeFin)
+   {
+      datetime hFen[];
+      if(CopyTime(_Symbol, PERIOD_H1, 0, 1, hFen) == 1)
+      {
+         MqlDateTime sFen; TimeToStruct(hFen[0], sFen);
+         bool dedans = InpHeureEntreeDeb < InpHeureEntreeFin
+            ? (sFen.hour >= InpHeureEntreeDeb && sFen.hour < InpHeureEntreeFin)
+            : (sFen.hour >= InpHeureEntreeDeb || sFen.hour < InpHeureEntreeFin);
+         if(!dedans)
+         {
+            g_confRefus = StringFormat("hors fenêtre d'entrée %d-%d (heure %d)",
+                                       InpHeureEntreeDeb, InpHeureEntreeFin, sFen.hour);
+            return false;
+         }
+      }
+   }
 
    double spreadPct = (ask - bid) / ask * 100.0;
    if(InpSpreadMaxPct > 0.0 && spreadPct > InpSpreadMaxPct)

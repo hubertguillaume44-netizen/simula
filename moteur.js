@@ -1619,7 +1619,23 @@ export function backtesterSuivi(df, cfg, ut) {
   const sess = df.sess;
   const traitable = (i) => !sess || sess[i] !== 0;
   const sousPlafond = (i) => !seuil || seuil[i] <= 0 || (sp[i] > 0 && sp[i] <= seuil[i]);
-  const acceptable = (i) => traitable(i) && sousPlafond(i);
+  // Fenêtre horaire d'ENTRÉE — troisième condition, du même genre que les deux autres :
+  // elle porte sur la bougie où l'ordre part, pas sur la bougie de décision. Un filtre
+  // `horaire` ordinaire ne peut pas faire ce travail : sur une décision D1 il est
+  // évalué sur la série agrégée, dont toutes les bougies sont à 00:00 — il garderait
+  // tout ou ne garderait rien. Ici le signal n'est pas perdu quand l'heure est exclue,
+  // il attend la première bougie du MÊME jour qui rentre dans la fenêtre, exactement
+  // comme sous le plafond de spread. Bornes en heures serveur, fin EXCLUSIVE, et le
+  // passage par minuit est admis (22 → 6).
+  const fenH = cfg.heures_entree;
+  const hD = fenH ? Number(fenH.debut) : 0, hF = fenH ? Number(fenH.fin) : 0;
+  const dansFenetre = !fenH || !Number.isFinite(hD) || !Number.isFinite(hF) || hD === hF
+    ? () => true
+    : (i) => {
+      const h = new Date(df.t[i]).getUTCHours();
+      return hD < hF ? (h >= hD && h < hF) : (h >= hD || h < hF);
+    };
+  const acceptable = (i) => traitable(i) && sousPlafond(i) && dansFenetre(i);
 
   const parSeau = new Map();
   for (let i = df.n - 1; i >= 0; i--) {

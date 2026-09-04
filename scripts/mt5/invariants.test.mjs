@@ -921,3 +921,51 @@ test("« meilleurs jours » : le moteur dit quand il n'y a rien à conclure", ()
   assert.equal(M.stabilitePeriode(bruit.slice(0, 10), "jour"), null,
     "la stabilité doit refuser de conclure sous vingt trades");
 });
+
+test("la fenêtre horaire d'entrée décale l'entrée, elle ne perd pas le signal", () => {
+  // Une fenêtre d'entrée n'est PAS un filtre horaire ordinaire, et le confondre avec un
+  // filtre est la seule façon de se tromper ici. Un filtre `horaire` porte sur la bougie
+  // de DÉCISION : sur une décision D1, toutes les bougies agrégées sont à 00:00, donc il
+  // garderait tout ou ne garderait rien. La fenêtre, elle, porte sur la bougie où
+  // l'ORDRE part, exactement comme le plafond de spread — et comme lui, un refus ne perd
+  // pas le signal : le seau reste en attente et l'entrée repart à la première heure
+  // admise du MÊME jour.
+  const n = 24 * 300;
+  const t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 100, a = 20260904;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.01;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.002); l.push(Math.min(ouv, px) * 0.998);
+    sp.push(10);
+  }
+  const df = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const base = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [] });
+  const libre = M.backtesterSuivi(df, base, "D1");
+  assert.ok(libre.length > 20, "gabarit sans trades : le test ne prouve rien");
+  assert.ok(libre.some((x) => new Date(x.entree_t).getUTCHours() < 8),
+    "aucune entrée avant 8 h sans fenêtre : la fenêtre ne prouverait rien");
+
+  const dans = M.backtesterSuivi(df, { ...base, heures_entree: { debut: 8, fin: 20 } }, "D1");
+  for (const x of dans) {
+    const hh = new Date(x.entree_t).getUTCHours();
+    assert.ok(hh >= 8 && hh < 20, `entrée à ${hh} h hors de la fenêtre 8-20`);
+  }
+  // le signal est DÉCALÉ, pas perdu : la très grande majorité des journées survit
+  assert.ok(dans.length > libre.length * 0.8,
+    `${dans.length} trades contre ${libre.length} : la fenêtre perd le signal au lieu de le décaler`);
+
+  // début égal à fin : fenêtre inactive, résultat identique au libre
+  const inactive = M.backtesterSuivi(df, { ...base, heures_entree: { debut: 0, fin: 0 } }, "D1");
+  assert.equal(inactive.length, libre.length, "début = fin doit désactiver la fenêtre");
+
+  // le passage par minuit est admis (22 → 6) et ne garde que ces heures-là
+  const nuit = M.backtesterSuivi(df, { ...base, heures_entree: { debut: 22, fin: 6 } }, "D1");
+  for (const x of nuit) {
+    const hh = new Date(x.entree_t).getUTCHours();
+    assert.ok(hh >= 22 || hh < 6, `entrée à ${hh} h hors de la fenêtre 22-6`);
+  }
+});

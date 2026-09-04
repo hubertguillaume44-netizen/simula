@@ -334,3 +334,21 @@ test("cfg.fin arrête les ENTRÉES sans tronquer les positions ouvertes", () => 
     assert.equal(borne[i].sortie_t, avant[i].sortie_t, "une sortie a été tronquée par la borne");
   }
 });
+
+test("la fenêtre horaire d'entrée voyage jusqu'au robot, et son refus porte un motif", () => {
+  // Un réglage qui existe dans Sivula et pas dans le MQL5 fait diverger les deux au
+  // moment même où l'utilisateur croit les avoir alignés. La fenêtre doit donc arriver
+  // dans les `input`, et le refus doit être NOMMÉ : un `return false` muet dans
+  // ExecutionAutorisee() a déjà coûté 2 947 refus inexplicables sur GOLD.
+  const src = genererMQ5({ ...CFG, heures_entree: { debut: 8, fin: 20 } }, CTX);
+  assert.match(src, /input int\s+InpHeureEntreeDeb\s+=\s+8;/);
+  assert.match(src, /input int\s+InpHeureEntreeFin\s+=\s+20;/);
+  assert.ok(src.includes("hors fenêtre d'entrée"), "refus sans motif nommé");
+  // l'heure jugée est celle de la BOUGIE H1, pas TimeCurrent() — c'est ce que lit le moteur
+  assert.match(src, /CopyTime\(_Symbol, PERIOD_H1, 0, 1, hFen\)/);
+
+  // absente, la fenêtre est inactive des deux côtés : début = fin = 0
+  const sans = genererMQ5(CFG, CTX);
+  assert.match(sans, /input int\s+InpHeureEntreeDeb\s+=\s+0;/);
+  assert.match(sans, /input int\s+InpHeureEntreeFin\s+=\s+0;/);
+});
