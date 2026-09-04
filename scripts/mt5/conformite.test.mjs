@@ -12,7 +12,7 @@ import { etatDepuisReference } from "./etat-depuis-reference.mjs";
 import { contexteRapport, lireRapportMt5 } from "./parse-mt5.mjs";
 import { readFileSync } from "node:fs";
 import { chargerMoteur } from "./charger-moteur.mjs";
-import { construireConfig } from "./config.mjs";
+import { construireConfig, mirroirVente } from "./config.mjs";
 
 const M = await chargerMoteur();
 
@@ -326,6 +326,31 @@ test("la sortie est journalisée, avec ses frais séparés", () => {
   assert.equal(s0.swap, -4.2);
   assert.equal(s0.commission, -1.1);
   assert.equal(s0.motif, "DEAL_REASON_TP");
+});
+
+test("le miroir de vente traite le sens ABSENT comme le défaut du moteur", () => {
+  // Un filtre sans champ `sens` vaut `au_dessus` (ou `hausse` pour la pente). L'oublier
+  // laissait l'inversion sans effet : le filtre `tendance_mtf` de GOLD n'en porte pas,
+  // et le moteur exigeait donc la clôture AU-DESSUS de la ligne sur une vente à
+  // découvert, quand le robot la voulait en dessous. Mesuré sur le journal du
+  // 6 septembre 2026 : 538 journées de désaccord sur 1 719, toutes dans le même sens,
+  // et 62 trades côté moteur contre 503 côté testeur. Corrigé : 502 contre 503.
+  const m = mirroirVente([{ type: "tendance_mtf", ut: "D1", ligne: "mediane", periode: 5 }]);
+  assert.equal(m[0].sens, "en_dessous", "un filtre sans sens n'est pas inversé");
+  assert.equal(mirroirVente([{ type: "pente", recul: 20 }])[0].sens, "baisse");
+  assert.equal(mirroirVente([{ type: "pente", recul: 20, sens: "baisse" }])[0].sens, "hausse");
+  // l'ADX mesure la force, pas la direction : il ne s'inverse pas
+  assert.equal(mirroirVente([{ type: "adx", seuil: 25, sens: "au_dessus" }])[0].sens, "au_dessus");
+  // le RSI s'inverse par son seuil
+  const r = mirroirVente([{ type: "rsi", seuil: 55, sens: "au_dessus" }])[0];
+  assert.equal(r.seuil, 45);
+  assert.equal(r.sens, "en_dessous");
+  // les filtres de résistance n'ont pas d'équivalent vendeur
+  assert.equal(mirroirVente([{ type: "sous_resistance" }, { type: "zone_resistance" }]).length, 0);
+  // et construireConfig l'applique de lui-même
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5, sl: 1, rr: 2,
+    sens: "vente", filtres: [{ type: "tendance_mtf", ut: "D1", ligne: "mediane", periode: 5 }] });
+  assert.equal(cfg.filtres[0].sens, "en_dessous");
 });
 
 test("le spread écrit est celui de la PREMIÈRE M1 de l'heure, pas de l'heure pile", () => {

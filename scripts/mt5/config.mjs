@@ -40,12 +40,19 @@ export function mirroirVente(filtres) {
   for (const f of filtres || []) {
     if (f.type === "sous_resistance" || f.type === "zone_resistance") continue;
     if (f.type === "adx" || f.type === "horaire" || f.type === "delai_bougies") { out.push(f); continue; }
-    if (f.type === "pente") { out.push({ ...f, sens: f.sens === "baisse" ? "hausse" : "baisse" }); continue; }
+    // Le sens ABSENT vaut le défaut du moteur — `au_dessus` pour les filtres de niveau,
+    // `hausse` pour la pente. Sans ce défaut, l'inversion laissait le filtre inchangé :
+    // le filtre `tendance_mtf` de GOLD n'a pas de champ `sens`, et le moteur exigeait
+    // donc la clôture AU-DESSUS de la ligne sur une vente à découvert, quand le robot la
+    // voulait en dessous. 538 journées de désaccord sur 1 719, toutes dans le même sens.
+    const au = (f.sens || "au_dessus") === "au_dessus";
+    const haut = (f.sens || "hausse") === "hausse";
+    if (f.type === "pente") { out.push({ ...f, sens: haut ? "baisse" : "hausse" }); continue; }
     if (f.type === "rsi") {
-      out.push({ ...f, seuil: 100 - Number(f.seuil), sens: f.sens === "au_dessus" ? "en_dessous" : "au_dessus" });
+      out.push({ ...f, seuil: 100 - Number(f.seuil), sens: au ? "en_dessous" : "au_dessus" });
       continue;
     }
-    out.push({ ...f, sens: f.sens === "au_dessus" ? "en_dessous" : "au_dessus" });
+    out.push({ ...f, sens: au ? "en_dessous" : "au_dessus" });
   }
   return out;
 }
