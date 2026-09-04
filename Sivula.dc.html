@@ -4540,6 +4540,32 @@ class Component extends DCLogic {
     // écrasait le résultat frais par l'ancien bloc — c'est ainsi qu'un scan terminé
     // « ne s'affichait pas », ses lignes remplacées par celles d'avant.
     this._poseT = Date.now();
+    // Les lignes font FOI, jamais un compteur enregistré.
+    //
+    // Supprimer un scan retirait son entrée de la liste, mais rien ne confrontait le
+    // total stocké aux lignes restantes : des lignes rattachées à des scans disparus
+    // survivaient — invisibles dans la liste, comptées dans le total, et servies aux
+    // curseurs de filtrage. Relevé en usage : 892 configurations annoncées dont 720
+    // orphelines, soit 81 % d'un écran qui prétendait décrire deux scans.
+    //
+    // Toute pose est donc l'occasion d'un ménage : on écarte les lignes dont le scan
+    // n'existe plus, et le compte de chaque scan est RECALCULÉ depuis les lignes.
+    // C'est le seul endroit qui pose un scan à l'écran, donc le seul à corriger.
+    const arch = (suite && suite.archives) || this.state.archives || [];
+    const vivants = new Set(arch.map((a) => a.id));
+    const vivant = (r) => r._sid === undefined || r._sid === null || vivants.has(r._sid);
+    // sans archive, on ne sait rien attribuer : on ne jette rien plutôt que tout
+    const filtrer = (l) => (!l || !vivants.size ? l : l.filter(vivant));
+    scan = filtrer(scan);
+    courant = filtrer(courant);
+    if (vivants.size && Array.isArray(arch) && scan) {
+      const compte = new Map();
+      for (const r of scan) if (r._sid !== undefined) compte.set(r._sid, (compte.get(r._sid) || 0) + 1);
+      for (const a of arch) {
+        const n = compte.get(a.id);
+        if (n !== undefined && a.retenues !== n) a.retenues = n;
+      }
+    }
     this._scanBrut = scan && scan.length ? scan : null;
     this._courantBrut = courant && courant.length ? courant : null;
     this._memo = null; this._parSym = null; this._nuitsMoy = undefined;
