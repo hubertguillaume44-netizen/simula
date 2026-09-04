@@ -2220,7 +2220,8 @@
             <button type="button" class="{{ oc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="{{ oc.aide }}" onClick="{{ oc.choisir }}">{{ oc.nom }}</button>
           </sc-for>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-bottom:6px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration, dans la colonne « peut aller au portefeuille ? ». Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n'est mesurable. Montez-le et la case redevient cliquable pour refaire le contrôle plus finement — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
           <button type="button" class="{{ plusCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ basculerPlus }}" title="Sept colonnes de plus (R par an, profit factor, pire creux, durée moyenne, segments positifs, hors échantillon, avant / après), le détail des réglages de chaque ligne, et le panneau de contrôle du hasard en série. Tout cela sert à creuser un résultat, pas à décider : la décision tient dans les deux dernières colonnes.">{{ plusTxt }}</button>
         </div>
         <div style="overflow:auto;max-height:70vh">
@@ -3899,7 +3900,10 @@ class Component extends DCLogic {
         'Le moment d\u2019entrée bat le hasard (' + dit + '), mais un des cinq contrôles ne passe pas : ' + (w.motifAide || '')]
       : ['non', 'tag tag-neutral',
         'Ni les cinq contrôles ni le contrôle du hasard ne sont concluants — ' + dit + '.'];
-    return { txt: d[0], cls: d[1], aide: d[2], vert: d[1] === 'tag tag-accent', controle: fin };
+    return { txt: d[0], cls: d[1], aide: d[2], vert: d[1] === 'tag tag-accent', controle: fin,
+      // la finesse du contrôle lu : c'est elle qui dit s'il reste quelque chose à gagner
+      // en relançant le tirage à un nombre plus élevé
+      tirages: h ? h.tirages : 0 };
   }
   // Une cellule de contrôle : le chiffre s'il est en mémoire, sinon un tiret. Jamais
   // calculée au rendu — charger la série de chaque ligne figerait la page.
@@ -15287,7 +15291,14 @@ GROUPES = {
               // tous, et qui ne peut donc plus se contredire d'un endroit à l'autre.
               const dec = this.decisionDe(r, v);
               const fin = dec.controle;
-              const controlable = !fin && !r.sansDonnees && (Number(r.n) || 0) >= 5;
+              // Le champ « tirages au hasard » commande la finesse. Tant qu'il demande
+              // plus que ce qui est enregistré, la case reste un bouton : c'est ainsi
+              // qu'on tranche un cas serré, sans rien avoir à effacer. Une ligne déjà
+              // contrôlée au nombre demandé n'a plus rien à recalculer — le tirage est
+              // déterministe, le refaire redonnerait le même chiffre.
+              const tDem = Math.max(200, Number(s.nTirages) || 200);
+              const plusFin = tDem > (dec.tirages || 0);
+              const controlable = plusFin && !r.sansDonnees && (Number(r.n) || 0) >= 5;
               return {
                 // la case de décision EST le bouton de contrôle tant que rien n'est mesuré
                 hasardIci: !!s.hasardEnCours && s.hasardUne === this.cleFine(r),
@@ -15298,7 +15309,9 @@ GROUPES = {
                   this.controlerUne(r); },
                 hasA: A.txt, hasACls: A.cls, hasAAide: A.aide, hasAVerdict: A.verdict || '',
                 hasB: B.txt, hasBCls: B.cls, hasBAide: B.aide, hasBVerdict: B.verdict || '',
-                decTxt: dec.txt, decCls: dec.cls, decAide: dec.aide };
+                decTxt: dec.txt, decCls: dec.cls,
+                decAide: dec.aide + (fin && plusFin
+                  ? ' Cliquez pour refaire le contrôle à ' + tDem.toLocaleString('fr-FR') + ' tirages.' : '') };
             })(),
             variante: r.filtreNom || (r.filtre ? this.nomVariante(r.filtre) : ''),
             aVariante: !!(r.filtreNom || r.filtre),
