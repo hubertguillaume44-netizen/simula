@@ -82,7 +82,9 @@ export function mesurerVariante(df, v, periodes, sls, rrs) {
   for (const p of periodes) for (const sl of sls) for (const rr of rrs) {
     let trades;
     try {
-      trades = M.backtester(df, appliquer(v.cfg, p, sl, rr));
+      // `df` est la série H1 : le suivi de position se fait à ce pas, la décision
+      // reste lue sur la bougie de `v.ut`. Voir moteur.js/backtesterSuivi.
+      trades = M.backtesterSuivi(df, appliquer(v.cfg, p, sl, rr), v.ut);
     } catch (e) { echecs.push(v.sym + ' ' + p + '/' + sl + '/' + rr); continue; }
     const base = { sym: v.sym, entree: v.entree, ligne: v.ligne, filtre: v.filtre,
       filtreNom: v.filtreNom, sens: v.sens, periode: p, sl, rr,
@@ -106,6 +108,9 @@ export function mesurerVariante(df, v, periodes, sls, rrs) {
       n: r.n, total: r.total, rAn: r.rAn, dd: r.dd,
       positifs: sg.positifs, segTotal: sg.total, pf: r.pf, winRate: r.winRate,
       nGains: r.nGains, nPertes: r.nPertes, neutres: r.neutres, ambigus: r.ambigus,
+      // sorties reposant sur un palier armé dans leur propre bougie : le seul écart
+      // qui subsiste face au testeur MT5, et il est optimiste
+      exposes: r.exposes,
       // trades sortis par le trailing dans la bougie de leur propre plus haut
       sommets: r.sommets,
       t0: trades[0].entree_t, t1: trades[trades.length - 1].sortie_t,

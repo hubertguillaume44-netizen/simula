@@ -2257,7 +2257,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture, pas de la donnée.">{{ tr2.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
+                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.n }}</td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.total }}<sc-if value="{{ tr2.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ tr2.jumCouleur }}" title="{{ tr2.jumAide }}">{{ tr2.jumTxt }}</span></sc-if></td>
                 <td style="text-align:center;white-space:nowrap">{{ tr2.rAn }}</td>
@@ -3017,6 +3017,17 @@
             <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" value="{{ btDelai }}" onChange="{{ setDelai }}">
             <span style="font-size:12px" class="text-muted">0 = sans limite</span>
           </div>
+
+          <div style="display:grid;grid-template-columns:1.7fr .8fr 1fr 1fr;gap:8px;font-size:13px;align-items:center">
+            <span style="font-size:14px">Fenêtre d'entrée<span class="aide" title="{{ aideFenetre }}">?</span></span>
+            <span style="font-size:12px" class="text-muted">heures serveur</span>
+            <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" min="0" max="24" value="{{ btFenDeb }}" onChange="{{ setFenDeb }}">
+            <input class="input" style="min-height:2rem;height:2rem;padding:2px 8px;font-size:13px" type="number" min="0" max="24" value="{{ btFenFin }}" onChange="{{ setFenFin }}">
+          </div>
+          <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:8px">
+            <span></span>
+            <span style="font-size:12px;grid-column:span 1" class="text-muted">{{ fenetreInfo }}</span>
+          </div>
           </div>
         </div>
 
@@ -3041,7 +3052,10 @@
           <span style="font-size:14px" class="text-muted">en {{ btN }} trades, sur {{ btAnnees }}</span>
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
+          <span class="tag {{ btBandeTag }}" title="Le total affiché est celui d'UNE lecture. L'autre lecture existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : confronté au testeur sur GOLD sans palier, le moteur rend 73,4 contre 73,1. Une bande large ne l'est pas : sur la même série AVEC paliers elle vaut 80 R, et il n'y a pas de chiffre unique à annoncer.">{{ btBande }}</span>
           <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
+          <span style="display:block;font-size:12px;opacity:.85" title="Résultat moyen par jour de la semaine, et verdict : un jour ne vaut d'être filtré que s'il s'écarte du hasard ET que son classement tient sur la seconde moitié de l'historique. Mesuré sur six configurations dont deux à plus de 500 trades, aucun jour ne passe ce double test.">{{ quandTxt }}</span>
+          <span style="display:block;font-size:12px;color:var(--color-accent-700)" title="Une sortie qui repose sur un palier armé dans la bougie même où elle tombe : le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors optimiste. Confronté douze fois au testeur MT5, une configuration sans aucune sortie exposée rend son chiffre exact aux frais près.">{{ btExposes }}</span>
           <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline">Chiffres périmés — relancez le test</span>
           </sc-if>
@@ -3134,6 +3148,53 @@
             </div>
           </sc-if>
         </div>
+      </section>
+
+      <section class="card blueprint" style="padding:22px 24px;gap:12px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:19px">Confronter au testeur MT5</div>
+        <div style="font-size:13px;line-height:1.5" class="text-muted">
+          Le robot exporté écrit un journal de conformité quand on met <code>InpConformite</code> à <code>true</code> :
+          une ligne par décision, par tentative d'entrée, par entrée, par sortie et par palier.
+          Déposez ce journal ici et Sivula le confronte, journée par journée, à ce que le moteur
+          décide sur la MÊME série et le MÊME réglage. C'est la seule façon de savoir si un chiffre
+          affiché ici est celui que MT5 rendra.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="file" accept=".csv,.log,.txt" onChange="{{ deposerJournal }}">
+          <span style="font-size:12px" class="text-muted">{{ confEtat }}</span>
+        </div>
+        <sc-if value="{{ aConf }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Robot MT5, net</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confRobot }}</div>
+            </div>
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Bande des deux lectures</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confBande }}</div>
+            </div>
+            <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:3px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict</div>
+              <div style="font-family:var(--font-heading);font-weight:600;font-size:22px">{{ confVerdict }}</div>
+            </div>
+          </div>
+          <div style="font-size:13px;line-height:1.6">{{ confDetail }}</div>
+          <sc-if value="{{ aConfDiv }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;line-height:1.6" class="text-muted">
+              <div style="font-weight:600;margin-bottom:4px">Divergences, par nature</div>
+              <sc-for list="{{ confDivergences }}" as="cd" hint-placeholder-count="2">
+                <div style="margin-bottom:6px">
+                  <span style="font-weight:600">{{ cd.n }}</span> · {{ cd.nom }}
+                  <div style="opacity:.8;padding-left:10px">{{ cd.exemple }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </sc-if>
       </section>
     </div>
     </sc-if>
@@ -3410,7 +3471,7 @@ const moisAn = (ms) => {
 class Component extends DCLogic {
   state = { tab: 'accueil', layout: null, montant: null, capital: 76020, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
-    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFrais: true,
+    btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '', bande: null,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
     fPente: false, fPenteRecul: 3, fPivot: false, regime: null, regimeEnCours: false,
     zoneMarche: 'us', regimes: {}, regimeZone: null, symOuvert: null, symTout: null, triCumul: 'total',
@@ -3424,6 +3485,17 @@ class Component extends DCLogic {
     gLignePente: ['mediane'], gPenteRecul: '3 5 8 10 15 20',
     fResist: false, utResist: 'D1', resistLookback: 20, resistMarge: 1,
     _grilleV2: 1, _penteV3: 1, _trailV4: 1, _echV3: 1, ut: 'D1', gPeriodes: '5 6 7 8 9 10 15 20 26',
+    // Sans session enregistrée (première visite), gEchelles restait undefined : les
+    // défauts de DEFAUTS_MULTI ne sont posés que si une session existe. Or la variante
+    // « Paliers progressifs » s'étend sur ce champ — vide, elle ne produit AUCUNE
+    // sous-variante et disparaît du scan en silence, alors que l'interface la montre
+    // sélectionnée. Le scan mesurait donc sans sécurisation, et exportait des robots
+    // qui, eux, gèrent leur stop.
+    gEchelles: '25>0 50>25 75>50 ; 50>0 75>50 ; 25>-25 50>25 75>50',
+    // Plafond de spread à l'entrée, en multiple de la médiane récente. On n'entre pas
+    // sur la bougie du rollover, où le spread vaut trois à huit fois sa normale ; le
+    // signal attend la première bougie du jour qui repasse dessous. 0 = aucun plafond.
+    gSpreadFacteur: 1.5,
     gSls: '0,5 0,6 0,7 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,5 2,0 2,5 3,0',
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
@@ -3930,8 +4002,13 @@ class Component extends DCLogic {
     })();
     let txt = null;
     try {
-      txt = mod.genererMQ5(v, { risquePct: Number(this.state.risquePct) || 1,
+      // La fenêtre d'entrée voyage AVEC la ligne, pas avec l'état courant : un robot
+      // exporté depuis une mesure faite sans fenêtre ne doit pas hériter d'une fenêtre
+      // saisie après coup. `etatDeLigne` rend les réglages de la mesure elle-même.
+      const cfgRobot = { ...v, heures_entree: { debut: Number(etat.btFenDeb) || 0, fin: Number(etat.btFenFin) || 0 } };
+      txt = mod.genererMQ5(cfgRobot, { risquePct: Number(this.state.risquePct) || 1,
         ut: v.ut || etat.ut || this.state.ut, hasard, etat, spreadMaxPct, stamp, magic,
+        spreadFacteur: this.facteurSpread(),
         mesureVieille: (v._mv || 'e1') !== this.MOTEUR_V,
         // les heures que le nettoyage de la mesure a gardées : le robot doit agréger
         // exactement les mêmes bougies, sinon ses D1 ne sont pas celles du backtest
@@ -4837,15 +4914,24 @@ GROUPES = {
         iSL = col('StopsLevel', 'StopLevel'), iFr = col('FreezeLevel'),
         iD = col('Description'), iCh = col('Path', 'Chemin'),
         iDv = col('CurrencyProfit', 'DeviseProfit');
-      // MT5 SwapMode : 1 = points, 5/6 = intérêt annuel en %. MT4 SwapType : 0 = points,
-      // 2 = % annuel. On ramène tout à notre convention interne (0 = points, 2 = %).
+      // MT5 SwapMode : 1 = points, 2/3/4 = MONTANT par lot et par nuit (devise du
+      // symbole, de la marge, du dépôt), 5/6 = intérêt annuel en %. MT4 SwapType :
+      // 0 = points, 1 = montant, 2 = % annuel. Convention interne : 0 = points,
+      // 1 = montant par lot, 2 = % annuel.
+      //
+      // Le mode 2 était traité comme « inconnu » et le portage de tout un pan du
+      // catalogue restait non chiffré : GOLD, #Germany40, #Japan225, #HongKong50 et
+      // 27 autres symboles du relevé FxPro. C'est le mode le plus courant sur les
+      // métaux et les indices — précisément les instruments où le portage pèse le
+      // plus : sur GOLD il mange 15,2 R sur 54,5 R de résultat brut.
       const mt5 = i('SwapMode') >= 0;
       const normSwap = (v) => {
         if (!Number.isFinite(v)) return NaN;
         if (!mt5) return v;
         if (v === 1) return 0;
+        if (v === 2 || v === 3 || v === 4) return 1;
         if (v === 5 || v === 6) return 2;
-        return NaN;
+        return NaN;   // 0 = pas de portage, 7/8 = réouverture, 9 = mode non documenté
       };
       const table = {};
       for (let k = 1; k < lignes.length; k++) {
@@ -5055,12 +5141,26 @@ GROUPES = {
         const prix = l.bid || (r && r.bid)
           || (df && df.c && df.c.length ? df.c[df.c.length - 1] : 0) || ailleurs();
         if (!prix || !l.point) continue;
-        // SwapType : 0 = points, 2 = pourcentage annuel. Tout autre mode
-        // (1 = devise de base) reste inconnu plutôt que converti au hasard.
+        // SwapType interne : 0 = points, 1 = montant par lot, 2 = pourcentage annuel.
+        //
+        // Les deux premiers se ramènent exactement à un MONTANT par lot et par nuit,
+        // qui est ce que le courtier facture réellement — et ce que le moteur sait
+        // désormais compter au trade près. Le pourcentage annuel n'est gardé que pour
+        // l'AFFICHAGE, et comme modèle de repli : il dépend du cours, donc il dérive.
+        // Sur GOLD le taux annuel équivalent passe de 11,8 % à 1 800 $ l'once à 4,5 %
+        // à 4 470 $ alors que le montant facturé, lui, n'a pas bougé.
         let swapL, swapS, portageInconnu = false;
+        let montantL, montantS;
         if (l.swapType === 0) {
+          montantL = l.swapLongLot * l.point * (l.lot || 1);
+          montantS = l.swapShortLot * l.point * (l.lot || 1);
           swapL = l.swapLongLot * l.point * 365 / prix * 100;
           swapS = l.swapShortLot * l.point * 365 / prix * 100;
+        } else if (l.swapType === 1) {
+          montantL = l.swapLongLot;
+          montantS = l.swapShortLot;
+          swapL = montantL * 365 / (prix * (l.lot || 1)) * 100;
+          swapS = montantS * 365 / (prix * (l.lot || 1)) * 100;
         } else if (l.swapType === 2) {
           swapL = l.swapLongLot;
           swapS = l.swapShortLot;
@@ -5077,6 +5177,10 @@ GROUPES = {
         l.spread_pct = l.spreadPts * l.point / prix * 100;
         l.swapL = swapL;
         l.swapS = swapS;
+        // montant par lot et par nuit : le seul chiffre que le moteur peut compter
+        // exactement, la conversion de devise s'annulant dans le R
+        l.swapLongMontant = montantL;
+        l.swapShortMontant = montantS;
         l.prixRepris = true;
         l.portageInconnu = portageInconnu;
         l.chiffre = true;
@@ -6561,10 +6665,170 @@ GROUPES = {
   }
 
   // base de calcul : H1 brut, ou UT supérieure reconstruite par resampling
+  // ————— confrontation au testeur MT5 —————
+  //
+  // La page pose la MÊME question que le harnais en ligne de commande, avec le MÊME
+  // code : `conformite-noyau.js`. Une seconde implémentation aurait dérivé, comme
+  // `src/lib/moteur.ts` a dérivé de `moteur.js` — et un écart de modèle mesuré ici
+  // n'aurait plus voulu dire la même chose que celui mesuré là-bas.
+  async deposerJournal(fichier) {
+    if (!fichier) return;
+    const sym = this.state.btSym;
+    this.setState({ confMsg: 'Lecture du journal…', conf: null });
+    try {
+      const [texte, noyau] = await Promise.all([fichier.text(), import('./conformite-noyau.js')]);
+      const conf = noyau.lireConformite(texte);
+      if (!noyau.journalUtilisable(conf)) {
+        this.setState({ confMsg: 'Aucune ligne CONF| dans ce fichier. Le robot a-t-il tourné avec InpConformite = true ?' });
+        return;
+      }
+      await this.charger(sym);
+      const df = this.serieH1(sym);
+      if (!df) { this.setState({ confMsg: 'Série H1 absente pour ' + sym + ' : importez-la d\u2019abord.' }); return; }
+      const plage = this.M.plageExploitable(df);
+      const debut = Math.max(this.DEBUT, plage.debut);
+      const cfg = {
+        ...this.cfgCourante(sym),
+        spread_max_facteur: this.facteurSpread(),
+        ...(plage.complete ? {} : { fin: plage.fin }),
+        debut,
+        lire_reconstituees: true,
+      };
+      const res = noyau.confronter({ M: this.M, df, cfg, conf, debut,
+        portage: this.portageDe(this.ligneCourtier(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif, sym)) });
+      this.setState({ conf: { ...res, sym, trades: undefined }, confMsg: '' });
+    } catch (e) {
+      this.setState({ confMsg: 'Journal illisible : ' + String((e && e.message) || e) });
+    }
+  }
+
   base(sym) {
     const df = this.dfs && this.dfs[sym];
     if (!df) return null;
     return this.state.ut === 'H1' ? df : this.M.resampler(df, this.state.ut);
+  }
+
+  // série H1 brute : les données de base (invariant 1), spread par bougie compris
+  serieH1(sym) { return (this.dfs && this.dfs[sym]) || null; }
+
+  // TOUT backtest passe par ici. Le signal est lu sur la bougie de décision (ut),
+  // la position est suivie sur la H1 — la bougie journalière ne dit que O/H/L/C, donc
+  // l'ordre des mouvements y est inconnu et le moteur devait trancher par convention.
+  // Mesuré sur huit configurations de référence face au testeur MT5 : l'erreur absolue
+  // moyenne passe de 22 800 € à 6 900 €, et la surestimation systématique
+  // (8 configurations sur 8) disparaît.
+  // Le plafond de spread traverse TOUTES les mesures : le robot exporté le porte
+  // (InpSpreadFacteur), donc une mesure faite sans lui décrirait autre chose que ce
+  // que le robot exécute. Un seul endroit le pose, ici.
+  facteurSpread() {
+    const v = Number(this.state.gSpreadFacteur);
+    return Number.isFinite(v) && v >= 0 ? v : this.M.SPREAD_FACTEUR;
+  }
+  // Plage réellement mesurable d'un instrument, mise en cache : le calcul balaie toute
+  // la série et serait refait des milliers de fois pendant un scan.
+  // Coût d'entrée heure par heure : le spread médian de chaque heure du serveur,
+  // rapporté à la médiane de l'instrument.
+  //
+  // Des trois frais, le spread est le SEUL qui dépende de l'heure. Le portage se
+  // facture au minuit du serveur, la commission au lot : ni l'un ni l'autre ne change
+  // selon qu'on entre à 9 h ou à 15 h. Mesuré sur les sept instruments de référence, le
+  // spread, lui, varie du simple au quintuple — AUDCAD ×4,3 et NZDCAD ×4,9 à minuit,
+  // #Germany40 ×1,9 de 04:00 à 08:00 avant l'ouverture du cash, #HongKong50 ×1,4 sur la
+  // pause de midi et le soir. GOLD et BITCOIN, eux, sont plats : rien à éviter.
+  //
+  // Le moteur refuse déjà les heures au-dessus du plafond ; cette grille sert à les
+  // VOIR, et à comprendre pourquoi une configuration n'entre jamais à certaines heures.
+  coutHoraire(sym) {
+    this._coutH = this._coutH || {};
+    if (this._coutH[sym] === undefined) {
+      const h1 = this.serieH1(sym);
+      const sp = h1 && this.M.spreadEnPct(h1);
+      if (!sp) { this._coutH[sym] = null; return null; }
+      const parH = Array.from({ length: 24 }, () => []);
+      const tous = [];
+      for (let i = 0; i < h1.n; i++) {
+        if (!(sp[i] > 0)) continue;
+        parH[new Date(h1.t[i]).getUTCHours()].push(sp[i]);
+        tous.push(sp[i]);
+      }
+      const med = (v) => { if (!v.length) return null; const a = [...v].sort((x, y) => x - y); return a[a.length >> 1]; };
+      const ref = med(tous);
+      this._coutH[sym] = ref
+        ? { ref, plafond: this.facteurSpread(), heures: parH.map((v) => {
+            const m = med(v);
+            return m === null ? null : { pct: m, rapport: m / ref, n: v.length };
+          }) }
+        : null;
+    }
+    return this._coutH[sym];
+  }
+
+  // Les heures que le plafond de spread écarte, en clair : « 00 h, 01 h ».
+  heuresCheres(sym) {
+    const g = this.coutHoraire(sym);
+    if (!g) return [];
+    return g.heures
+      .map((x, h) => (x && x.rapport > g.plafond ? h : -1))
+      .filter((h) => h >= 0);
+  }
+
+  plageDe(sym) {
+    this._plages = this._plages || {};
+    if (this._plages[sym] === undefined) {
+      const h1 = this.serieH1(sym);
+      this._plages[sym] = h1 ? this.M.plageExploitable(h1) : null;
+    }
+    return this._plages[sym];
+  }
+  // Instruments dont la plage a été rognée, pour l'afficher : une mesure restreinte en
+  // silence est exactement ce qu'on reproche à l'ancienne colonne de spread.
+  restrictions(syms) {
+    const j = (t) => new Date(t).toISOString().slice(0, 7);
+    return (syms || []).map((sym) => {
+      const p = this.plageDe(sym);
+      if (!p || p.complete) return null;
+      return { sym, debut: p.debut, fin: p.fin, texte: j(p.debut) + ' → ' + j(p.fin) };
+    }).filter(Boolean);
+  }
+  // Distance minimale de stop du courtier, en unités de PRIX (StopsLevel × Point).
+  //
+  // `distanceStopMini` la rend en POURCENTAGE du cours du jour : cela suffit à prévenir
+  // qu'une configuration est irréaliste, pas à mesurer. La contrainte est absolue. Sur
+  // BITCOIN elle vaut 200,00 — 0,25 % à 81 000, mais 1,00 % à 20 000. Un stop de 1 %
+  // était donc pile à la limite pendant tout 2022, et le testeur a refusé 928 ordres
+  // « invalid stops » sur 2022-2023 et aucun ensuite. Le moteur comptait les 66 trades
+  // correspondants ; en les retirant il tombe à 352 contre 355 au testeur, et l'écart de
+  // résultat passe de 26,0 à 10,1 R.
+  //
+  // Mesurée depuis le cours SANS le spread côté moteur : le courtier compare le stop au
+  // BID. Journal à l'appui — plus petite distance acceptée 248,36, plus grande refusée
+  // 260,30, pour un minimum annoncé de 200,00 ; l'écart est exactement le spread.
+  stopMiniDe(sym) {
+    this._stopMini = this._stopMini || {};
+    if (this._stopMini[sym] === undefined) {
+      const c = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+      let l = null;
+      try { l = this.ligneCourtier(c, sym); } catch (e) { l = null; }
+      this._stopMini[sym] = (l && l.stopsLevel && l.point) ? l.stopsLevel * l.point : 0;
+    }
+    return this._stopMini[sym];
+  }
+  mesurer(sym, cfg, ut, repli) {
+    const h1 = this.serieH1(sym);
+    const u = ut || this.state.ut;
+    const c = { ...cfg, spread_max_facteur: this.facteurSpread(), stop_mini: this.stopMiniDe(sym) };
+    // Une bougie sans spread est refusée par le moteur, et une journée entière sans
+    // spread perd son signal sans laisser de trace. Sur les exports du courtier,
+    // Germany40 et BITCOIN n'ont aucun spread avant 2022 : mesurer là revenait à
+    // publier trois ans de vide comme un résultat. On borne la mesure à ce que la
+    // donnée porte réellement.
+    const p = this.plageDe(sym);
+    if (p && !p.complete) {
+      c.debut = Math.max(Number(c.debut) || 0, p.debut);
+      c.fin = c.fin ? Math.min(Number(c.fin), p.fin) : p.fin;
+    }
+    if (!h1) return repli ? this.M.backtester(repli, c) : [];
+    return this.M.backtesterSuivi(h1, c, u);
   }
 
   // Fermeture ou rechargement de l'onglet. Un scan est une boucle qui vit dans la
@@ -6758,6 +7022,7 @@ GROUPES = {
     if (f.courtier) {
       const l = this.ligneCourtier(f.courtier, f.base);
       if (l) return { spread_pct: mes ?? l.spread_pct, swap_annuel_pct: l.swapL,
+        ...this.portageDe(l),
         commission_pct: this.commPct(f.courtier, l), connu: true, saisi: false, courtier: f.label, mesure: mes !== null };
     }
     // Le relevé DÉPOSÉ du compte actif est la source de référence : ligneCourtier y
@@ -6766,6 +7031,7 @@ GROUPES = {
     // et le backtest tournait donc hors frais sur un instrument pourtant chiffré.
     const lc = this.ligneCourtier(this.compteActif, f.base);
     if (lc) return { spread_pct: mes ?? lc.spread_pct, swap_annuel_pct: lc.swapL,
+      ...this.portageDe(lc),
       commission_pct: this.commPct(this.compteActif, lc), connu: true, saisi: false, mesure: mes !== null };
     const t = (this.frais || {})[this.source(f.base)] || {};
     const e = t[this.FRAIS_SYM[f.base] || f.base];
@@ -6776,8 +7042,21 @@ GROUPES = {
     const al = (this.ALIAS_COURTIER[src] || {})[f.base];
     const l = al && ((this.baremes || {})[src] || {})[al];
     if (l) return { spread_pct: l.spread_pct, swap_annuel_pct: l.swapL,
+      ...this.portageDe(l),
       commission_pct: this.commPct(src, l), connu: true, saisi: false };
     return { spread_pct: 0, swap_annuel_pct: 0, commission_pct: 0, connu: false, saisi: false };
+  }
+
+  // Portage exact : le MONTANT par lot et par nuit, et la taille du contrat.
+  //
+  // Le moteur préfère ce couple au pourcentage annuel dès qu'il l'a, parce que c'est
+  // ce que le courtier facture : mesuré sur les 174 trades GOLD portant au moins une
+  // nuit, le montant reste à -60 par lot de 2020 à 2026 pendant que l'once passe de
+  // 1 800 à 4 675, tandis que le taux annuel équivalent s'effondre de 11,8 % à 4,5 %.
+  // Rapport prédit / facturé : 1,0000 (p10 0,9965, p90 1,0038).
+  portageDe(l) {
+    if (!l || !(l.lot > 0) || !Number.isFinite(l.swapLongMontant)) return {};
+    return { contrat: l.lot, swap_long: l.swapLongMontant, swap_short: l.swapShortMontant };
   }
 
   // période couverte par un scan : la date plancher demandée, et ce que les données
@@ -6785,8 +7064,15 @@ GROUPES = {
   periodeScan(f) {
     const jma = (ms) => new Date(ms).toLocaleDateString('fr-FR');
     const plancher = 'depuis le ' + jma(f && f.debut ? f.debut : this.DEBUT);
-    if (!f || !f.premier) return plancher + ' → fin de vos fichiers';
-    return plancher + ' · trades du ' + jma(f.premier) + ' au ' + jma(f.dernier);
+    // Une plage rognée faute de spread doit se lire ICI, à côté de la période annoncée :
+    // sans ça le scan affiche « depuis le 01/01/2020 » pour un instrument mesuré à partir
+    // de 2022, et le chiffre décrit autre chose que ce qu'il prétend.
+    const r = (f && f.restrictions) || [];
+    const rogne = r.length
+      ? ' · ⚠ ' + r.map((x) => x.sym + ' ' + x.texte).join(', ') + ' (spread absent avant)'
+      : '';
+    if (!f || !f.premier) return plancher + ' → fin de vos fichiers' + rogne;
+    return plancher + ' · trades du ' + jma(f.premier) + ' au ' + jma(f.dernier) + rogne;
   }
 
   // saisie d'un palier : la valeur est ramenée DANS le champ, pas seulement au
@@ -7033,6 +7319,10 @@ GROUPES = {
           : { type: 'be_progressif', etapes: this.paliers(s) },
       },
       frais: s.btFrais ? this.fraisDe(sym || s.btSym) : { spread_pct: 0, swap_annuel_pct: 0, commission_pct: 0 },
+      // Fenêtre horaire d'ENTRÉE : elle porte sur la bougie où l'ordre part, pas sur la
+      // bougie de décision — un filtre `horaire` sur une décision D1 serait évalué sur
+      // des bougies toutes à 00:00. Début égal à fin : inactive.
+      heures_entree: { debut: Number(s.btFenDeb) || 0, fin: Number(s.btFenFin) || 0 },
       debut: this.DEBUT,
     };
   }
@@ -7082,14 +7372,25 @@ GROUPES = {
     // le backtest est un calcul synchrone long : on rend la main une fois avant,
     // sinon le clic d'onglet est perdu et l'interface gèle sans rien annoncer.
     await new Promise((z) => setTimeout(z, 0));
-    const trades = this.M.backtester(df, cfg);
+    const trades = this.mesurer(this.state.btSym, cfg, this.state.ut, df);
     const res = this.M.resume(trades);
     const seg = this.M.segments(trades, 5);
     const courbe = this.M.courbe(trades);
+    // LA BANDE, calculée à chaque test et non plus seulement au scan. Le total affiché
+    // est celui d'UNE lecture ; l'autre existe toujours, et c'est l'écart entre les deux
+    // qui dit ce que MT5 peut rendre. Le taire revenait à présenter un pari comme un
+    // chiffre : sur GOLD à paliers la bande vaut 80 R pour un total de 37, et le testeur
+    // tombe à 34,5. Sans palier elle vaut 0,0 et le testeur rend le chiffre exact.
+    const jumelle = this.mesurer(this.state.btSym,
+      { ...cfg, sortie: { ...cfg.sortie, prudent: !cfg.sortie.prudent } }, this.state.ut, df);
+    const totNet = (a) => a.reduce((x, t) => x + (t.R_net !== undefined ? t.R_net : t.R), 0);
+    const a = totNet(trades), b = totNet(jumelle);
+    const bande = { bas: Math.min(a, b), haut: Math.max(a, b), largeur: Math.abs(a - b),
+      indecidables: trades.filter((t) => t.ambigu).length, n: trades.length };
     // gardés hors état : la comparaison au robot MT5 en a besoin, un setState de plus
     // relancerait un rendu à chaque backtest sans rien changer à l'écran
     this._tradesBt = trades;
-    this.setState({ res, seg, courbe, nTrades: trades.length, signature: sig },
+    this.setState({ res, seg, courbe, bande, nTrades: trades.length, signature: sig },
       () => this.ecrireSession());
   }
 
@@ -7922,7 +8223,7 @@ GROUPES = {
     for (const dp of [-1, 0, 1]) for (const dr of [-0.25, 0, 0.25]) {
       const p = d.periode + dp, rr = Math.round((d.rr + dr) * 100) / 100;
       if (p < 2 || rr <= 0) { cases.push(null); continue; }
-      const trades = this.M.backtester(df, this.cfgCourante(d.sym, p, d.sl, rr));
+      const trades = this.mesurer(d.sym, this.cfgCourante(d.sym, p, d.sl, rr), this.state.ut, df);
       const r = trades.length ? this.M.resume(trades) : null;
       const sg = trades.length ? this.M.segments(trades, 5) : null;
       cases.push({ p, rr, centre: dp === 0 && dr === 0,
@@ -7985,7 +8286,7 @@ GROUPES = {
           sansDonnees: true, erreur: qual.raison, grain: true });
         continue;
       }
-      const trades = this.M.backtester(df, this.cfgCourante(sym, d.periode, d.sl, d.rr));
+      const trades = this.mesurer(sym, this.cfgCourante(sym, d.periode, d.sl, d.rr), this.state.ut, df);
       if (!trades.length) { out.push({ sym, total: null, n: 0, positifs: 0, dd: 0 }); continue; }
       const r = this.M.resume(trades), sg = this.M.segments(trades, 5);
       out.push({ sym, total: r.total, n: r.n, dd: r.dd, positifs: sg.positifs, segTotal: sg.total });
@@ -8324,7 +8625,7 @@ GROUPES = {
     }
     const df = this.base(r.sym);
     if (!df) return false;
-    const trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr));
+    const trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr), this.state.ut, df);
     if (!trades.length) return false;
     const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
     const sup = this.mesuresSup(trades, res);
@@ -8369,7 +8670,7 @@ GROUPES = {
     return { ...etat,
       btMtf: false, fRsi: false, fAdx: false, fNuage: false, fPente: false,
       fPivot: false, fResist: false, fZone: false, fMa: false,
-      btDureeMax: 0, btSens: 'achat', secuPrudent: false, btBE: false, btDelai: 0 };
+      btDureeMax: 0, btSens: 'achat', secuPrudent: false, btBE: false, btDelai: 0, btFenDeb: 0, btFenFin: 0 };
   }
   // Lecture basse des lignes AFFICHÉES, calculée à la demande.
   //
@@ -8428,8 +8729,8 @@ GROUPES = {
         if (!df || df.n < 100) continue;
         let trades = [];
         try {
-          trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat,
-            { entree: r.entree, ligne: r.ligne }));
+          trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat,
+            { entree: r.entree, ligne: r.ligne }), etat.ut, df);
         } catch (e) { continue; }
         if (!trades.length) { out[this.cleConfig(r)] = { vide: true }; continue; }
         const res = this.M.resume(trades);
@@ -8586,7 +8887,7 @@ GROUPES = {
         for (const entree of entrees) for (const ligne of lignes) {
           for (const p of periodes) for (const sl of sls) for (const rr of rrs) {
             let tr = [];
-            try { tr = this.M.backtester(df, this.cfgCourante(sym, p, sl, rr, null, { entree, ligne })); } catch (e) {}
+            try { tr = this.mesurer(sym, this.cfgCourante(sym, p, sl, rr, null, { entree, ligne }), this.state.ut, df); } catch (e) {}
             const r = this.M.resume(tr);
             res.push([sym, entree, ligne, p, sl, rr, tr.length,
               r.total.toFixed(10), r.dd.toFixed(10), r.winRate.toFixed(10), r.pf.toFixed(10)].join('|'));
@@ -8689,7 +8990,13 @@ GROUPES = {
         w.onmessage = (e) => { if ((e.data || {}).type === 'pret') fini(); };
         w.onerror = () => { ok = false; fini(); };
         try {
-          w.postMessage({ type: 'bougies', sym, df: { n: df.n, t: df.t, o: df.o, h: df.h, l: df.l, c: df.c } });
+          // sp / spreadPct / grain doivent suivre : sans eux le worker retombe sur le
+          // spread MOYEN du relevé, et un scan parallèle rend d'autres chiffres qu'un
+          // scan séquentiel sans que rien ne le signale.
+          w.postMessage({ type: 'bougies', sym, df: { n: df.n, t: df.t, o: df.o, h: df.h,
+            l: df.l, c: df.c, sp: df.sp, spreadPct: df.spreadPct,
+            spreadPctMoyen: df.spreadPctMoyen, spreadRenseigne: df.spreadRenseigne,
+            grain: df.grain, heuresSession: df.heuresSession } });
         } catch (e) { ok = false; fini(); }
       }
     });
@@ -8942,11 +9249,30 @@ GROUPES = {
           ...(sousBruit ? { sousBruit: true, bruitPct: Math.round(bruit * 1000) / 1000,
             trailingPct: dTr } : {}),
           etiq: vf.base === 'aucun' ? etiqFiltres : this.filtresTexte(cfg),
-          cfg });
+          // l'unité de décision voyage avec la variante : le noyau en a besoin pour
+          // savoir sur quelle bougie lire le signal, la H1 restant le pas de suivi
+          ut: etatV.ut || this.state.ut,
+          // le plafond de spread voyage AVEC la configuration : sans lui le scan
+          // mesurerait sans plafond tout en exportant des robots qui en portent un —
+          // c'est mot pour mot le défaut de gEchelles, une mesure qui décrit autre
+          // chose que ce que le robot exécute
+          cfg: (() => {
+            const c = { ...cfg, spread_max_facteur: this.facteurSpread(),
+              stop_mini: this.stopMiniDe(sym) };
+            const p = this.plageDe(sym);
+            if (p && !p.complete) {
+              c.debut = Math.max(Number(c.debut) || 0, p.debut);
+              c.fin = p.fin;
+            }
+            return c;
+          })() });
       }
       this._grille = { periodes, sls, rrs };
+      // le noyau reçoit la H1 : c'est le pas de suivi. `df` (agrégé) reste utilisé
+      // au-dessus pour les gardes et la mesure d'amplitude.
+      const dfH1 = this.serieH1(sym) || df;
       let enParallele = workers.length >= 1 && lots.length > 0;
-      if (enParallele) enParallele = await this.preparerWorkers(workers, df, sym);
+      if (enParallele) enParallele = await this.preparerWorkers(workers, dfH1, sym);
       if (enParallele) {
         // découpé en tours : le fil principal reprend la main entre deux, donc
         // l'interface et le bouton « Arrêter le scan » restent vivants
@@ -8970,7 +9296,7 @@ GROUPES = {
           if (this._stopScan) { if (faitsSeq < lots.length) partiels.add(sym); break; }
           faitsSeq++;
           await this.attendreReprise();
-          const r = this.N.mesurerVariante(df, v, periodes, sls, rrs);
+          const r = this.N.mesurerVariante(dfH1, v, periodes, sls, rrs);
           for (const x of r.out) out.push(x);
           for (const x of r.echecs) echecs.push(x);
           borner();
@@ -9083,6 +9409,9 @@ GROUPES = {
         ligne: lignes.map((x) => LIGNES[x] || x).join(', '), ut: s.ut,
         grille: 'période = ' + fmt(periodes) + ' · SL = ' + fmt(sls) + ' % · R/R = ' + fmt(rrs),
         seuils: s.tradesMin + ' / ' + s.segMin,
+        // instruments dont la donnée ne couvre pas toute la période demandée : ils
+        // ont été mesurés sur une plage plus courte, et il faut que ça se lise
+        restrictions: this.restrictions(Array.from(new Set(total.map((r) => r.sym)))),
         // période réellement couverte : la date plancher demandée, et le premier trade
         // effectivement trouvé (un instrument peut n'avoir d'historique que plus tard)
         debut: this.DEBUT,
@@ -9131,7 +9460,7 @@ GROUPES = {
   }
   // tout ce qui change un résultat : sauvegardé et restauré en bloc, jamais champ par champ
   REGLAGES = ['btSym', 'ut', 'btEntree', 'btLigne', 'btPeriode', 'btSL', 'btRR', 'risquePct',
-    'btMtf', 'utMtf', 'ligneMtf', 'periodeMtf', 'btBE', 'btFrais', 'btDelai',
+    'btMtf', 'utMtf', 'ligneMtf', 'periodeMtf', 'btBE', 'btFrais', 'btDelai', 'btFenDeb', 'btFenFin',
     'fRsi', 'utRsi', 'periodeRsi', 'fRsiSeuil',
     'fAdx', 'utAdx', 'periodeAdx', 'fAdxSeuil', 'fNuage', 'utNuage',
     'fMa', 'utMa', 'periodeMa',
@@ -9563,7 +9892,7 @@ GROUPES = {
       const df0 = this.dfs && this.dfs[r.sym];
       const df = !df0 ? null : (etat.ut === 'H1' ? df0 : this.M.resampler(df0, etat.ut));
       if (!df || df.n < 300) { lignes.push({ sym: r.sym, avant: r.total, apres: null }); continue; }
-      const trades = this.M.backtester(df, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat));
+      const trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat), etat.ut, df);
       if (!trades.length) { lignes.push({ sym: r.sym, avant: r.total, apres: null }); continue; }
       const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
       const sup = this.mesuresSup(trades, res);
@@ -10757,7 +11086,8 @@ GROUPES = {
       ['winRate', 'G / P / =', 'Gagnants, perdants et sorties à l\u2019équilibre, en nombre de trades. Les trois chiffres plutôt qu’un pourcentage : un palier au point mort déplace des trades vers la colonne « = », ce qui faisait bondir le taux sans que le résultat en R bouge. Un scan lancé avant cette version ne conserve que le pourcentage : relancez-le pour obtenir les trois nombres.', (r) => (r.nGains === undefined ? '— scan antérieur' : r.nGains + ' / ' + r.nPertes + ' / ' + (r.neutres || 0)), false],
       ['pf', 'PF', 'Somme des gains divisée par la somme des pertes. Sous 1, la configuration perd. « ∞ » signifie zéro perte : ce n\u2019est pas un bon score mais une absence de mesure, et ces lignes sont classées en dernier.', (r) => r.pf === Infinity ? '∞ non mesuré' : fr(r.pf, 2), true],
       ['sommets', 'Sortis au sommet', 'Part des trades sortis par le stop suiveur DANS la bougie qui a fixé leur propre plus haut. Le gain suppose alors que le stop a suivi le sommet tick par tick — ce qu\u2019une bougie H1 ne dit pas. Au-delà de 30 %, le résultat mesure surtout l\u2019ignorance de vos données.', (r) => (r.sommets === undefined ? '—' : (r.n ? Math.round(r.sommets / r.n * 100) + ' %' : '—')), false],
-      ['ambigus', 'Ambiguës', 'Part des trades dont le sort a été décidé par une convention de lecture et non par la donnée : la bougie contenait à la fois le stop et l\u2019objectif, et l\u2019ordre réel des mouvements est inconnu. Au-delà de 10 %, le résultat dépend surtout de cette convention. Non mesuré sur les scans lancés avant cette version.', (r) => (r.ambigus === undefined ? '— scan antérieur' : (r.n ? Math.round(r.ambigus / r.n * 100) + ' %' : '0 %')), true],
+      ['exposes', 'Exposées', 'Part des sorties qui reposent sur un palier armé dans la bougie même où elles tombent. Le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors OPTIMISTE. Confronté douze fois au testeur MT5 : à zéro sortie exposée le chiffre est celui du testeur à 0,3-0,4 R près (sur 403, 44 et 47 trades) ; à 15-16 %, l\u2019écart monte à 12 et 17 R. Ce n\u2019est pas la fréquence d\u2019armement des paliers qui compte — AUDCAD en arme sur 64 % de ses trades sans exposer une seule sortie. Non mesuré sur les scans lancés avant cette version.', (r) => (r.exposes === undefined ? '— scan antérieur' : (r.n ? Math.round(r.exposes / r.n * 100) + ' %' : '0 %')), true],
+      ['ambigus', 'Ambiguës', 'Part des trades dont le sort a été décidé par une convention de lecture et non par la donnée. Deux cas : la bougie contient à la fois le stop et l\u2019objectif, ou bien elle arme un palier puis redescend le toucher — dans les deux, l\u2019ordre réel des mouvements est inconnu. Le second cas manquait au comptage : mesuré sur GOLD, 27 % des trades changent de sortie entre les deux lectures là où 1 % seulement était signalé. Au-delà de 10 %, le résultat dépend surtout de cette convention. Non mesuré sur les scans lancés avant cette version.', (r) => (r.ambigus === undefined ? '— scan antérieur' : (r.n ? Math.round(r.ambigus / r.n * 100) + ' %' : '0 %')), true],
       ['dd', 'Pire creux', 'Le drawdown : plus forte perte cumulée depuis un sommet. Lu en nombre de stops, c\u2019est ce que vous devrez encaisser d\u2019affilée avant de revoir votre sommet.', (r) => Math.round(Math.abs(r.dd)) + ' stops', true],
       ['calmar', 'R/creux', 'R total divisé par le pire creux : combien vous gagnez pour chaque R de douleur.', (r) => r.calmar === undefined ? '—' : (r.calmar === Infinity ? '∞' : fr(r.calmar, 2)), false],
       ['nuits', 'Durée', 'Temps moyen pendant lequel un trade reste ouvert : c\u2019est lui qui décide du poids du swap.', (r) => (r.nuits === undefined ? '—' : (r.nuits < 1 ? Math.round(r.nuits * 24) + ' h' : fr(r.nuits, 1) + ' j')), false],
@@ -12051,6 +12381,18 @@ GROUPES = {
       aideSecu: 'Déplace le stop pendant que le trade avance. Par paliers : le stop saute à un niveau fixe quand un pourcentage du chemin vers l\u2019objectif est atteint. Suiveur : il colle au plus haut atteint et ne redescend jamais.',
       aideFrais: 'Spread et swap, rapportés au risque du trade. Sans eux le résultat est brut, donc optimiste de plusieurs points de R sur quelques centaines de trades.',
       aideDelai: 'Nombre minimum de bougies entre deux entrées, pour ne pas empiler dix positions sur le même mouvement.',
+      aideFenetre: 'Heures serveur pendant lesquelles l\u2019ordre peut partir. La fin est EXCLUE : 6 et 22 autorisent de 06:00 à 21:59. '
+        + 'Début égal à fin : aucune restriction. Le signal n\u2019est pas perdu quand l\u2019heure est exclue — l\u2019entrée attend la première heure admise du MÊME jour, '
+        + 'comme sous le plafond de spread. Attention : sur les huit configurations de référence, restreindre à 6-22 fait PERDRE de l\u2019argent sept fois sur huit '
+        + '(99 R au total contre −15 R) : les heures écartées coûtent quelques centièmes de pour cent de spread, et le cours bouge davantage pendant les heures d\u2019attente.',
+      btFenDeb: s.btFenDeb, btFenFin: s.btFenFin,
+      fenetreInfo: (() => {
+        const d = Number(s.btFenDeb) || 0, f = Number(s.btFenFin) || 0;
+        if (d === f) return 'aucune restriction — le plafond de spread écarte déjà, tout seul, les heures où l\u2019entrée coûte cher';
+        const hh = (h) => (h < 10 ? '0' + h : h) + ' h';
+        return 'entrées de ' + hh(d) + ' à ' + hh(f) + ' exclue' + (d < f ? '' : ' (passage par minuit)')
+          + ' — les signaux hors fenêtre attendent, ils ne sont pas perdus';
+      })(),
       calcRegime: () => this.calcRegime(),
       sauverBacktest: () => this.sauverBacktest(),
       sauverScan: () => this.sauverScan(),
@@ -12188,7 +12530,15 @@ GROUPES = {
         const f = this.fraisDe(s.btSym);
         if (!f.connu) return 'aucun frais connu pour ' + s.btSym + ' — résultat brut, saisissez ceux de votre courtier';
         const dte = (this.DATES_BAREME || {})[this.source(s.btSym)];
-        return (f.saisi ? 'saisis : ' : 'relevés ' + (dte ? 'du ' + dte + ' : ' : ': ')) + 'spread ' + fr(f.spread_pct, 4) + ' % · swap ' + fr(f.swap_annuel_pct, 2) + ' %/an';
+        // Les heures écartées se lisent ICI, à côté des frais : c'est le SEUL des trois
+        // coûts qui dépende de l'heure — le portage se facture au minuit du serveur et
+        // la commission au lot. Sans cette ligne, on ne comprend pas pourquoi une
+        // configuration n'entre jamais avant 2 h du matin.
+        const ch = this.heuresCheres(s.btSym);
+        const cher = ch.length
+          ? ' · spread trop large à ' + ch.map((h) => (h < 10 ? '0' + h : h) + ' h').join(', ') + ' : pas d\u2019entrée à ces heures'
+          : '';
+        return (f.saisi ? 'saisis : ' : 'relevés ' + (dte ? 'du ' + dte + ' : ' : ': ')) + 'spread ' + fr(f.spread_pct, 4) + ' % · swap ' + fr(f.swap_annuel_pct, 2) + ' %/an' + cher;
       })(),
       fraisConnus: this.frais ? this.fraisDe(s.btSym).connu : true,
       fraisInconnus: this.frais ? !this.fraisDe(s.btSym).connu : false,
@@ -12205,6 +12555,37 @@ GROUPES = {
       setSL: (e) => this.maj({ btSL: Number(e.target.value) }),
       setRR: (e) => this.maj({ btRR: Number(e.target.value) }),
       setDelai: (e) => this.maj({ btDelai: Number(e.target.value) }),
+      deposerJournal: (e) => this.deposerJournal(e.target.files && e.target.files[0]),
+      confEtat: s.confMsg || (s.conf
+        ? s.conf.communs + ' journées comparées sur ' + s.conf.sym
+        : 'aucun journal déposé'),
+      aConf: !!(s.conf && s.conf.bilan),
+      confRobot: s.conf && s.conf.bilan ? fr(s.conf.bilan.netRobot, 1) + ' R' : '—',
+      confBande: s.conf && s.conf.bilan
+        ? fr(s.conf.bilan.bande[0], 1) + ' … ' + fr(s.conf.bilan.bande[1], 1) + ' R' : '—',
+      // Le verdict tient en un mot, et il n'est pas décoratif : une bande qui ne
+      // contient pas le chiffre du testeur est un DÉFAUT DE MODÈLE, pas une
+      // incertitude honnête. Le dire autrement reviendrait à vendre une promesse
+      // que la mesure ne tient pas.
+      confVerdict: s.conf && s.conf.bilan
+        ? (s.conf.bilan.dedans ? 'MT5 est dans la bande' : 'MT5 est HORS de la bande') : '—',
+      confDetail: (() => {
+        const b = s.conf && s.conf.bilan;
+        if (!b) return '';
+        return 'R brut : robot ' + fr(b.brutRobot, 1) + ', moteur ' + fr(b.brutMoteur, 1)
+          + ' · frais : robot ' + fr(b.fraisRobot, 1) + ' (portage ' + fr(b.portageRobot, 1)
+          + ', commission ' + fr(b.commissionRobot, 1) + '), moteur ' + fr(b.fraisMoteur, 1)
+          + ' · NET : robot ' + fr(b.netRobot, 1) + ', moteur ' + fr(b.netMoteur, 1)
+          + ' (écart ' + fr(b.netMoteur - b.netRobot, 1) + ' R)'
+          + ' — ' + b.nRobot + ' trades robot contre ' + b.nMoteur + ' moteur, dont '
+          + b.ambigus + ' (' + Math.round(100 * b.ambigus / (b.nLecture || 1))
+          + ' %) dont l\u2019issue dépend de l\u2019ordre des mouvements dans une bougie.';
+      })(),
+      aConfDiv: !!(s.conf && s.conf.divergences && s.conf.divergences.length),
+      confDivergences: ((s.conf && s.conf.divergences) || []).slice(0, 8)
+        .map((d) => ({ n: d.n, nom: d.nom, exemple: (d.exemples || [])[0] || '' })),
+      setFenDeb: (e) => this.maj({ btFenDeb: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
+      setFenFin: (e) => this.maj({ btFenFin: Math.min(24, Math.max(0, Math.round(Number(e.target.value) || 0))) }),
       setCroisement: () => this.maj({ btEntree: 'croisement_prix' }),
       toggleMtf: () => this.maj({ btMtf: !s.btMtf }),
       toggleBE: () => this.maj({ btBE: !s.btBE }),
@@ -12289,6 +12670,72 @@ GROUPES = {
         ? 'gagnants / perdants / à l\u2019équilibre — soit ' + fr(res.winRate, 0) + ' % sur les '
           + ((res.nGains || 0) + (res.nPertes || 0)) + ' trades tranchés'
         : '',
+      // MEILLEURS JOURS ET HORAIRES — ou l'absence de meilleurs jours.
+      //
+      // Découper le résultat par jour et désigner le meilleur seau est facile ; ce seau
+      // l'est toujours, et il ne le restera pas. Mesuré sur les six configurations
+      // confrontées au testeur, dont deux à plus de 500 trades : AUCUN jour ne s'écarte
+      // du hasard, et le test de stabilité échoue quatre fois sur six — sur GOLD ema 5,
+      // le meilleur jour de la première moitié de l'historique devient le PIRE de la
+      // seconde. Filtrer là-dessus détruirait le résultat au lieu de l'améliorer.
+      //
+      // On affiche donc les chiffres ET le verdict, jamais le classement seul.
+      quandTxt: (() => {
+        const tr = this._tradesBt;
+        if (!res || !this.M || !tr || !tr.length) return '';
+        const J = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+        const p = this.M.parPeriode(tr, 'jour');
+        if (!p.seaux.length) return '';
+        const st = this.M.stabilitePeriode(tr, 'jour');
+        const lignes = p.seaux.map((x) => J[x.cle].slice(0, 3) + ' ' + x.n + 't '
+          + (x.moyenne >= 0 ? '+' : '') + fr(x.moyenne, 3) + ' R' + (x.notable ? ' ★' : '')).join('   ');
+        // On ne rapporte QUE le jour le plus écarté : compter les jours « notables »
+        // induit en erreur dès qu'un jour fort existe, son complément paraissant écarté
+        // lui aussi.
+        const f = p.fort;
+        let verdict = p.conclut
+          ? 'le ' + J[f.cle] + ' s\u2019écarte vraiment du hasard (z = ' + fr(f.z, 2)
+            + ', seuil ' + fr(p.seuil, 2) + ')'
+          : 'aucun jour ne se distingue du hasard — le plus écarté est le ' + J[f.cle]
+            + ' à z = ' + fr(f.z, 2) + ', pour un seuil de ' + fr(p.seuil, 2)
+            + ' : n\u2019en filtrez aucun';
+        if (st) {
+          verdict += ' — sur la seconde moitié de l\u2019historique, le meilleur jour de la '
+            + 'première finit ' + (st.rangMeilleur + 1) + 'ᵉ sur ' + st.seaux
+            + ' et le pire ' + (st.rangPire + 1) + 'ᵉ : le classement '
+            + (st.tient ? 'TIENT' : 'ne tient pas');
+        }
+        return lignes + '  —  ' + verdict;
+      })(),
+
+      // Sorties EXPOSÉES : le seul écart qui subsiste face au testeur MT5, et il est
+      // OPTIMISTE. Confronté à douze exécutions : les configurations à ZÉRO sortie
+      // exposée rendent le chiffre du testeur à 0,3-0,4 R près sur 403, 44 et 47 trades ;
+      // celles qui en portent 15 à 16 % dérivent de 12 et 17 R. Le scan cherchant le
+      // meilleur résultat sélectionne justement les configurations qui exploitent ce
+      // biais : ne pas l'afficher, c'est le laisser choisir à l'aveugle.
+      // Le verdict le plus important de la page : ce chiffre est-il un chiffre, ou un
+      // pari ? Il se lit à côté du total, pas au fond d'une aide.
+      btBande: (() => {
+        const b = s.bande;
+        if (!b || !b.n) return '';
+        if (b.largeur < 0.05) return 'chiffre exact — les deux lectures s\u2019accordent';
+        // Une bande large sur une série exportée AVANT les colonnes de retour n'est pas
+        // la même nouvelle qu'une bande large sur une série complète : dans le premier
+        // cas il manque une donnée qu'un ré-export suffit à fournir. Le dire ici évite
+        // de conclure « configuration invendable » là où il n'y a qu'un fichier périmé.
+        const df = this.serieH1(s.btSym);
+        const vieux = df && !(df.retourConnu > 0.5)
+          ? ' · série exportée sans les colonnes haut_apres / bas_apres : un ré-export peut resserrer cette bande'
+          : '';
+        return 'bande ' + fr(b.bas, 1) + ' … ' + fr(b.haut, 1) + ' R (largeur ' + fr(b.largeur, 1)
+          + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas' + vieux;
+      })(),
+      btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
+      btExposes: res ? (res.exposes
+        ? Math.round(res.exposes / Math.max(1, res.n) * 100) + ' % des sorties reposent sur un palier armé dans leur propre bougie ('
+          + res.exposes + ' sur ' + res.n + ') : sur celles-là le prix a pu repasser une seconde fois par le niveau, et le résultat est optimiste d\u2019autant'
+        : 'aucune sortie ne repose sur un palier armé dans sa propre bougie : le chiffre est celui du testeur, aux frais près') : '',
       btAmbigus: res ? (res.ambigus
         ? Math.round(res.ambigus / Math.max(1, res.n) * 100) + ' % des trades tranchés par une bougie ambiguë ('
           + res.ambigus + ' sur ' + res.n + ') : leur sort vient d\u2019une convention de lecture, pas de la donnée'

@@ -26,6 +26,26 @@ Ce dépôt est la copie qui compte. Grok et Claude travaillent **ici**, pas chac
 | `/simuler` | Laboratoire |
 | `/visiteurs` | Fréquentation |
 
+## Comparer le moteur au testeur MT5
+
+Le moteur vit dans `src/lib/moteur.ts` (backtest H1 sur bougie confirmée) et
+`src/lib/engine.ts` (réglages → config). Quand ses résultats ne collent pas à ceux du
+testeur MetaTrader 5, `scripts/mt5-diff.mjs` rejoue le moteur sur le CSV H1, lit un
+rapport MT5, et compare **séparément les entrées, les sorties et les frais**.
+
+```sh
+node scripts/mt5-diff.mjs --csv AUDCAD_H1.csv --mt5 rapport.html \
+     --ligne mediane --periode 15 --sl 0,5 --rr 2 --out-csv journal.csv
+
+npm run mt5:demo   # le voir tourner sur un couple aux écarts connus d'avance
+node scripts/mt5-diff.mjs --aide
+```
+
+Le rapport MT5 peut être le HTML du testeur ou un copier-coller des onglets
+Transactions / Ordres / Positions. Le harnais détecte seul le décalage d'heure serveur,
+apparie les trades, puis chiffre l'écart en euros poste par poste : trades pris d'un seul
+côté, sorties divergentes, frais — et ce qui reste inexpliqué. Il ne corrige rien.
+
 ## Lancer en local
 
 ```sh

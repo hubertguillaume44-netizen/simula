@@ -252,10 +252,29 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
 - `scan-worker.js` — l'enveloppe worker.
 - `robot-mt5.js` — génération du `.mq5` : en-tête de configuration, agrégation des bougies,
   filtres, paliers, gestion de position, tableau de bord sur le graphique.
+- `conformite-noyau.js` — la confrontation moteur ↔ journal du robot MT5, appelée à la fois
+  par `scripts/mt5/conformite.mjs` (ligne de commande) et par la page. Une seule
+  implémentation : deux copies auraient divergé, et un « hors de la bande » mesuré d'un côté
+  n'aurait plus voulu dire la même chose que de l'autre.
 - `Sivula.dc.html` — l'application : interface, cache, tamis, walk-forward, tirage au sort,
   Benjamini-Hochberg, solveur de mélange, comparateur MT5, export des robots.
-- `Export_H1_Sivula.mq5` — le script d'export d'historique H1 **avec la colonne de spread**,
-  à glisser sur chaque graphique.
+- `Export_H1_Sivula.mq5` — le script d'export d'historique H1, à glisser sur chaque
+  graphique. Quatorze colonnes : OHLC, volume, **spread d'ouverture** (celui de la première
+  M1 de l'heure, pas l'agrégat), séance, **minute des deux extrêmes**, **extrêmes vus par la
+  M1**, et **extrêmes atteints après le second extrême**. Les six dernières existent pour
+  une seule raison : réduire ce que le backtest doit deviner.
+
+### Pour faire tourner la page
+
+`Sivula.dc.html` importe `moteur.js`, `scan-noyau.js`, `robot-mt5.js` et
+`conformite-noyau.js` en modules ES. Elle ne fonctionne donc PAS en `file://` — le
+spécificateur relatif n'y résout pas et le moteur n'est jamais chargé, sans message
+d'erreur visible. Il faut servir le dossier en HTTP :
+
+    npx serve .        # puis ouvrir http://localhost:3000/Sivula.dc.html
+
+`node scripts/app/ouvrir.mjs` fait la même chose sans interface, pour vérifier que la page
+démarre après une modification.
 
 ## Premières tâches suggérées, dans l'ordre
 
