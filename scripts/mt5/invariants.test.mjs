@@ -713,3 +713,45 @@ test("un stop ne se place pas du mauvais côté du marché", () => {
       + `sortie ${new Date(x.sortie_t).toISOString()} juste après le pic isolé`);
   }
 });
+
+test("un stop en attente se pose dès l'ouverture quand le cours y est déjà au-delà", () => {
+  // La modification part au premier tick de la bougie, pas à son extrême. Ne tester que
+  // l'extrême la retardait d'une heure — et sur GOLD le 23 janvier 2020 cette heure a
+  // coûté quatre R : le palier armé la veille à 1 558,57 hors séance, la bougie de 01:00
+  // ouvre à 1 558,65, le stop se pose, le bas à 1 558,41 le déclenche. Le robot sort à
+  // 01:00 ; le moteur attendait 04:00 et n'entrait le trade suivant qu'à 05:00 au lieu
+  // de 02:00. Décomposé sur les 538 trades : l'écart de R passe de 4,98 à 2,48 et les
+  // trades « chez l'un seulement » tombent à zéro des deux côtés.
+  const J = 20, n = 24 * J, t = [], o = [], h = [], l = [], c = [], sp = [], sess = [];
+  for (let i = 0; i < n; i++) {
+    const j = Math.floor(i / 24);
+    const base = j < 10 ? 110 - j : 100 + (j - 10) * 1.2;   // un V : le croisement au creux
+    const px = base + (i % 24) * (j < 10 ? -1 : 1) * 0.04;
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    o.push(px); c.push(px + (j < 10 ? -0.04 : 0.04));
+    h.push(Math.max(px, px + 0.04) + 0.02); l.push(Math.min(px, px + 0.04) - 0.02);
+    sp.push(10);
+    sess.push(new Date(t[i]).getUTCHours() === 0 ? 0 : 1);
+  }
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 4, paliers: [[25, 0], [50, 25], [75, 50]] });
+  const nu = M.backtesterSuivi({ n, t, o, h, l, c, sp, sess, grain: { decimales: 4 } }, cfg, "D1");
+  assert.equal(nu.length, 1, "gabarit inattendu : le test ne prouve rien");
+  const iEnt = t.indexOf(nu[0].entree_t);
+  const px = o[iEnt] * (1 + 10 * 1e-4 / o[iEnt]);
+  // minuit du surlendemain, hors séance : la bougie monte assez pour armer le point
+  // mort, et redescend
+  const k = (Math.floor(iEnt / 24) + 2) * 24;
+  const be = px;                                   // le point mort, à 25 % du chemin
+  const oh = o.slice(), hh = h.slice(), ll = l.slice(), cc = c.slice();
+  hh[k] = px * 1.03; oh[k] = be * 1.001; ll[k] = be * 1.0005; cc[k] = be * 1.002;
+  // la bougie SUIVANTE ouvre au-dessus du point mort, puis passe dessous
+  oh[k + 1] = be * 1.0008; hh[k + 1] = be * 1.001; ll[k + 1] = be * 0.997; cc[k + 1] = be * 0.998;
+  for (let i = k + 2; i < n; i++) { oh[i] = be * 0.998; cc[i] = be * 0.998; hh[i] = be * 0.9985; ll[i] = be * 0.9975; }
+  const tr = M.backtesterSuivi({ n, t, o: oh, h: hh, l: ll, c: cc, sp, sess, grain: { decimales: 4 } }, cfg, "D1");
+  const porte = tr.find((x) => x.entree_t <= t[k] && x.sortie_t >= t[k]);
+  assert.ok(porte, "aucun trade ne traverse la bougie hors séance : le test ne prouve rien");
+  assert.equal(porte.sortie_t, t[k + 1],
+    `sortie le ${new Date(porte.sortie_t).toISOString()} au lieu de la bougie qui ouvre au-delà du stop armé`);
+  assert.ok(Math.abs(porte.R) < 0.1, `sortie au point mort attendue, R = ${porte.R.toFixed(2)}`);
+});

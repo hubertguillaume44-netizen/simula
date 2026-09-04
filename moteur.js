@@ -1220,6 +1220,17 @@ export function backtester(df, cfg) {
       // ensuite — c'est ce que fait le testeur, vérifié sur 538 sorties dont aucune
       // hors séance et 103 paliers qui, eux, s'y déplacent.
       if (!releve(i)) { majSecu(i, false); continue; }
+      // Un stop en attente se pose dès l'OUVERTURE quand le cours y est déjà au-delà :
+      // la modification part au premier tick, avant tout mouvement de la bougie. Ne
+      // tester que l'extrême de la bougie la retardait d'une heure — et sur GOLD le
+      // 23 janvier 2020, cette heure a coûté quatre R. Le palier armé la veille à
+      // 1 558,57 hors séance, la bougie de 01:00 ouvre à 1 558,65 : le stop se pose,
+      // puis le bas à 1 558,41 le déclenche. Le robot sort là, à 01:00 ; le moteur
+      // attendait 04:00, et n'entrait le trade suivant qu'à 05:00 au lieu de 02:00.
+      if (d * slVoulu > d * sl && d * df.o[i] > d * slVoulu) {
+        sl = slVoulu;
+        be = trailing ? 1 : (d * sl > d * px ? 2 : 1);
+      }
       // gap : le SL est un ordre stop, exécuté au cours d'ouverture
       // (rien ne peut être sécurisé avant l'ouverture)
       if (d * df.o[i] <= d * sl) {
