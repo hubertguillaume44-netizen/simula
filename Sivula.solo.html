@@ -3086,10 +3086,6 @@
           <sc-if value="{{ btVarianteRatee }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600" title="La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres ci-dessous décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.">Condition de la ligne NON restaurée — ces chiffres ne sont pas ceux de la ligne</span>
           </sc-if>
-          <span class="tag {{ btBandeTag }}" title="Le total affiché est celui d'UNE lecture. L'autre lecture existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : confronté au testeur sur GOLD sans palier, le moteur rend 73,4 contre 73,1. Une bande large ne l'est pas : sur la même série AVEC paliers elle vaut 80 R, et il n'y a pas de chiffre unique à annoncer.">{{ btBande }}</span>
-          <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
-          <span style="display:block;font-size:12px;opacity:.85" title="Résultat moyen par jour de la semaine, et verdict : un jour ne vaut d'être filtré que s'il s'écarte du hasard ET que son classement tient sur la seconde moitié de l'historique. Mesuré sur six configurations dont deux à plus de 500 trades, aucun jour ne passe ce double test.">{{ quandTxt }}</span>
-          <span style="display:block;font-size:12px;color:var(--color-accent-700)" title="Une sortie qui repose sur un palier armé dans la bougie même où elle tombe : le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors optimiste. Confronté douze fois au testeur MT5, une configuration sans aucune sortie exposée rend son chiffre exact aux frais près.">{{ btExposes }}</span>
           <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline">Chiffres périmés — relancez le test</span>
           </sc-if>
@@ -3097,6 +3093,30 @@
             <span class="tag tag-outline">{{ erreur }}</span>
           </sc-if>
         </div>
+
+        <!--
+          CE QUE VAUT CE CHIFFRE — trois lignes étiquetées, plus quatre phrases empilées.
+
+          Les quatre mesures étaient rendues en prose, même taille, trois couleurs, à la
+          suite du total : la bande, puis le compte de bougies ambiguës qui répétait le
+          même fait, puis le tableau des jours en une seule phrase à rallonge, puis les
+          sorties exposées. Rien ne hiérarchisait, et le verdict — la seule chose à lire —
+          se noyait au milieu. On garde exactement les mêmes mesures, on les range.
+        -->
+        <sc-if value="{{ aBilanLecture }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:baseline;font-size:12px;padding-top:2px;border-top:1px solid color-mix(in srgb,currentColor 12%,transparent)">
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Ce chiffre vaut</span>
+            <span title="Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable : sur GOLD sans palier, le moteur rend 73,4 contre 73,1 au testeur. Une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.">{{ btBande }}</span>
+
+            <sc-if value="{{ aBtConseil }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Pour resserrer</span>
+              <span style="color:var(--color-accent-700)">{{ btConseil }}</span>
+            </sc-if>
+
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap" class="text-muted">Jours</span>
+            <span title="{{ quandDetail }}">{{ quandTxt }}</span>
+          </div>
+        </sc-if>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
           <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -12771,6 +12791,12 @@ GROUPES = {
         const st = this.M.stabilitePeriode(tr, 'jour');
         const lignes = p.seaux.map((x) => J[x.cle].slice(0, 3) + ' ' + x.n + 't '
           + (x.moyenne >= 0 ? '+' : '') + fr(x.moyenne, 3) + ' R' + (x.notable ? ' ★' : '')).join('   ');
+        // Le détail chiffré passe au SURVOL : sur cinq jours il fait déjà une ligne
+        // pleine, et il ne sert qu'à vérifier le verdict, jamais à le remplacer.
+        this._quandDetail = 'Résultat moyen par jour : ' + lignes
+          + '  ·  Un jour ne vaut d\u2019être filtré que s\u2019il s\u2019écarte du hasard ET que son '
+          + 'classement tient sur la seconde moitié de l\u2019historique. Mesuré sur six configurations '
+          + 'dont deux à plus de 500 trades, aucun jour ne passe ce double test.';
         // On ne rapporte QUE le jour le plus écarté : compter les jours « notables »
         // induit en erreur dès qu'un jour fort existe, son complément paraissant écarté
         // lui aussi.
@@ -12778,17 +12804,20 @@ GROUPES = {
         let verdict = p.conclut
           ? 'le ' + J[f.cle] + ' s\u2019écarte vraiment du hasard (z = ' + fr(f.z, 2)
             + ', seuil ' + fr(p.seuil, 2) + ')'
-          : 'aucun jour ne se distingue du hasard — le plus écarté est le ' + J[f.cle]
-            + ' à z = ' + fr(f.z, 2) + ', pour un seuil de ' + fr(p.seuil, 2)
-            + ' : n\u2019en filtrez aucun';
+          : 'aucun ne se distingue du hasard — n\u2019en filtrez aucun';
         if (st) {
-          verdict += ' — sur la seconde moitié de l\u2019historique, le meilleur jour de la '
-            + 'première finit ' + (st.rangMeilleur + 1) + 'ᵉ sur ' + st.seaux
-            + ' et le pire ' + (st.rangPire + 1) + 'ᵉ : le classement '
-            + (st.tient ? 'TIENT' : 'ne tient pas');
+          verdict += st.tient
+            ? ' · le classement tient sur la seconde moitié de l\u2019historique'
+            : ' · et le classement ne tient pas d\u2019une moitié de l\u2019historique à l\u2019autre';
+          this._quandDetail += ' Ici, le meilleur jour de la première moitié finit '
+            + (st.rangMeilleur + 1) + 'ᵉ sur ' + st.seaux + ' dans la seconde, et le pire '
+            + (st.rangPire + 1) + 'ᵉ.';
         }
-        return lignes + '  —  ' + verdict;
+        this._quandDetail += ' Le plus écarté est le ' + J[f.cle] + ' à z = ' + fr(f.z, 2)
+          + ', pour un seuil de ' + fr(p.seuil, 2) + '.';
+        return verdict;
       })(),
+      quandDetail: this._quandDetail || '',
 
       // Sorties EXPOSÉES : le seul écart qui subsiste face au testeur MT5, et il est
       // OPTIMISTE. Confronté à douze exécutions : les configurations à ZÉRO sortie
@@ -12798,20 +12827,39 @@ GROUPES = {
       // biais : ne pas l'afficher, c'est le laisser choisir à l'aveugle.
       // Le verdict le plus important de la page : ce chiffre est-il un chiffre, ou un
       // pari ? Il se lit à côté du total, pas au fond d'une aide.
+      aBilanLecture: !!(s.bande && s.bande.n),
       btBande: (() => {
         const b = s.bande;
         if (!b || !b.n) return '';
-        if (b.largeur < 0.05) return 'chiffre exact — les deux lectures s\u2019accordent';
-        // Une bande large sur une série exportée AVANT les colonnes de retour n'est pas
-        // la même nouvelle qu'une bande large sur une série complète : dans le premier
-        // cas il manque une donnée qu'un ré-export suffit à fournir. Le dire ici évite
-        // de conclure « configuration invendable » là où il n'y a qu'un fichier périmé.
+        // Les sorties EXPOSÉES ne se disent que si la question se pose : sans palier il
+        // n'y en a jamais, et l'annoncer occuperait une ligne pour rien. Avec palier, un
+        // zéro est au contraire une bonne nouvelle qui mérite d'être écrite.
+        const paliers = !!s.btBE && s.typeSecu !== 'trailing';
+        const exp = !res || !paliers ? ''
+          : res.exposes
+            ? ' · ' + res.exposes + ' sortie' + (res.exposes > 1 ? 's repose' : ' repose')
+              + (res.exposes > 1 ? 'nt' : '') + ' sur un palier armé dans sa propre bougie, '
+              + 'donc optimiste' + (res.exposes > 1 ? 's' : '')
+            : ' · aucune sortie ne repose sur un palier armé dans sa propre bougie';
+        if (b.largeur < 0.05) {
+          return 'exactement ce que le testeur doit rendre, aux frais près — les deux lectures s\u2019accordent' + exp;
+        }
+        const pct = Math.round((100 * b.indecidables) / Math.max(1, b.n));
+        return fr(b.bas, 1) + ' … ' + fr(b.haut, 1) + ' R, pas un chiffre unique — '
+          + b.indecidables + ' trades sur ' + b.n + ' (' + pct + ' %) dont l\u2019issue dépend de '
+          + 'l\u2019ordre des mouvements dans une bougie' + exp;
+      })(),
+      // Le conseil est séparé du constat : il n'est pas toujours là, et quand il l'est
+      // c'est la seule ligne sur laquelle on peut AGIR.
+      ...(() => {
+        const b = s.bande;
         const df = this.serieH1(s.btSym);
-        const vieux = df && !(df.retourConnu > 0.5)
-          ? ' · série exportée sans les colonnes haut_apres / bas_apres : un ré-export peut resserrer cette bande'
-          : '';
-        return 'bande ' + fr(b.bas, 1) + ' … ' + fr(b.haut, 1) + ' R (largeur ' + fr(b.largeur, 1)
-          + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas' + vieux;
+        const vieux = !!(b && b.n && b.largeur >= 0.05 && df && !(df.retourConnu > 0.5));
+        return { aBtConseil: vieux,
+          btConseil: vieux
+            ? 'ré-exportez ' + s.btSym + ' — cette série n\u2019a pas les colonnes haut_apres / bas_apres, '
+              + 'qui disent ce que le prix a fait après le second extrême de l\u2019heure'
+            : '' };
       })(),
       btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
       // Une ligne rouverte sans sa condition affiche d'autres chiffres sous le même
@@ -12842,14 +12890,6 @@ GROUPES = {
               + '1 448 trades. En garder une seule divise le temps de scan par deux sans rien perdre.'
             : '' };
       })(),
-      btExposes: res ? (res.exposes
-        ? Math.round(res.exposes / Math.max(1, res.n) * 100) + ' % des sorties reposent sur un palier armé dans leur propre bougie ('
-          + res.exposes + ' sur ' + res.n + ') : sur celles-là le prix a pu repasser une seconde fois par le niveau, et le résultat est optimiste d\u2019autant'
-        : 'aucune sortie ne repose sur un palier armé dans sa propre bougie : le chiffre est celui du testeur, aux frais près') : '',
-      btAmbigus: res ? (res.ambigus
-        ? Math.round(res.ambigus / Math.max(1, res.n) * 100) + ' % des trades tranchés par une bougie ambiguë ('
-          + res.ambigus + ' sur ' + res.n + ') : leur sort vient d\u2019une convention de lecture, pas de la donnée'
-        : 'aucune bougie ambiguë : aucun trade ne dépend d\u2019une convention de lecture') : '',
       btPf: res ? (res.pf === Infinity ? '∞ non mesuré' : fr(res.pf, 2)) : '—',
       btDD: res ? sg(res.dd, 1) + ' R' : '—',
       ...this.clesComparaison(res ? (this._tradesBt || []).map((t) => ({ e: t.entree_t, p: t.entree })) : null, 'bcmp'),
