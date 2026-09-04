@@ -276,6 +276,22 @@ d'erreur visible. Il faut servir le dossier en HTTP :
 `node scripts/app/ouvrir.mjs` fait la même chose sans interface, pour vérifier que la page
 démarre après une modification.
 
+### Le fichier unique
+
+`npm run app:solo` produit `Sivula.solo.html` : la même application, les cinq modules
+intégrés en Blob URL, **aucun voisin requis**. C'est le fichier à déposer là où l'on ne peut
+en fournir qu'un. Il fonctionne aussi bien en `file://`.
+
+C'est un ARTEFACT : il se refait à chaque changement de la source et ne se modifie JAMAIS à
+la main. L'éditer recréerait la divergence que tout le reste du dépôt s'emploie à éviter —
+et rien ne signalerait que les deux versions ont cessé de dire la même chose.
+
+Deux pièges ont coûté un aller-retour chacun, et le script les documente : `support.js`
+contient une balise fermante de script, qui refermait la balise d'accueil et affichait le
+runtime en texte au milieu de la page ; et le commentaire qui expliquait ce piège en
+contenait une lui aussi, ce qui mettait le préambule hors service. Tout voyage en base64
+depuis.
+
 ## Premières tâches suggérées, dans l'ordre
 
 1. **Un harnais de test qui exécute le moteur sur un CSV** et compare sa liste de trades à

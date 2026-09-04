@@ -18,7 +18,8 @@
     "mt5:diff": "node scripts/mt5-diff.mjs",
     "mt5:demo": "node scripts/mt5-diff.mjs --demo",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "app:solo": "node scripts/app/solo.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
