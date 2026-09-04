@@ -2283,7 +2283,7 @@
                           <span class="text-muted" style="font-size:10px" title="Aucune configuration scannée pour cet instrument : lancez un scan qui l'inclut.">Lancez un scan pour agir</span>
                         </sc-if>
                         <sc-if value="{{ tr2.avecAction }}" hint-placeholder-val="{{ true }}">
-                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
+                          <button type="button" class="tag tag-neutral" title="Charger cette configuration dans le Backtest et la relancer" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.auBacktest }}">Backtest</button><button type="button" class="tag tag-accent" title="{{ tr2.verdictAide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5;margin-inline-start:4px" onClick="{{ tr2.verifier }}">{{ tr2.verifierTxt }}</button><sc-if value="{{ tr2.aVersBasse }}" hint-placeholder-val="{{ false }}"><button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ tr2.versBasse }}" title="{{ tr2.versBasseAide }}">mesurer en lecture basse</button></sc-if>
                         </sc-if>
                         <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="2">
                           <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;line-height:1.5" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
@@ -2292,7 +2292,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span></td>
+                <td class="text-muted"><sc-if value="{{ tr2.aIrrealisable }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;margin-bottom:3px;font-weight:600" title="{{ tr2.irrealisableTxt }}">{{ tr2.irrealisableEtiq }}</span></sc-if>{{ tr2.reglages }}<sc-if value="{{ tr2.aVariante }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;font-weight:600;color:var(--color-accent-700)" title="La combinaison exacte à cocher dans le scan pour refaire ce résultat">{{ tr2.variante }}</span></sc-if><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Filtres actifs lors du scan">{{ tr2.filtres }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Période réellement couverte par les trades de cette configuration">{{ tr2.periodeTestee }}</span><span style="display:block;font-size:10px;line-height:1.4;color:var(--color-accent-700)" title="Deux cas : la bougie contient à la fois le stop et l'objectif, ou bien elle monte assez pour armer un palier puis redescend le toucher. Dans les deux, elle ne dit pas dans quel ordre le prix est passé, et le sort du trade vient d'une convention de lecture, pas de la donnée. Le second cas est le plus fréquent.">{{ tr2.ambiguTxt }}</span><span style="display:block;font-size:10px;line-height:1.4;opacity:.8" title="Part des trades tranchés qui finissent gagnants, sorties à l'équilibre exclues. C'est la valeur que le curseur « % gagnants minimum » compare : un objectif lointain se contente d'un taux bas, et l'exiger plus haut écarte justement les configurations qui gagnent gros.">{{ tr2.winTxt }}</span><span class="{{ tr2.verdictCls }}" style="display:inline-block;margin-top:4px;font-size:10px;padding:1px 6px;line-height:1.5;white-space:normal" title="{{ tr2.verdictAide }}">{{ tr2.verdictTxt }}</span></td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.n }}</td>
                 <td style="text-align:center;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ tr2.total }}<sc-if value="{{ tr2.aJumelle }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:10px;line-height:1.3;color:{{ tr2.jumCouleur }}" title="{{ tr2.jumAide }}">{{ tr2.jumTxt }}</span></sc-if></td>
                 <td style="text-align:center;white-space:nowrap">{{ tr2.rAn }}</td>
@@ -3561,7 +3561,7 @@ class Component extends DCLogic {
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
     btSym: null, reglagesOuverts: false, venuDeHisto: null, univers: [],
-    res: null, seg: null, courbe: [], varianteRatee: false, ligneAttendue: null, ecartLigne: '', scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
+    res: null, seg: null, courbe: [], varianteRatee: false, ligneAttendue: null, cfgLigne: null, ecartLigne: '', scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
     tradesMin: 40, segMin: 3, marche: null, tri: 'total', erreur: null, recherche: '', parSymbole: 1,
     deposes: [], survol: false, messageDepot: null, spreadSaisi: null, swapSaisi: null,
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
@@ -7470,12 +7470,20 @@ GROUPES = {
     }
     if (this.state.erreur) this.setState({ erreur: null });
     const cfg = this.cfgCourante();
-    const sig = this.signature(cfg);
+    // La signature doit porter la configuration RÉELLEMENT mesurée, sinon ouvrir une
+    // ligne dont les réglages de panneau coïncident avec le test précédent sauterait le
+    // recalcul et laisserait les anciens chiffres sous le nouvel intitulé.
+    const sig = this.signature(this.state.cfgLigne || cfg);
     if (sig === this.state.signature && this.state.res) return;
     // le backtest est un calcul synchrone long : on rend la main une fois avant,
     // sinon le clic d'onglet est perdu et l'interface gèle sans rien annoncer.
     await new Promise((z) => setTimeout(z, 0));
-    const trades = this.mesurer(this.state.btSym, cfg, this.state.ut, df);
+    // Ouvert DEPUIS une ligne : on rejoue la configuration qu'elle a fait mesurer, au
+    // lieu de la reconstruire depuis le panneau. C'est la seule façon que les deux
+    // chiffres coïncident — reconstruire, c'est réunir douze réglages et espérer.
+    const cfgL = this.state.cfgLigne;
+    const cfgUtile = cfgL || cfg;
+    const trades = this.mesurer(this.state.btSym, cfgUtile, this.state.ut, df);
     const res = this.M.resume(trades);
     const seg = this.M.segments(trades, 5);
     const courbe = this.M.courbe(trades);
@@ -7485,7 +7493,8 @@ GROUPES = {
     // chiffre : sur GOLD à paliers la bande vaut 80 R pour un total de 37, et le testeur
     // tombe à 34,5. Sans palier elle vaut 0,0 et le testeur rend le chiffre exact.
     const jumelle = this.mesurer(this.state.btSym,
-      { ...cfg, sortie: { ...cfg.sortie, prudent: !cfg.sortie.prudent } }, this.state.ut, df);
+      { ...cfgUtile, sortie: { ...cfgUtile.sortie, prudent: !cfgUtile.sortie.prudent } },
+      this.state.ut, df);
     const totNet = (a) => a.reduce((x, t) => x + (t.R_net !== undefined ? t.R_net : t.R), 0);
     const a = totNet(trades), b = totNet(jumelle);
     const bande = { bas: Math.min(a, b), haut: Math.max(a, b), largeur: Math.abs(a - b),
@@ -8872,7 +8881,11 @@ GROUPES = {
     // Photo des réglages prise à la validation : rien à retrouver, rien à deviner.
     if (!rejoue && r._reg) {
       const suite = { ...this.state, ...r._reg, ...(forcage || {}), varianteRatee: false,
-        ligneAttendue: this.attenduDe(r, forcage), vue: 'backtest', venuDeHisto: r.sym,
+        ligneAttendue: this.attenduDe(r, forcage),
+        cfgLigne: forcage
+          ? (() => { const c = this.cfgDeLigne(r); return c ? { ...c, sortie: { ...c.sortie, ...forcage } } : null; })()
+          : this.cfgDeLigne(r),
+        vue: 'backtest', venuDeHisto: r.sym,
         btSym: r.sym, btPeriode: r.periode, btSL: r.sl, btRR: r.rr,
         btEntree: r.entree || r._reg.btEntree, btLigne: r.ligne || r._reg.btLigne };
       const fin = { ...this.state, ...suite };
@@ -8963,8 +8976,11 @@ GROUPES = {
     this.setState({ ...suite,
       // la variante n'a pas été retrouvée alors que la ligne en portait une : les chiffres
       // qui vont s'afficher ne décrivent PAS la ligne cliquée, et il faut le dire fort
-      varianteRatee: !rejoue && !patchV && !!(r.filtre || r.filtreNom),
+      varianteRatee: !rejoue && !patchV && !this.cfgDeLigne(r) && !!(r.filtre || r.filtreNom),
       ligneAttendue: this.attenduDe(r, forcage),
+      cfgLigne: forcage
+        ? (() => { const c = this.cfgDeLigne(r); return c ? { ...c, sortie: { ...c.sortie, ...forcage } } : null; })()
+        : this.cfgDeLigne(r),
       reglagesRejoues: (forcage && forcage.secuPrudent)
         ? (patchV
           ? 'Même configuration que la ligne, mais en LECTURE BASSE : les bougies ambiguës sont tranchées contre vous. Comparez le R obtenu à celui de l\u2019historique — l\u2019écart est la part du résultat qui dépend de l\u2019ordre des mouvements à l\u2019intérieur d\u2019une bougie.'
@@ -9384,6 +9400,21 @@ GROUPES = {
               c.debut = Math.max(Number(c.debut) || 0, p.debut);
               c.fin = p.fin;
             }
+            // LA CONFIGURATION MESURÉE, gardée sous la clé de sa variante.
+            //
+            // C'est elle que le moteur exécute. Jusqu'ici, rouvrir une ligne ne la
+            // rejouait pas : elle était RECONSTRUITE — retrouver l'archive, retrouver la
+            // variante, réappliquer son patch sur l'état du panneau, remesurer. Une
+            // douzaine de réglages, une douzaine d'occasions d'en perdre un, et trois
+            // écarts constatés en un après-midi. Le backtest, le contrôle du hasard et
+            // le robot exporté empruntaient tous les trois ce chemin.
+            //
+            // Une variante par clé, quelques centaines au plus : la table est minuscule
+            // à côté des cent quatre-vingt-dix mille lignes qu'elle décrit. Période,
+            // stop et objectif ne s'y trouvent pas — ils viennent de la ligne, et
+            // `appliquerLigne` les repose.
+            this._cfgVar = this._cfgVar || {};
+            this._cfgVar[vf.cle + '|' + sym] = c;
             return c;
           })() });
       }
@@ -9516,6 +9547,9 @@ GROUPES = {
         // indéfiniment sur des instruments qui n'auraient rien donné de plus.
         termine: true,
         plan: (() => { const g = {}; for (const k of this.CHAMPS_PLAN) g[k] = this.state[k]; return g; })(),
+        // Les configurations MESURÉES, une par variante et par symbole. C'est ce qui
+        // permet de rejouer une ligne au lieu de la reconstruire — voir `cfgDeLigne`.
+        cfgVar: this._cfgVar || {},
         // tous les réglages du moteur au moment du scan : filtres, sécurisation, frais, UT.
         // Sans eux, rejouer une configuration dans le backtest ne redonne pas le même résultat.
         reglages: (() => { const g = {}; for (const k of this.REGLAGES) g[k] = this.state[k]; return g; })(),
@@ -9554,6 +9588,17 @@ GROUPES = {
       this.ecrireSession();
       // scan mené à son terme : plus rien à reprendre
       try { localStorage.removeItem(this.cle('simula.scan.depart')); } catch (e) {}
+      // LE CONTRÔLE DU HASARD S'ENCHAÎNE, il ne s'attend pas.
+      //
+      // Un scan garde le meilleur de cent mille essais : le hasard aussi produit un
+      // meilleur. Tant que la comparaison n'est pas faite, un résultat de tête ne dit
+      // rien — il dit seulement qu'il est le premier d'une liste. En faire un bouton
+      // séparé, dans un autre écran, c'était inviter à l'oublier ; et un résultat qu'on
+      // regarde avant son contrôle est déjà cru.
+      //
+      // Il tourne sur les seules lignes retenues, après le scan, et se saute tout seul
+      // si l'utilisateur a déjà lancé un contrôle ou si rien n'est exploitable.
+      if (!this.state.hasardEnCours) this.controlerHasard();
     });
   }
 
@@ -9744,6 +9789,102 @@ GROUPES = {
   //
   // Une lecture forcée (le bouton « lecture basse ») change le résultat EXPRÈS : on ne
   // compare alors rien, sous peine d'annoncer un écart voulu comme une anomalie.
+  // LE VERDICT D'UNE LIGNE, sur place.
+  //
+  // Juger une configuration demandait trois écrans : le scan pour la voir, l'historique
+  // pour le contrôle du hasard, le backtest pour la bande de lecture. Trois écrans, trois
+  // chemins de reconstruction, et à l'arrivée des chiffres qui ne se recoupaient pas.
+  //
+  // Tout est mesurable ici, sur la ligne, à partir de la configuration qu'elle porte. Le
+  // parcours redevient : scanner, lire les verdicts, exporter le robot. Le backtest reste
+  // l'endroit où l'on explore à la main — plus celui où l'on vérifie.
+  //
+  // Trois questions, dans cet ordre, parce que la première rend les autres vaines :
+  //   1. le hasard fait-il aussi bien ? (sinon, rien d'autre ne compte)
+  //   2. les deux lectures s'accordent-elles ? (sinon, le chiffre n'est pas un chiffre)
+  //   3. le résultat tient-il hors échantillon ?
+  verdictDe(r) {
+    const rang = this.rangHasard(r);
+    const b = (this._bandes || {})[this.cleFine(r)];
+    const bits = [];
+    let dur = 'ok';
+    if (!rang) { bits.push('hasard non contrôlé'); dur = 'attente'; }
+    else if (rang.statut === 'indecidable') {
+      bits.push('hasard : pas tranchable à ' + (rang.tirages || 0) + ' tirages');
+      dur = 'attente';
+    } else if (rang.statut === 'net' || rang.statut === 'reel') {
+      bits.push('bat le hasard');
+    } else { bits.push('le hasard fait aussi bien'); dur = 'ko'; }
+    if (b) {
+      if (b.largeur < 0.05) bits.push('chiffre exact');
+      else { bits.push('bande ' + b.largeur.toFixed(1).replace('.', ',') + ' R'); if (dur === 'ok') dur = 'attente'; }
+    } else bits.push('lectures non comparées');
+    const pos = Number(r.positifs), tot = Number(r.segTotal) || 5;
+    if (Number.isFinite(pos)) {
+      bits.push(pos + '/' + tot + ' segments');
+      if (pos < tot - 1 && dur === 'ok') dur = 'attente';
+    }
+    return {
+      verdictTxt: bits.join(' · '),
+      verdictCls: dur === 'ok' ? 'tag tag-accent' : dur === 'ko' ? 'tag tag-neutral' : 'tag tag-outline',
+      verdictAide: 'Trois questions dans l\u2019ordre : le hasard fait-il aussi bien '
+        + '(sinon rien d\u2019autre ne compte) · les deux lectures s\u2019accordent-elles '
+        + '(sinon le chiffre n\u2019est pas un chiffre) · le résultat tient-il sur les '
+        + 'segments. « Vérifier » les mesure toutes les trois sur cette ligne.',
+      verifierTxt: this.state.verifEnCours === this.cleFine(r) ? 'Mesure…' : 'Vérifier',
+      verifier: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.verifierLigne(r); },
+    };
+  }
+  // Mesure les deux lectures de CETTE ligne et garde la bande. Le contrôle du hasard,
+  // lui, passe par `controlerHasard` qui sait déjà mémoriser ses tirages.
+  async verifierLigne(r) {
+    if (!this.M || !r || this.state.verifEnCours) return;
+    const cle = this.cleFine(r);
+    this.setState({ verifEnCours: cle });
+    try {
+      await this.charger(r.sym);
+      const cfg = this.cfgDeLigne(r)
+        || this.cfgCourante(r.sym, r.periode, r.sl, r.rr, this.etatDeLigne(r),
+          { entree: r.entree, ligne: r.ligne });
+      const df = this.base(r.sym);
+      if (df) {
+        const tot = (t) => t.reduce((a, x) => a + (x.R_net !== undefined ? x.R_net : x.R), 0);
+        const a = tot(this.mesurer(r.sym, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, r.ut || this.state.ut, df));
+        const c = tot(this.mesurer(r.sym, { ...cfg, sortie: { ...cfg.sortie, prudent: true } }, r.ut || this.state.ut, df));
+        this._bandes = this._bandes || {};
+        this._bandes[cle] = { bas: Math.min(a, c), haut: Math.max(a, c), largeur: Math.abs(a - c) };
+      }
+      if (!this.rangHasard(r) && !this.state.hasardEnCours) await this.controlerHasard();
+    } catch (e) { /* une ligne invérifiable ne doit pas bloquer les autres */ }
+    this.setState({ verifEnCours: null, scanRev: (this.state.scanRev || 0) + 1 });
+  }
+  // LA CONFIGURATION DE LA LIGNE, rejouée telle qu'elle a été mesurée.
+  //
+  // Elle est cherchée là où elle a été gravée : la table du scan en cours d'abord, puis
+  // les archives, puis l'historique enregistré. Introuvable, on rend `null` et l'appelant
+  // retombe sur la reconstruction — en le disant, jamais en silence.
+  //
+  // Période, stop et objectif viennent de la LIGNE : la table ne garde qu'un modèle par
+  // variante, et ces trois-là balaient une grille. C'est exactement ce que fait le noyau
+  // de scan, `appliquer` : même opération, même résultat.
+  cfgDeLigne(r) {
+    if (!r || !r.filtre || !r.sym) return null;
+    const cle = r.filtre + '|' + r.sym;
+    let modele = (this._cfgVar || {})[cle];
+    if (!modele) {
+      const tables = [];
+      for (const a of this.state.archives || []) if (a && a.cfgVar) tables.push(a.cfgVar);
+      try { for (const run of this.lireRuns()) if (run && run.cfgVar) tables.push(run.cfgVar); }
+      catch (e) { /* historique illisible : on se contente des archives */ }
+      for (const t of tables) if (t[cle]) { modele = t[cle]; break; }
+    }
+    if (!modele || !modele.entree || !modele.sortie) return null;
+    const periode = Number(r.periode), sl = Number(r.sl), rr = Number(r.rr);
+    if (!Number.isFinite(periode) || !Number.isFinite(sl) || !Number.isFinite(rr)) return null;
+    return { ...modele,
+      entree: { ...modele.entree, periode },
+      sortie: { ...modele.sortie, sl: { ...modele.sortie.sl, valeur: sl }, tp: { valeur: rr } } };
+  }
   attenduDe(r, forcage) {
     if (!r || forcage) return null;
     return { sym: r.sym, n: Number(r.n) || 0, total: Number(r.total) || 0,
@@ -9820,7 +9961,12 @@ GROUPES = {
         try { await this.charger(r.sym); df = this.base(r.sym); } catch (e) { continue; }
         if (!df) continue;
         etat = this.etatDeLigne(r);
-        const cfg = this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat, { entree: r.entree, ligne: r.ligne });
+        // La configuration MESURÉE d'abord ; la reconstruction seulement à défaut. Le
+        // contrôle du hasard comparait sinon le R d'une ligne à des tirages faits sur
+        // une AUTRE configuration — le filtre perdu en route rendait les tirages plus
+        // faciles à battre, donc la ligne plus flatteuse qu'elle n'est.
+        const cfg = this.cfgDeLigne(r)
+          || this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat, { entree: r.entree, ligne: r.ligne });
         let res;
         try {
           res = this.M.tirageHasard(df, cfg, r.n, tirages, this.graineDe(r));
@@ -10025,7 +10171,13 @@ GROUPES = {
   // Mais un backtest complet par frappe fige l'interface : on regroupe les
   // saisies rapprochées et on ne calcule qu'une fois la main levée.
   maj(patch) {
-    this.setState(patch);
+    // Toucher un réglage sort du mode « ligne » : le résultat ne prétend plus rejouer la
+    // configuration mesurée, il décrit ce que l'utilisateur vient de composer. Le garder
+    // reviendrait à ignorer la modification qu'on vient de faire — la pire des surprises.
+    this.setState({ ...patch,
+      ...(this.state.cfgLigne
+        ? { cfgLigne: null, ligneAttendue: null, ecartLigne: '', varianteRatee: false }
+        : {}) });
     clearTimeout(this._majT);
     this._majT = setTimeout(() => this.lancerTest(), 260);
   }
@@ -10078,6 +10230,13 @@ GROUPES = {
       // justement filtres, sécurisation, sens et lecture, puisque ce sont les variantes
       // qui les rallument.
       plan: (() => { const g = {}; for (const k of this.CHAMPS_PLAN) g[k] = s[k]; return g; })(),
+      // On ne garde que les configurations des lignes RETENUES : la table du scan en
+      // porte des centaines, le TOP en utilise quinze.
+      cfgVar: (() => {
+        const t = this._cfgVar || {}, o = {};
+        for (const r of garde) { const k = r.filtre + '|' + r.sym; if (t[k]) o[k] = t[k]; }
+        return o;
+      })(),
       mv: this.MOTEUR_V };
     this.ecrireRuns([run, ...this.lireRuns()]);
   }
@@ -14513,7 +14672,7 @@ GROUPES = {
           + ' · ' + sec + ' · frais ' + (s.btFrais ? 'compris' : 'exclus')
           + (s.btDelai ? ' · délai ' + s.btDelai : '');
       })(),
-      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null, varianteRatee: false, ligneAttendue: null, ecartLigne: '' }, () => this.lancerTest()),
+      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null, varianteRatee: false, ligneAttendue: null, cfgLigne: null, ecartLigne: '' }, () => this.lancerTest()),
       setVueJournal: () => this.setState({ vue: 'journal' }),
       combinaisons: (this.SYMBOLES.length * 5 * 4 * 4).toLocaleString('fr-FR'),
       choixVueLecture: [
@@ -15224,6 +15383,7 @@ GROUPES = {
             partielAide: 'Le balayage de cet instrument a été interrompu : seules les combinaisons déjà calculées sont là. Son meilleur résultat n\u2019est pas comparable à celui d\u2019un instrument balayé en entier — relancez le scan pour le compléter.',
             ouvrir: () => this.ouvrirFiche(r.sym, r),
             auBacktest: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.versBacktest(r); },
+            ...this.verdictDe(r),
             // les scans déjà enregistrés ont perdu leurs jumelles à l'élagage : ce bouton
             // rouvre la MÊME configuration en lecture basse, sans relancer de scan
             aVersBasse: false,
