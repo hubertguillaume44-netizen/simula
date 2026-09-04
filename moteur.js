@@ -34,7 +34,15 @@ export function texteVersDf(txt) {
   // traiter. Absente, la colonne vaut 1 partout : les séries déjà exportées gardent leur
   // comportement.
   const iSess = cols.findIndex((x) => /session|seance|séance/.test(x));
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [];
+  // ORDRE DES EXTRÊMES : la minute, dans l'heure, où la bougie a fait son plus haut et
+  // celle où elle a fait son plus bas. Deux entiers qui ferment l'indécision du
+  // backtest — une bougie H1 dit ce que le prix a touché, jamais dans quel ordre, et
+  // c'est ce seul ordre qui décide du sort d'un trade quand une bougie arme un palier
+  // puis redescend le toucher. Absentes, le moteur retombe sur une convention de
+  // lecture et le dit : les séries déjà exportées gardent leur comportement.
+  const iMH = cols.findIndex((x) => /min_haut|minhaut/.test(x));
+  const iMB = cols.findIndex((x) => /min_bas|minbas/.test(x));
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [];
   for (let i = debut; i < lignes.length; i++) {
     const p = lignes[i].split(sep);
     if (p.length < 5) continue;
@@ -64,8 +72,17 @@ export function texteVersDf(txt) {
     const decal = cols.length > p.length ? 1 : 0;
     sp.push(iSp >= 0 ? (nb(p[iSp - decal]) || 0) : 0);
     sess.push(iSess >= 0 ? (nb(p[iSess - decal]) ? 1 : 0) : 1);
+    // -1 = inconnu, et le rester : le haut et le bas dans la même minute ne disent pas
+    // dans quel ordre ils sont venus
+    const lireMin = (k) => {
+      if (k < 0) return -1;
+      const x = nb(p[k - decal]);
+      return Number.isFinite(x) && x >= 0 && x < 60 ? x : -1;
+    };
+    mh.push(lireMin(iMH));
+    mb.push(lireMin(iMB));
   }
-  return nettoyer({ t, o, h, l, c, v, sp, sess, n: t.length });
+  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, n: t.length });
 }
 
 // ---------- nettoyage (blocs.charger_csv : couper_daily + normaliser_session) ----------
@@ -124,9 +141,10 @@ export function nettoyer(df) {
   if (!df.n) return df;
   const debut = debutIntraday(df.t);
   const { depart, heures } = fenetreHomogene(df.t);
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [];
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [];
   const spSrc = df.sp || df.spreadPts;
   const sessSrc = df.sess;
+  const mhSrc = df.mh, mbSrc = df.mb;
   for (let i = 0; i < df.n; i++) {
     const d = new Date(df.t[i]);
     if (debut !== null && df.t[i] < debut) continue;
@@ -136,6 +154,8 @@ export function nettoyer(df) {
     // pas de colonne = pas de restriction : une série exportée avant cette colonne doit
     // continuer à se mesurer exactement comme avant
     sess.push(sessSrc ? (sessSrc[i] ? 1 : 0) : 1);
+    mh.push(mhSrc ? (mhSrc[i] ?? -1) : -1);
+    mb.push(mbSrc ? (mbSrc[i] ?? -1) : -1);
   }
   const grain = mesurerGrain({ h, l, c, n: t.length });
   // Le spread est exporté en POINTS. Un point vaut 10^-décimales du cours : on le
@@ -161,9 +181,15 @@ export function nettoyer(df) {
   // absente : sans lui, une série exportée sans la colonne serait indiscernable d'une
   // série dont le courtier n'aurait fermé aucune heure.
   const sessRenseigne = !!df.sess && sess.some((x) => !x);
-  return { t, o, h, l, c, v, sp, sess, n: t.length, ecartees: df.n - t.length,
+  // Part des bougies dont l'ORDRE des extrêmes est connu. C'est elle qui dit si la
+  // mesure est déterminée par la donnée ou par une convention de lecture : à 100 %,
+  // les deux lectures rendent le même chiffre.
+  const ordreConnu = mh.some((x) => x >= 0)
+    ? mh.reduce((a, x, i) => a + (x >= 0 && mb[i] >= 0 ? 1 : 0), 0) / (t.length || 1)
+    : 0;
+  return { t, o, h, l, c, v, sp, sess, mh, mb, n: t.length, ecartees: df.n - t.length,
     heuresSession: [...heures].sort((a, b) => a - b), grain,
-    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne };
+    spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu };
 }
 
 // Grain de la série : certains exports MT5 arrondissent les prix à 2 décimales.
@@ -1063,6 +1089,29 @@ export function backtester(df, cfg) {
   // garde donc le test du gap et on ignore le reste. Les extrêmes ne sont pas perdus :
   // les bougies suivantes de la journée les portent (aucune des 1 981 journées de GOLD
   // ne se réduit à sa seule bougie de 00:00). Sans colonne de spread, rien ne change.
+  // ————— l'ordre des extrêmes, quand la donnée le porte —————
+  //
+  // Deux colonnes de l'export — la minute du plus haut et celle du plus bas dans
+  // l'heure — suffisent à trancher ce qu'une bougie H1 laissait indécidable. Le chemin
+  // d'une bougie est alors : ouverture → premier extrême → second extrême → clôture,
+  // et le sort du trade s'en déduit sans convention.
+  //
+  //   HAUT d'abord : l'objectif s'il est atteint ; sinon le palier s'arme au sommet et
+  //                  la descente qui suit le touche s'il est franchi.
+  //   BAS d'abord  : l'ancien stop s'il est atteint — le palier n'existe pas encore ;
+  //                  sinon la remontée donne l'objectif, ou arme le palier, et seule
+  //                  une clôture repassée dessous le fait jouer.
+  //
+  // À -1 (colonne absente, ou les deux extrêmes dans la même minute) on ne sait pas, et
+  // le moteur retombe sur la lecture haute ou basse — en le disant, via `ambigu`.
+  const mhCol = df.mh, mbCol = df.mb;
+  // L'égalité vaut ignorance, et le test est ICI, pas seulement dans le lecteur de CSV :
+  // un df construit à la main — un test, un worker de scan — passerait sinon à côté de
+  // la règle, et le moteur lirait « bas d'abord » sur deux extrêmes simultanés.
+  const ordreConnuA = (i) =>
+    !!mhCol && !!mbCol && mhCol[i] >= 0 && mbCol[i] >= 0 && mhCol[i] !== mbCol[i];
+  const hautDAbord = (i) => mhCol[i] < mbCol[i];
+
   const reconstituee = bougiesReconstituees(df);
   const releve = reconstituee ? (i) => !reconstituee[i] : () => true;
 
@@ -1150,7 +1199,7 @@ export function backtester(df, cfg) {
       const okRien = !okVieux && !okTp && !armeCertain;
       const issues = (okTp ? 1 : 0) + (armeActif ? 1 : 0) + (okVieux ? 1 : 0) + (okRien ? 1 : 0);
       const ambigu = issues > 1;
-      ambiguTrade = ambiguTrade || ambigu;
+      ambiguTrade = ambiguTrade || (ambigu && !ordreConnuA(i));
 
       // Lecture HAUTE : la meilleure issue admissible — l'objectif, sinon laisser
       // courir, sinon le stop armé, et l'ancien stop en dernier recours.
@@ -1165,7 +1214,19 @@ export function backtester(df, cfg) {
       // (parcours 28 %), redescend le toucher — le robot sort à 0,00 et le moteur
       // inscrivait -1 R alors qu'il se disait en lecture haute.
       let sortie = null;
-      if (prudent) {
+      if (ambigu && ordreConnuA(i)) {
+        // l'ordre est connu : plus de convention, la bougie se lit comme elle s'est
+        // déroulée
+        if (hautDAbord(i)) {
+          if (okTp) sortie = ['tp', tp];
+          else if (armeActif) sortie = ['sl', slArme];
+          else if (okVieux) sortie = ['sl', sl];
+        } else {
+          if (okVieux) sortie = ['sl', sl];
+          else if (okTp) sortie = ['tp', tp];
+          else if (armeCertain) sortie = ['sl', slArme];
+        }
+      } else if (prudent) {
         if (okVieux) sortie = ['sl', sl];
         else if (armeActif) sortie = ['sl', slArme];
         else if (!okRien && okTp) sortie = ['tp', tp];
@@ -1242,10 +1303,20 @@ export function backtester(df, cfg) {
     const okTp0 = d * mieux0 >= d * tp;
     const okVieux0 = d * pire0 <= d * sl;
     const okRien0 = !okVieux0 && !okTp0 && !armeCertain0;
-    ambiguTrade = ambiguTrade
-      || ((okTp0 ? 1 : 0) + (armeActif0 ? 1 : 0) + (okVieux0 ? 1 : 0) + (okRien0 ? 1 : 0)) > 1;
+    const ambigu0 = ((okTp0 ? 1 : 0) + (armeActif0 ? 1 : 0) + (okVieux0 ? 1 : 0) + (okRien0 ? 1 : 0)) > 1;
+    ambiguTrade = ambiguTrade || (ambigu0 && !ordreConnuA(i));
     let sortie0 = null;
-    if (prudent) {
+    if (ambigu0 && ordreConnuA(i)) {
+      if (hautDAbord(i)) {
+        if (okTp0) sortie0 = ['tp', tp];
+        else if (armeActif0) sortie0 = ['sl', slArme0];
+        else if (okVieux0) sortie0 = ['sl', sl];
+      } else {
+        if (okVieux0) sortie0 = ['sl', sl];
+        else if (okTp0) sortie0 = ['tp', tp];
+        else if (armeCertain0) sortie0 = ['sl', slArme0];
+      }
+    } else if (prudent) {
       if (okVieux0) sortie0 = ['sl', sl];
       else if (armeActif0) sortie0 = ['sl', slArme0];
       else if (!okRien0 && okTp0) sortie0 = ['tp', tp];

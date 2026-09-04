@@ -6624,6 +6624,52 @@ GROUPES = {
   }
   // Plage réellement mesurable d'un instrument, mise en cache : le calcul balaie toute
   // la série et serait refait des milliers de fois pendant un scan.
+  // Coût d'entrée heure par heure : le spread médian de chaque heure du serveur,
+  // rapporté à la médiane de l'instrument.
+  //
+  // Des trois frais, le spread est le SEUL qui dépende de l'heure. Le portage se
+  // facture au minuit du serveur, la commission au lot : ni l'un ni l'autre ne change
+  // selon qu'on entre à 9 h ou à 15 h. Mesuré sur les sept instruments de référence, le
+  // spread, lui, varie du simple au quintuple — AUDCAD ×4,3 et NZDCAD ×4,9 à minuit,
+  // #Germany40 ×1,9 de 04:00 à 08:00 avant l'ouverture du cash, #HongKong50 ×1,4 sur la
+  // pause de midi et le soir. GOLD et BITCOIN, eux, sont plats : rien à éviter.
+  //
+  // Le moteur refuse déjà les heures au-dessus du plafond ; cette grille sert à les
+  // VOIR, et à comprendre pourquoi une configuration n'entre jamais à certaines heures.
+  coutHoraire(sym) {
+    this._coutH = this._coutH || {};
+    if (this._coutH[sym] === undefined) {
+      const h1 = this.serieH1(sym);
+      const sp = h1 && this.M.spreadEnPct(h1);
+      if (!sp) { this._coutH[sym] = null; return null; }
+      const parH = Array.from({ length: 24 }, () => []);
+      const tous = [];
+      for (let i = 0; i < h1.n; i++) {
+        if (!(sp[i] > 0)) continue;
+        parH[new Date(h1.t[i]).getUTCHours()].push(sp[i]);
+        tous.push(sp[i]);
+      }
+      const med = (v) => { if (!v.length) return null; const a = [...v].sort((x, y) => x - y); return a[a.length >> 1]; };
+      const ref = med(tous);
+      this._coutH[sym] = ref
+        ? { ref, plafond: this.facteurSpread(), heures: parH.map((v) => {
+            const m = med(v);
+            return m === null ? null : { pct: m, rapport: m / ref, n: v.length };
+          }) }
+        : null;
+    }
+    return this._coutH[sym];
+  }
+
+  // Les heures que le plafond de spread écarte, en clair : « 00 h, 01 h ».
+  heuresCheres(sym) {
+    const g = this.coutHoraire(sym);
+    if (!g) return [];
+    return g.heures
+      .map((x, h) => (x && x.rapport > g.plafond ? h : -1))
+      .filter((h) => h >= 0);
+  }
+
   plageDe(sym) {
     this._plages = this._plages || {};
     if (this._plages[sym] === undefined) {
@@ -12354,7 +12400,15 @@ GROUPES = {
         const f = this.fraisDe(s.btSym);
         if (!f.connu) return 'aucun frais connu pour ' + s.btSym + ' — résultat brut, saisissez ceux de votre courtier';
         const dte = (this.DATES_BAREME || {})[this.source(s.btSym)];
-        return (f.saisi ? 'saisis : ' : 'relevés ' + (dte ? 'du ' + dte + ' : ' : ': ')) + 'spread ' + fr(f.spread_pct, 4) + ' % · swap ' + fr(f.swap_annuel_pct, 2) + ' %/an';
+        // Les heures écartées se lisent ICI, à côté des frais : c'est le SEUL des trois
+        // coûts qui dépende de l'heure — le portage se facture au minuit du serveur et
+        // la commission au lot. Sans cette ligne, on ne comprend pas pourquoi une
+        // configuration n'entre jamais avant 2 h du matin.
+        const ch = this.heuresCheres(s.btSym);
+        const cher = ch.length
+          ? ' · spread trop large à ' + ch.map((h) => (h < 10 ? '0' + h : h) + ' h').join(', ') + ' : pas d\u2019entrée à ces heures'
+          : '';
+        return (f.saisi ? 'saisis : ' : 'relevés ' + (dte ? 'du ' + dte + ' : ' : ': ')) + 'spread ' + fr(f.spread_pct, 4) + ' % · swap ' + fr(f.swap_annuel_pct, 2) + ' %/an' + cher;
       })(),
       fraisConnus: this.frais ? this.fraisDe(s.btSym).connu : true,
       fraisInconnus: this.frais ? !this.fraisDe(s.btSym).connu : false,

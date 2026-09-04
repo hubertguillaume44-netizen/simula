@@ -516,3 +516,59 @@ test("les issues d'une bougie sont énumérées, et les deux lectures en prennen
   assert.equal(HH.reduce((a, x) => a + x.R, 0).toFixed(6), BB.reduce((a, x) => a + x.R, 0).toFixed(6),
     "les deux lectures divergent alors qu'aucune bougie n'est indécidable");
 });
+
+test("l'ordre des extrêmes ferme l'indécision : la bande tombe à zéro", () => {
+  // Deux colonnes de l'export — la minute du plus haut et celle du plus bas dans
+  // l'heure — remplacent la convention de lecture par la donnée. Sans elles, une
+  // bougie contenant le stop ET l'objectif laisse le moteur choisir : lecture haute
+  // l'objectif, lecture basse le stop, et 9 R d'écart sur trois trades. Avec elles,
+  // les deux lectures rendent le MÊME chiffre, celui du chemin réellement parcouru.
+  //
+  // C'est la réponse à « faut-il télécharger la M1 » : non. La M1 entière coûterait
+  // soixante fois le fichier ; ces deux entiers coûtent quatre caractères par ligne et
+  // tranchent le même cas.
+  const n = 24 * 12, t = [], o = [], h = [], l = [], c = [];
+  let px = 100;
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const ouv = px;
+    px *= 1 + (i % 48 < 24 ? 0.0006 : -0.0004);
+    o.push(ouv); c.push(px); h.push(Math.max(ouv, px)); l.push(Math.min(ouv, px));
+  }
+  const larges = [];
+  for (let i = 30; i < n; i += 10) { h[i] = o[i] * 1.03; l[i] = o[i] * 0.97; larges.push(i); }
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5, sl: 1, rr: 2, paliers: [] });
+  const R = (a) => a.reduce((x, y) => x + y.R, 0);
+
+  // sans les colonnes : les deux lectures divergent, et le moteur le signale
+  const sans = { n, t, o, h, l, c, grain: { decimales: 4 } };
+  const sh = M.backtesterSuivi(sans, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, "D1");
+  const sb = M.backtesterSuivi(sans, { ...cfg, sortie: { ...cfg.sortie, prudent: true } }, "D1");
+  assert.ok(Math.abs(R(sh) - R(sb)) > 1, "gabarit sans indécision : le test ne prouve rien");
+  assert.equal(sh.filter((x) => x.ambigu).length, sh.length);
+
+  // avec les colonnes, HAUT d'abord : l'objectif est pris, dans les deux lectures
+  const avecHaut = { ...sans, mh: t.map((_, i) => (larges.includes(i) ? 10 : -1)),
+    mb: t.map((_, i) => (larges.includes(i) ? 40 : -1)) };
+  const ah = M.backtesterSuivi(avecHaut, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, "D1");
+  const ab = M.backtesterSuivi(avecHaut, { ...cfg, sortie: { ...cfg.sortie, prudent: true } }, "D1");
+  assert.equal(R(ah).toFixed(6), R(ab).toFixed(6), "les deux lectures divergent alors que l'ordre est connu");
+  assert.equal(ah.filter((x) => x.ambigu).length, 0, "des trades restent marqués ambigus alors que l'ordre est connu");
+  assert.deepEqual([...new Set(ah.map((x) => x.motif))], ["tp"], "haut d'abord ne donne pas l'objectif");
+
+  // BAS d'abord : c'est le stop, dans les deux lectures
+  const avecBas = { ...sans, mh: t.map((_, i) => (larges.includes(i) ? 40 : -1)),
+    mb: t.map((_, i) => (larges.includes(i) ? 10 : -1)) };
+  const bh = M.backtesterSuivi(avecBas, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, "D1");
+  const bb = M.backtesterSuivi(avecBas, { ...cfg, sortie: { ...cfg.sortie, prudent: true } }, "D1");
+  assert.equal(R(bh).toFixed(6), R(bb).toFixed(6));
+  assert.deepEqual([...new Set(bh.map((x) => x.motif))], ["sl"], "bas d'abord ne donne pas le stop");
+  assert.ok(R(bh) < R(ah), "l'ordre des extrêmes ne change rien au résultat");
+
+  // même minute = ordre inconnu : on retombe sur la convention, et on le dit
+  const meme = { ...sans, mh: t.map((_, i) => (larges.includes(i) ? 10 : -1)),
+    mb: t.map((_, i) => (larges.includes(i) ? 10 : -1)) };
+  const mh2 = M.backtesterSuivi(meme, { ...cfg, sortie: { ...cfg.sortie, prudent: false } }, "D1");
+  assert.equal(mh2.filter((x) => x.ambigu).length, mh2.length,
+    "le haut et le bas dans la même minute ne disent pas l'ordre : le trade doit rester marqué ambigu");
+});

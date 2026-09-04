@@ -183,7 +183,7 @@ bool Exporter(string sym)
    }
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread,session\r\n");
+   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
@@ -195,7 +195,7 @@ bool Exporter(string sym)
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
-   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0;
+   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0;
    for(int i = 0; i < n; i++)
    {
       // les deux séries sont croissantes : une seule passe suffit
@@ -204,17 +204,45 @@ bool Exporter(string sym)
       if(iM1 < nM1 && m1[iM1].time == r[i].time) sp = m1[iM1].spread;
       else sansM1++;
 
+      // ORDRE DES EXTRÊMES — la minute du plus haut et celle du plus bas.
+      //
+      // Deux entiers, et l'indécision du backtest s'effondre. Une bougie H1 dit ce que
+      // le prix a touché, pas dans quel ordre : quand elle arme un palier PUIS
+      // redescend le toucher, le sort du trade dépend de cet ordre et de rien d'autre.
+      // Mesuré sur les sept instruments de référence : sans palier la question ne se
+      // pose jamais, mais avec les paliers 25→0 / 50→25 / 75→50 elle décide de 26 % des
+      // trades de GOLD et de 42 % de ceux de BITCOIN, pour une bande de 100 R.
+      //
+      // Exporter la M1 entière coûterait soixante fois le fichier. Ces deux colonnes
+      // coûtent quatre caractères par ligne et tranchent le même cas : le haut avant le
+      // bas, ou l'inverse. Quand les deux tombent dans la MÊME minute, on écrit -1 :
+      // l'ordre reste inconnu, et le moteur doit continuer à le dire plutôt que d'en
+      // inventer un.
+      int minHaut = -1, minBas = -1;
+      {
+         int j = iM1;
+         double hh = -1.0, ll = -1.0;
+         while(j < nM1 && m1[j].time < r[i].time + 3600)
+         {
+            if(hh < 0.0 || m1[j].high > hh) { hh = m1[j].high; minHaut = (int)((m1[j].time - r[i].time) / 60); }
+            if(ll < 0.0 || m1[j].low  < ll) { ll = m1[j].low;  minBas  = (int)((m1[j].time - r[i].time) / 60); }
+            j++;
+         }
+         if(minHaut < 0 || minBas < 0) sansOrdre++;
+         else if(minHaut == minBas) memeMinute++;
+      }
+
       int seance = Traitable(sym, r[i].time) ? 1 : 0;
       if(seance == 0) horsSeance++;
       if(sp <= 0) sansSpread++;
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d\r\n",
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d\r\n",
          TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(r[i].open,  dec),
          DoubleToString(r[i].high,  dec),
          DoubleToString(r[i].low,   dec),
          DoubleToString(r[i].close, dec),
          r[i].tick_volume,
-         sp, seance));
+         sp, seance, minHaut, minBas));
    }
    FileClose(f);
 
@@ -222,6 +250,12 @@ bool Exporter(string sym)
                sym, n, nom,
                TimeToString(r[0].time, TIME_DATE),
                TimeToString(r[n - 1].time, TIME_DATE));
+   // L'ordre des extrêmes est la donnée qui ferme l'indécision du backtest : si la M1
+   // manque sur une partie de l'historique, le moteur y retombera sur une convention
+   // de lecture, et il faut le savoir AVANT de mesurer.
+   PrintFormat("%s : ordre des extrêmes — %d bougies sans M1 (%.1f %%), %d où le haut et "
+               "le bas tombent dans la même minute (%.1f %%).",
+               sym, sansOrdre, 100.0 * sansOrdre / n, memeMinute, 100.0 * memeMinute / n);
    PrintFormat("%s : plus ancienne barre — H1 %s | M1 %s", sym,
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
