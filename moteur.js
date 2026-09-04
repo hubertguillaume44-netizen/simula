@@ -1295,6 +1295,12 @@ export function backtester(df, cfg) {
       // l'extrême qui a armé le palier : la sortie au stop armé devient certaine, et
       // « aucune issue » cesse d'être admissible. C'est une déduction, pas une
       // convention — et elle resserre la bande sans rien inventer.
+      // Un palier armé PAR CETTE BOUGIE prend effet dedans : le robot envoie sa demande
+      // au tick qui suit l'extrême et elle passe la plupart du temps. Reporter l'effet à
+      // la bougie suivante rapproche les TOTAUX (BITCOIN -17,4 → -23,2 contre -34,8 au
+      // robot, GOLD 37,3 → 34,8 contre 34,5) mais éloigne chaque trade pris un par un —
+      // sorties divergentes 21 → 37 sur GOLD, 35 → 58 sur BITCOIN. C'est une compensation,
+      // pas une modélisation plus fidèle : on garde la règle qui colle bougie par bougie.
       const armeActif = slArme !== sl && d * pire <= d * slArme;
       // la clôture est au-delà du stop armé : le retour a eu lieu après l'armement
       const armeCertain = slArme !== sl && d * df.c[i] <= d * slArme;
