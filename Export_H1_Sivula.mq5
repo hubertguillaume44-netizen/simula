@@ -122,11 +122,19 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
 //| faudrait un calendrier par DATE, que MT5 n'expose pas et qu'une    |
 //| exécution du journal de conformité permettrait de reconstituer.    |
 //+------------------------------------------------------------------+
+// Une bougie H1 est traitable si la séance est ouverte à UN MOMENT QUELCONQUE de
+// l'heure, pas seulement à sa minute d'ouverture.
+//
+// La séance de #HongKong50 ouvre à 04:15 : la bougie de 04:00 était marquée hors
+// séance, alors que le testeur y entre — à 04:15, dans cette même bougie. Mesuré sur
+// le rapport du 6 septembre 2026 : sur 67 trades, 38 tombent sur une bougie que Sivula
+// tenait pour fermée, tous d'avril à octobre, à 04:15 précises. De novembre à mars le
+// testeur entre à 05:00 ; l'heure d'été du serveur décale la séance d'une heure.
 bool Traitable(string sym, datetime t)
 {
    MqlDateTime d; TimeToStruct(t, d);
    ENUM_DAY_OF_WEEK jour = (ENUM_DAY_OF_WEEK)d.day_of_week;
-   int minute = d.hour * 60 + d.min;
+   int deb = d.hour * 60 + d.min, fin = deb + 60;   // l'heure entière
    datetime de, a;
    bool aucuneSeance = true;
    for(int k = 0; k < 8; k++)
@@ -135,9 +143,13 @@ bool Traitable(string sym, datetime t)
       aucuneSeance = false;
       MqlDateTime dd, aa; TimeToStruct(de, dd); TimeToStruct(a, aa);
       int m1 = dd.hour * 60 + dd.min, m2 = aa.hour * 60 + aa.min;
-      // une séance qui franchit minuit est rendue avec une fin inférieure au début
-      if(m2 <= m1) { if(minute >= m1 || minute < m2) return true; }
-      else if(minute >= m1 && minute < m2) return true;
+      // une séance qui franchit minuit est rendue avec une fin inférieure au début :
+      // on la coupe en deux intervalles pour tester le chevauchement
+      if(m2 <= m1)
+      {
+         if(deb < m2 || fin > m1) return true;
+      }
+      else if(deb < m2 && fin > m1) return true;
    }
    // aucune séance déclarée : le courtier ne restreint rien, tout est traitable
    return aucuneSeance;
