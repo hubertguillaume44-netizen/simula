@@ -110,6 +110,7 @@ function main() {
     // Le portage relevé chez le courtier : sans lui on comparerait le R BRUT du moteur
     // au R du robot, qui paie. Sur GOLD l'écart est de 15,2 R sur 54,5.
     ...(ref.portage ? { frais: ref.portage } : {}),
+    lire_reconstituees: true,
   };
 
   // Le moteur, sur la même série et la même configuration.

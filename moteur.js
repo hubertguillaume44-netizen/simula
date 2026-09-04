@@ -42,7 +42,14 @@ export function texteVersDf(txt) {
   // lecture et le dit : les séries déjà exportées gardent leur comportement.
   const iMH = cols.findIndex((x) => /min_haut|minhaut/.test(x));
   const iMB = cols.findIndex((x) => /min_bas|minbas/.test(x));
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [];
+  // Le haut et le bas VUS PAR LA M1 — ceux que le testeur MT5 rejoue. Ils ne sont pas
+  // toujours ceux de la bougie H1 : le courtier stocke des H1 reconstituées dont les
+  // extrêmes n'ont jamais existé à la minute. Le SIGNAL se lit sur la H1 du courtier,
+  // comme le robot ; l'EXÉCUTION doit se lire sur la M1, comme le testeur.
+  const iEH = cols.findIndex((x) => /m1_haut|m1haut/.test(x));
+  const iEB = cols.findIndex((x) => /m1_bas|m1bas/.test(x));
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
+    eh = [], eb = [];
   for (let i = debut; i < lignes.length; i++) {
     const p = lignes[i].split(sep);
     if (p.length < 5) continue;
@@ -81,8 +88,11 @@ export function texteVersDf(txt) {
     };
     mh.push(lireMin(iMH));
     mb.push(lireMin(iMB));
+    // 0 = pas de M1 sur cette heure : on garde l'extrême H1, seul disponible
+    const px = (k) => { if (k < 0) return 0; const x = nb(p[k - decal]); return Number.isFinite(x) && x > 0 ? x : 0; };
+    eh.push(px(iEH)); eb.push(px(iEB));
   }
-  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, n: t.length });
+  return nettoyer({ t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, n: t.length });
 }
 
 // ---------- nettoyage (blocs.charger_csv : couper_daily + normaliser_session) ----------
@@ -141,10 +151,11 @@ export function nettoyer(df) {
   if (!df.n) return df;
   const debut = debutIntraday(df.t);
   const { depart, heures } = fenetreHomogene(df.t);
-  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [];
+  const t = [], o = [], h = [], l = [], c = [], v = [], sp = [], sess = [], mh = [], mb = [],
+    eh = [], eb = [];
   const spSrc = df.sp || df.spreadPts;
   const sessSrc = df.sess;
-  const mhSrc = df.mh, mbSrc = df.mb;
+  const mhSrc = df.mh, mbSrc = df.mb, ehSrc = df.eh, ebSrc = df.eb;
   for (let i = 0; i < df.n; i++) {
     const d = new Date(df.t[i]);
     if (debut !== null && df.t[i] < debut) continue;
@@ -156,6 +167,9 @@ export function nettoyer(df) {
     sess.push(sessSrc ? (sessSrc[i] ? 1 : 0) : 1);
     mh.push(mhSrc ? (mhSrc[i] ?? -1) : -1);
     mb.push(mbSrc ? (mbSrc[i] ?? -1) : -1);
+    // faute de M1, l'extrême d'exécution EST celui de la bougie H1
+    eh.push(ehSrc && ehSrc[i] > 0 ? ehSrc[i] : df.h[i]);
+    eb.push(ebSrc && ebSrc[i] > 0 ? ebSrc[i] : df.l[i]);
   }
   const grain = mesurerGrain({ h, l, c, n: t.length });
   // Le spread est exporté en POINTS. Un point vaut 10^-décimales du cours : on le
@@ -187,7 +201,7 @@ export function nettoyer(df) {
   const ordreConnu = mh.some((x) => x >= 0)
     ? mh.reduce((a, x, i) => a + (x >= 0 && mb[i] >= 0 ? 1 : 0), 0) / (t.length || 1)
     : 0;
-  return { t, o, h, l, c, v, sp, sess, mh, mb, n: t.length, ecartees: df.n - t.length,
+  return { t, o, h, l, c, v, sp, sess, mh, mb, eh, eb, n: t.length, ecartees: df.n - t.length,
     heuresSession: [...heures].sort((a, b) => a - b), grain,
     spreadPct, spreadPctMoyen, spreadRenseigne: !!spreadPct, sessRenseigne, ordreConnu };
 }
@@ -1132,15 +1146,32 @@ export function backtester(df, cfg) {
   // L'égalité vaut ignorance, et le test est ICI, pas seulement dans le lecteur de CSV :
   // un df construit à la main — un test, un worker de scan — passerait sinon à côté de
   // la règle, et le moteur lirait « bas d'abord » sur deux extrêmes simultanés.
-  const ordreConnuA = (i) =>
+  // Extrêmes d'EXÉCUTION : ceux que le testeur rejoue. Le signal continue de se lire sur
+  // la bougie du courtier — c'est ce que fait le robot, qui appelle CopyRates — mais le
+  // stop et l'objectif se jouent sur ce que la M1 a réellement coté.
+  //
+  // Vu sur GOLD le 21 janvier 2020 : la H1 de 00:00 porte un bas de 1 546,23, sous le
+  // stop initial d'une position ouverte le 16. Aucune autre heure de la journée ne
+  // descend sous 1 558, et le testeur n'a rien vu — il est sorti au point mort dix
+  // heures plus tard. Le moteur y fermait une perte pleine qui n'a jamais eu lieu.
+  const exH = df.eh || df.h, exL = df.eb || df.l;
+
+  const minutesConnues = (i) =>
     !!mhCol && !!mbCol && mhCol[i] >= 0 && mbCol[i] >= 0 && mhCol[i] !== mbCol[i];
-  const hautDAbord = (i) => mhCol[i] < mbCol[i];
+  // Repli mesuré : le testeur MT5 en modélisation « 1 minute OHLC » rejoue chaque bougie
+  // dans un ordre DÉTERMINÉ par son sens — haussière O→B→H→C, baissière O→H→B→C. Ce
+  // n'est pas une convention de lecture, c'est le comportement du testeur, donc ce que
+  // le robot vit réellement.
+  const testeurMt5 = cfg.ordre_testeur === true;
+  const ordreConnuA = (i) => minutesConnues(i) || testeurMt5;
+  const hautDAbordTesteur = (i) => d * (df.c[i] - df.o[i]) < 0;   // baissière : haut d'abord
+  const hautDAbord = (i) => (minutesConnues(i) ? mhCol[i] < mbCol[i] : hautDAbordTesteur(i));
 
   const reconstituee = bougiesReconstituees(df);
-  const releve = reconstituee ? (i) => !reconstituee[i] : () => true;
+  const releve = (reconstituee && cfg.lire_reconstituees === false) ? (i) => !reconstituee[i] : () => true;
 
   const majSecu = (i) => {
-    const extreme = vente ? df.l[i] : df.h[i];
+    const extreme = vente ? exL[i] : exH[i];
     if (trailing && d * extreme > d * plusHaut) { plusHaut = extreme; iPlusHaut = i; }
     const nouveau = niveauSecu(extreme);
     if (d * nouveau > d * sl) { sl = nouveau; be = trailing ? 1 : (d * nouveau > d * px ? 2 : 1); }
@@ -1151,7 +1182,7 @@ export function backtester(df, cfg) {
       // gap : le SL est un ordre stop, exécuté au cours d'ouverture
       // (rien ne peut être sécurisé avant l'ouverture)
       if (d * df.o[i] <= d * sl) {
-        const gap = vente ? df.o[i] > df.h[i - 1] : df.o[i] < df.l[i - 1];
+        const gap = vente ? df.o[i] > exH[i - 1] : df.o[i] < exL[i - 1];
         const motif = be >= 2 ? 'be2' : be >= 1 ? 'be' : (gap ? 'sl_gap' : 'sl');
         trades.push(clore(df, iEnt, i, px, df.o[i], sl0, motif, be, ambiguTrade, vente));
         enPos = false; continue;
@@ -1166,7 +1197,7 @@ export function backtester(df, cfg) {
       // bougie ambiguë : elle contient le stop ET l'objectif. L'ordre réel des
       // mouvements y est inconnu, donc le sort du trade est décidé par une
       // convention, pas par la donnée. Compté pour pouvoir le dire.
-      const pire = vente ? df.h[i] : df.l[i], mieux = vente ? df.l[i] : df.h[i];
+      const pire = vente ? exH[i] : exL[i], mieux = vente ? exL[i] : exH[i];
       // Stop que l'extrême de CETTE bougie justifie. Une bougie peut monter assez pour
       // armer un palier PUIS redescendre le toucher : la H1 ne dit pas dans quel ordre.
       // Le moteur ne le voyait pas — il testait la sortie avec l'ancien stop, encaissait
@@ -1304,7 +1335,7 @@ export function backtester(df, cfg) {
     if (stopMini > 0 && Math.abs(df.o[i] - sl0) < stopMini) continue;
     sl = sl0;
     tp = px + (px - sl0) * rr;
-    enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? df.l[i] : df.h[i];
+    enPos = true; iEnt = i; derniere = i; be = 0; plusHaut = vente ? exL[i] : exH[i];
     ambiguTrade = false;
     if (seauEnt) seauEntre = seauEnt[i];
     iPlusHaut = i;
@@ -1313,7 +1344,7 @@ export function backtester(df, cfg) {
     // avoir sécurisé la position avant d'y redescendre
     const haussiere = d * (df.c[i] - df.o[i]) >= 0;
     if (!haussiere && !prudent && armerAvant) majSecu(i);
-    const pire0 = vente ? df.h[i] : df.l[i], mieux0 = vente ? df.l[i] : df.h[i];
+    const pire0 = vente ? exH[i] : exL[i], mieux0 = vente ? exL[i] : exH[i];
     // Même règle que sur les bougies suivantes : la bougie d'entrée peut monter assez
     // pour armer un palier PUIS redescendre le toucher, et la H1 ne dit pas dans quel
     // ordre. C'est le cas le plus fréquent, l'entrée et le palier tombant dans la même

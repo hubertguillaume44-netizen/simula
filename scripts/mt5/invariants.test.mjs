@@ -608,3 +608,44 @@ test("une heure sans spread ET sans détail à la minute n'est pas une heure cot
   assert.equal(M.bougiesReconstituees(creuse)[1], 0,
     "une heure cotée dont les deux extrêmes tombent dans la même minute est prise pour une heure absente");
 });
+
+test("le signal se lit sur la bougie du courtier, l'exécution sur ce que la M1 a coté", () => {
+  // Le courtier stocke des H1 reconstituées dont les extrêmes n'ont jamais existé à la
+  // minute, et le testeur MT5 — qui rejoue la M1 — ne les voit pas. Vu sur GOLD le
+  // 21 janvier 2020 : la H1 de 00:00 porte un bas de 1 546,23, sous le stop initial
+  // d'une position ouverte le 16. Aucune autre heure de la journée ne descend sous
+  // 1 558, et le testeur est sorti au point mort dix heures plus tard. Le moteur y
+  // fermait une perte pleine qui n'a jamais eu lieu.
+  const n = 24 * 40, t = [], o = [], h = [], l = [], c = [], sp = [];
+  let px = 100, seed = 20260906;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.48) * 0.004;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.0006); l.push(Math.min(ouv, px) * 0.9994);
+    sp.push(10);
+  }
+  // une bougie sur vingt porte un faux bas, 3 % sous le cours : de quoi toucher
+  // n'importe quel stop
+  const faux = [];
+  for (let i = 25; i < n; i += 20) { l[i] = o[i] * 0.97; faux.push(i); }
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [[25, 0], [50, 25], [75, 50]] });
+
+  const brut = { n, t, o, h, l, c, sp, grain: { decimales: 4 } };
+  const avec = { ...brut, eh: h.slice(), eb: l.map((x, i) => (faux.includes(i) ? Math.min(o[i], c[i]) * 0.9996 : x)) };
+  const A = M.backtesterSuivi(brut, cfg, "D1");
+  const B = M.backtesterSuivi(avec, cfg, "D1");
+  assert.ok(A.length > 3, "gabarit sans trades : le test ne prouve rien");
+  const R = (x) => x.reduce((a, y) => a + y.R, 0);
+  assert.ok(R(B) > R(A),
+    `les faux bas continuent de fermer des trades : ${R(A).toFixed(2)} R sans les extrêmes M1, ${R(B).toFixed(2)} R avec`);
+  // aucune sortie ne doit tomber sur une bougie dont seul le faux bas justifiait le stop
+  const surFaux = B.filter((x) => faux.includes(t.indexOf(x.sortie_t)) && x.motif === "sl");
+  assert.equal(surFaux.length, 0, "une sortie s'appuie encore sur un extrême que la M1 n'a pas coté");
+
+  // sans les colonnes, rien ne change : les séries déjà exportées gardent leur mesure
+  const C = M.backtesterSuivi({ ...brut }, cfg, "D1");
+  assert.equal(R(C).toFixed(6), R(A).toFixed(6));
+});

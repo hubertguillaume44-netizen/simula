@@ -183,7 +183,7 @@ bool Exporter(string sym)
    }
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas\r\n");
+   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
@@ -195,7 +195,7 @@ bool Exporter(string sym)
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
-   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0;
+   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0, ecartH1M1 = 0;
    for(int i = 0; i < n; i++)
    {
       // les deux séries sont croissantes : une seule passe suffit
@@ -219,6 +219,7 @@ bool Exporter(string sym)
       // l'ordre reste inconnu, et le moteur doit continuer à le dire plutôt que d'en
       // inventer un.
       int minHaut = -1, minBas = -1;
+      double m1Haut = 0.0, m1Bas = 0.0;
       {
          int j = iM1;
          double hh = -1.0, ll = -1.0;
@@ -228,21 +229,34 @@ bool Exporter(string sym)
             if(ll < 0.0 || m1[j].low  < ll) { ll = m1[j].low;  minBas  = (int)((m1[j].time - r[i].time) / 60); }
             j++;
          }
+         m1Haut = (hh > 0.0) ? hh : 0.0;
+         m1Bas  = (ll > 0.0) ? ll : 0.0;
          if(minHaut < 0 || minBas < 0) sansOrdre++;
          else if(minHaut == minBas) memeMinute++;
+         // Le haut et le bas VUS PAR LA M1 — ceux que le testeur rejoue réellement.
+         //
+         // Ils ne sont pas toujours ceux de la bougie H1 : le courtier stocke une H1
+         // reconstituée dont les extrêmes n'ont jamais existé à la minute. Vu sur GOLD
+         // le 21 janvier 2020 — la H1 de 00:00 porte un bas de 1 546,23, sous le stop
+         // initial d'une position ouverte le 16 ; aucune autre heure de la journée ne
+         // descend sous 1 558, et le testeur, lui, n'a rien vu et est sorti au point
+         // mort dix heures plus tard. Le signal se lit sur la H1 du courtier, comme le
+         // robot ; l'exécution doit se lire sur la M1, comme le testeur.
+         if(m1Haut > 0.0 && (m1Haut < r[i].high - _Point || m1Bas > r[i].low + _Point)) ecartH1M1++;
       }
 
       int seance = Traitable(sym, r[i].time) ? 1 : 0;
       if(seance == 0) horsSeance++;
       if(sp <= 0) sansSpread++;
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d\r\n",
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d,%s,%s\r\n",
          TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(r[i].open,  dec),
          DoubleToString(r[i].high,  dec),
          DoubleToString(r[i].low,   dec),
          DoubleToString(r[i].close, dec),
          r[i].tick_volume,
-         sp, seance, minHaut, minBas));
+         sp, seance, minHaut, minBas,
+         DoubleToString(m1Haut, dec), DoubleToString(m1Bas, dec)));
    }
    FileClose(f);
 
@@ -256,6 +270,9 @@ bool Exporter(string sym)
    PrintFormat("%s : ordre des extrêmes — %d bougies sans M1 (%.1f %%), %d où le haut et "
                "le bas tombent dans la même minute (%.1f %%).",
                sym, sansOrdre, 100.0 * sansOrdre / n, memeMinute, 100.0 * memeMinute / n);
+   PrintFormat("%s : %d bougies (%.1f %%) dont les extrêmes H1 n'existent PAS dans la M1 — "
+               "le testeur ne les voit pas, Sivula ne les lira pas non plus.",
+               sym, ecartH1M1, 100.0 * ecartH1M1 / n);
    PrintFormat("%s : plus ancienne barre — H1 %s | M1 %s", sym,
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
