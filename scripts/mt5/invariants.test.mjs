@@ -969,3 +969,55 @@ test("la fenêtre horaire d'entrée décale l'entrée, elle ne perd pas le signa
     assert.ok(hh >= 22 || hh < 6, `entrée à ${hh} h hors de la fenêtre 22-6`);
   }
 });
+
+test("connaître l'ordre des extrêmes ne tranche pas quand le palier s'arme en second", () => {
+  // Le dernier résidu face au testeur, et il ne vient PAS de l'ordre des extrêmes.
+  // La bougie descend d'abord — sous le futur palier, mais celui-ci n'existe pas encore,
+  // donc rien ne ferme. Elle monte ensuite assez pour l'armer. Entre ce sommet et la
+  // clôture, le prix a pu redescendre le toucher puis remonter : deux extrêmes et une
+  // clôture ne peuvent pas le dire, et une clôture au-dessus du palier ne le réfute pas.
+  // Le moteur supposait « non » en silence — un pari optimiste présenté comme une
+  // certitude, avec une bande de lecture à 0,0 qui ne contenait pas le chiffre de MT5.
+  const serie = (mH, mB) => {
+    const t = [], o = [], h = [], l = [], c = [], mh = [], mb = [];
+    const poser = (i, O, H, L, C, a, b) => { t[i] = Date.UTC(2021, 0, 4) + i * 3600000;
+      o[i] = O; h[i] = H; l[i] = L; c[i] = C; mh[i] = a; mb[i] = b; };
+    for (let i = 0; i < 44; i++) poser(i, 100, 100.1, 99.9, 100, 10, 40);
+    poser(39, 100, 103, 99.9, 103, 55, 5);        // croisement à la hausse
+    // Entrée à l'ouverture de 40 à 103 · stop 1 % = 101,97 · objectif 3 R = 106,09.
+    // Palier 25 → 0 : le haut à 106 l'arme largement, le point mort se pose à 103.
+    // Le bas à 102,80 est SOUS ce point mort, la clôture à 105,50 est AU-DESSUS.
+    poser(40, 103, 106, 102.8, 105.5, mH, mB);
+    poser(41, 105.5, 110, 105.4, 109.5, 50, 5);   // atteint l'objectif, pour clore le trade
+    poser(42, 109.5, 109.6, 109.4, 109.5, 10, 40);
+    poser(43, 109.5, 109.6, 109.4, 109.5, 10, 40);
+    return { n: 44, t, o, h, l, c, mh, mb, sp: t.map(() => 0), grain: { decimales: 2 } };
+  };
+  const cfg = construireConfig({ entree: "croisement_prix", ligne: "ma", periode: 5,
+    sl: 1, rr: 3, paliers: [[25, 0]] });
+  const lire = (df, prudent) => M.backtester(df,
+    { ...cfg, sortie: { ...cfg.sortie, armer_avant: false, prudent } })[0];
+
+  // le BAS d'abord (minute 5), le HAUT ensuite (minute 50) : le palier s'arme en second
+  const tardif = serie(50, 5);
+  const haute = lire(tardif, false), basse = lire(tardif, true);
+  assert.ok(haute && basse, "aucun trade : gabarit sans portée");
+  assert.equal(haute.ambigu, true,
+    "palier armé sur l'extrême de fin de bougie : le trade doit être compté indécidable");
+  assert.equal(haute.motif, "tp", "lecture haute : le trade continue jusqu'à l'objectif");
+  assert.ok(basse.motif.startsWith("be"),
+    `lecture basse : sortie au palier attendue, obtenu « ${basse.motif} »`);
+  assert.ok(basse.R < haute.R,
+    `la lecture basse doit rendre moins que la haute (${basse.R} vs ${haute.R})`);
+
+  // Le pendant, qui garde la règle honnête : quand le palier s'arme sur l'extrême de
+  // DÉBUT, la bougie se déroule sous nos yeux et il n'y a plus rien à supposer.
+  const tot = serie(5, 50);
+  const tranche = lire(tot, false);
+  assert.equal(tranche.ambigu, false,
+    "palier armé sur l'extrême de début : l'ordre tranche, rien ne doit rester indécidable");
+  assert.ok(tranche.motif.startsWith("be"),
+    `l'ordre connu doit donner la sortie au palier, obtenu « ${tranche.motif} »`);
+  assert.equal(lire(tot, true).R, tranche.R,
+    "bougie décidable : les deux lectures doivent rendre le même chiffre");
+});

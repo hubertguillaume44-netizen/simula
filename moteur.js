@@ -1331,6 +1331,8 @@ export function backtester(df, cfg) {
       const okRien = !okVieux && !okTp && !armeCertain;
       const issues = (okTp ? 1 : 0) + (armeActif ? 1 : 0) + (okVieux ? 1 : 0) + (okRien ? 1 : 0);
       const ambigu = issues > 1;
+      // `indecis` : l'ordre des extrêmes est connu ET ne tranche pas. Voir plus bas.
+      let indecis = false;
       ambiguTrade = ambiguTrade || (ambigu && !ordreConnuA(i));
 
       // Lecture HAUTE : la meilleure issue admissible — l'objectif, sinon laisser
@@ -1357,6 +1359,16 @@ export function backtester(df, cfg) {
           if (okVieux) sortie = ['sl', sl];
           else if (okTp) sortie = ['tp', tp];
           else if (armeCertain) sortie = ['sl', slArme];
+          // Connaître l'ORDRE des deux extrêmes ne suffit pas ici, et c'est le dernier
+          // résidu face au testeur. L'extrême défavorable est passé le PREMIER, avant
+          // que le palier n'existe : il ne ferme rien. Le palier s'arme ensuite, sur
+          // l'extrême favorable. Entre cet extrême et la clôture, le prix a pu
+          // redescendre toucher le palier puis remonter — deux extrêmes et une clôture
+          // ne peuvent pas le dire, et la clôture au-dessus du palier ne le réfute pas.
+          // Le moteur supposait « non » en silence, ce qui est un pari optimiste ; il
+          // le déclare maintenant indécidable, et les deux lectures en prennent les
+          // bornes comme partout ailleurs.
+          else if (armeActif) { indecis = true; if (prudent) sortie = ['sl', slArme]; }
         }
       } else if (prudent) {
         if (okVieux) sortie = ['sl', sl];
@@ -1367,6 +1379,7 @@ export function backtester(df, cfg) {
         else if (!okRien) sortie = armeActif ? ['sl', slArme] : (okVieux ? ['sl', sl] : null);
       }
       void ordre;
+      ambiguTrade = ambiguTrade || indecis;
       if (sortie) {
         let motif = sortie[0];
         if (motif === 'sl') {
@@ -1446,6 +1459,7 @@ export function backtester(df, cfg) {
     const okRien0 = !okVieux0 && !okTp0 && !armeCertain0;
     const ambigu0 = ((okTp0 ? 1 : 0) + (armeActif0 ? 1 : 0) + (okVieux0 ? 1 : 0) + (okRien0 ? 1 : 0)) > 1;
     ambiguTrade = ambiguTrade || (ambigu0 && !ordreConnuA(i));
+    let indecis0 = false;
     let sortie0 = null;
     if (ambigu0 && ordreConnuA(i)) {
       if (mieuxDAbord(i)) {
@@ -1456,6 +1470,11 @@ export function backtester(df, cfg) {
         if (okVieux0) sortie0 = ['sl', sl];
         else if (okTp0) sortie0 = ['tp', tp];
         else if (armeCertain0) sortie0 = ['sl', slArme0];
+        // Même indécidable que sur les bougies suivantes, et il faut le traiter ICI
+        // aussi : l'entrée et l'armement du palier tombent le plus souvent dans la même
+        // heure. Le laisser au seul cas général reviendrait à appliquer deux règles
+        // différentes dans la même fonction — l'erreur que ce bloc avait déjà commise.
+        else if (armeActif0) { indecis0 = true; if (prudent) sortie0 = ['sl', slArme0]; }
       }
     } else if (prudent) {
       if (okVieux0) sortie0 = ['sl', sl];
@@ -1465,6 +1484,7 @@ export function backtester(df, cfg) {
       if (okTp0) sortie0 = ['tp', tp];
       else if (!okRien0) sortie0 = armeActif0 ? ['sl', slArme0] : (okVieux0 ? ['sl', sl] : null);
     }
+    ambiguTrade = ambiguTrade || indecis0;
     if (sortie0) {
       if (sortie0[0] === 'sl') {
         const niv = d * sortie0[1] > d * px ? 2 : d * sortie0[1] > d * sl0 ? 1 : 0;
