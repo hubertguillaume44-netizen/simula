@@ -241,20 +241,25 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
   (`MOTEUR_V`, actuellement `e4`). C'est ce qui permet d'afficher « à remesurer » plutôt que
   de laisser des chiffres anciens passer pour à jour. **À conserver.**
 
-## Ce que le dépôt contient — et ce qu'il ne contient plus
+## Ce que le dépôt contient : DEUX applications, et il faut le savoir
 
-Le dépôt portait AUSSI une application Vite complète (`src/`, `server/`, `migrations/`,
-`public/`, la configuration Vite et TypeScript) : une PWA avec authentification et
-connecteurs Gmail/Drive, sans aucun rapport avec Sivula. Aucun des cinq modules de
-l'application ne l'importait ; ses seules mentions dans le code étaient des commentaires
-la citant comme exemple de copie ayant dérivé. Elle a été retirée.
+`src/`, `server/`, `migrations/`, `public/` et la configuration Vite portent le SITE
+PUBLIC — les cinq pages (`/`, `/methode`, `/pourquoi`, `/simuler`, `/visiteurs`),
+l'authentification et le mur payant. C'est le canal de vente.
 
-Un seul fil la reliait au harnais : `scripts/mt5/fixture.mjs` chargeait `src/lib/demo.ts`
-à travers un résolveur d'alias, pour trois fonctions. Le générateur a été porté dans
+`Sivula.dc.html` et ses quatre modules sont l'APPLICATION de mesure. Elle ne dépend en
+rien du site : aucun de ses modules n'importe quoi que ce soit de `src/`.
+
+Cette indépendance rend le site facile à décrire comme « inutilisé », et c'est un piège.
+Il a été supprimé une fois sur cette base, puis restauré : « aucun lien technique avec
+Sivula » ne veut pas dire « ne sert à rien ». Ce sont deux applications dans un dépôt,
+pas une application et des résidus.
+
+Un seul fil les reliait : `scripts/mt5/fixture.mjs` chargeait `src/lib/demo.ts` à
+travers un résolveur d'alias, pour trois fonctions. Le générateur vit désormais dans
 `scripts/mt5/serie-demo.mjs` — vérifié identique au caractère près sur les quatre séries
-avant la suppression, sans quoi la vérité terrain du comparateur aurait changé en silence.
-
-`git` garde tout : `git show <commit>^:src/lib/demo.ts` rend n'importe quel fichier retiré.
+— et le harnais ne dépend plus du site du tout. C'est le seul acquis de l'épisode, et il
+est bon à garder : la vérité terrain du comparateur ne peut plus changer par ricochet.
 
 ## Fichiers de cette passation
 
