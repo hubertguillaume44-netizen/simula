@@ -1069,3 +1069,48 @@ test("l'extrême atteint APRÈS le second extrême tranche — dans un seul sens
   assert.equal(lire(sans, false).ambigu, true,
     "sans les colonnes, la bougie doit rester indécidable comme auparavant");
 });
+
+test("la médiane glissante du plafond de spread donne le MÊME chiffre que le tri complet", () => {
+  // Le plafond de spread décide de l'HEURE d'entrée, et le robot le calcule de son côté.
+  // Deux médianes qui diffèrent d'un cheveu font entrer le moteur et le robot à des
+  // heures différentes — c'est-à-dire à des prix différents. L'accélération de ce calcul
+  // (fenêtre maintenue triée au lieu d'être retriée chaque jour) n'a donc le droit de
+  // rien changer au résultat, et ce test compare à la définition, pas à un chiffre figé.
+  const n = 24 * 800;
+  const t = [], o = [], h = [], l = [], c = [], sp = [], v = [];
+  let px = 100, a = 20260907;
+  const rnd = () => ((a = (a * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+  for (let i = 0; i < n; i++) {
+    t.push(Date.UTC(2021, 0, 1) + i * 3600000);
+    const ouv = px; px *= 1 + (rnd() - 0.5) * 0.01;
+    o.push(ouv); c.push(px);
+    h.push(Math.max(ouv, px) * 1.002); l.push(Math.min(ouv, px) * 0.998); v.push(1);
+    // spreads très inégaux, dont des heures NON cotées : ce sont elles qui distinguent
+    // une fenêtre correctement entretenue d'une fenêtre qui garde des valeurs mortes
+    sp.push(i % 24 === 0 ? 0 : Math.round(4 + rnd() * 60));
+  }
+  const df = M.nettoyer({ n, t, o, h, l, c, sp, v });
+  const FENETRE = 250 * 24, FACTEUR = 1.5;
+  const obtenu = M.seuilSpread(df, FACTEUR, FENETRE);
+
+  // la définition, écrite naïvement : à chaque nouveau jour, on recollecte et on retrie
+  const pct = M.spreadEnPct(df);
+  const attendu = new Float64Array(df.n);
+  let jour = null, med = 0;
+  for (let i = 0; i < df.n; i++) {
+    const j = Math.floor(df.t[i] / 86400000);
+    if (jour === null || j !== jour) {
+      const deb = Math.max(0, i - FENETRE);
+      const v = [];
+      for (let k = deb; k < i; k++) if (pct[k] > 0) v.push(pct[k]);
+      if (v.length >= 100) { v.sort((x, y) => x - y); med = v[v.length >> 1] * FACTEUR; }
+      jour = j;
+    }
+    attendu[i] = med;
+  }
+  let ecarts = 0;
+  for (let i = 0; i < df.n; i++) if (obtenu[i] !== attendu[i]) ecarts++;
+  assert.equal(ecarts, 0, `${ecarts} bougies où la médiane glissante s'écarte du tri complet`);
+  // et le gabarit doit vraiment exercer le seuil, sinon comparer deux zéros ne prouve rien
+  assert.ok(attendu.some((x) => x > 0), "aucun seuil actif : le gabarit ne prouve rien");
+});

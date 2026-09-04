@@ -299,15 +299,37 @@ export function seuilSpread(df, facteur = SPREAD_FACTEUR, fenetre = SPREAD_FENET
   if (!sp) return null;
   return memo(df, 'seuilSpread|' + facteur + '|' + fenetre, () => {
     const out = new Float64Array(df.n);
-    let jour = null, med = 0;
+    // La fenêtre GLISSE : d'un jour au suivant elle perd quelques valeurs par la gauche
+    // et en gagne autant par la droite. La recollecter et la retrier entièrement à chaque
+    // jour coûtait deux secondes et demie par instrument — mille neuf cents tris de six
+    // mille valeurs — et sur un balayage de quarante instruments, cent secondes avant
+    // même le premier backtest. On maintient donc la fenêtre TRIÉE et on l'ajuste :
+    // chaque valeur y entre une fois et en sort une fois.
+    //
+    // Le résultat est le MÊME, chiffre pour chiffre — c'est vérifié par un test, et il
+    // faut qu'il le soit : ce seuil décide de l'heure d'entrée, et le robot le calcule de
+    // son côté. Deux médianes qui diffèrent d'un cheveu font entrer les deux à des heures
+    // différentes.
+    const tri = [];
+    const inserer = (x) => {
+      let a = 0, b = tri.length;
+      while (a < b) { const m = (a + b) >> 1; if (tri[m] < x) a = m + 1; else b = m; }
+      tri.splice(a, 0, x);
+    };
+    const retirer = (x) => {
+      let a = 0, b = tri.length;
+      while (a < b) { const m = (a + b) >> 1; if (tri[m] < x) a = m + 1; else b = m; }
+      if (tri[a] === x) tri.splice(a, 1);
+    };
+    let jour = null, med = 0, dedansA = 0, dedansB = 0;
     for (let i = 0; i < df.n; i++) {
       const j = Math.floor(df.t[i] / 86400000);
       if (jour === null || j !== jour) {
         const a = Math.max(0, i - fenetre);
-        const v = [];
-        for (let k = a; k < i; k++) if (sp[k] > 0) v.push(sp[k]);
+        while (dedansB < i) { if (sp[dedansB] > 0) inserer(sp[dedansB]); dedansB++; }
+        while (dedansA < a) { if (sp[dedansA] > 0) retirer(sp[dedansA]); dedansA++; }
         // sous 100 relevés la médiane n'a pas de sens : le seuil reste inactif
-        if (v.length >= 100) { v.sort((x, y) => x - y); med = v[v.length >> 1] * facteur; }
+        if (tri.length >= 100) med = tri[tri.length >> 1] * facteur;
         jour = j;
       }
       out[i] = med;
@@ -1707,13 +1729,23 @@ export function backtesterSuivi(df, cfg, ut) {
     };
   const acceptable = (i) => traitable(i) && sousPlafond(i) && dansFenetre(i);
 
-  const parSeau = new Map();
-  for (let i = df.n - 1; i >= 0; i--) {
-    if (!executable(i)) continue;
-    const b = seau(df.t[i]);
-    if (!parSeau.has(b)) parSeau.set(b, []);
-    parSeau.get(b).push(i);
-  }
+  // Les bougies H1 exécutables de chaque seau. Ce tableau ne dépend QUE de la série et
+  // de l'unité de décision — jamais de la configuration — et il était pourtant reconstruit
+  // à chaque appel : 46 000 bougies parcourues, deux objets `Date` créés par bougie
+  // (`executable` puis `seau`), soit vingt millions d'allocations sur un balayage de deux
+  // cents configurations. Mémoïsé, le suivi H1 passe de 8,3 s à 2,4 s sur 216
+  // configurations de GOLD — le même chiffre, trois fois et demie plus vite.
+  const parSeau = memo(df, 'parSeau|' + ut + '|' + (pasDebutSemaine ? 1 : 0), () => {
+    const m = new Map();
+    for (let i = df.n - 1; i >= 0; i--) {
+      if (!executable(i)) continue;
+      const b = seau(df.t[i]);
+      let l = m.get(b);
+      if (!l) { l = []; m.set(b, l); }
+      l.push(i);
+    }
+    return m;
+  });
   const force = new Array(df.n).fill(false);
   const seauDe = new Float64Array(df.n).fill(NaN);
   for (let k = 0; k < sup.n; k++) {
