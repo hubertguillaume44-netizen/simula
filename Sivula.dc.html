@@ -1893,6 +1893,9 @@
                 <button type="button" class="{{ cl2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);display:inline-flex;align-items:center;gap:5px" onClick="{{ cl2.basculer }}" title="{{ cl2.expl }}">{{ cl2.nom }}<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.65" title="{{ cl2.expl }}">?</span></button>
               </sc-for>
             </div>
+            <sc-if value="{{ lectureInutile }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px;line-height:1.45;color:var(--color-accent-700)">{{ lectureInutileTxt }}</span>
+            </sc-if>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px">
             <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée de tenue comparée<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Un trade qui n'atteint ni son stop ni son objectif reste ouvert indéfiniment et paie le portage. Comparez « sans limite » à une fermeture après N bougies.">?</span></span>
@@ -12732,6 +12735,29 @@ GROUPES = {
           + ') — ' + b.indecidables + ' trades sur ' + b.n + ' que la H1 ne tranche pas' + vieux;
       })(),
       btBandeTag: s.bande && s.bande.n && s.bande.largeur >= 0.05 ? 'tag-outline' : '',
+      // Sans sécurisation, et sur une série qui porte la minute des extrêmes, les deux
+      // lectures rendent le MÊME chiffre : l'ordre des mouvements est connu, il n'y a
+      // plus rien à trancher par convention. Mesuré sur huit configurations et sept
+      // instruments — bande 0,0 et zéro trade indécidable sur 1 448 trades. En comparer
+      // deux double alors le temps de scan pour rien, et le scan est déjà ce que
+      // l'utilisateur attend le plus longtemps.
+      //
+      // Le message n'apparaît QUE si la donnée le justifie : sans les colonnes de minute,
+      // l'ordre reste inconnu, les deux lectures divergent, et les comparer a un sens.
+      ...(() => {
+        const deux = (s.gLectures || []).length > 1;
+        const sansSecu = (s.gSecus || []).length === 1 && (s.gSecus || [])[0] === 'aucune';
+        const syms = (s.univers && s.univers.length ? s.univers : [s.btSym]).filter(Boolean);
+        const ordre = syms.map((x) => this.serieH1(x)).filter(Boolean);
+        const tousOrdonnes = ordre.length > 0 && ordre.every((d) => d.ordreConnu > 0.99);
+        const inutile = deux && sansSecu && tousOrdonnes;
+        return { lectureInutile: inutile,
+          lectureInutileTxt: inutile
+            ? 'Sans sécurisation, et vos séries portant la minute des extrêmes, les deux lectures '
+              + 'rendent le même chiffre — mesuré : bande 0,0 et aucun trade indécidable sur '
+              + '1 448 trades. En garder une seule divise le temps de scan par deux sans rien perdre.'
+            : '' };
+      })(),
       btExposes: res ? (res.exposes
         ? Math.round(res.exposes / Math.max(1, res.n) * 100) + ' % des sorties reposent sur un palier armé dans leur propre bougie ('
           + res.exposes + ' sur ' + res.n + ') : sur celles-là le prix a pu repasser une seconde fois par le niveau, et le résultat est optimiste d\u2019autant'
