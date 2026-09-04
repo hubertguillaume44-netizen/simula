@@ -108,6 +108,9 @@ export function mesurerVariante(df, v, periodes, sls, rrs) {
       n: r.n, total: r.total, rAn: r.rAn, dd: r.dd,
       positifs: sg.positifs, segTotal: sg.total, pf: r.pf, winRate: r.winRate,
       nGains: r.nGains, nPertes: r.nPertes, neutres: r.neutres, ambigus: r.ambigus,
+      // sorties reposant sur un palier armé dans leur propre bougie : le seul écart
+      // qui subsiste face au testeur MT5, et il est optimiste
+      exposes: r.exposes,
       // trades sortis par le trailing dans la bougie de leur propre plus haut
       sommets: r.sommets,
       t0: trades[0].entree_t, t1: trades[trades.length - 1].sortie_t,

@@ -3042,6 +3042,7 @@
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
           <span style="font-size:12px;color:var(--color-accent-700)" title="Une bougie qui contient à la fois le stop et l'objectif ne dit pas dans quel ordre le prix les a touchés : le sort du trade vient d'une convention de lecture.">{{ btAmbigus }}</span>
+          <span style="display:block;font-size:12px;color:var(--color-accent-700)" title="Une sortie qui repose sur un palier armé dans la bougie même où elle tombe : le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors optimiste. Confronté douze fois au testeur MT5, une configuration sans aucune sortie exposée rend son chiffre exact aux frais près.">{{ btExposes }}</span>
           <sc-if value="{{ perime }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline">Chiffres périmés — relancez le test</span>
           </sc-if>
@@ -10969,6 +10970,7 @@ GROUPES = {
       ['winRate', 'G / P / =', 'Gagnants, perdants et sorties à l\u2019équilibre, en nombre de trades. Les trois chiffres plutôt qu’un pourcentage : un palier au point mort déplace des trades vers la colonne « = », ce qui faisait bondir le taux sans que le résultat en R bouge. Un scan lancé avant cette version ne conserve que le pourcentage : relancez-le pour obtenir les trois nombres.', (r) => (r.nGains === undefined ? '— scan antérieur' : r.nGains + ' / ' + r.nPertes + ' / ' + (r.neutres || 0)), false],
       ['pf', 'PF', 'Somme des gains divisée par la somme des pertes. Sous 1, la configuration perd. « ∞ » signifie zéro perte : ce n\u2019est pas un bon score mais une absence de mesure, et ces lignes sont classées en dernier.', (r) => r.pf === Infinity ? '∞ non mesuré' : fr(r.pf, 2), true],
       ['sommets', 'Sortis au sommet', 'Part des trades sortis par le stop suiveur DANS la bougie qui a fixé leur propre plus haut. Le gain suppose alors que le stop a suivi le sommet tick par tick — ce qu\u2019une bougie H1 ne dit pas. Au-delà de 30 %, le résultat mesure surtout l\u2019ignorance de vos données.', (r) => (r.sommets === undefined ? '—' : (r.n ? Math.round(r.sommets / r.n * 100) + ' %' : '—')), false],
+      ['exposes', 'Exposées', 'Part des sorties qui reposent sur un palier armé dans la bougie même où elles tombent. Le prix a pu y repasser une seconde fois sans que la donnée H1 le dise, et le résultat est alors OPTIMISTE. Confronté douze fois au testeur MT5 : à zéro sortie exposée le chiffre est celui du testeur à 0,3-0,4 R près (sur 403, 44 et 47 trades) ; à 15-16 %, l\u2019écart monte à 12 et 17 R. Ce n\u2019est pas la fréquence d\u2019armement des paliers qui compte — AUDCAD en arme sur 64 % de ses trades sans exposer une seule sortie. Non mesuré sur les scans lancés avant cette version.', (r) => (r.exposes === undefined ? '— scan antérieur' : (r.n ? Math.round(r.exposes / r.n * 100) + ' %' : '0 %')), true],
       ['ambigus', 'Ambiguës', 'Part des trades dont le sort a été décidé par une convention de lecture et non par la donnée. Deux cas : la bougie contient à la fois le stop et l\u2019objectif, ou bien elle arme un palier puis redescend le toucher — dans les deux, l\u2019ordre réel des mouvements est inconnu. Le second cas manquait au comptage : mesuré sur GOLD, 27 % des trades changent de sortie entre les deux lectures là où 1 % seulement était signalé. Au-delà de 10 %, le résultat dépend surtout de cette convention. Non mesuré sur les scans lancés avant cette version.', (r) => (r.ambigus === undefined ? '— scan antérieur' : (r.n ? Math.round(r.ambigus / r.n * 100) + ' %' : '0 %')), true],
       ['dd', 'Pire creux', 'Le drawdown : plus forte perte cumulée depuis un sommet. Lu en nombre de stops, c\u2019est ce que vous devrez encaisser d\u2019affilée avant de revoir votre sommet.', (r) => Math.round(Math.abs(r.dd)) + ' stops', true],
       ['calmar', 'R/creux', 'R total divisé par le pire creux : combien vous gagnez pour chaque R de douleur.', (r) => r.calmar === undefined ? '—' : (r.calmar === Infinity ? '∞' : fr(r.calmar, 2)), false],
@@ -12509,6 +12511,16 @@ GROUPES = {
         ? 'gagnants / perdants / à l\u2019équilibre — soit ' + fr(res.winRate, 0) + ' % sur les '
           + ((res.nGains || 0) + (res.nPertes || 0)) + ' trades tranchés'
         : '',
+      // Sorties EXPOSÉES : le seul écart qui subsiste face au testeur MT5, et il est
+      // OPTIMISTE. Confronté à douze exécutions : les configurations à ZÉRO sortie
+      // exposée rendent le chiffre du testeur à 0,3-0,4 R près sur 403, 44 et 47 trades ;
+      // celles qui en portent 15 à 16 % dérivent de 12 et 17 R. Le scan cherchant le
+      // meilleur résultat sélectionne justement les configurations qui exploitent ce
+      // biais : ne pas l'afficher, c'est le laisser choisir à l'aveugle.
+      btExposes: res ? (res.exposes
+        ? Math.round(res.exposes / Math.max(1, res.n) * 100) + ' % des sorties reposent sur un palier armé dans leur propre bougie ('
+          + res.exposes + ' sur ' + res.n + ') : sur celles-là le prix a pu repasser une seconde fois par le niveau, et le résultat est optimiste d\u2019autant'
+        : 'aucune sortie ne repose sur un palier armé dans sa propre bougie : le chiffre est celui du testeur, aux frais près') : '',
       btAmbigus: res ? (res.ambigus
         ? Math.round(res.ambigus / Math.max(1, res.n) * 100) + ' % des trades tranchés par une bougie ambiguë ('
           + res.ambigus + ' sur ' + res.n + ') : leur sort vient d\u2019une convention de lecture, pas de la donnée'

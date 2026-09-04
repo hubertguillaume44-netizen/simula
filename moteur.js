@@ -1377,6 +1377,12 @@ export function backtester(df, cfg) {
           motif = b >= 2 ? 'be2' : b >= 1 ? 'be' : 'sl';
         }
         const tr = clore(df, iEnt, i, px, sortie[1], sl0, motif, be, ambiguTrade, vente);
+        // Sortie qui repose sur un palier armé DANS la bougie où elle tombe : le prix a
+        // pu repasser une seconde fois par ce niveau sans que l'ordre des deux extrêmes
+        // le dise. C'est le seul résidu qui subsiste face au testeur, et il est
+        // OPTIMISTE — mesuré de 0,003 à 0,06 R par trade selon l'instrument, contre
+        // 0,0007 sans aucun palier. On le compte pour pouvoir l'annoncer.
+        if (armeActif) tr.palierDansBougie = true;
         // sortie par le stop dans la bougie même qui a fixé le plus haut : le gain
         // suppose que le stop a suivi le sommet tick par tick, ce que H1 ne dit pas
         if (trailing && sortie[0] === 'sl' && i === iPlusHaut) tr.sommet = true;
@@ -1677,7 +1683,7 @@ function clore(df, iEnt, i, px, sortie, sl0, motif, be, ambigu, vente) {
 }
 
 export function resume(trades) {
-  if (!trades.length) return { n: 0, total: 0, winRate: 0, nGains: 0, nPertes: 0, neutres: 0, ambigus: 0, pf: 0, pfMesurable: false, dd: 0, moyenne: 0, rAn: 0, annees: 0 };
+  if (!trades.length) return { n: 0, total: 0, winRate: 0, nGains: 0, nPertes: 0, neutres: 0, ambigus: 0, exposes: 0, pf: 0, pfMesurable: false, dd: 0, moyenne: 0, rAn: 0, annees: 0 };
   const col = (t) => (t.R_net !== undefined ? t.R_net : t.R);
   const n = trades.length;
   // Un palier « point mort » sort à ≈ 0 R : légèrement négatif frais compris,
@@ -1703,6 +1709,16 @@ export function resume(trades) {
     // part des trades dont le sort a été décidé par une convention de lecture et non
     // par la donnée : la bougie contenait le stop ET l'objectif
     ambigus: trades.filter((t) => t.ambigu).length,
+    // Sorties EXPOSÉES : celles qui reposent sur un palier armé dans la bougie même où
+    // elles tombent. Le prix a pu y repasser une seconde fois sans que l'ordre des deux
+    // extrêmes le dise, et c'est le seul écart qui subsiste face au testeur MT5.
+    //
+    // Confronté à douze exécutions du testeur : les trois configurations à ZÉRO sortie
+    // exposée rendent le chiffre du testeur à 0,3-0,4 R près, soit le seul arrondi des
+    // frais — sur 403, 44 et 47 trades. Celles qui en portent 15 à 16 % dérivent de 12
+    // et 17 R. Ce n'est PAS la fréquence d'armement qui compte : AUDCAD arme un palier
+    // sur 64 % de ses trades et n'expose aucune sortie, pour 0,4 R d'écart.
+    exposes: trades.filter((t) => t.palierDansBougie).length,
     // trades sortis par le trailing dans la bougie de leur propre plus haut : leur
     // résultat dépend du chemin intra-bougie, inconnu de la donnée
     sommets: trades.filter((t) => t.sommet).length,

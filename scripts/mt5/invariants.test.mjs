@@ -836,3 +836,47 @@ test("à la vente, l'extrême favorable est le BAS — l'ordre des extrêmes se 
   assert.ok(y && y.motif !== "sl",
     `le bas vient en premier : la vente doit sécuriser, obtenu ${y ? y.motif : "rien"}`);
 });
+
+test("les sorties EXPOSÉES sont comptées : c'est le seul écart qui reste face au testeur", () => {
+  // Une sortie exposée repose sur un palier armé dans la bougie MÊME où elle tombe : le
+  // prix a pu y repasser une seconde fois sans que l'ordre des deux extrêmes le dise.
+  //
+  // Confronté à douze exécutions du testeur MT5, c'est l'indicateur qui sépare : les
+  // trois configurations à ZÉRO sortie exposée rendent le chiffre du testeur à 0,3-0,4 R
+  // près — sur 403, 44 et 47 trades — quand celles qui en portent 15 à 16 % dérivent de
+  // 12 et 17 R. Ce n'est PAS la fréquence d'armement : AUDCAD arme un palier sur 64 % de
+  // ses trades et n'expose aucune sortie, pour 0,4 R d'écart.
+  const J = 20, n = 24 * J, t = [], o = [], h = [], l = [], c = [], sp = [], mh = [], mb = [];
+  for (let i = 0; i < n; i++) {
+    const j = Math.floor(i / 24);
+    const base = j < 10 ? 110 - j : 100 + (j - 10) * 1.2;   // un V : le croisement au creux
+    const px = base + (i % 24) * (j < 10 ? -1 : 1) * 0.04;
+    t.push(Date.UTC(2021, 0, 4) + i * 3600000);
+    o.push(px); c.push(px + (j < 10 ? -0.04 : 0.04));
+    h.push(Math.max(px, px + 0.04) + 0.02); l.push(Math.min(px, px + 0.04) - 0.02);
+    sp.push(10); mh.push(10); mb.push(40);          // le haut d'abord partout
+  }
+  const cfg = (paliers) => construireConfig({ entree: "croisement_prix", ligne: "ma",
+    periode: 5, sl: 1, rr: 4, paliers });
+  const nu = M.backtesterSuivi({ n, t, o, h, l, c, sp, mh, mb, grain: { decimales: 4 } }, cfg([]), "D1");
+  assert.equal(nu.length, 1, "gabarit inattendu : le test ne prouve rien");
+  const iEnt = t.indexOf(nu[0].entree_t);
+  const px = o[iEnt] * (1 + 10 * 1e-4 / o[iEnt]);
+
+  // une bougie qui MONTE assez pour armer le point mort et REDESCEND le toucher
+  const k = iEnt + 5;
+  const O = o.slice(), H = h.slice(), L = l.slice(), C = c.slice();
+  O[k] = px * 1.002; H[k] = px * 1.012; L[k] = px * 0.999; C[k] = px * 1.003;
+  const df = { n, t, o: O, h: H, l: L, c: C, sp, mh, mb, grain: { decimales: 4 } };
+
+  const sans = M.resume(M.backtesterSuivi(df, cfg([]), "D1"));
+  assert.equal(sans.exposes, 0, "sans palier, aucune sortie ne peut être exposée");
+
+  const avec = M.resume(M.backtesterSuivi(df, cfg([[25, 0], [50, 25], [75, 50]]), "D1"));
+  assert.equal(avec.exposes, 1,
+    `la bougie qui arme le point mort et y redescend doit exposer sa sortie, obtenu ${avec.exposes}`);
+  assert.ok(avec.exposes <= avec.n, "plus de sorties exposées que de trades");
+
+  // le compteur survit au résumé d'une liste vide
+  assert.equal(M.resume([]).exposes, 0);
+});
