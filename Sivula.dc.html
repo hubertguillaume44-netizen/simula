@@ -3059,6 +3059,9 @@
           <span style="font-size:14px" class="text-muted">en {{ btN }} trades, sur {{ btAnnees }}</span>
           <span class="tag {{ btVerdictTag }}">{{ btVerdict }}</span>
           <span style="font-size:12px" class="text-muted">{{ btMotifs }}</span>
+          <sc-if value="{{ aEcartLigne }}" hint-placeholder-val="{{ false }}">
+            <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600;white-space:normal;text-align:left;max-width:96ch">{{ ecartLigneTxt }}</span>
+          </sc-if>
           <sc-if value="{{ btVarianteRatee }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline" style="color:var(--color-accent-900);font-weight:600" title="La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres ci-dessous décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.">Condition de la ligne NON restaurée — ces chiffres ne sont pas ceux de la ligne</span>
           </sc-if>
@@ -3530,7 +3533,7 @@ class Component extends DCLogic {
     gRrs: '1,5 2,0 2,5 3,0 3,5 4,0',
     gEntrees: ['croisement_ou_rebond'], gLignes: ['ema'], gFiltres: ['aucun'],
     btSym: null, reglagesOuverts: false, venuDeHisto: null, univers: [],
-    res: null, seg: null, courbe: [], varianteRatee: false, scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
+    res: null, seg: null, courbe: [], varianteRatee: false, ligneAttendue: null, ecartLigne: '', scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
     tradesMin: 40, segMin: 3, marche: null, tri: 'total', erreur: null, recherche: '', parSymbole: 1,
     deposes: [], survol: false, messageDepot: null, spreadSaisi: null, swapSaisi: null,
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
@@ -7462,7 +7465,10 @@ GROUPES = {
     // gardés hors état : la comparaison au robot MT5 en a besoin, un setState de plus
     // relancerait un rendu à chaque backtest sans rien changer à l'écran
     this._tradesBt = trades;
-    this.setState({ res, seg, courbe, bande, nTrades: trades.length, signature: sig },
+    this.setState({ res, seg, courbe, bande, nTrades: trades.length, signature: sig,
+      // La ligne rouverte tient-elle sa promesse ? Le dire ICI, à côté du chiffre, et
+      // nommer ce qui diffère — pas laisser l'utilisateur comparer deux écrans.
+      ecartLigne: this.ecartLigne(res) },
       () => this.ecrireSession());
   }
 
@@ -8837,7 +8843,8 @@ GROUPES = {
     const rejoue = !!(this.state.rejeu && this.state.rejeu[this.cleConfig(r)]);
     // Photo des réglages prise à la validation : rien à retrouver, rien à deviner.
     if (!rejoue && r._reg) {
-      const suite = { ...this.state, ...r._reg, ...(forcage || {}), varianteRatee: false, vue: 'backtest', venuDeHisto: r.sym,
+      const suite = { ...this.state, ...r._reg, ...(forcage || {}), varianteRatee: false,
+        ligneAttendue: this.attenduDe(r, forcage), vue: 'backtest', venuDeHisto: r.sym,
         btSym: r.sym, btPeriode: r.periode, btSL: r.sl, btRR: r.rr,
         btEntree: r.entree || r._reg.btEntree, btLigne: r.ligne || r._reg.btLigne };
       const fin = { ...this.state, ...suite };
@@ -8929,6 +8936,7 @@ GROUPES = {
       // la variante n'a pas été retrouvée alors que la ligne en portait une : les chiffres
       // qui vont s'afficher ne décrivent PAS la ligne cliquée, et il faut le dire fort
       varianteRatee: !rejoue && !patchV && !!(r.filtre || r.filtreNom),
+      ligneAttendue: this.attenduDe(r, forcage),
       reglagesRejoues: (forcage && forcage.secuPrudent)
         ? (patchV
           ? 'Même configuration que la ligne, mais en LECTURE BASSE : les bougies ambiguës sont tranchées contre vous. Comparez le R obtenu à celui de l\u2019historique — l\u2019écart est la part du résultat qui dépend de l\u2019ordre des mouvements à l\u2019intérieur d\u2019une bougie.'
@@ -9698,6 +9706,58 @@ GROUPES = {
     return { ...base, ...(patch || {}), btSens: r.sens || 'achat',
       secuPrudent: /lecture basse/i.test(r.filtreNom || ''),
       _exact: !!(arch && (!r.filtre || patch)) };
+  }
+  // Ce que la LIGNE annonçait, gardé pour le confronter au backtest qu'on va lancer.
+  //
+  // Une ligne rouverte doit rendre ses chiffres. Quand elle n'y arrive pas, la cause est
+  // toujours un réglage qui n'a pas suivi — et jusqu'ici il fallait la deviner en
+  // comparant deux écrans de mémoire. L'application sait tout ce qu'il faut : elle peut
+  // le dire elle-même.
+  //
+  // Une lecture forcée (le bouton « lecture basse ») change le résultat EXPRÈS : on ne
+  // compare alors rien, sous peine d'annoncer un écart voulu comme une anomalie.
+  attenduDe(r, forcage) {
+    if (!r || forcage) return null;
+    return { sym: r.sym, n: Number(r.n) || 0, total: Number(r.total) || 0,
+      periode: r.periode, sl: r.sl, rr: r.rr, entree: r.entree, ligne: r.ligne,
+      filtreNom: r.filtreNom || '', sens: r.sens || 'achat' };
+  }
+  // Le backtest vient de tourner : dit-il la même chose que la ligne ? Et sinon, QUOI
+  // exactement diffère. On énumère les réglages un à un plutôt que d'annoncer un écart
+  // global — c'est la différence entre « ça ne colle pas » et « la période est 26, la
+  // ligne disait 10 ».
+  ecartLigne(res) {
+    const a = this.state.ligneAttendue;
+    if (!a || !res) return '';
+    const s = this.state;
+    const memeN = res.n === a.n;
+    const memeR = Math.abs((res.total || 0) - a.total) < 0.05;
+    if (memeN && memeR) return '';
+    const dits = [];
+    const cmp = (nom, ici, la) => {
+      if (la === undefined || la === null || la === '') return;
+      if (String(ici) !== String(la)) dits.push(nom + ' : ' + ici + ' ici, ' + la + ' sur la ligne');
+    };
+    cmp('instrument', s.btSym, a.sym);
+    cmp('période', s.btPeriode, a.periode);
+    cmp('stop', s.btSL, a.sl);
+    cmp('objectif', s.btRR, a.rr);
+    cmp('entrée', s.btEntree, a.entree);
+    cmp('ligne', s.btLigne, a.ligne);
+    cmp('sens', s.btSens, a.sens);
+    // le filtre ne se compare pas champ à champ : on dit ce qui est actif de chaque côté
+    const ici = this.filtresTexte(this.cfgCourante()) || 'aucune condition';
+    if (a.filtreNom && !new RegExp(a.filtreNom.split('·')[0].trim().slice(0, 12)
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(ici)) {
+      dits.push('condition : « ' + ici + ' » ici, « ' + a.filtreNom + ' » sur la ligne');
+    }
+    return 'Ce backtest ne rend pas les chiffres de la ligne : ' + res.n + ' trades et '
+      + (res.total >= 0 ? '+' : '') + res.total.toFixed(1) + ' R ici, contre ' + a.n
+      + ' trades et ' + (a.total >= 0 ? '+' : '') + a.total.toFixed(1) + ' R annoncés. '
+      + (dits.length
+        ? 'Ce qui diffère — ' + dits.join(' · ') + '.'
+        : 'Aucun réglage visible ne diffère : la ligne vient probablement d\u2019un scan '
+          + 'antérieur à une correction du moteur. Relancez le scan pour la remesurer.');
   }
   async controlerHasard() {
     if (!this.M || this.state.hasardEnCours) return;
@@ -12962,6 +13022,8 @@ GROUPES = {
       // il se lisait après coup, quand on avait déjà cru au nombre. L'avertissement monte
       // donc à côté du total, là où le regard se pose.
       btVarianteRatee: !!s.varianteRatee,
+      aEcartLigne: !!s.ecartLigne,
+      ecartLigneTxt: s.ecartLigne || '',
       // Sans sécurisation, et sur une série qui porte la minute des extrêmes, les deux
       // lectures rendent le MÊME chiffre : l'ordre des mouvements est connu, il n'y a
       // plus rien à trancher par convention. Mesuré sur huit configurations et sept
@@ -14423,7 +14485,7 @@ GROUPES = {
           + ' · ' + sec + ' · frais ' + (s.btFrais ? 'compris' : 'exclus')
           + (s.btDelai ? ' · délai ' + s.btDelai : '');
       })(),
-      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null, varianteRatee: false }, () => this.lancerTest()),
+      setVueBacktest: () => this.setState({ vue: 'backtest', venuDeHisto: null, varianteRatee: false, ligneAttendue: null, ecartLigne: '' }, () => this.lancerTest()),
       setVueJournal: () => this.setState({ vue: 'journal' }),
       combinaisons: (this.SYMBOLES.length * 5 * 4 * 4).toLocaleString('fr-FR'),
       choixVueLecture: [
