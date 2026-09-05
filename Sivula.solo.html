@@ -930,51 +930,20 @@
 
 
     <sc-if value="{{ vueCourtiers }}" hint-placeholder-val="{{ false }}">
-    <div style="border:1px dashed {{ bordureDepot }};background:{{ fondDepot }};padding:10px 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap" onDragOver="{{ surSurvol }}" onDragLeave="{{ surSortie }}" onDrop="{{ surDepot }}">
-      <span style="font-size:13px">Déposez ici les fichiers {{ deNomCompte }} : bougies H1 (<code>AAPL.US_H1.csv</code>) ou relevé de symboles du courtier. Ils restent dans ce navigateur et n'appartiennent qu'à ce compte.</span>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <label class="btn btn-secondary" style="min-height:2.1rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative">Bougies H1<input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;width:1px;height:1px;opacity:0"></label>
-        <label class="btn btn-secondary" style="min-height:2.1rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative">Relevé de frais<input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;width:1px;height:1px;opacity:0"></label>
-        <sc-if value="{{ aRenommer }}" hint-placeholder-val="{{ false }}">
-          <input class="input" type="text" style="min-height:2.1rem;height:2.1rem;font-size:12px;width:20ch" value="{{ nomSaisi }}" onChange="{{ renommer }}" placeholder="Nommer ce compte" title="Donnez à ce compte le nom de votre courtier : il remplace « Compte nº N » partout dans l'application.">
-        </sc-if>
-      </div>
-      <sc-if value="{{ aConfirmBareme }}" hint-placeholder-val="{{ false }}">
-        <div style="width:100%;border:1px solid var(--color-accent);padding:10px 12px;display:flex;flex-direction:column;gap:8px">
-          <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.3">{{ confirmTitre }}</strong>
-          <span style="font-size:12px;line-height:1.5">{{ confirmDetail }}</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ confirmerBareme }}">{{ confirmOui }}</button>
-            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px" onClick="{{ annulerBareme }}">Annuler</button>
-          </div>
-        </div>
-      </sc-if>
-      <sc-if value="{{ aDepotEnCours }}" hint-placeholder-val="{{ false }}">
-        <div style="width:100%;border:1px solid var(--color-accent);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
-          <strong style="font-family:var(--font-heading);font-size:14px">{{ depotTitre }}</strong>
-          <div style="height:4px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
-            <div style="height:100%;background:var(--color-accent);width:{{ depotPart }}"></div>
-          </div>
-          <span style="font-size:11px" class="text-muted">{{ depotDetail }}</span>
-        </div>
-      </sc-if>
-      <sc-if value="{{ aMessageDepot }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;width:100%">
-          <sc-if value="{{ listeDepotVisible }}" hint-placeholder-val="{{ true }}">
-            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}</span>
-          </sc-if>
-          <sc-if value="{{ listeDepotMasquee }}" hint-placeholder-val="{{ false }}">
-            <span class="tag tag-outline" style="font-size:11px">{{ resumeDepot }}</span>
-          </sc-if>
-          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px" onClick="{{ basculerListeDepot }}">{{ libListeDepot }}</button>
-        </div>
-      </sc-if>
-      <sc-if value="{{ aBaremeMsg }}" hint-placeholder-val="{{ false }}">
-        <span class="tag tag-accent" style="font-size:11px">{{ baremeMsg }}</span>
-      </sc-if>
-    </div>
-    </sc-if>
-    <sc-if value="{{ vueCourtiers }}" hint-placeholder-val="{{ false }}">
+    <!--
+      LA LISTE À GAUCHE, L'INSTRUMENT EN ENTIER À DROITE.
+
+      Le tableau portait neuf colonnes dont une PAR COURTIER : il grandissait à chaque
+      relevé ajouté et débordait déjà. Il faisait trois métiers à la fois — ce que
+      l'instrument coûte, si ses bougies sont là, s'il faut les télécharger — et il ne
+      pouvait pas dire l'essentiel : « Bougies ✓ » ne distingue pas une série à jour d'une
+      série arrêtée en 2024 avec un trou de trois semaines au milieu.
+
+      La zone de dépôt ne prend plus le haut de la page : le glisser-déposer reste actif
+      sur toute la vue, et la bordure en pointillé n'apparaît qu'au survol d'un fichier.
+    -->
+    <div style="display:flex;flex-direction:column;gap:14px;border:1px dashed {{ bordureDepot }};background:{{ fondDepot }};padding:2px" onDragOver="{{ surSurvol }}" onDragLeave="{{ surSortie }}" onDrop="{{ surDepot }}">
+
     <div style="display:flex;gap:14px;flex-wrap:wrap;align-self:flex-start">
       <div class="blueprint" style="padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:132px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -1010,129 +979,208 @@
       </div>
       <div style="align-self:center;max-width:44ch;font-size:11px;line-height:1.5" class="text-muted">{{ teteResume }}</div>
     </div>
-    </sc-if>
 
-
-    <sc-if value="{{ vueCourtiers }}" hint-placeholder-val="{{ false }}">
-    <div style="display:flex;flex-direction:column;gap:20px">
-      <section style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
-        <div>
-          <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Coûts</div>
-          <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">{{ titreCourtiers }}</h4>
-
-          <button type="button" onClick="{{ basculerCour }}" title="Replier ou déplier cette section" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;white-space:nowrap;color:inherit;text-align:left">{{ chevronCour }}</button>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-          <div class="field" style="min-width:220px">
-            <label>Rechercher</label>
-            <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}">
-          </div>
-          <div class="field" style="min-width:210px">
-            <label>À télécharger</label>
-            <div style="display:flex;gap:8px;align-items:center;min-height:2.6rem">
-              <span style="font-size:12px;white-space:nowrap" class="text-muted">{{ nTeleTxt }}</span>
-              <button class="btn btn-secondary" type="button" style="min-height:2.1rem;font-size:12px" onClick="{{ exporterTele }}" disabled="{{ sansTele }}" title="Enregistre la liste des noms d'instruments cochés, un par ligne">Exporter la liste</button>
-              <button class="btn btn-ghost" type="button" style="min-height:2.1rem;font-size:12px" onClick="{{ viderTele }}" disabled="{{ sansTele }}">Vider</button>
-            </div>
-          </div>
-          <div class="field" style="min-width:230px">
-            <label>Bougies</label>
-            <div class="seg">
-              <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">Tous</label>
-              <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">Téléchargées</label>
-              <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">Manquantes</label>
-            </div>
-          </div>
-          <div class="field" style="min-width:210px">
-            <label>Classement</label>
-            <div class="seg">
-              <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
-              <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triCher }}" onChange="{{ setTriCher }}">Plus cher</label>
-            </div>
+      <sc-if value="{{ aConfirmBareme }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;border:1px solid var(--color-accent);padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+          <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.3">{{ confirmTitre }}</strong>
+          <span style="font-size:12px;line-height:1.5">{{ confirmDetail }}</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ confirmerBareme }}">{{ confirmOui }}</button>
+            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px" onClick="{{ annulerBareme }}">Annuler</button>
           </div>
         </div>
-      </section>
-      <sc-if value="{{ ouvCour }}" hint-placeholder-val="{{ true }}">
+      </sc-if>
+      <sc-if value="{{ aDepotEnCours }}" hint-placeholder-val="{{ false }}">
+        <div style="width:100%;border:1px solid var(--color-accent);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+          <strong style="font-family:var(--font-heading);font-size:14px">{{ depotTitre }}</strong>
+          <div style="height:4px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
+            <div style="height:100%;background:var(--color-accent);width:{{ depotPart }}"></div>
+          </div>
+          <span style="font-size:11px" class="text-muted">{{ depotDetail }}</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ aMessageDepot }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;width:100%">
+          <sc-if value="{{ listeDepotVisible }}" hint-placeholder-val="{{ true }}">
+            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}</span>
+          </sc-if>
+          <sc-if value="{{ listeDepotMasquee }}" hint-placeholder-val="{{ false }}">
+            <span class="tag tag-outline" style="font-size:11px">{{ resumeDepot }}</span>
+          </sc-if>
+          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px" onClick="{{ basculerListeDepot }}">{{ libListeDepot }}</button>
+        </div>
+      </sc-if>
       <sc-if value="{{ aBaremeMsg }}" hint-placeholder-val="{{ false }}">
-        <p style="margin:0;font-size:13px"><strong>{{ baremeMsg }}</strong></p>
+        <span class="tag tag-accent" style="font-size:11px">{{ baremeMsg }}</span>
       </sc-if>
-      <sc-if value="{{ aTableauCout }}" hint-placeholder-val="{{ true }}">
-      <div style="overflow:auto;max-height:74vh">
-        <table class="table" style="font-size:13px">
-          <thead><tr>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Instrument</th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:right">Nuits<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Combien de nuits vos positions restent ouvertes en moyenne sur cet instrument. Chaque nuit coûte des intérêts au courtier.">?</span></th>
-            <sc-if value="{{ aColRef }}" hint-placeholder-val="{{ true }}">
-              <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:right" title="Le coût de l'instrument lui-même, mesuré sur le compte principal : aller-retour rapporté au stop que vos backtests utilisent réellement, donc la part de votre 1 R qui part en frais.">Coût de référence<span style="display:block;font-size:10px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;opacity:.7">Compte principal</span></th>
-            </sc-if>
-            <sc-for list="{{ colCourtiers }}" as="cc" hint-placeholder-count="3">
-              <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:right" title="{{ cc.aide }}">{{ cc.nom }}<span style="display:block;font-size:10px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;opacity:.7">{{ cc.role }}</span></th>
-            </sc-for>
-            <sc-if value="{{ aComparaison }}" hint-placeholder-val="{{ true }}">
-              <th style="position:sticky;top:0;z-index:2;background:var(--color-bg)">Le moins cher</th>
-            </sc-if>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center" title="Les favoris sont mesurés en continu et se glissent sur vos portefeuilles.">Favori</th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center" title="Les bougies H1 de cet instrument sont-elles dans ce navigateur ? Sans elles, l'instrument ne peut pas être scanné.">Bougies</th>
-            <th style="position:sticky;top:0;z-index:2;background:var(--color-bg);text-align:center" title="Cochez les instruments dont vous voulez télécharger les bougies : le bouton « Exporter la liste » vous en donne la liste des noms.">À&nbsp;télécharger</th>
-          </tr></thead>
-          <tbody>
-            <sc-for list="{{ coutRows }}" as="cr" hint-placeholder-count="12">
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:baseline;gap:8px">
-                    <span class="text-muted" style="font-family:var(--font-heading);font-size:12px;min-width:26px" title="Place de cet instrument dans le classement des coûts du compte principal (FxPro MT5) : 1 = le moins cher. Ce numéro le suit dans tous les tableaux.">{{ cr.rangCout }}</span>
-                    <div>
-                      <strong>{{ cr.nom }}</strong>
-                      <span class="text-muted" style="display:block;font-size:11px">{{ cr.sym }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td style="text-align:right">{{ cr.nuits }}</td>
-                <sc-if value="{{ aColRef }}" hint-placeholder-val="{{ true }}">
-                <td style="text-align:right;white-space:nowrap"><strong style="font-family:var(--font-heading);font-size:14px">{{ cr.refR }}</strong><span class="text-muted" style="display:block;font-size:11px">{{ cr.refDetail }}</span></td>
-                </sc-if>
-                <sc-for list="{{ cr.cellules }}" as="cl" hint-placeholder-count="3">
-                  <td style="text-align:right">
-                    <span style="font-weight:{{ cl.poids }}">{{ cl.total }}</span>
-                    <span class="text-muted" style="display:block;font-size:11px">{{ cl.detail }}</span>
-                  </td>
-                </sc-for>
-                <sc-if value="{{ aComparaison }}" hint-placeholder-val="{{ true }}">
-                  <td><span class="tag {{ cr.tagMeilleur }}">{{ cr.meilleur }}</span></td>
-                </sc-if>
-                <td style="text-align:center"><button class="btn btn-ghost" type="button" style="min-height:auto;padding:0 4px;line-height:1;font-size:15px" onClick="{{ cr.basculerFav }}" title="{{ cr.favAide }}" aria-label="Favori">{{ cr.etoile }}</button></td>
-                <td style="text-align:center;white-space:nowrap"><span class="{{ cr.bougiesCls }}" title="{{ cr.bougiesAide }}">{{ cr.bougies }}</span><sc-if value="{{ cr.aBougies }}" hint-placeholder-val="{{ false }}"><button class="btn btn-ghost" type="button" style="min-height:auto;padding:0 5px;margin-inline-start:5px;font-size:10px;line-height:1.5" onClick="{{ cr.supprimerBougies }}" title="{{ cr.supprBougiesAide }}">{{ cr.supprBougiesTxt }}</button></sc-if></td>
-                <td style="text-align:center"><button type="button" class="{{ cr.cocheCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);min-width:2.2rem" onClick="{{ cr.basculerCoche }}" title="{{ cr.cocheAide }}">{{ cr.cocheTxt }}</button></td>
-              </tr>
-            </sc-for>
-          </tbody>
-        </table>
-      </div>
-      <sc-if value="{{ aResteCout }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <span style="font-size:12px" class="text-muted">{{ resteCoutTxt }}</span>
-          <sc-if value="{{ aPlusCout }}" hint-placeholder-val="{{ true }}">
-            <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px" onClick="{{ plusCout }}">{{ plusCoutTxt }}</button>
-          </sc-if>
-          <sc-if value="{{ aToutCout }}" hint-placeholder-val="{{ true }}">
-            <button class="btn btn-ghost" type="button" style="min-height:2.2rem;font-size:12px" onClick="{{ toutCout }}">{{ toutCoutTxt }}</button>
-          </sc-if>
-          <sc-if value="{{ aReduireCout }}" hint-placeholder-val="{{ false }}">
-            <button class="btn btn-ghost" type="button" style="min-height:2.2rem;font-size:12px" onClick="{{ reduireCout }}" title="Revenir à une liste légère">Réduire à 60</button>
-          </sc-if>
-        </div>
-      </sc-if>
-      <p style="margin:0;font-size:12px;max-width:96ch" class="text-muted">Coût d'un aller-retour en % du notionnel : spread relevé + portage sur la durée moyenne de vos trades (swap annuel du courtier, signe conservé — un swap positif réduit le coût). La colonne achat/vente montre les deux côtés. La commission saisie par classe d'actif (onglet Portefeuille : montant par lot et par côté, dans sa devise) est comptée deux fois — entrée et sortie — et convertie en % du notionnel avec les taux de votre relevé. Le minimum par ordre n'est pas modélisé : sur de très petits volumes, le coût réel est un peu plus élevé.</p>
-      </sc-if>
-      <sc-if value="{{ aSansReleve }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:14px 16px;align-self:flex-start;max-width:96ch">
+
+      <div style="display:grid;grid-template-columns:360px 1fr;gap:14px;align-items:start">
+
+        <aside class="blueprint" style="position:sticky;top:{{ scanTopAside }};padding:0;display:flex;flex-direction:column">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <span style="font-size:13px">{{ sansReleveTxt }}</span>
-        </div>
-      </sc-if>
-      </sc-if>
+          <div style="padding:13px 15px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--color-divider)">
+            <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px">
+            <div class="seg" style="width:100%">
+              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
+              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">{{ fbAvecTxt }}</label>
+              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:11px" class="text-muted">Classer par</span>
+              <div class="seg">
+                <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
+                <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triCher }}" onChange="{{ setTriCher }}">Plus cher</label>
+              </div>
+            </div>
+          </div>
+
+          <!--
+            LA LISTE NE PORTE QUE DE QUOI CHOISIR : le rang de coût, le nom, la couverture
+            des bougies et la part du 1 R. Les nuits, le détail par courtier, le favori et
+            la case à cocher sont partis dans la fiche ou en pied de colonne. Une seule
+            colonne défile, donc plus de débordement horizontal ni de pagination.
+          -->
+          <div style="overflow:auto;max-height:60vh">
+            <sc-for list="{{ instrRows }}" as="ir" hint-placeholder-count="14">
+              <button type="button" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;background:{{ ir.fond }};border:0;border-inline-start:3px solid {{ ir.marque }};border-bottom:1px solid var(--color-divider);padding:9px 13px;display:flex;gap:9px;align-items:center;opacity:{{ ir.opacite }}" title="{{ ir.aide }}" onClick="{{ ir.choisir }}">
+                <span style="font-family:var(--font-heading);font-size:12px;min-width:2.6ch" class="text-muted">{{ ir.rangCout }}</span>
+                <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+                  <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ir.nom }}</strong>
+                  <span style="display:block;height:3px;background:{{ ir.barre }}"></span>
+                </span>
+                <span style="font-size:12px;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="padding:11px 13px;display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider)">
+            <label class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">
+              Déposer des bougies H1
+              <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
+            <label class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">
+              Déposer un relevé de symboles
+              <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
+            <!--
+              La liste des manquants n'a plus à être cochée à la main : le filtre « À faire »
+              définit déjà exactement la sélection.
+            -->
+            <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne, à coller dans InpSymboles de l’export MT5.">{{ exporterManquantsTxt }}</button>
+          </div>
+        </aside>
+
+        <main style="min-width:0;display:flex;flex-direction:column;gap:13px">
+          <sc-if value="{{ aFiche }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+              <span style="font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">{{ fNom }}</span>
+              <span style="font-size:12px" class="text-muted">{{ fMeta }}</span>
+              <div style="display:flex;gap:6px;margin-inline-start:auto">
+                <button type="button" class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fBasculerFav }}" title="{{ fFavAide }}">{{ fFavTxt }}</button>
+                <button type="button" class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fScanner }}" title="Ouvre le scanner avec cet instrument seul dans l’univers.">Scanner</button>
+              </div>
+            </div>
+
+            <!--
+              LE CADRE NEUF. Il montre ce qu'aucune colonne ne pouvait dire : où sont les
+              bougies, et où elles manquent.
+            -->
+            <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:11px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+                <strong style="font-family:var(--font-heading);font-size:18px">Bougies présentes</strong>
+                <span style="font-size:12px" class="text-muted">{{ fCouvTxt }}</span>
+                <span class="{{ fEtatCls }}" style="font-size:10px;margin-inline-start:auto">{{ fEtat }}</span>
+              </div>
+              <sc-if value="{{ aFCouv }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;height:22px;gap:0;border:1px solid var(--color-divider)">
+                    <sc-for list="{{ fSegments }}" as="fs2" hint-placeholder-count="3">
+                      <div style="flex:{{ fs2.part }};background:{{ fs2.fond }}" title="{{ fs2.aide }}"></div>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:10px" class="text-muted">
+                    <sc-for list="{{ fAnnees }}" as="fa" hint-placeholder-count="7">
+                      <span>{{ fa }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <span style="font-size:12px;line-height:1.5;color:{{ fTrouCouleur }}">{{ fTrouTxt }}</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;padding-top:3px">
+                <label class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:10px;cursor:pointer;display:inline-flex;align-items:center;position:relative">
+                  Remplacer par un nouvel export
+                  <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+                </label>
+                <sc-if value="{{ aFBougies }}" hint-placeholder-val="{{ false }}">
+                  <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fSupprimer }}" title="{{ fSupprAide }}">{{ fSupprTxt }}</button>
+                </sc-if>
+              </div>
+            </div>
+
+            <!--
+              LES COURTIERS DEVIENNENT DES LIGNES. En colonnes, le tableau grandissait avec
+              chaque relevé ajouté, et le détail spread / portage / commission finissait
+              empilé dans une cellule de onze pixels.
+            -->
+            <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+                <strong style="font-family:var(--font-heading);font-size:18px">Ce qu’il coûte</strong>
+                <span style="font-size:12px" class="text-muted">{{ fCoutSous }}</span>
+              </div>
+              <sc-if value="{{ aFCout }}" hint-placeholder-val="{{ true }}">
+                <table class="table" style="font-size:12px">
+                  <thead><tr>
+                    <th>Courtier</th>
+                    <th style="text-align:right">Spread</th>
+                    <th style="text-align:right">Portage</th>
+                    <th style="text-align:right">Commission</th>
+                    <th style="text-align:right">Total</th>
+                    <th style="text-align:right">Part de votre 1 R</th>
+                  </tr></thead>
+                  <tbody>
+                    <sc-for list="{{ fCoutLignes }}" as="fc" hint-placeholder-count="3">
+                      <tr>
+                        <td style="font-weight:{{ fc.poids }}">{{ fc.courtier }}<sc-if value="{{ fc.principal }}" hint-placeholder-val="{{ false }}"><span style="display:block;font-size:11px;font-weight:400" class="text-muted">compte principal</span></sc-if></td>
+                        <td style="text-align:right">{{ fc.spread }}</td>
+                        <td style="text-align:right">{{ fc.portage }}</td>
+                        <td style="text-align:right">{{ fc.comm }}</td>
+                        <td style="text-align:right;font-weight:{{ fc.poids }}">{{ fc.total }}</td>
+                        <td style="text-align:right;font-weight:{{ fc.poids }}">{{ fc.partR }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </sc-if>
+              <span style="font-size:11px;line-height:1.5" class="text-muted">{{ fCoutLecture }}</span>
+            </div>
+
+            <!--
+              CE QUE LE SCAN EN A TIRÉ. Un instrument cher qui rapporte se garde ; un
+              instrument bon marché à − 8 R ne sert à rien. Le tableau de coûts ne pouvait
+              pas faire ce rapprochement.
+            -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+              <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Détention moyenne</span><strong style="font-family:var(--font-heading);font-size:20px">{{ fNuits }}</strong></div>
+              <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Configurations mesurées</span><strong style="font-family:var(--font-heading);font-size:20px">{{ fNConfigs }}</strong></div>
+              <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Meilleure au scan</span><strong style="font-family:var(--font-heading);font-size:20px;color:{{ fMeilleurCouleur }}">{{ fMeilleur }}</strong></div>
+              <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Bougies ambiguës</span><strong style="font-family:var(--font-heading);font-size:20px">{{ fAmbigus }}</strong></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ aSansReleve }}" hint-placeholder-val="{{ false }}">
+            <div class="blueprint" style="padding:14px 16px;align-self:flex-start;max-width:96ch">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <span style="font-size:13px">{{ sansReleveTxt }}</span>
+            </div>
+          </sc-if>
+          <p style="margin:0;font-size:12px;max-width:96ch" class="text-muted">Coût d’un aller-retour en % du notionnel : spread relevé + portage sur la durée de détention + commission. Le minimum par ordre n’est pas modélisé.</p>
+        </main>
+      </div>
     </div>
     </sc-if>
+
 
     <sc-if value="{{ vueMarche }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;flex-direction:column;gap:30px">
@@ -5973,7 +6021,7 @@ GROUPES = {
     messageDepot: null, baremeMsg: null, depotEnCours: null, confirmBareme: null,
     inventaire: null, libSuppr: null, libEnCours: null, libLibere: 0,
     // pagination et curseurs d'affichage
-    coutLimite: 60, recherche: '', rechCourtier: '',
+    coutLimite: 60, recherche: '', rechCourtier: '', symFiche: null,
   };
   changerCompte(cle) {
     if (cle !== 'demo') this._semisFait = false;
@@ -7852,7 +7900,7 @@ GROUPES = {
   CLE_SCAN = 'simula.scan.v1';
   CLE_HASARD = 'simula.hasard.v1';
   get champsSession() {
-    return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvSymb', 'ouvTele', 'ouvCour', 'ouvMarc',
+    return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvSymb', 'ouvTele', 'ouvMarc',
       'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'triCout', 'tab', 'vueLecture',
       'filtreBougies', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
@@ -10782,6 +10830,64 @@ GROUPES = {
   }
   // ————— séries déposées : gardées telles quelles, relues au démarrage —————
   CLE_SERIES = 'simula.series.v1';
+  CLE_COUV = 'simula.couverture.v1';
+  // ————— CE QUE COUVRENT VRAIMENT LES BOUGIES —————
+  //
+  // « Bougies ✓ » répondait par oui ou par non. Une série à jour et une série arrêtée en
+  // 2024 avec un trou de trois semaines au milieu s'affichaient pareil, et c'est un défaut
+  // de fond, pas de mise en page : le moteur TRAVERSE un trou sans le savoir — les deux
+  // bougies de part et d'autre sont vues comme consécutives, ce qui peut inventer un
+  // signal — et c'est aussi pourquoi un scan mesure six ans sur un instrument et deux sur
+  // son voisin sans que rien ne le dise.
+  //
+  // Le calcul se fait UNE fois, au dépôt du CSV (ou au premier chargement d'une série
+  // enregistrée avant cette version), et se range dans un petit index à part : la liste
+  // affiche la barre de cent vingt-sept instruments, elle ne peut pas ouvrir cent
+  // vingt-sept séries pour cela.
+  lireCouv() {
+    try { return JSON.parse(localStorage.getItem(this.cle(this.CLE_COUV)) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  ecrireCouv(m) {
+    try { localStorage.setItem(this.cle(this.CLE_COUV), JSON.stringify(m || {})); } catch (e) {}
+  }
+  noterCouv(sym, couv) {
+    const m = this.lireCouv();
+    if (couv) m[sym] = couv; else delete m[sym];
+    this.ecrireCouv(m);
+  }
+  // Les heures de MARCHÉ sautées entre deux bougies, week-ends exclus. Un week-end vaut
+  // deux jours d'absence qui n'ont rien d'un trou ; deux jours OUVRÉS d'affilée, si.
+  // Compter en heures civiles aurait signalé chaque samedi de l'historique.
+  manqueOuvre(a, b) {
+    let h = 0, t = a;
+    // borne dure : au-delà de deux mois on sait déjà que c'est un trou, inutile de
+    // parcourir dix ans d'heures pour le confirmer
+    const fin = Math.min(b, a + 62 * 24 * 3600000);
+    while (t < fin) {
+      const j = new Date(t).getUTCDay();
+      if (j !== 0 && j !== 6) h += 1;
+      t += 3600000;
+    }
+    return b > fin ? 1e9 : h;
+  }
+  couvertureSerie(brut) {
+    const t = brut && brut.t;
+    if (!t || t.length < 2) return null;
+    const trous = [];
+    for (let i = 1; i < t.length; i++) {
+      const d = t[i] - t[i - 1];
+      // 26 h : la nuit, la pause quotidienne de certains contrats et un week-end court
+      // passent en dessous. Au-dessus seulement, on regarde ce qui est vraiment sauté.
+      if (d <= 26 * 3600000) continue;
+      if (this.manqueOuvre(t[i - 1], t[i]) <= 48) continue;
+      trous.push([t[i - 1], t[i]]);
+      // quarante trous suffisent à dire qu'une série est en morceaux ; les garder tous
+      // ferait grossir l'index pour rien
+      if (trous.length >= 40) break;
+    }
+    return { t0: t[0], t1: t[t.length - 1], n: t.length, trous, date: Date.now() };
+  }
   // Les séries déposées avant le cloisonnement vivaient dans l'espace commun : le
   // compte nº 1 les adopte une fois, index et blocs IndexedDB compris. Sans cela,
   // sélectionner son propre compte principal viderait le plan de travail.
@@ -10977,6 +11083,12 @@ GROUPES = {
     } catch (e) {}
     if (this.dfs) for (const n of noms) delete this.dfs[n];
     if (this._cacheM) for (const n of noms) this._cacheM.delete(n);
+    // la couverture suit la série : la laisser afficherait une barre pour des bougies
+    // qui n'existent plus
+    const mc = this.lireCouv();
+    let touche = false;
+    for (const nn of noms) if (mc[nn]) { delete mc[nn]; touche = true; }
+    if (touche) this.ecrireCouv(mc);
     this.setState((p) => ({ deposes: (p.deposes || []).filter((x) => !noms.has(x)),
       seriesRev: (p.seriesRev || 0) + 1 }));
     if (this.state.inventaire) await this.inventaireStockage();
@@ -11081,6 +11193,8 @@ GROUPES = {
     const ok = await this.grosSet(this.cle(this.CLE_SERIES) + '|' + sym,
       { sym, brut: this.compacter(brut), date: Date.now() });
     if (!ok) return false;
+    // la couverture se relève ICI, sur la série entière et une seule fois
+    try { this.noterCouv(sym, this.couvertureSerie(brut)); } catch (e) {}
     let indexe = false;
     try {
       const idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]');
@@ -11156,6 +11270,8 @@ GROUPES = {
     let idx = [];
     try { idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]'); } catch (e) {}
     if (!idx.length || !this.M) return 0;
+    const couvVues = this.lireCouv();
+    let couvNeuves = false;
     this.dfs = this.dfs || {};
     this.diag = this.diag || {};
     let n = 0;
@@ -11164,6 +11280,12 @@ GROUPES = {
       const bloc = await this.grosGet(this.cle(this.CLE_SERIES) + '|' + sym);
       if (!bloc || !bloc.brut || !bloc.brut.n) continue;
       const brut = this.decompacter(bloc.brut);
+      // rattrapage : les séries enregistrées avant cette version n'ont pas de couverture.
+      // On la relève au premier chargement plutôt que de demander un ré-export.
+      if (!couvVues[sym]) {
+        try { const cv = this.couvertureSerie(brut); if (cv) { couvVues[sym] = cv; couvNeuves = true; } }
+        catch (e) {}
+      }
       this.diag[sym] = { session: brut.heuresSession, ecartees: brut.ecartees };
       this.dfs[sym] = this.M.decouper(brut, this.DEBUT);
       // série encore au format verbeux : on la réécrit compacte au passage
@@ -11172,6 +11294,7 @@ GROUPES = {
       if (this._cacheM) this._cacheM.delete(sym);
       n++;
     }
+    if (couvNeuves) this.ecrireCouv(couvVues);
     if (n) {
       this.completerMt4();
     this.mesurerPlace();
@@ -12325,7 +12448,9 @@ GROUPES = {
       },
       surChoix: (e) => this.accepterFichiers([...(e.target.files || [])]),
       survol: s.survol,
-      bordureDepot: s.survol ? 'var(--color-accent)' : 'var(--color-divider)',
+      // La zone de dépôt n'occupe plus le haut de la page : le glisser-déposer couvre
+      // toute la vue, et son cadre ne se dessine qu'au survol d'un fichier.
+      bordureDepot: s.survol ? 'var(--color-accent)' : 'transparent',
       fondDepot: s.survol ? 'color-mix(in srgb, var(--color-accent) 8%, transparent)' : 'transparent',
       ...(() => {
         const d = s.depotEnCours;
@@ -13038,7 +13163,7 @@ GROUPES = {
           o['basculerH' + n] = () => this.setState({ [k]: !v }, () => this.ecrireSession());
         }
         // et pour les sections des autres écrans (Symboles, Courtiers, Portefeuille, Backtest)
-        for (const n of ['Symb', 'Tele', 'Cour', 'Marc', 'Vali', 'Cout', 'Redo',
+        for (const n of ['Symb', 'Tele', 'Marc', 'Vali', 'Cout', 'Redo',
           'Secu', 'Gril', 'Flux']) {
           const k = 'ouv' + n;
           const v = s[k] === undefined ? true : !!s[k];
@@ -15016,125 +15141,240 @@ GROUPES = {
       // 180 lignes reconstruites à chaque frappe du champ Capital : mémoïsé sur
       // les seules entrées qui les font varier, et le classement (n log n appels
       // à rangCout) est calculé une fois par jeu de barèmes.
-      coutRows: this.memo('coutRows',
-        [s.vue, s.rechCourtier || '', s.ongCourtier || 'tous', s.coutLimite || 60, s.capital, s.risquePct, s.btSL, s.nuitsSaisi,
-          this.SYMBOLES.length, this.frais ? 1 : 0, s.triCout || 'moins',
-          // la sélection et les favoris entrent dans la clé : sans eux, les cellules
-          // gardaient l'état du premier calcul alors que le compteur, lui, bougeait
-          (s.aTele || []).join(','), (s.favoris || []).join(','), s.serieSuppr || '',
-          s.seriesRev || 0, s.filtreBougies || 'tous'].join('|'),
-        () => {
-        if (s.vue !== 'courtiers') return [];
+      // ————— LA LISTE : de quoi choisir, rien de plus —————
+      ...(() => {
+        if (s.vue !== 'courtiers') {
+          return { instrRows: [], aFiche: false, fNom: '', fMeta: '', fCoutLignes: [],
+            fSegments: [], fAnnees: [], fbTousTxt: 'Tous', fbAvecTxt: 'Prêts',
+            fbSansTxt: 'À faire', exporterManquantsTxt: '', sansManquants: true,
+            exporterManquants: () => {}, aFCouv: false, aFCout: false, aFBougies: false };
+        }
         const q = (s.rechCourtier || '').trim().toLowerCase();
         const ong = s.ongCourtier || 'tous';
-        // catalogue de l'application ET symboles propres au relevé du compte : se
-        // limiter au catalogue masquait 1 800 lignes chiffrées de l'export (forex, cryptos)
-        const liste = this.universCouts(ong, q, s.filtreBougies);
-        const pc = (x) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(3).replace('.', ',') + ' %');
+        const couv = this.lireCouv();
         // index des séries déposées : lu UNE fois, pas par ligne
         const seriesLa = new Set();
         try {
           for (const x of JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]')) seriesLa.add(x);
         } catch (e) {}
         for (const k of Object.keys(this.dfs || {})) if (this.dfs[k]) seriesLa.add(k);
-        const aTelecharger = new Set(s.aTele || []);
-        // classement du moins cher au plus cher chez le courtier de référence
-        // (le premier de COURTIERS). L'ordre ne bougera pas quand un second
-        // barème s'ajoutera : c'est toujours ce courtier-là qui range le tableau.
-        // coût réel de chaque ligne, en part de 1 R sur le compte qui range le tableau
+        const aLa = (sym) => seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym);
+        const couvDe = (sym) => couv[sym] || couv[this.fluxDe(sym).base] || null;
         const cleTri = ong === 'tous' ? this.COURTIERS[0][0] : ong;
         const coutDe = (sym) => {
           const o = this.coutEnR(sym, this.stopDe(sym), cleTri);
           return o ? (o.achatR + o.venteR) / 2 : Infinity;
         };
-        const rang = new Map(liste.map((sym) => [sym, coutDe(sym)]));
+        // le classement porte sur TOUT l'univers, pas sur la tranche affichée
+        const tous = this.universCouts(ong, '', 'tous');
         const sens = s.triCout === 'cher' ? -1 : 1;
-        // le tableau complet coûte ~3 000 nœuds : on n'en monte qu'une tranche,
-        // le classement lui reste calculé sur la totalité
-        const triee = [...liste].sort((a, b) => {
+        const rang = new Map(tous.map((sym) => [sym, coutDe(sym)]));
+        const triee = [...tous].sort((a, b) => {
           const ra = rang.get(a), rb = rang.get(b);
           const ia = !Number.isFinite(ra), ib = !Number.isFinite(rb);
           if (ia !== ib) return ia ? 1 : -1;
           if (ia) return a.localeCompare(b);
           return (ra - rb) * sens;
         });
-        const ordinal = new Map(triee.map((sym, k) => [sym, k + 1]));
-        return triee
-          .slice(0, s.coutLimite || 60).map((sym) => {
-          const c = this.coutsCourtiers(sym);
+        const ordinal = new Map(triee.map((sym, k) => [sym, Number.isFinite(rang.get(sym)) ? k + 1 : null]));
+        const nAvec = tous.filter(aLa).length;
+        const manquants = tous.filter((x) => !aLa(x));
+        const fb = s.filtreBougies || 'tous';
+        const visibles = triee.filter((sym) => {
+          if (q && !(sym.toLowerCase().includes(q)
+            || this.nomComplet(sym).toLowerCase().includes(q))) return false;
+          if (fb === 'avec') return aLa(sym);
+          if (fb === 'sans') return !aLa(sym);
+          return true;
+        });
+        // LA BARRE DE COUVERTURE, en un dégradé : la part présente en accent, chaque trou
+        // en neutre, à sa place réelle dans la période couverte. Trois pixels suffisent à
+        // distinguer une série entière d'une série en morceaux.
+        const barreDe = (sym) => {
+          const cv = couvDe(sym);
+          if (!aLa(sym)) return 'var(--color-neutral-200)';
+          if (!cv || !cv.trous || !cv.trous.length) return 'var(--color-accent)';
+          const span = Math.max(1, cv.t1 - cv.t0);
+          const bouts = [];
+          let pos = 0;
+          for (const [a, b] of cv.trous) {
+            const d = Math.max(0, Math.min(100, (a - cv.t0) / span * 100));
+            const f = Math.max(d, Math.min(100, (b - cv.t0) / span * 100));
+            bouts.push('var(--color-accent) ' + pos.toFixed(1) + '% ' + d.toFixed(1) + '%');
+            bouts.push('var(--color-neutral-200) ' + d.toFixed(1) + '% ' + f.toFixed(1) + '%');
+            pos = f;
+          }
+          bouts.push('var(--color-accent) ' + pos.toFixed(1) + '% 100%');
+          return 'linear-gradient(to right,' + bouts.join(',') + ')';
+        };
+        const sel = s.symFiche && visibles.includes(s.symFiche) ? s.symFiche : (visibles[0] || null);
+        const partR = (sym) => {
+          const v = rang.get(sym);
+          return Number.isFinite(v) ? fr(v * 100, 2) + ' %' : null;
+        };
+        const instrRows = visibles.slice(0, 400).map((sym) => {
+          const la = aLa(sym), p = partR(sym), cv = couvDe(sym);
           return {
-            sym, nom: this.nomComplet(sym), nuits: fr(c.nuits, 1), rangCout: ordinal.get(sym),
-            // bougies H1 réellement présentes dans ce navigateur pour ce compte
-            ...(() => {
-              const a = seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym);
-              return { bougies: a ? 'présent' : 'absent',
-                // TROIS états, pas deux. Une série non ouverte depuis le démarrage n'est
-                // pas « ancienne » : on ne sait pas, et l'annoncer enverrait ré-exporter
-                // cent quarante-cinq séries qui n'en ont peut-être aucun besoin.
-                bougiesCls: !a ? 'tag tag-outline'
-                  : this.serieComplete(sym) === false ? 'tag tag-neutral' : 'tag tag-accent',
-                bougiesAide: !a
-                  ? 'Aucune bougie H1 pour cet instrument : il ne peut pas être scanné. Cochez-le pour l\u2019ajouter à votre liste de téléchargement.'
-                  : this.serieComplete(sym) === true
-                    ? 'Série COMPLÈTE : elle porte la minute des extrêmes. Sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula sait lequel a été touché en premier — les deux lectures s\u2019accordent et le chiffre est celui du testeur.'
-                    : this.serieComplete(sym) === false
-                      ? 'Série ANCIENNE : pas de minute des extrêmes. Le scan fonctionne, mais sur une bougie contenant à la fois le stop et l\u2019objectif, Sivula doit choisir une convention — d\u2019où un écart entre les deux lectures. Ré-exportez-la AVANT de valider une configuration pour la production, pas avant de chercher.'
-                      : 'Bougies présentes. L\u2019état des colonnes ne se connaît qu\u2019à l\u2019ouverture de la série : lancez un test sur cet instrument pour le savoir.' };
-            })(),
-            aBougies: seriesLa.has(this.fluxDe(sym).base) || seriesLa.has(sym),
-            supprBougiesTxt: this.state.serieSuppr === sym ? 'Confirmer' : 'Supprimer',
-            supprBougiesAide: this.state.serieSuppr === sym
-              ? 'Cliquez à nouveau pour effacer définitivement les bougies de ' + sym + ' de ce navigateur.'
-              : 'Efface les bougies H1 de ' + sym + ' pour libérer de la place. L\u2019instrument reste listé et pourra être redéposé.',
-            supprimerBougies: (e) => {
-              if (e && e.stopPropagation) e.stopPropagation();
-              if (this.state.serieSuppr !== sym) { this.setState({ serieSuppr: sym }); return; }
-              this.setState({ serieSuppr: null });
-              this.supprimerSerie(sym);
-            },
-            coche: aTelecharger.has(sym),
-            // une case native n'a pas d'état visible dans ce système : on reprend la
-            // pastille, qui dit « coché » par son remplissage comme partout ailleurs
-            cocheTxt: aTelecharger.has(sym) ? '✓ pris' : 'ajouter',
-            cocheCls: aTelecharger.has(sym) ? 'tag tag-accent' : 'tag tag-outline',
-            cocheAide: aTelecharger.has(sym)
-              ? sym + ' est dans votre liste à télécharger — cliquez pour le retirer'
-              : 'Ajouter ' + sym + ' à la liste à télécharger',
-            basculerCoche: () => this.setState((p) => {
-              const l = new Set(p.aTele || []);
-              if (l.has(sym)) l.delete(sym); else l.add(sym);
-              return { aTele: [...l] };
-            }, () => this.ecrireSession()),
-            // le favori vient de la page Symboles, supprimée : une seule page suffit
-            etoile: (s.favoris || []).includes(sym) ? '\u2605' : '\u2606',
-            favAide: (s.favoris || []).includes(sym)
-              ? sym + ' est en favori — cliquez pour le retirer'
-              : 'Mettre ' + sym + ' en favori : il sera mesuré en continu et proposé sur vos portefeuilles',
-            basculerFav: (e) => { if (e && e.stopPropagation) e.stopPropagation();
-              this.majPf(pfListe, (s.favoris || []).includes(sym)
-                ? (s.favoris || []).filter((x) => x !== sym)
-                : [...(s.favoris || []), sym]); },
-            ...(() => {
-              // coût de référence de l'instrument : meilleur tarif disponible ramené au
-              // stop réellement utilisé par vos configurations, donc en part de 1 R
-              const slPct = this.stopDe(sym);
-              const o = this.coutEnR(sym, slPct, this.COURTIERS[0][0]);
-              if (!o) return { refR: '—', refDetail: 'coût non chiffrable : relevé absent, ou export sans prix ni mode de swap' };
-              const m = (o.achatR + o.venteR) / 2;
-              return { refR: fr(m * 100, 1) + ' % du R',
-                refDetail: EUR.format(m * euroR) + ' sur ' + EUR.format(euroR) + ' risqués · stop ' + fr(slPct, 2) + ' %' };
-            })(),
-            cellules: c.liste.filter((o) => (this.baremes || {})[o.cle]
-              && (ong === 'tous' || o.cle === ong)).map((o) => ({
-              total: o.connu ? pc(o.moyen) : '—',
-              poids: o.meilleur ? '600' : '400',
-              detail: o.connu ? o.sym + ' · achat ' + pc(o.achat) + ' · vente ' + pc(o.vente) : 'pas de relevé',
-            })),
-            meilleur: c.meilleur ? c.meilleur.courtier : '—',
-            tagMeilleur: c.meilleur ? 'tag-accent' : 'tag-outline',
+            sym, nom: this.nomComplet(sym),
+            rangCout: ordinal.get(sym) === null ? '—' : String(ordinal.get(sym)),
+            barre: barreDe(sym),
+            part: p === null ? (la ? 'sans relevé' : 'sans bougies') : p,
+            poids: p === null ? '400' : '600',
+            couleur: p === null ? 'var(--color-neutral-500)'
+              : (rang.get(sym) > 0.003 ? 'var(--color-accent-700)' : 'var(--color-text)'),
+            opacite: la ? '1' : '.6',
+            fond: sym === sel ? 'var(--color-accent-100)' : 'transparent',
+            marque: sym === sel ? 'var(--color-accent)' : 'transparent',
+            aide: sym + ' — ' + (la
+              ? (cv ? 'bougies du ' + new Date(cv.t0).toLocaleDateString('fr-FR')
+                  + ' au ' + new Date(cv.t1).toLocaleDateString('fr-FR')
+                  + (cv.trous && cv.trous.length ? ' · ' + this.pl(cv.trous.length, 'trou', 'trous') : ' · sans trou')
+                : 'bougies présentes, couverture non relevée')
+              : 'aucune bougie'),
+            choisir: () => this.setState({ symFiche: sym }),
           };
         });
-      }),
+        return {
+          instrRows,
+          fbTousTxt: 'Tous · ' + tous.length,
+          fbAvecTxt: 'Prêts · ' + nAvec,
+          fbSansTxt: 'À faire · ' + manquants.length,
+          exporterManquantsTxt: manquants.length
+            ? 'Exporter la liste des ' + manquants.length + ' manquants' : 'Rien à télécharger',
+          sansManquants: manquants.length === 0,
+          // La sélection à la main a disparu : le filtre « À faire » EST la sélection.
+          exporterManquants: () => {
+            const noms = manquants.map((sym) => {
+              const l = this.ligneCourtier(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif, sym);
+              return (l && l.sym) || sym;
+            });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([[...new Set(noms)].join('\n') + '\n'],
+              { type: 'text/plain;charset=utf-8' }));
+            a.download = 'a-telecharger.txt';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+          },
+          // ————— LA FICHE DE L'INSTRUMENT CHOISI —————
+          ...(!sel ? { aFiche: false, fNom: '', fMeta: '', fCoutLignes: [], fSegments: [],
+              fAnnees: [], aFCouv: false, aFCout: false, aFBougies: false }
+            : (() => {
+            const cv = couvDe(sel), la = aLa(sel);
+            const c = this.coutsCourtiers(sel);
+            const jour = (t) => new Date(t).toLocaleDateString('fr-FR');
+            const pc = (x) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(3).replace('.', ',') + ' %');
+            // la barre en segments : présent / trou / présent, à l'échelle du temps couvert
+            const segs = [];
+            const annees = [];
+            if (cv) {
+              const span = Math.max(1, cv.t1 - cv.t0);
+              let pos = cv.t0;
+              for (const [a, b] of (cv.trous || [])) {
+                if (a > pos) segs.push({ part: ((a - pos) / span * 100).toFixed(2),
+                  fond: 'var(--color-accent-400)',
+                  aide: 'Bougies présentes du ' + jour(pos) + ' au ' + jour(a) });
+                segs.push({ part: Math.max(0.6, (b - a) / span * 100).toFixed(2),
+                  fond: 'var(--color-neutral-200)',
+                  aide: 'Trou : rien entre le ' + jour(a) + ' et le ' + jour(b) });
+                pos = b;
+              }
+              if (cv.t1 > pos) segs.push({ part: ((cv.t1 - pos) / span * 100).toFixed(2),
+                fond: 'var(--color-accent-400)',
+                aide: 'Bougies présentes du ' + jour(pos) + ' au ' + jour(cv.t1) });
+              const a0 = new Date(cv.t0).getUTCFullYear(), a1 = new Date(cv.t1).getUTCFullYear();
+              for (let y = a0; y <= a1 && annees.length < 12; y++) annees.push(String(y));
+            }
+            // périmée : la dernière bougie a plus de 45 jours de marché
+            const vieux = cv ? (Date.now() - cv.t1) > 45 * 86400000 : false;
+            const etat = !la ? ['absente', 'tag tag-outline']
+              : !cv ? ['couverture non relevée', 'tag tag-outline']
+              : vieux ? ['périmée', 'tag tag-neutral'] : ['à jour', 'tag tag-accent'];
+            const nTrous = cv && cv.trous ? cv.trous.length : 0;
+            const e = (this._parSym || new Map()).get(sel);
+            const best = e && e.best;
+            return {
+              aFiche: true,
+              fNom: this.nomComplet(sel),
+              fMeta: sel + ' · ' + (ordinal.get(sel) === null ? 'coût non chiffrable'
+                : 'n° ' + ordinal.get(sel) + ' au coût sur ' + tous.length),
+              fFavTxt: ((s.favoris || []).includes(sel) ? '★ Favori' : '☆ Favori'),
+              fFavAide: (s.favoris || []).includes(sel)
+                ? sel + ' est en favori — cliquez pour le retirer'
+                : 'Mettre ' + sel + ' en favori : il sera mesuré en continu et proposé sur vos portefeuilles',
+              fBasculerFav: () => this.majPf(this.state.pfs || [], (s.favoris || []).includes(sel)
+                ? (s.favoris || []).filter((x) => x !== sel)
+                : [...(s.favoris || []), sel]),
+              fScanner: () => this.setState({ vue: 'scan', univers: [sel] }, () => this.ecrireSession()),
+              aFCouv: !!cv, fSegments: segs, fAnnees: annees,
+              fCouvTxt: !la ? 'aucune bougie dans ce navigateur'
+                : cv ? 'H1 · ' + cv.n.toLocaleString('fr-FR') + ' bougies · du ' + jour(cv.t0) + ' au ' + jour(cv.t1)
+                : 'bougies présentes — la couverture se relève au prochain chargement de la série',
+              fEtat: etat[0], fEtatCls: etat[1],
+              // LE TROU, ET CE QU'IL FAIT AU SCAN. C'est l'information neuve : le moteur
+              // traverse un trou sans le savoir, les deux bougies de part et d'autre
+              // étant vues comme consécutives.
+              fTrouTxt: !la
+                ? 'Sans bougies, cet instrument ne peut pas être scanné. Exportez-le depuis MT5 et déposez le fichier ici.'
+                : nTrous
+                  ? this.pl(nTrous, 'Un trou', nTrous + ' trous') + ' dans la série'
+                    + (cv.trous[0] ? ', dont un du ' + jour(cv.trous[0][0]) + ' au ' + jour(cv.trous[0][1]) : '')
+                    + '. Le scan le traverse sans le savoir : les deux bougies de part et d’autre sont considérées comme consécutives, ce qui peut inventer un signal. À vérifier dans votre export MT5.'
+                  : vieux
+                    ? 'La série s’arrête le ' + jour(cv.t1) + '. Un scan lancé aujourd’hui ne mesurera rien après cette date — c’est ainsi qu’un instrument couvre six ans et son voisin deux.'
+                    : (cv ? 'Aucun trou : la série est continue du premier au dernier jour.' : ''),
+              fTrouCouleur: (!la || nTrous || vieux) ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
+              aFBougies: la,
+              fSupprTxt: this.state.serieSuppr === sel ? 'Confirmer la suppression' : 'Supprimer ces bougies',
+              fSupprAide: this.state.serieSuppr === sel
+                ? 'Cliquez à nouveau pour effacer définitivement les bougies de ' + sel + ' de ce navigateur.'
+                : 'Efface les bougies H1 de ' + sel + ' pour libérer de la place. L’instrument reste listé et pourra être redéposé.',
+              fSupprimer: () => {
+                if (this.state.serieSuppr !== sel) { this.setState({ serieSuppr: sel }); return; }
+                this.setState({ serieSuppr: null });
+                this.supprimerSerie(sel);
+              },
+              // LES COURTIERS EN LIGNES : le détail spread / portage / commission redevient
+              // lisible au lieu d'être empilé dans une cellule.
+              aFCout: c.liste.some((o) => o.connu),
+              fCoutSous: 'aller-retour en % du notionnel, portage compris sur '
+                + fr(c.nuits, 1) + ' nuits de détention moyenne',
+              fCoutLignes: c.liste.filter((o) => o.connu).map((o) => {
+                const r = this.coutEnR(sel, this.stopDe(sel), o.cle);
+                return { courtier: o.courtier, principal: o.cle === this.COURTIERS[0][0],
+                  poids: o.cle === this.COURTIERS[0][0] ? '600' : '400',
+                  spread: pc(o.spread),
+                  portage: o.portageInconnu ? '— non relevé' : pc((o.portL + o.portS) / 2),
+                  comm: o.comm ? pc(o.comm * 2) : '—',
+                  total: pc(o.moyen),
+                  partR: r ? fr((r.achatR + r.venteR) / 2 * 100, 2) + ' %' : '—' };
+              }),
+              fCoutLecture: (() => {
+                const connus = c.liste.filter((o) => o.connu).sort((a, b) => a.moyen - b.moyen);
+                const fin = ' Le minimum par ordre n’est pas modélisé : sur de très petits volumes le coût réel est un peu plus élevé.';
+                if (!connus.length) return 'Aucun relevé de frais pour cet instrument : son coût ne peut pas être chiffré.' + fin;
+                if (connus.length === 1) return 'Un seul relevé : ' + connus[0].courtier + '.' + fin;
+                const ecart = connus[1].moyen - connus[0].moyen;
+                const principal = connus[0].cle === this.COURTIERS[0][0];
+                // un écart plus petit que la variation du spread d'une séance à l'autre ne
+                // justifie pas de changer de courtier : le dire évite un déménagement inutile
+                const petit = ecart < connus[0].spread * 0.25;
+                return 'Le moins cher est ' + (principal ? 'votre compte principal' : connus[0].courtier)
+                  + ' — l’écart avec ' + connus[1].courtier + ' (' + pc(ecart) + ') '
+                  + (petit
+                    ? 'est plus petit que la variation du spread d’une séance à l’autre : il ne justifie pas de changer.'
+                    : 'est réel : à volume égal, il se voit sur l’année.') + fin;
+              })(),
+              fNuits: fr(c.nuits, 1) + ' nuits',
+              fNConfigs: e ? String(e.n) : '0',
+              fMeilleur: best ? sg(best.total, 0) + ' R' : '—',
+              fMeilleurCouleur: best && best.total > 0 ? 'var(--color-accent-700)' : 'var(--color-text)',
+              fAmbigus: best && best.ambigus !== undefined && best.n
+                ? Math.round(best.ambigus / best.n * 100) + ' %' : '—',
+            };
+          })()),
+        };
+      })(),
+
       // la page Symboles a été fusionnée dans Courtiers : une session enregistrée
       // pointant encore dessus afficherait une page vide
       vueSymboles: false,
