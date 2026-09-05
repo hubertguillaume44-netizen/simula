@@ -1225,9 +1225,12 @@
           <div style="padding:13px 15px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--color-divider)">
             <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px">
             <div class="seg" style="width:100%">
-              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
+              <!-- L'ordre suit ce qu'on cherche : ce qui est déjà là, ce qui manque, puis
+                   la liste entière. « Prêt » et « à faire » nommaient un jugement ; ce que
+                   la case dit vraiment, c'est si les bougies sont téléchargées. -->
               <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">{{ fbAvecTxt }}</label>
               <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
+              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
               <span style="font-size:11px" class="text-muted">Classer par</span>
@@ -1582,24 +1585,6 @@
 
     <sc-if value="{{ vuePortefeuille }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:18px">
-      <sc-if value="{{ aFeuille }}" hint-placeholder-val="{{ false }}">
-      <section class="card blueprint" style="padding:20px 22px;gap:12px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
-          <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">Où j'en suis</span>
-          <span style="font-size:12px" class="text-muted">{{ feuilleResume }}</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px 20px">
-          <sc-for list="{{ feuille }}" as="fr2" hint-placeholder-count="6">
-            <div style="display:flex;gap:10px;align-items:baseline;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--color-divider)">
-              <strong style="font-size:13px">{{ fr2.nom }}</strong>
-              <span class="{{ fr2.cls }}" style="font-size:10px;letter-spacing:.03em;cursor:help;white-space:nowrap" title="{{ fr2.aide }}">{{ fr2.quoi }}</span>
-            </div>
-          </sc-for>
-        </div>
-        <p class="card-body" style="margin:0;font-size:12px;max-width:88ch">Survolez une étiquette pour savoir quoi faire. Une ligne « prête pour MT5 » passe les contrôles de Sivula : il reste à la tester dans le testeur MT5, et à ne lancer le robot que si le profit net y est positif.</p>
-      </section>
-      </sc-if>
       <section class="card blueprint" style="padding:20px 22px;gap:12px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
@@ -3084,7 +3069,22 @@
                     </div>
                   </div>
 
-                  <div style="font-size:10px;line-height:1.5" class="text-muted">{{ tr2.reglages }} · {{ tr2.variante }} · {{ tr2.n }} trades · {{ tr2.segs }} époques · {{ tr2.hasardPhrase }}</div>
+                  <!--
+                    LE HASARD EST UNE MESURE, PAS UNE INCISE. Il était en fin d'une ligne
+                    grise de six éléments : le seul chiffre qui dise si la configuration
+                    vaut mieux qu'entrer au hasard se lisait après le reste, ou pas du tout.
+                  -->
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hasard</span>
+                      <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasTousAide }}">{{ tr2.hasChiffre }}</strong>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict du tirage</span>
+                      <span style="font-size:11px;line-height:1.35;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasardPhrase }}">{{ tr2.hasMot }}</span>
+                    </div>
+                  </div>
+                  <div style="font-size:10px;line-height:1.5" class="text-muted">{{ tr2.reglages }} · {{ tr2.variante }} · {{ tr2.n }} trades · {{ tr2.segs }} époques</div>
                   <!-- l'étiquette de fenêtre suit la ligne jusqu'ici : sans elle, on
                        retrouve dans six mois une fiche à + 41 R sans savoir qu'elle a été taillée -->
                   <div style="display:{{ tr2.fenAff }};flex-direction:column;gap:3px;padding-top:6px;border-top:1px solid var(--color-divider)">
@@ -3106,10 +3106,43 @@
                     </sc-if>
                     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Charger cette configuration dans le Backtest et la relancer" onClick="{{ tr2.auBacktest }}">Backtest</button>
                     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Ouvrir la fiche détaillée de cet instrument, sous la grille" onClick="{{ tr2.ouvrir }}">La fiche</button>
-                    <sc-for list="{{ tr2.pastilles }}" as="pp" hint-placeholder-count="1">
-                      <button type="button" class="{{ pp.cls }}" title="{{ pp.aide }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:2px 7px" onClick="{{ pp.ajouter }}">{{ pp.nom }}</button>
-                    </sc-for>
                   </div>
+
+                  <!--
+                    LE DÉPLIAGE NE SE CACHE PAS. Il était dans le rang `.agir`, que la
+                    feuille de style masque tant que la carte n'est pas survolée : la
+                    seule porte vers les huit autres configurations n'existait donc pas
+                    au clavier, ni sur un écran tactile. Il vit désormais dans la carte.
+                  -->
+                  <button type="button" class="btn btn-ghost" style="min-height:1.7rem;font-size:11px;padding-inline:9px;align-self:flex-start" title="{{ tr2.autresAide }}" onClick="{{ tr2.basculer }}">{{ tr2.autresTxt }}</button>
+
+                  <!--
+                    LES AUTRES CONFIGURATIONS DE L'INSTRUMENT.
+
+                    La carte annonçait « 9 config. mesurées » et n'offrait aucun moyen de
+                    les voir : le pliage existait dans les données — `combis`, `basculer`,
+                    `toutAfficher` — et aucune de ces trois n'était branchée au gabarit.
+                    On ne voyait donc que la meilleure de chaque instrument, et les huit
+                    autres restaient hors d'atteinte.
+                  -->
+                  <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider);padding-top:7px">
+                      <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="4">
+                        <div style="display:grid;grid-template-columns:16px 1fr auto auto;gap:7px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--color-divider)">
+                          <span style="font-size:10px" class="text-muted">{{ cb.rang }}</span>
+                          <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                            <span style="font-size:11px;line-height:1.3">{{ cb.reglages }}</span>
+                            <span style="font-size:9px;line-height:1.35" class="text-muted">{{ cb.variante }} · {{ cb.n }} trades · {{ cb.segs }} époques · {{ cb.hasardPhrase }}</span>
+                          </span>
+                          <span style="font-family:var(--font-heading);font-size:13px;white-space:nowrap">{{ cb.total }}</span>
+                          <button type="button" class="{{ cb.agirCls }}" style="min-height:1.5rem;font-size:10px;padding-inline:8px;white-space:nowrap" disabled="{{ cb.agirBloque }}" title="{{ cb.agirAide }}" onClick="{{ cb.agir }}">{{ cb.agirTxt }}</button>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
+                        <button type="button" class="btn btn-ghost" style="min-height:1.7rem;font-size:11px;align-self:flex-start;padding-inline:9px;margin-top:6px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
+                      </sc-if>
+                    </div>
+                  </sc-if>
                 </div>
               </sc-for>
             </div>
@@ -3626,6 +3659,15 @@
           <span style="border:1px solid currentColor;padding:3px 9px;font-size:11px;white-space:normal;text-align:left;max-width:80ch">{{ ecartLigneTxt }}</span>
         </sc-if>
         <span style="margin-inline-start:auto;font-size:11px;opacity:.85;text-align:right;max-width:56ch" title="Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.">{{ btBande }}</span>
+        <!--
+          RANGER AU PORTEFEUILLE, DEPUIS LE BACKTEST.
+
+          La page rejouait une configuration en détail, affichait son verdict, et n'offrait
+          aucun moyen de la garder : il fallait retourner la chercher dans l'Historique. Le
+          bouton ouvre le contrôle du hasard puis la validation — le même chemin, avec la
+          même fenêtre de confirmation.
+        -->
+        <button type="button" style="cursor:pointer;border:1px solid currentColor;background:{{ btRangerFond }};color:{{ btRangerEncre }};font-family:var(--font-body);font-size:11px;padding:4px 11px;white-space:nowrap;opacity:{{ btRangerVoile }}" onClick="{{ btRanger }}" disabled="{{ btRangerOff }}" title="{{ btRangerAide }}">{{ btRangerTxt }}</button>
       </div>
 
       <div style="display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start">
@@ -5002,12 +5044,11 @@ class Component extends DCLogic {
     const taches = [];
     for (const r of lignes) {
       for (const t of nombres) {
-        // depuis la barre, la règle est celle des fiches : un contrôle DÉJÀ plus fin
-        // rend celui-ci inutile, et son résultat resterait de toute façon masqué
-        if (tirages) {
-          const f = this.meilleurHasardFait(r);
-          if (f && (f.tirages || 0) >= t) continue;
-        } else if (this.hasardFait(this.cleHasardFait(r, t))) continue;
+        // Une seule règle, partout : on saute le nombre de tirages DÉJÀ joué sur cette
+        // configuration, et lui seul. Le tirage est déterministe — le refaire au même
+        // nombre redonnerait le même chiffre — mais un autre nombre, même plus petit,
+        // produit un second contrôle que la fiche affiche à côté du premier.
+        if (this.hasardFait(this.cleHasardFait(r, t))) continue;
         taches.push([r, t]);
       }
     }
@@ -5085,6 +5126,32 @@ class Component extends DCLogic {
   // contrôlée à « non contrôlé » dès que l'utilisateur changeait ce champ.
   meilleurHasardFait(cfg) {
     return this.indexHasard().get(this.prefixeHasard(cfg)) || null;
+  }
+  // TOUS les contrôles d'une configuration, du plus fin au plus grossier.
+  //
+  // La mémoire les garde tous — la clé est « préfixe|tirages » — mais la page n'affichait
+  // que le meilleur. Un second contrôle à un autre nombre de tirages était donc calculé,
+  // stocké, et invisible : rien ne distinguait « je viens de le refaire à 600 » de « il
+  // ne s'est rien passé ». Or c'est justement l'écart entre deux nombres qui dit si le
+  // pourcentage est stable.
+  tousHasardFaits(cfg) {
+    return this.indexHasardTous().get(this.prefixeHasard(cfg)) || [];
+  }
+  indexHasardTous() {
+    if (this._idxHT && this._idxHTRev === (this._hfRev || 0)) return this._idxHT;
+    const m = this.state.hasardFaits || {};
+    const o = new Map();
+    for (const k of Object.keys(m)) {
+      const v = m[k];
+      if (!v || !v.tirages) continue;
+      const i = k.lastIndexOf('|');
+      const pre = i < 0 ? k : k.slice(0, i);
+      const l = o.get(pre);
+      if (l) l.push(v); else o.set(pre, [v]);
+    }
+    for (const l of o.values()) l.sort((a, b) => b.tirages - a.tirages);
+    this._idxHT = o; this._idxHTRev = (this._hfRev || 0);
+    return o;
   }
   // L'index préfixe → meilleur contrôle, refait seulement quand la mémoire change.
   // La recherche par balayage des clés coûtait un parcours de TOUTE la mémoire des
@@ -8670,6 +8737,23 @@ GROUPES = {
       fenSousAff: e.sous ? 'block' : 'none',
     };
   }
+  // La configuration du Backtest, avec ses MESURES : c'est elle qu'on range au
+  // portefeuille depuis cette page. Les champs sont ceux d'une ligne de scan, parce que
+  // c'est ce que `basculerValide`, `verdict` et le contrôle du hasard savent lire.
+  ligneBt() {
+    const s = this.state;
+    if (!s.res || !s.btSym) return null;
+    const sup = s.sup || {};
+    const seg = s.seg;
+    return { sym: s.btSym, periode: s.btPeriode, sl: s.btSL, rr: s.btRR,
+      entree: s.btEntree, ligne: s.btLigne, sens: s.btSens || 'achat',
+      n: s.res.n, total: s.res.total, rAn: s.res.rAn, dd: s.res.dd,
+      pf: s.res.pf, winRate: s.res.winRate,
+      positifs: seg ? seg.positifs : 0, segTotal: seg ? seg.total : 5,
+      esp: sup.esp, oos: sup.oos, tenue: sup.tenue, calmar: sup.calmar, nuits: sup.nuits,
+      filtres: this.filtresTexte(this.cfgCourante(s.btSym)),
+      ...(() => { const f = this.fenetre(s); return f.complete ? {} : { fen: this.fenPlate(f) }; })() };
+  }
   // La configuration du backtest vue comme une LIGNE : elle porte sa fenêtre, donc
   // `fenetreDeLigne` la reconnaît et le résultat sur la partie écartée se mesure avec le
   // même chemin que pour une ligne de scan. Une seule mécanique, pas deux.
@@ -9297,6 +9381,10 @@ GROUPES = {
     // relancerait un rendu à chaque backtest sans rien changer à l'écran
     this._tradesBt = trades;
     this.setState({ res, seg, courbe, bande, nTrades: trades.length, signature: sig,
+      // Espérance, hors échantillon, tenue, R par R de creux : trois des cinq contrôles
+      // en dépendent. Sans elles, le Backtest affichait « 2 / 5 mesurés » sur une
+      // configuration parfaitement jugeable — et ne pouvait donc rien proposer d'en faire.
+      sup: this.mesuresSup(trades, res),
       // La ligne rouverte tient-elle sa promesse ? Le dire ICI, à côté du chiffre, et
       // nommer ce qui diffère — pas laisser l'utilisateur comparer deux écrans.
       ecartLigne: this.ecartLigne(res) },
@@ -16468,6 +16556,45 @@ GROUPES = {
       btMotifs: res ? 'TP ' + res.tp + ' · SL ' + res.sl + ' · BE ' + res.be + ' · gap ' + res.gap
         + (res.temps ? ' · durée ' + res.temps : '') : '',
       btVerdict: verdict[0], btVerdictTag: verdict[1],
+      // ————— GARDER CE QU'ON VIENT DE MESURER —————
+      ...(() => {
+        const l = this.ligneBt();
+        if (!l) {
+          return { btRangerTxt: 'Ranger au portefeuille', btRangerOff: true,
+            btRangerAide: 'Lancez d\u2019abord le test : il n\u2019y a rien à ranger.',
+            btRangerFond: 'transparent', btRangerEncre: 'currentColor', btRangerVoile: '.5',
+            btRanger: () => {} };
+        }
+        const dedans = this.estValide(l.sym, l);
+        const ef = this.etatFenetre(l);
+        const v = this.verdict(l);
+        if (dedans) {
+          return { btRangerTxt: '\u2713 Au portefeuille', btRangerOff: false,
+            btRangerAide: 'Cette configuration est rangée. Cliquez pour l\u2019en retirer.',
+            btRangerFond: 'var(--color-bg)', btRangerEncre: 'var(--color-accent-900)', btRangerVoile: '1',
+            btRanger: () => this.basculerValide(l.sym, l) };
+        }
+        if (ef.verrou) {
+          return { btRangerTxt: 'Fenêtre choisie \u00b7 non validable', btRangerOff: true,
+            btRangerAide: 'Mesurée sur ' + this.fenLibelle(ef.fen)
+              + ' : revenez à tout l\u2019historique, ou écrivez pourquoi la période écartée '
+              + 'est inexploitable depuis la fiche de cette configuration.',
+            btRangerFond: 'transparent', btRangerEncre: 'currentColor', btRangerVoile: '.6',
+            btRanger: () => {} };
+        }
+        const passe = v.ok === 5;
+        return {
+          btRangerTxt: passe ? 'Ranger au portefeuille' : 'Contrôler puis ranger',
+          btRangerOff: false,
+          btRangerAide: passe
+            ? 'Les cinq contrôles passent. Le hasard est rejoué avant de ranger : une configuration retenue sans ce contrôle est retenue parce qu\u2019elle est première d\u2019une liste, pas parce qu\u2019elle vaut mieux qu\u2019un tirage au sort.'
+            : v.motifAide,
+          btRangerFond: passe ? 'var(--color-bg)' : 'transparent',
+          btRangerEncre: passe ? 'var(--color-accent-900)' : 'currentColor',
+          btRangerVoile: passe ? '1' : '.75',
+          btRanger: () => this.demanderValidation(l.sym, l),
+        };
+      })(),
       btSymNom: this.nomComplet(s.btSym),
       btPath, btZero, btAire, btGradsY, btGradsX,
       aBtCreux: !!creux,
@@ -17358,7 +17485,9 @@ GROUPES = {
         const sl = v.sl;
         const fraisPct = c.principal ? c.principal.moyen : null;
         return {
-          sym: this.nomComplet(sym), ticker: sym,
+          // `nom` est le nom lisible affiché en tête de ligne ; `sym` porte le même
+          // texte pour le reste de la page, et `ticker` le code brut.
+          nom: this.nomComplet(sym), sym: this.nomComplet(sym), ticker: sym,
           ...(() => {
             const dans = pfListe.map((p, k) => ((p.syms || []).includes(sym) ? { ab: abrevPf[k], nom: p.nom } : null)).filter(Boolean);
             const d = this.comptesDe(sym);
@@ -17462,10 +17591,11 @@ GROUPES = {
               : p < 0.01 ? (p * 100).toFixed(2).replace('.', ',') + ' %'
               : p < 0.1 ? (p * 100).toFixed(1).replace('.', ',') + ' %'
               : Math.round(p * 100) + ' %';
-            // Un contrôle plus fin est proposé dès que le champ demande plus de tirages
-            // que celui déjà enregistré : c'est ainsi qu'on tranche un cas serré, sans
-            // avoir à effacer quoi que ce soit.
-            const plusFin = t > f.tirages;
+            // Un nouveau contrôle est proposé dès que le champ demande un nombre de
+            // tirages qui n'a pas encore été joué sur cette configuration — au-dessus
+            // comme en dessous du plus fin déjà enregistré. Deux tailles de tirage qui
+            // donnent le même pourcentage disent que ce pourcentage tient.
+            const plusFin = !this.hasardFait(this.cleHasardFait({ ...v, _sid: v.sid || v._sid }, t));
             return { hasTxt: ici ? 'contrôle…' : pct,
               hasCls: 'tag ' + (p <= 0.05 ? 'tag-accent' : p <= 0.2 ? 'tag-outline' : 'tag-neutral'),
               hasAFaire: plusFin && !ici, hasVu: !(plusFin && !ici), hasIci: ici, hasOccupe: !!s.hasardEnCours, lancerHas: lancer,
@@ -17588,9 +17718,11 @@ GROUPES = {
               return { faireTxt: 'Contrôler le hasard', faireCls: 'tag tag-accent', faire: has,
                 faireAide: 'Le hasard n’a pas été mesuré sur cette configuration : rien ne dit encore qu’elle vaut mieux qu’un tirage au sort.' };
             }
-            if (h.verdict !== 'se distingue nettement' && h.verdict !== 'se distingue' && t > (f ? f.tirages : 0)) {
-              return { faireTxt: 'Pousser à ' + t.toLocaleString('fr-FR'), faireCls: 'tag tag-accent', faire: has,
-                faireAide: 'Le contrôle à ' + (f ? f.tirages : 0) + ' tirages ne tranche pas. Le refaire plus fin peut le trancher.' };
+            const inedit = !this.hasardFait(this.cleHasardFait(vr, t));
+            if (h.verdict !== 'se distingue nettement' && h.verdict !== 'se distingue' && inedit) {
+              return { faireTxt: (t > (f ? f.tirages : 0) ? 'Pousser à ' : 'Refaire à ') + t.toLocaleString('fr-FR'),
+                faireCls: 'tag tag-accent', faire: has,
+                faireAide: 'Le contrôle à ' + (f ? f.tirages : 0) + ' tirages ne tranche pas. Le rejouer à un autre nombre de tirages peut le trancher.' };
             }
             if (!j || !j.exporte) {
               return { faireTxt: 'Robot MT5', faireCls: 'tag tag-accent', faire: rob,
@@ -17630,46 +17762,6 @@ GROUPES = {
           valides: toutes,
           aRanger,
           aARanger: aRanger.length > 0,
-          // ————— feuille de route —————
-          // Sivula sait déjà tout ce qu'il faut pour dire, ligne par ligne, où elle en est.
-          // Sans cette liste, l'information est répartie sur quatre pages et vingt colonnes,
-          // et il faut la reconstituer de tête à chaque fois.
-          ...(() => {
-            const RANGS = { remesurer: 0, lecture: 1, oos: 2, trades: 3, prete: 4 };
-            const etapes = toutes.map((v) => {
-              // la ligne STOCKÉE, pas l'objet d'affichage : c'est elle qui porte _mv,
-              // filtreNom et oos. Les lire sur l'objet d'affichage rendait la carte inerte.
-              const b = v._v || {};
-              const nR = Number(b.n) || 0;
-              const oos = Number(b.oos);
-              const haute = /lecture haute/i.test(b.filtreNom || '');
-              let cle = 'prete';
-              if ((b._mv || 'e1') !== this.MOTEUR_V) cle = 'remesurer';
-              else if (haute) cle = 'lecture';
-              else if (Number.isFinite(oos) && oos < 0) cle = 'oos';
-              else if (nR > 0 && nR < 40) cle = 'trades';
-              const TXT = {
-                remesurer: ['À remesurer', 'tag tag-outline',
-                  'Ses chiffres viennent d\u2019une règle de moteur antérieure. Relancez un scan sur cet instrument.'],
-                lecture: ['À rejouer en lecture basse', 'tag tag-outline',
-                  'Mesurée en lecture haute : sur une bougie ambiguë, l\u2019ordre supposé vous arrange. Rejouez-la en lecture basse avant d\u2019y croire.'],
-                oos: ['À écarter', 'tag tag-neutral',
-                  'Son résultat hors échantillon est négatif : elle n\u2019a pas tenu sur la partie de l\u2019historique qui n\u2019a pas servi à la choisir.'],
-                trades: ['Trop peu de trades', 'tag tag-neutral',
-                  'Moins de 40 trades : le résultat peut venir d\u2019une poignée de coups. Utilisable, mais pas concluant.'],
-                prete: ['Prête pour MT5', 'tag tag-accent',
-                  'Elle passe les contrôles de Sivula. Prochaine étape : la tester dans le testeur MT5, puis lancer le robot si le profit net est positif.'],
-              };
-              const t = TXT[cle];
-              return { rang: RANGS[cle], sym: v.ticker, nom: v.sym,
-                quoi: t[0], cls: t[1], aide: t[2] };
-            }).sort((a, b) => a.rang - b.rang || (a.nom < b.nom ? -1 : 1));
-            const prets = etapes.filter((x) => x.rang === 4).length;
-            return { feuille: etapes, aFeuille: etapes.length > 0,
-              feuilleResume: etapes.length
-                ? prets + ' sur ' + etapes.length + (prets > 1 ? ' prêtes pour MT5' : ' prête pour MT5')
-                : '' };
-          })(),
           ...(() => {
             const t = this.state.triDec || {};
             const fleche = (cle) => (t.cle !== cle ? '' : t.sens === 1 ? ' \u25be' : ' \u25b4');
@@ -18246,8 +18338,8 @@ GROUPES = {
       ...(() => {
         if (s.vue !== 'courtiers') {
           return { instrRows: [], aFiche: false, fNom: '', fMeta: '', fCoutLignes: [],
-            fSegments: [], fAnnees: [], fbTousTxt: 'Tous', fbAvecTxt: 'Prêts',
-            fbSansTxt: 'À faire', exporterManquantsTxt: '', sansManquants: true,
+            fSegments: [], fAnnees: [], fbTousTxt: 'Tous', fbAvecTxt: 'Téléchargés',
+            fbSansTxt: 'Non téléchargés', exporterManquantsTxt: '', sansManquants: true,
             exporterManquants: () => {}, aFCouv: false, aFCout: false, aFBougies: false };
         }
         const q = (s.rechCourtier || '').trim().toLowerCase();
@@ -18338,8 +18430,8 @@ GROUPES = {
         return {
           instrRows,
           fbTousTxt: 'Tous · ' + tous.length,
-          fbAvecTxt: 'Prêts · ' + nAvec,
-          fbSansTxt: 'À faire · ' + manquants.length,
+          fbAvecTxt: 'Téléchargés · ' + nAvec,
+          fbSansTxt: 'Non téléchargés · ' + manquants.length,
           // « les 1 944 manquants » annonçait un nombre inquiétant sans dire de quoi il
           // parlait : ce sont des instruments du relevé de courtier dont les bougies ne
           // sont pas encore là, pas des données perdues.
@@ -18347,7 +18439,7 @@ GROUPES = {
             ? 'Exporter la liste des ' + manquants.length.toLocaleString('fr-FR') + ' sans bougies'
             : 'Rien à télécharger',
           sansManquants: manquants.length === 0,
-          // La sélection à la main a disparu : le filtre « À faire » EST la sélection.
+          // La sélection à la main a disparu : le filtre « Non téléchargés » EST la sélection.
           exporterManquants: () => {
             const noms = manquants.map((sym) => {
               const l = this.ligneCourtier(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif, sym);
@@ -19172,14 +19264,22 @@ GROUPES = {
               // tous, et qui ne peut donc plus se contredire d'un endroit à l'autre.
               const dec = this.decisionDe(r, v);
               const fin = dec.controle;
-              // Le champ « tirages au hasard » commande la finesse. Tant qu'il demande
-              // plus que ce qui est enregistré, la case reste un bouton : c'est ainsi
-              // qu'on tranche un cas serré, sans rien avoir à effacer. Une ligne déjà
-              // contrôlée au nombre demandé n'a plus rien à recalculer — le tirage est
-              // déterministe, le refaire redonnerait le même chiffre.
+              // Le champ « tirages au hasard » commande la finesse. La case reste un
+              // bouton tant que CE nombre-là n'a pas été tiré sur cette configuration —
+              // pas seulement quand il dépasse le contrôle le plus fin.
+              //
+              // La règle précédente n'autorisait que le plus fin, et interdisait donc de
+              // contrôler à 600 une ligne déjà contrôlée à 1 000. Or c'est exactement ce
+              // qu'on veut faire pour savoir si le pourcentage tient : deux tirages de
+              // tailles différentes qui donnent le même chiffre, c'est un chiffre stable.
+              // Les deux résultats coexistent, la carte les affiche tous les deux.
+              //
+              // Une ligne déjà contrôlée à ce nombre précis n'a rien à recalculer : le
+              // tirage est déterministe, le refaire redonnerait le même chiffre.
               const tDem = Math.max(200, Number(s.nTirages) || 200);
+              const inedit = !this.hasardFait(this.cleHasardFait(r, tDem));
               const plusFin = tDem > (dec.tirages || 0);
-              const controlable = plusFin && !r.sansDonnees && (Number(r.n) || 0) >= 5;
+              const controlable = inedit && !r.sansDonnees && (Number(r.n) || 0) >= 5;
               return {
                 // la case de décision EST le bouton de contrôle tant que rien n'est mesuré
                 hasardIci: !!s.hasardEnCours && s.hasardUne === this.cleFine(r),
@@ -19243,11 +19343,11 @@ GROUPES = {
                         this.basculerValide(r.sym, r); },
                       opacite: '1' };
                   }
-                  // le hasard ne tranche pas ET le champ demande plus fin : il reste
-                  // quelque chose à gagner en poussant les tirages
-                  if (!dec.fort && plusFin) {
+                  // le hasard ne tranche pas ET le champ demande un nombre qui n'a pas
+                  // encore été tiré : il reste quelque chose à apprendre
+                  if (!dec.fort && inedit) {
                     return { aAgir: true,
-                      agirTxt: 'Pousser à ' + tDem.toLocaleString('fr-FR') + ' tirages',
+                      agirTxt: (plusFin ? 'Pousser à ' : 'Refaire à ') + tDem.toLocaleString('fr-FR') + ' tirages',
                       agirCls: 'btn btn-secondary',
                       agirAide: dec.aide, agirBloque: !!s.hasardEnCours,
                       agir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
@@ -19262,6 +19362,32 @@ GROUPES = {
                     agirCls: 'btn btn-ghost', agirBloque: true, agir: () => {},
                     agirAide: dec.aide || 'Les cinq contrôles ne passent pas encore, ou le hasard fait aussi bien que cette configuration.',
                     opacite: '.62' };
+                })(),
+                // LE HASARD, CHIFFRÉ. `hasardPhrase` le disait en toutes lettres au bout
+                // d'une ligne grise ; il devient une valeur, à côté des cinq autres.
+                ...(() => {
+                  const tous = this.tousHasardFaits(r);
+                  if (!tous.length) {
+                    return { hasChiffre: '—', hasMot: 'non contrôlé',
+                      hasCouleur: 'var(--color-neutral-500)', hasTousAide: '' };
+                  }
+                  const f = tous[0];
+                  const pct = f.auDessus / f.tirages * 100;
+                  return {
+                    // TOUS les contrôles, du plus fin au plus grossier : deux nombres de
+                    // tirages qui divergent disent que le pourcentage n'est pas stable,
+                    // et c'est ce qu'un seul chiffre ne peut pas dire.
+                    hasChiffre: tous.map((x) => x.auDessus + ' / ' + x.tirages.toLocaleString('fr-FR')).join('  ·  '),
+                    hasMot: dec.controle || '—',
+                    hasCouleur: dec.fort ? 'var(--color-accent-700)'
+                      : pct >= 20 ? 'var(--color-accent-900)' : 'var(--color-text)',
+                    hasTousAide: tous.length > 1
+                      ? tous.map((x) => x.auDessus + ' des ' + x.tirages + ' tirages font aussi bien ('
+                          + (x.auDessus / x.tirages * 100).toFixed(1).replace('.', ',') + ' %)').join('\n')
+                        + '\nLe verdict se lit sur le contrôle le plus fin. Deux pourcentages éloignés '
+                        + 'signifient que le chiffre n\u2019est pas encore stable.'
+                      : dec.aide,
+                  };
                 })(),
                 // L'ÉTIQUETTE DE FENÊTRE, et le verrou qu'elle pose sur le rangement.
                 ...(() => {
@@ -19291,7 +19417,7 @@ GROUPES = {
                 hasA: A.txt, hasACls: A.cls, hasAAide: A.aide, hasAVerdict: A.verdict || '',
                 hasB: B.txt, hasBCls: B.cls, hasBAide: B.aide, hasBVerdict: B.verdict || '',
                 decTxt: dec.txt, decCls: dec.cls,
-                decAide: dec.aide + (fin && plusFin
+                decAide: dec.aide + (fin && inedit
                   ? ' Cliquez pour refaire le contrôle à ' + tDem.toLocaleString('fr-FR') + ' tirages.' : '') };
             })(),
             variante: r.filtreNom || (r.filtre ? this.nomVariante(r.filtre) : ''),
@@ -19752,6 +19878,15 @@ GROUPES = {
               nCombis: g.combis.length + ' config.',
               ...ligne(g.meilleur),
               basculer: () => this.setState({ symOuvert: ouvert ? null : g.sym, symTout: null }),
+              autresTxt: ouvert ? '\u25be Replier'
+                : (g.combis.length > 1
+                  ? '\u25b8 Les ' + g.combis.length + ' configurations'
+                  : '\u25b8 La seule configuration'),
+              autresAide: g.combis.length > 1
+                ? 'La carte ne montre que la meilleure des ' + g.combis.length
+                  + ' configurations mesurées sur cet instrument. Les autres se déplient ici, '
+                  + 'avec leur propre contrôle du hasard et leur propre bouton de rangement.'
+                : 'Une seule configuration mesurée sur cet instrument.',
               combis,
               aReste: ouvert && g.combis.length > 10 && s.symTout !== g.sym,
               resteTxt: 'Afficher les autres configurations',
@@ -19771,17 +19906,19 @@ GROUPES = {
       // affichées, pas sur celles du rendu précédent.
       ...(() => {
         const t = Math.max(200, Number(s.nTirages) || 200);
-        // LE CONTRÔLE EST MONOTONE : seul un nombre de tirages PLUS GRAND que le meilleur
-        // déjà fait apprend quelque chose. Comparer à « déjà fait à ce nombre exact »
-        // proposait de relancer à 600 une fiche contrôlée à 700 — le calcul tournait, et
-        // la fiche continuait d'afficher son 700, puisque c'est le meilleur qui s'affiche.
-        // Rien ne bougeait, et il n'y avait aucune façon de le comprendre.
+        // UN NOMBRE DE TIRAGES NON ENCORE JOUÉ APPREND QUELQUE CHOSE, qu'il soit
+        // au-dessus ou en dessous du plus fin déjà enregistré. La règle était monotone
+        // — seul un nombre plus grand était accepté — parce que la fiche n'affichait que
+        // le meilleur contrôle : relancer à 600 une fiche contrôlée à 700 ne changeait
+        // rien à l'écran. La fiche liste maintenant TOUS les contrôles, donc un second
+        // tirage d'une autre taille se voit, et sert : deux tailles qui donnent le même
+        // pourcentage disent que ce pourcentage tient.
+        //
+        // Seul le nombre EXACTEMENT déjà joué reste sauté : le tirage est déterministe,
+        // le refaire redonnerait le même chiffre.
         const possibles = (this._ciblesHasard || []).filter((r) => r && !r.sansDonnees
           && (r.n || 0) >= 5);
-        const cibles = possibles.filter((r) => {
-          const f = this.meilleurHasardFait(r);
-          return !f || t > (f.tirages || 0);
-        });
+        const cibles = possibles.filter((r) => !this.hasardFait(this.cleHasardFait(r, t)));
         const dejaMax = possibles.reduce((a2, r) => {
           const f = this.meilleurHasardFait(r);
           return f && (f.tirages || 0) > a2 ? f.tirages : a2;
@@ -19797,19 +19934,20 @@ GROUPES = {
               ? (cibles.length === 1 ? 'Contrôler la fiche affichée'
                 : 'Contrôler les ' + cibles.length + ' affichées')
               : dejaMax
-                ? 'Déjà contrôlées à ' + dejaMax.toLocaleString('fr-FR') + ' tirages'
+                ? 'Déjà contrôlées à ' + t.toLocaleString('fr-FR') + ' tirages'
                 : 'Aucune fiche contrôlable',
           boutonLotAide: cibles.length
             ? 'Rejoue au hasard ' + (cibles.length === 1 ? 'la configuration affichée'
               : 'les ' + cibles.length + ' configurations affichées')
               + ' qui n\u2019ont pas encore été contrôlées à ' + t.toLocaleString('fr-FR')
-              + ' tirages ou plus. Celles qui l\u2019ont déjà été sont sautées : leur série n\u2019est pas rechargée.'
+              + ' tirages exactement. Chaque contrôle s\u2019ajoute aux précédents et reste lisible sur la fiche : '
+              + 'deux tailles de tirage qui donnent le même pourcentage disent que ce pourcentage tient.'
+              + (dejaMax ? ' Le contrôle le plus fin déjà enregistré est à '
+                + dejaMax.toLocaleString('fr-FR') + ' tirages.' : '')
             : dejaMax
-              ? 'Les fiches affichées sont déjà contrôlées à ' + dejaMax.toLocaleString('fr-FR')
-                + ' tirages, soit plus fin que les ' + t.toLocaleString('fr-FR') + ' demandés. '
-                + 'Un nombre plus petit n\u2019apprend rien de neuf : c\u2019est le contrôle le plus fin '
-                + 'qui s\u2019affiche sur la fiche. Montez le champ au-dessus de '
-                + dejaMax.toLocaleString('fr-FR') + ' pour aller plus loin.'
+              ? 'Toutes les fiches affichées ont déjà été contrôlées à ' + t.toLocaleString('fr-FR')
+                + ' tirages exactement. Le tirage est déterministe : le refaire au même nombre '
+                + 'redonnerait le même chiffre. Changez le nombre pour en jouer un autre.'
               : 'Aucune des fiches affichées n\u2019a assez de trades pour être rejouée au hasard.',
         };
       })(),
