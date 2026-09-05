@@ -914,6 +914,50 @@
   <sc-if value="{{ isCourt }}" hint-placeholder-val="{{ false }}">
   <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
 
+    <!--
+      LE BANDEAU D'EXEMPLE. Il ne se ferme pas : il tombe quand la démonstration s'arrête,
+      et pas avant. Un utilisateur qui oublie qu'il regarde un exemple et décide dessus
+      est un problème d'une autre nature qu'une maladresse d'interface.
+    -->
+    <sc-if value="{{ aExemple }}" hint-placeholder-val="{{ false }}">
+      <div class="blueprint" style="padding:14px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--color-accent-900);border-color:var(--color-accent-900)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.2;color:var(--color-accent-100)">Vous regardez un exemple.</strong>
+        <span style="font-size:13px;line-height:1.5;flex:1;min-width:36ch;color:var(--color-accent-100)">Ces chiffres viennent de bougies de démonstration : ils ne sont pas les vôtres et aucune décision ne doit être prise dessus.</span>
+        <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:13px" onClick="{{ quitterExemple }}">Passer à mes données</button>
+      </div>
+    </sc-if>
+
+    <!--
+      LE COMPTE VIDE. Le plus gros risque de perdre quelqu'un qui aurait payé : une
+      application qui ne montre rien tant qu'il n'a pas exporté des CSV depuis MetaEditor.
+      Les quatre instruments de démonstration existaient déjà — voici le déclencheur.
+    -->
+    <sc-if value="{{ aVide }}" hint-placeholder-val="{{ false }}">
+      <section class="card blueprint" style="padding:24px 26px;gap:18px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div>
+          <div class="card-kicker">Premier passage</div>
+          <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Votre compte est vide — c'est normal</h3>
+          <p class="card-body" style="margin:8px 0 0;max-width:78ch">Sivula ne mesure que vos propres bougies : tant que vous n'avez rien importé, il n'a rien à montrer. Le temps de préparer vos fichiers, voici l'outil au travail sur quatre instruments fictifs.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+          <sc-for list="{{ etapesExemple }}" as="e" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:5px;border-inline-start:2px solid {{ e.trait }};padding-inline-start:12px">
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ e.rang }}</div>
+              <strong style="font-family:var(--font-heading);font-size:16px;line-height:1.25">{{ e.titre }}</strong>
+              <span style="font-size:12px;line-height:1.5" class="text-muted">{{ e.dit }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" type="button" style="min-height:2.6rem" onClick="{{ voirExemple }}">{{ exempleBouton }}</button>
+          <button class="btn btn-secondary" type="button" style="min-height:2.6rem" onClick="{{ allerImporter }}">J'ai déjà mes fichiers</button>
+          <span style="font-size:12px;line-height:1.5;max-width:46ch" class="text-muted">{{ exempleNote }}</span>
+        </div>
+      </section>
+    </sc-if>
+
     <sc-if value="{{ essai }}" hint-placeholder-val="{{ false }}">
       <div class="blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb,var(--color-accent) 6%,transparent)">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -4048,7 +4092,7 @@ class Component extends DCLogic {
     // Le TOP classe par R net, et la lecture haute donne toujours un meilleur R que la
     // basse : sans cette condition, le tamis retenait mécaniquement la version optimiste
     // de chaque configuration — celle sur laquelle on ne peut pas s'engager.
-    sPrudent: true, onbCache: false, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
+    sPrudent: true, onbCache: false, exemple: false, exempleEtape: 0, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -5377,6 +5421,7 @@ GROUPES = {
   // Instruments engendrés pour le compte de découverte : nom, prix de départ, volatilité
   // horaire, dérive annuelle, spread en points, swap annuel. Aucun ne prétend représenter
   // un marché réel — c'est un terrain d'essai, pas une source de vérité.
+  SEMIS_V = 2;
   SEMIS = [
     ['DEMO-AUTO', 62, 0.011, 0.06, 12, -3.4, 'Démo — automobile'],
     ['DEMO-ENERGIE', 78, 0.014, -0.03, 16, -4.1, 'Démo — énergie'],
@@ -7285,7 +7330,14 @@ GROUPES = {
     // marche aléatoire déterministe : le même compte de découverte pour tout le monde,
     // et un résultat reproductible d'une visite à l'autre
     let x = graine || 1;
-    const rnd = () => { x = (x * 1103515245 + 12345) & 0x7fffffff; return x / 0x7fffffff; };
+    // Math.imul et pas `*` : le produit d'un entier de 31 bits par 1 103 515 245 dépasse
+    // les 53 bits exacts d'un double, les bits de poids faible sont perdus avant le ET
+    // binaire, et le générateur dégénère pour certaines graines. Mesuré : la série
+    // « énergie » partait de 78 pour finir à 5,6 millions, avec une dérive annoncée
+    // NÉGATIVE — l'exemple affichait alors + 2 800 R sur un instrument fictif, ce qui
+    // décrédibilise l'outil au lieu de le montrer. Avec le produit 32 bits exact, la
+    // même série finit à 131.
+    const rnd = () => { x = (Math.imul(x, 1103515245) + 12345) & 0x7fffffff; return x / 0x7fffffff; };
     const N = 12000;                        // ~500 jours de bougies horaires
     const t0 = Date.now() - N * 3600000;
     const th = [], o = [], h = [], l = [], c = [], v = [];
@@ -7311,7 +7363,15 @@ GROUPES = {
     this._semisFait = true;
     let idx = [];
     try { idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]'); } catch (e) {}
-    const manquants = this.SYM_DEMO.filter((x) => !idx.includes(x));
+    // Les séries engendrées portent une version : quand le générateur change, celles
+    // déjà en mémoire sont refaites, sinon un compte ouvert avant garderait des prix
+    // aberrants pour toujours. Ne concerne QUE le compte de découverte — aucune bougie
+    // déposée par l'utilisateur n'est touchée.
+    let vSemis = 0;
+    try { vSemis = Number(localStorage.getItem(this.cle('simula.semis.v')) || 0); } catch (e) {}
+    const refaire = vSemis < this.SEMIS_V;
+    const manquants = this.SYM_DEMO.filter((x) => !idx.includes(x)
+      || (refaire && !this.DEMO.includes(x)));
     // les quatre séries livrées se lisent, les six autres s'engendrent
     for (const sym of manquants) {
       let brut = null;
@@ -7348,7 +7408,81 @@ GROUPES = {
       table.__semis = 2;
       await this.poserBareme('demo', table);
     }
+    try { localStorage.setItem(this.cle('simula.semis.v'), String(this.SEMIS_V)); } catch (e) {}
     this.setState({ deposes: [...this.SYM_DEMO], seriesRev: (this.state.seriesRev || 0) + 1 });
+  }
+  // ————— LES DEUX PREMIÈRES MINUTES —————
+  //
+  // Un nouveau client arrive sur une application vide qui ne montre rien avant qu'il ait
+  // exporté des CSV depuis MetaEditor. Les quatre instruments fictifs et la présentation
+  // existaient déjà, sans rien pour les relier — c'est ce déclencheur-là.
+  //
+  // Le scan de démonstration est un VRAI calcul de quelques secondes, pas une animation :
+  // c'est lui qui prouve que l'outil fonctionne. Un faux chargement fait exactement
+  // l'inverse, et se voit tout de suite.
+  CLE_EXEMPLE = 'simula.exemple.v1';
+  // La grille de l'exemple : la grille livrée, élargie aux deux types d'entrée et aux
+  // deux moyennes. Une vingtaine de milliers de combinaisons réellement mesurées —
+  // assez pour que le balayage dure, assez peu pour qu'on l'attende sans partir.
+  GRILLE_EXEMPLE = { gEntrees: ['croisement_ou_rebond', 'croisement_prix'],
+    gLignes: ['ema', 'ma'], gFiltres: ['aucun'], gSens: ['achat'],
+    gSecus: ['aucune'], gTemps: ['jamais'] };
+  // Les quatre instruments de l'exemple. On ne prend PAS les quatre premiers de la
+  // liste : le compte de découverte en annonce dix, dont quatre ne sont lus que si les
+  // fichiers de démonstration sont publiés à côté de l'application. Un exemple qui
+  // scanne des séries vides affiche quatre lignes à zéro R et prouve le contraire de ce
+  // qu'il devait prouver. On retient donc les premières qui portent vraiment des bougies.
+  async universExemple() {
+    const out = [];
+    for (const sym of this.SYM_DEMO) {
+      if (out.length >= 4) break;
+      let df = null;
+      try { df = await this.charger(sym); } catch (e) { df = null; }
+      if (df && df.n > 500) out.push(sym);
+    }
+    return out;
+  }
+  attendreEtat(test, msMax) {
+    return new Promise((ok) => {
+      const t0 = Date.now();
+      const voir = () => {
+        if (test() || Date.now() - t0 > msMax) { ok(test()); return; }
+        setTimeout(voir, 120);
+      };
+      voir();
+    });
+  }
+  async voirExemple() {
+    if (this._exempleEnRoute) return;
+    this._exempleEnRoute = true;
+    try { localStorage.setItem(this.CLE_EXEMPLE, '1'); } catch (e) {}
+    this.setState({ exemple: true, exempleEtape: 1, onbCache: true });
+    // 1. les quatre instruments. Ils vivent dans le compte de découverte, semé à son
+    // ouverture : y passer charge les bougies, le relevé de frais fictif et rien d'autre.
+    if (this.compteActif !== 'demo') {
+      // d'où l'on vient : « Passer à mes données » doit rendre la main sur CE compte-là,
+      // pas laisser l'utilisateur dans la démonstration en croyant en être sorti
+      this._compteAvant = this.compteActif;
+      this.changerCompte('demo');
+      await this.attendreEtat(() => !this.state.chargeCompte, 60000);
+    }
+    await this.attendreEtat(() => (this.state.deposes || []).length > 0, 30000);
+    const univers = await this.universExemple();
+    this._exempleEnRoute = false;
+    if (!univers.length) { this.setState({ exempleEtape: 0 }); return; }
+    // 2. le scan. La fiche s'ouvrira toute seule à la fin — étape 3.
+    this._exempleFiche = true;
+    this.setState({ vue: 'scan', exempleEtape: 2, univers, ut: 'H1',
+      ...this.GRILLE_V2, ...this.GRILLE_EXEMPLE, tradesMin: 40, segMin: 3 },
+      () => this.lancerScan(true));
+  }
+  quitterExemple() {
+    try { localStorage.removeItem(this.CLE_EXEMPLE); } catch (e) {}
+    this._exempleFiche = false;
+    const avant = this._compteAvant;
+    this._compteAvant = null;
+    this.setState({ exemple: false, exempleEtape: 0, detail: null, vue: 'backtest', onbCache: true },
+      () => { if (avant && avant !== this.compteActif) this.changerCompte(avant); });
   }
   // Amplitude médiane d'une bougie, en % du prix. Sert de plancher de crédibilité à un
   // stop suiveur : en dessous, la sortie dépend du chemin intra-bougie que la donnée
@@ -7721,12 +7855,16 @@ GROUPES = {
     const favoris = sauve && sauve.favoris ? sauve.favoris : base;
     let onbCache = false;
     let risqueVu = false;
+    // le bandeau d'exemple survit au rechargement : c'est tout son intérêt. Un onglet
+    // rouvert le lendemain sur des chiffres de démonstration doit encore le dire.
+    let exemple = false;
     try {
       onbCache = localStorage.getItem('simula.onboarding.vu') === '1';
       risqueVu = !!localStorage.getItem('simula.risque.v1');
+      exemple = localStorage.getItem(this.CLE_EXEMPLE) === '1' && this.compteActif === 'demo';
     } catch (e) {}
     this.setState({ pret: true, runs: this.lireRuns(), pfs, favoris,
-      valides: (sauve && sauve.valides) || [], onbCache, risqueVu });
+      valides: (sauve && sauve.valides) || [], onbCache, risqueVu, exemple });
     // Le backtest du démarrage coûte plusieurs secondes de fil principal : il n'est
     // lancé que si l'utilisateur est déjà sur cette vue. Sur les autres, il part à
     // l'ouverture de l'onglet Backtest.
@@ -9394,7 +9532,22 @@ GROUPES = {
     }
     const df = this.base(r.sym);
     if (!df) return false;
-    const trades = this.mesurer(r.sym, this.cfgCourante(r.sym, r.periode, r.sl, r.rr), this.state.ut, df);
+    // LA CONFIGURATION MESURÉE D'ABORD, la reconstruction seulement à défaut.
+    //
+    // Une ligne de scan porte sa variante — filtre, sécurisation, lecture haute ou
+    // basse, durée. `cfgCourante` ne les connaît pas : elle rebâtit la configuration
+    // avec les réglages actuels de la page. La fiche affichait donc d'autres chiffres
+    // que la ligne cliquée, sans un mot : mesuré sur le compte de découverte, une ligne
+    // à + 49,0 R (4 segments sur 5) s'ouvrait à − 8,4 R (1 sur 5). C'est exactement ce
+    // que le contrôle du hasard évite déjà en passant par `cfgDeLigne`.
+    const cfgFiche = this.cfgDeLigne(r)
+      // sans variante — une fiche ouverte depuis le Backtest — les réglages de la page
+      // SONT la configuration : on ne va pas chercher l'état d'une archive inexistante
+      || (r.filtre
+        ? this.cfgCourante(r.sym, r.periode, r.sl, r.rr, this.etatDeLigne(r),
+          { entree: r.entree, ligne: r.ligne })
+        : this.cfgCourante(r.sym, r.periode, r.sl, r.rr));
+    const trades = this.mesurer(r.sym, cfgFiche, this.state.ut, df);
     if (!trades.length) return false;
     const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
     const sup = this.mesuresSup(trades, res);
@@ -10094,7 +10247,7 @@ GROUPES = {
             // stop et objectif ne s'y trouvent pas — ils viennent de la ligne, et
             // `appliquerLigne` les repose.
             this._cfgVar = this._cfgVar || {};
-            this._cfgVar[vf.cle + '|' + sym] = c;
+            this._cfgVar[this.cleCfgVar(vf.cle, sym, entree, ligne)] = c;
             return c;
           })() });
       }
@@ -10278,6 +10431,16 @@ GROUPES = {
       this.ecrireSession();
       // scan mené à son terme : plus rien à reprendre
       try { localStorage.removeItem(this.cle('simula.scan.depart')); } catch (e) {}
+      // Troisième étape de la démonstration : une configuration ouverte trade par trade.
+      // Le tableau seul ne prouve rien — c'est la liste des trades qui montre d'où vient
+      // le chiffre. On ne l'ouvre qu'après le scan de l'exemple, jamais après un scan
+      // ordinaire : personne n'a demandé qu'on le déplace.
+      if (this._exempleFiche) {
+        this._exempleFiche = false;
+        const best = [...(this.lignesScan || [])].sort((a, b) => b.total - a.total)[0];
+        this.setState({ exempleEtape: 3 });
+        if (best) this.ouvrirDetail(best);
+      }
       // LE CONTRÔLE DU HASARD S'ENCHAÎNE, il ne s'attend pas.
       //
       // Un scan garde le meilleur de cent mille essais : le hasard aussi produit un
@@ -10551,18 +10714,36 @@ GROUPES = {
   // Période, stop et objectif viennent de la LIGNE : la table ne garde qu'un modèle par
   // variante, et ces trois-là balaient une grille. C'est exactement ce que fait le noyau
   // de scan, `appliquer` : même opération, même résultat.
+  // LA CLÉ D'UNE VARIANTE MESURÉE.
+  //
+  // Le type d'entrée et la ligne en font partie. Ils n'y étaient pas : une grille qui
+  // balaie deux entrées et deux moyennes écrit QUATRE configurations différentes sous
+  // la même clé, et la dernière écrase les trois autres. Rouvrir une ligne rejouait
+  // alors la configuration d'une autre — mesuré sur le compte de découverte : une ligne
+  // à 776 trades et + 49,0 R se rouvrait à 634 trades et + 3,6 R, sans un mot. Le
+  // contrôle du hasard et le robot exporté empruntent le même chemin.
+  cleCfgVar(filtre, sym, entree, ligne) {
+    return filtre + '|' + sym + '|' + (entree || '') + '|' + (ligne || '');
+  }
   cfgDeLigne(r) {
     if (!r || !r.filtre || !r.sym) return null;
-    const cle = r.filtre + '|' + r.sym;
-    let modele = (this._cfgVar || {})[cle];
-    if (!modele) {
-      const tables = [];
-      for (const a of this.state.archives || []) if (a && a.cfgVar) tables.push(a.cfgVar);
-      try { for (const run of this.lireRuns()) if (run && run.cfgVar) tables.push(run.cfgVar); }
-      catch (e) { /* historique illisible : on se contente des archives */ }
+    // la clé complète d'abord ; l'ancienne ensuite, pour les scans archivés avant
+    const cles = [this.cleCfgVar(r.filtre, r.sym, r.entree, r.ligne), r.filtre + '|' + r.sym];
+    const tables = [this._cfgVar || {}];
+    for (const a of this.state.archives || []) if (a && a.cfgVar) tables.push(a.cfgVar);
+    try { for (const run of this.lireRuns()) if (run && run.cfgVar) tables.push(run.cfgVar); }
+    catch (e) { /* historique illisible : on se contente des archives */ }
+    let modele = null;
+    for (const cle of cles) {
       for (const t of tables) if (t[cle]) { modele = t[cle]; break; }
+      if (modele) break;
     }
     if (!modele || !modele.entree || !modele.sortie) return null;
+    // Le modèle doit décrire CETTE ligne. Sur une table écrite sous l'ancienne clé, il
+    // peut porter une autre entrée ou une autre moyenne : mieux vaut reconstruire que
+    // rejouer autre chose que ce qui est affiché.
+    if (r.entree && modele.entree.type !== r.entree) return null;
+    if (r.ligne && modele.entree.ligne !== r.ligne) return null;
     const periode = Number(r.periode), sl = Number(r.sl), rr = Number(r.rr);
     if (!Number.isFinite(periode) || !Number.isFinite(sl) || !Number.isFinite(rr)) return null;
     return { ...modele,
@@ -15057,6 +15238,27 @@ GROUPES = {
       setOosMin: (e) => this.setState({ oosMin: Number(e.target.value) }),
       colonnes,
       ficheMsg: s.ficheMsg, aFicheMsg: !!s.ficheMsg,
+      // ————— LES DEUX PREMIÈRES MINUTES —————
+      ...(() => {
+        const vide = !!s.pret && !s.exemple && !(s.deposes || []).length && !this.aScanData;
+        const et = s.exempleEtape || 0;
+        const pas = [
+          ['1', 'Quatre instruments chargés', 'Des bougies H1 fictives, avec un relevé de frais fictif : le compte de découverte, à côté du vôtre.'],
+          ['2', 'Un vrai scan', 'Une vingtaine de milliers de configurations réellement mesurées. Pas une animation — le chiffre qui s\u2019affiche est calculé.'],
+          ['3', 'Une configuration ouverte', 'La meilleure ligne s\u2019ouvre trade par trade : dates d\u2019entrée, de sortie, motif, R de chacun.'],
+        ];
+        return {
+          aVide: vide,
+          etapesExemple: pas.map(([rang, titre, dit], i) => ({ rang, titre, dit,
+            trait: et > i ? 'var(--color-accent)' : 'var(--color-divider)' })),
+          voirExemple: () => this.voirExemple(),
+          exempleBouton: et === 1 ? 'Chargement des instruments\u2026'
+            : et === 2 ? 'Scan en cours\u2026' : 'Voir un exemple complet \u00b7 2 min',
+          exempleNote: 'Rien n\u2019est écrit dans votre compte : l\u2019exemple vit dans le compte de démonstration.',
+          aExemple: !!s.exemple,
+          quitterExemple: () => this.quitterExemple(),
+        };
+      })(),
       aOnboarding: !!s.pret && !s.onbCache && !this.aScanData && !(s.runs && s.runs.length),
       masquerOnboarding: () => {
         try { localStorage.setItem('simula.onboarding.vu', '1'); } catch (e) {}
@@ -15068,12 +15270,9 @@ GROUPES = {
         try { localStorage.removeItem('simula.onboarding.vu'); } catch (e) {}
         this.setState({ onbCache: false });
       },
-      lancerExemple: () => {
-        const sym = this.essai ? this.DEMO[0] : (this.state.deposes || [])[0] || 'AAPL.US';
-        this.setState({ vue: 'scan', onbCache: true, univers: [sym], ut: 'H1',
-          tradesMin: 40, segMin: 3 },
-          () => this.lancerScan());
-      },
+      // un seul chemin pour la démonstration : celui qui charge des séries lisibles,
+      // lance un vrai scan et ouvre une configuration à la fin
+      lancerExemple: () => this.voirExemple(),
       aDetail: !!d,
       aDetailVu: !!d && (s.vue === 'scan' || s.vue === 'historique'),
       fermerDetail: () => this.setState({ detail: null }),
