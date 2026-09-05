@@ -1240,14 +1240,14 @@
         <!--
           TROIS ACTIONS DE POIDS DIFFÉRENTS, DONC TROIS NIVEAUX, en pied de colonne.
         -->
-        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:4px">
+        <div id="zoneDepot" style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:4px">
           <label class="btn btn-primary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
             Déposer des bougies H1
-            <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            <input id="champBougies" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
           </label>
           <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
             Déposer un relevé
-            <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            <input id="champReleve" type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
           </label>
         </div>
       </div>
@@ -14761,13 +14761,34 @@ GROUPES = {
             if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70,
               behavior: 'smooth' }); }, 60);
         });
+        // ————— « DÉPOSER » DÉPOSE —————
+        //
+        // Le bouton appelait `aller('courtiers')`, c'est-à-dire « va sur Mes instruments ».
+        // Or c'est justement la page où l'on est quand on le voit : ni changement de vue,
+        // ni ancre, ni ouverture de quoi que ce soit. Il ne faisait rien, et rien ne
+        // permettait de le deviner.
+        //
+        // Il amène maintenant le bloc de dépôt à l'écran ET ouvre le sélecteur de fichier
+        // qui convient — celui du relevé ou celui des bougies, selon ce qui manque. Le
+        // clic sur le champ est tenté après le défilement ; s'il est refusé, le bloc est
+        // sous les yeux et ses deux boutons sont à portée.
+        const deposer = (champ) => () => this.setState({ vue: 'courtiers' }, () => {
+          this.ecrireSession();
+          setTimeout(() => {
+            const el = document.getElementById('zoneDepot');
+            if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110,
+              behavior: 'smooth' });
+            const inp = document.getElementById(champ);
+            if (inp) { try { inp.click(); } catch (e) {} }
+          }, 60);
+        });
         let tache = null;
         if (!((this.baremes || {})[this.compteActif])) {
           tache = { txt: 'Aucun relevé de courtier — les frais ne sont pas comptés',
-            bouton: 'Déposer', go: aller('courtiers') };
+            bouton: 'Déposer le relevé', go: deposer('champReleve') };
         } else if (!nSeries) {
           tache = { txt: 'Aucune bougie déposée — rien n’est scannable',
-            bouton: 'Déposer', go: aller('courtiers') };
+            bouton: 'Déposer des bougies', go: deposer('champBougies') };
         } else if (!this.lignesScan.length) {
           tache = { txt: this.pl(nSeries, 'série prête', 'séries prêtes') + ', aucun balayage lancé',
             bouton: 'Scanner', go: aller('scan', 'lancerScan') };
