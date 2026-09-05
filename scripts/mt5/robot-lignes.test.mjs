@@ -352,3 +352,50 @@ test("la fenêtre horaire d'entrée voyage jusqu'au robot, et son refus porte un
   assert.match(sans, /input int\s+InpHeureEntreeDeb\s+=\s+0;/);
   assert.match(sans, /input int\s+InpHeureEntreeFin\s+=\s+0;/);
 });
+
+// ————— LE JOURNAL DES TRADES RÉELS —————
+//
+// Second journal, distinct de celui de conformité : celui-là est un outil de mise au
+// point, celui-ci un relevé permanent. La différence qui compte est qu'il n'est PAS
+// derrière InpConformite — un journal qu'on oublie d'activer ne sert à rien le jour où
+// l'écart apparaît.
+test('le journal des trades est toujours actif et porte son en-tête', () => {
+  const txt = genererMQ5(CFG, CTX);
+  assert.match(txt, /SIV_trades_" \+ _Symbol \+ "_" \+ IntegerToString\(\(long\)InpMagic\)/,
+    'le nom du fichier porte le symbole ET le magique — deux configurations sur le même '
+    + 'instrument doivent écrire dans deux fichiers');
+  assert.match(txt, /ticket;symbole;sens;ouverture;entree;stop_initial;objectif;/,
+    'en-tête du relevé');
+  // pas derrière InpConformite : Liv() écrit sans condition
+  const liv = txt.slice(txt.indexOf('void Liv(string ligne)'));
+  const corps = liv.slice(0, liv.indexOf('}'));
+  assert.ok(!/InpConformite/.test(corps), 'Liv() ne doit pas dépendre de InpConformite');
+  assert.match(txt, /OnInit\(\)\s*\{\s*ConfOuvrir\(\);\s*LivOuvrir\(\);/,
+    'le fichier s’ouvre au démarrage');
+  assert.match(txt, /OnDeinit\(const int reason\) \{ ConfFermer\(\); LivFermer\(\);/,
+    'et se ferme à l’arrêt');
+});
+
+test('une position ouverte est visible avant sa fermeture', () => {
+  const txt = genererMQ5(CFG, CTX);
+  assert.match(txt, /Liv\(StringFormat\("OUV;%I64u;%s;%s;%s;%s"/,
+    'ligne OUV; à l’ouverture : ticket, date, entrée, stop, objectif');
+});
+
+test('le motif de sortie distingue le palier du stop', () => {
+  const txt = genererMQ5({ ...CFG }, { ...CTX, paliers: [[50, 0]] });
+  assert.match(txt, /\(dr == DEAL_REASON_SL\) \? \(g_livPalier \? "palier" : "sl"\)/,
+    'un stop relevé par un palier ne se lit pas comme le stop initial : c’est cette '
+    + 'distinction qui explique l’essentiel des écarts avec le moteur');
+  assert.match(txt, /g_livPalier = true;\s*\n\s*trade\.PositionModify/,
+    'le drapeau se pose au moment où le palier bouge le stop');
+});
+
+test('le R du relevé se compte sur le risque INITIAL', () => {
+  const txt = genererMQ5(CFG, CTX);
+  assert.match(txt, /g_livRisque\s*=\s*\(tv > 0\.0 && ts > 0\.0\)\s*\n?\s*\? MathAbs\(prix - stop\)/,
+    'risque en devise mesuré sur la distance au stop INITIAL, à l’ouverture');
+  assert.match(txt, /DoubleToString\(prof \/ g_livRisque, 3\)/,
+    'profit_R = profit devise ÷ risque initial — la définition de Sivula. Rapporté au '
+    + 'risque courant, un trade sorti sur palier vaudrait mécaniquement plus.');
+});

@@ -1302,56 +1302,38 @@
           </div>
         </div>
         <sc-if value="{{ aARanger }}" hint-placeholder-val="{{ true }}">
-        <div style="overflow:auto;max-height:52vh">
-        <table class="table" style="font-size:12px">
-          <thead><tr>
-            <th title="Glissez la ligne sur un portefeuille, ou cliquez le nom du portefeuille dans la dernière colonne">Instrument</th>
-            <th style="border-left:1px solid var(--color-divider);" title="Cliquez une abréviation pour placer la ligne dans ce portefeuille, ou la retirer">Portef.</th>
-            <th style="border-left:1px solid var(--color-divider);">Réglages<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Le déclencheur d'achat, la ligne de référence et sa longueur, puis la distance du stop en % et l'objectif visé (2 = viser deux fois ce qu'on risque).">?</span></th>
-            <th style="border-left:1px solid var(--color-divider);">Filtres<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Les conditions qui devaient être remplies pour autoriser l'achat lors du scan.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">UT<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="La taille des bougies utilisées : H1 = une heure, H4 = quatre heures, D1 = un jour.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Trades<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Nombre de fois où la règle s'est déclenchée depuis 2020. Moins de 40 : trop peu pour en tirer une conclusion.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierRnet }}" title="Gain total, compté en « fois le risque ». Si vous risquez 100 € par trade, 12 R veut dire 1 200 € gagnés au total, frais déduits. Cliquez pour classer sur cette colonne.">R net{{ fRnet }}<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">R/an<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Le même gain, mais ramené à une année. C'est le chiffre à utiliser pour comparer deux instruments entre eux.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">PF<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Pour 1 € perdu, combien d'euros gagnés. Au-dessus de 1, vous gagnez ; en dessous de 1,2, la marge est trop mince pour être fiable.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierCreux }}" title="La pire période de pertes qu'il a fallu traverser, comptée en nombre de pertes d'affilée. C'est ce que vous auriez dû encaisser sans abandonner. Cliquez pour classer sur cette colonne. Le creux le plus faible arrive en premier.">Pire<span style="display:block">creux{{ fCreux }}</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Segments<span style="display:block">+</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="On coupe l'historique en 5 tranches de temps égales et on compte celles qui gagnent. 5 sur 5 : régulier. 2 sur 5 : ça n'a marché qu'à certaines époques.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierDuree }}" title="Combien de temps une position reste ouverte en moyenne. Utile pour savoir si ça vous demande de surveiller tous les jours ou une fois par semaine. Cliquez pour classer sur cette colonne. La plus courte arrive en premier.">Durée<span style="display:block">moy.{{ fDuree }}</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">État<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Verdict des cinq contrôles, figé au moment de la validation : Validée, À revoir ou Rejetée. Le motif s'affiche au survol.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Hasard<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Part des tirages au hasard qui font aussi bien que cette configuration. Plus c'est bas, plus le moment d'entrée apporte quelque chose. « non contrôlé » : lancez le contrôle du hasard depuis la page Historique.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Frais<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Ce que le courtier vous prend à l'aller-retour, exprimé en part de votre risque. 15 % veut dire que sur 100 € risqués, 15 € partent en frais.">?</span></th>
-            <th></th>
-          </tr></thead>
+        <div style="border:1px solid var(--color-divider)">
+        <!--
+          Pas d'en-tête de tableau : deux ou trois lignes n'en ont pas besoin, et le
+          tableau n'est plus écrit deux fois — c'est la même définition de ligne, avec
+          deux colonnes de moins (la part d'un portefeuille où la ligne n'est pas encore
+          rangée n'existe pas, et son déploiement non plus).
+        -->
+        <table class="table" style="font-size:12px;width:100%">
           <tbody>
             <sc-for list="{{ aRanger }}" as="vl" hint-placeholder-count="5">
-              <tr draggable="true" onDragStart="{{ vl.dragStart }}" onDragEnd="{{ vl.dragEnd }}" onClick="{{ vl.selectionner }}" style="cursor:grab">
-                <td style="padding-right:6px;min-width:13ch;max-width:15ch;line-height:1.25"><strong style="display:inline-block">{{ vl.sym }}</strong><span style="display:block;font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--color-accent-700)" title="{{ vl.pfAide }}">{{ vl.pfTxt }}</span><span class="text-muted" style="display:block;font-size:10px">{{ vl.ticker }}</span></td>
-                <td style="border-left:1px solid var(--color-divider);padding-right:6px">
-                  <div style="display:flex;gap:3px;flex-wrap:wrap;max-width:9ch">
+              <tr draggable="true" onDragStart="{{ vl.dragStart }}" onDragEnd="{{ vl.dragEnd }}" onClick="{{ vl.selectionner }}" style="cursor:grab;background:{{ vl.fondSel }}">
+                <td>
+                  <strong>{{ vl.nom }}</strong>
+                  <span style="display:block;font-size:11px;line-height:1.45" class="text-muted">{{ vl.reglages }} · {{ vl.filtres }} · {{ vl.ut }} · {{ vl.n }} trades</span>
+                  <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
                     <sc-for list="{{ vl.cibles }}" as="cb3" hint-placeholder-count="2">
-                      <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 5px" title="{{ cb3.aide }}" onClick="{{ cb3.placer }}">{{ cb3.nom }}</button>
+                      <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:0 5px" title="{{ cb3.aide }}" onClick="{{ cb3.basculer }}">{{ cb3.ab }}</button>
                     </sc-for>
                   </div>
                 </td>
-                <td class="text-muted" style="border-left:1px solid var(--color-divider);font-size:11px;line-height:1.35"><span style="display:block;width:16ch;overflow-wrap:anywhere">{{ vl.reglagesEntree }}<span style="display:block">{{ vl.reglagesChiffres }}</span></span></td>
-                <td class="text-muted" style="border-left:1px solid var(--color-divider);font-size:11px;line-height:1.35;padding-right:4px" title="{{ vl.filtres }}"><span style="display:block;width:19ch;overflow-wrap:anywhere">{{ vl.filtres }}<span style="display:block;color:var(--color-accent-700)" title="{{ vl.secuAide }}">{{ vl.secu }}</span><span style="display:block;white-space:pre-line;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ vl.secuPaliers }}</span></span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.ut }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.n }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.total }}<sc-if value="{{ vl.aMvVieux }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;width:fit-content;margin:2px auto 0;font-size:9px;letter-spacing:.03em;cursor:help" title="{{ vl.mvAide }}">à remesurer</span></sc-if></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.rAn }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.pf }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.dd }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.segs }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.duree }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.etatCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.etatAide }}">{{ vl.etatTxt }}</span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em">{{ vl.hasTxt }}</button></sc-if><sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></sc-if></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.frais }}</td>
-                <td style="text-align:right">
-                  <div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">
-                    <button type="button" class="tag tag-neutral" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Rejouer cette configuration dans le Backtest" onClick="{{ vl.auBacktest }}">Backtest</button>
-                    <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Télécharge un Expert Advisor MQL5 dédié à cette configuration : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." onClick="{{ vl.exporterRobot }}">Robot MT5</button>
-                    <button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Retirer des validés" onClick="{{ vl.retirer }}">Retirer</button>
-                  </div>
+                <td style="text-align:right;width:1%;white-space:nowrap"><strong>{{ vl.rAn }}</strong><span style="display:block;font-size:10px" class="text-muted">R / an</span></td>
+                <td style="text-align:right;width:1%;white-space:nowrap">{{ vl.dd }}<span style="display:block;font-size:10px" class="text-muted">pire creux</span></td>
+                <td style="width:1%">
+                  <sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" style="cursor:pointer;font-family:var(--font-body);font-size:10px;white-space:nowrap" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}">{{ vl.hasTxt }}</button>
+                  </sc-if>
+                  <sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}">
+                    <span class="{{ vl.hasCls }}" style="font-size:10px;white-space:nowrap" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span>
+                  </sc-if>
+                </td>
+                <td style="text-align:right;width:1%">
+                  <button type="button" class="{{ vl.faireCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;white-space:nowrap" title="{{ vl.faireAide }}" onClick="{{ vl.faire }}">{{ vl.faireTxt }}</button>
                 </td>
               </tr>
             </sc-for>
@@ -1375,62 +1357,113 @@
                 <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
               </div>
             </div>
+            <!--
+              LE BANDEAU. La comparaison à la simple détention — la seule conclusion
+              actionnable de la page — vivait en pied de section, sous dix-sept colonnes.
+              Elle monte ici, à côté du compteur qui dit ce qu'il reste à faire.
+            -->
+            <div style="display:flex;gap:0;border:1px solid var(--color-divider);flex-wrap:wrap">
+              <div style="padding:12px 16px;border-inline-end:1px solid var(--color-divider);display:flex;flex-direction:column;gap:1px;min-width:160px">
+                <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">{{ ps.nom }}</span>
+                <strong style="font-family:var(--font-heading);font-size:26px;line-height:1">{{ ps.pfRAn }}</strong>
+                <span style="font-size:11px" class="text-muted">{{ ps.pfRTotal }}</span>
+              </div>
+              <div style="padding:12px 16px;border-inline-end:1px solid var(--color-divider);display:flex;flex-direction:column;gap:1px;min-width:150px">
+                <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Pire creux</span>
+                <strong style="font-family:var(--font-heading);font-size:26px;line-height:1">{{ ps.pfCreux }}</strong>
+                <span style="font-size:11px" class="text-muted">{{ ps.pfCreuxEur }}</span>
+              </div>
+              <div style="padding:12px 16px;border-inline-end:1px solid var(--color-divider);display:flex;flex-direction:column;gap:1px;min-width:160px">
+                <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Simple détention</span>
+                <strong style="font-family:var(--font-heading);font-size:26px;line-height:1">{{ ps.bhDetTxt }}</strong>
+                <span style="font-size:11px" class="text-muted">{{ ps.bhResume }}</span>
+              </div>
+              <div style="padding:12px 16px;display:flex;flex-direction:column;gap:1px;min-width:150px">
+                <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Reste à faire</span>
+                <strong style="font-family:var(--font-heading);font-size:26px;line-height:1;color:{{ ps.pfResteCouleur }}">{{ ps.pfReste }}</strong>
+                <span style="font-size:11px" class="text-muted">{{ ps.pfResteDetail }}</span>
+              </div>
+              <div style="padding:12px 16px;display:flex;gap:7px;align-items:center;margin-inline-start:auto;flex-wrap:wrap">
+                <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:18ch;padding:0 7px" value="{{ ps.nom }}" onChange="{{ ps.renommer }}" title="Renommer ce portefeuille">
+                <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ ps.exporterRobots }}" title="Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.">{{ ps.robotsTxt }}</button>
+                <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ basculerMesures }}" title="Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.">{{ mesuresTxt }}</button>
+                <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ ps.supprimer }}" title="{{ ps.supprAide }}">{{ ps.supprTxt }}</button>
+              </div>
+            </div>
             <div style="overflow:auto">
-        <table class="table" style="font-size:12px">
+        <table class="table" style="font-size:12px;width:100%">
           <thead><tr>
-            <th title="Glissez la ligne sur un portefeuille, ou cliquez le nom du portefeuille dans la dernière colonne">Instrument</th>
-            <th style="border-left:1px solid var(--color-divider);" title="Cliquez une abréviation pour placer la ligne dans ce portefeuille, ou la retirer">Portef.</th>
-            <th style="border-left:1px solid var(--color-divider);">Réglages<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Le déclencheur d'achat, la ligne de référence et sa longueur, puis la distance du stop en % et l'objectif visé (2 = viser deux fois ce qu'on risque).">?</span></th>
-            <th style="border-left:1px solid var(--color-divider);">Filtres<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px 0 0;cursor:help" title="Les conditions qui devaient être remplies pour autoriser l'achat lors du scan.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">UT<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="La taille des bougies utilisées : H1 = une heure, H4 = quatre heures, D1 = un jour.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Trades<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Nombre de fois où la règle s'est déclenchée depuis 2020. Moins de 40 : trop peu pour en tirer une conclusion.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierRnet }}" title="Gain total, compté en « fois le risque ». Si vous risquez 100 € par trade, 12 R veut dire 1 200 € gagnés au total, frais déduits. Cliquez pour classer sur cette colonne.">R net{{ fRnet }}<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">R/an<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Le même gain, mais ramené à une année. C'est le chiffre à utiliser pour comparer deux instruments entre eux.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">PF<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Pour 1 € perdu, combien d'euros gagnés. Au-dessus de 1, vous gagnez ; en dessous de 1,2, la marge est trop mince pour être fiable.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierCreux }}" title="La pire période de pertes qu'il a fallu traverser, comptée en nombre de pertes d'affilée. C'est ce que vous auriez dû encaisser sans abandonner. Cliquez pour classer sur cette colonne. Le creux le plus faible arrive en premier.">Pire<span style="display:block">creux{{ fCreux }}</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Segments<span style="display:block">+</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="On coupe l'historique en 5 tranches de temps égales et on compte celles qui gagnent. 5 sur 5 : régulier. 2 sur 5 : ça n'a marché qu'à certaines époques.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);cursor:pointer;user-select:none" onClick="{{ trierDuree }}" title="Combien de temps une position reste ouverte en moyenne. Utile pour savoir si ça vous demande de surveiller tous les jours ou une fois par semaine. Cliquez pour classer sur cette colonne. La plus courte arrive en premier.">Durée<span style="display:block">moy.{{ fDuree }}</span><span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">État<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Verdict des cinq contrôles, figé au moment de la validation : Validée, À revoir ou Rejetée. Le motif s'affiche au survol.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Hasard<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Part des tirages au hasard qui font aussi bien que cette configuration. Plus c'est bas, plus le moment d'entrée apporte quelque chose. « non contrôlé » : lancez le contrôle du hasard depuis la page Historique.">?</span></th>
-            <th style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">Frais<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Ce que le courtier vous prend à l'aller-retour, exprimé en part de votre risque. 15 % veut dire que sur 100 € risqués, 15 € partent en frais.">?</span></th>
-            <th></th>
+            <th>Instrument &amp; réglages</th>
+            <th style="text-align:right;width:1%">R / an</th>
+            <th style="text-align:right;width:1%">Pire creux</th>
+            <th style="text-align:right;width:1%">Part du portefeuille</th>
+            <th style="min-width:15ch">Le hasard</th>
+            <th style="min-width:17ch">Où en est le déploiement</th>
+            <th style="min-width:11ch"></th>
           </tr></thead>
           <tbody>
             <sc-for list="{{ ps.lignes }}" as="vl" hint-placeholder-count="5">
-              <tr draggable="true" onDragStart="{{ vl.dragStart }}" onDragEnd="{{ vl.dragEnd }}" onClick="{{ vl.selectionner }}" style="cursor:grab">
-                <td style="padding-right:6px;min-width:13ch;max-width:15ch;line-height:1.25"><strong style="display:inline-block">{{ vl.sym }}</strong><span style="display:block;font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--color-accent-700)" title="{{ vl.pfAide }}">{{ vl.pfTxt }}</span><span class="text-muted" style="display:block;font-size:10px">{{ vl.ticker }}</span></td>
-                <td style="border-left:1px solid var(--color-divider);padding-right:6px">
-                  <div style="display:flex;gap:3px;flex-wrap:wrap;max-width:9ch">
+              <tr draggable="true" onDragStart="{{ vl.dragStart }}" onDragEnd="{{ vl.dragEnd }}" onClick="{{ vl.selectionner }}" style="cursor:grab;background:{{ vl.fondSel }}">
+                <td>
+                  <strong>{{ vl.nom }}</strong>
+                  <span style="display:block;font-size:11px;line-height:1.45" class="text-muted">{{ vl.reglages }} · {{ vl.filtres }} · {{ vl.ut }} · {{ vl.n }} trades</span>
+                  <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
                     <sc-for list="{{ vl.cibles }}" as="cb3" hint-placeholder-count="2">
-                      <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 5px" title="{{ cb3.aide }}" onClick="{{ cb3.placer }}">{{ cb3.nom }}</button>
+                      <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:0 5px" title="{{ cb3.aide }}" onClick="{{ cb3.basculer }}">{{ cb3.ab }}</button>
                     </sc-for>
                   </div>
                 </td>
-                <td class="text-muted" style="border-left:1px solid var(--color-divider);font-size:11px;line-height:1.35"><span style="display:block;width:16ch;overflow-wrap:anywhere">{{ vl.reglagesEntree }}<span style="display:block">{{ vl.reglagesChiffres }}</span></span></td>
-                <td class="text-muted" style="border-left:1px solid var(--color-divider);font-size:11px;line-height:1.35;padding-right:4px" title="{{ vl.filtres }}"><span style="display:block;width:19ch;overflow-wrap:anywhere">{{ vl.filtres }}<span style="display:block;color:var(--color-accent-700)" title="{{ vl.secuAide }}">{{ vl.secu }}</span><span style="display:block;white-space:pre-line;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">{{ vl.secuPaliers }}</span></span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.ut }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.n }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.total }}<sc-if value="{{ vl.aMvVieux }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="display:block;width:fit-content;margin:2px auto 0;font-size:9px;letter-spacing:.03em;cursor:help" title="{{ vl.mvAide }}">à remesurer</span></sc-if></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.rAn }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.pf }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.dd }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.segs }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.duree }}</td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><span class="{{ vl.etatCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.etatAide }}">{{ vl.etatTxt }}</span></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);"><sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}" style="cursor:pointer;font-family:var(--font-body);font-size:9px;letter-spacing:.03em">{{ vl.hasTxt }}</button></sc-if><sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}"><span class="{{ vl.hasCls }}" style="font-size:9px;letter-spacing:.03em" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span></sc-if></td>
-                <td style="text-align:center;width:1%;white-space:nowrap;border-left:1px solid var(--color-divider);">{{ vl.frais }}</td>
-                <td style="text-align:right">
-                  <div style="display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap">
-                    <button type="button" class="tag tag-neutral" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Rejouer cette configuration dans le Backtest" onClick="{{ vl.auBacktest }}">Backtest</button>
-                    <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Télécharge un Expert Advisor MQL5 dédié à cette configuration : réglages en dur, les cinq invariants du moteur respectés, garde-fous d'exécution inclus. À compiler dans MetaEditor." onClick="{{ vl.exporterRobot }}">Robot MT5</button>
-                    <button type="button" class="tag tag-outline" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px" title="Retirer des validés" onClick="{{ vl.retirer }}">Retirer</button>
-                  </div>
+                <td style="text-align:right;width:1%;white-space:nowrap"><strong>{{ vl.rAn }}</strong></td>
+                <td style="text-align:right;width:1%;white-space:nowrap">{{ vl.dd }}</td>
+                <td style="text-align:right;width:1%;white-space:nowrap" title="{{ vl.partAide }}">{{ vl.partTxt }}<span style="display:block;height:4px;background:{{ vl.partBarre }};margin-top:2px"></span></td>
+                <td style="width:1%">
+                  <sc-if value="{{ vl.hasAFaire }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" class="{{ vl.hasCls }}" disabled="{{ vl.hasOccupe }}" style="cursor:pointer;font-family:var(--font-body);font-size:10px;white-space:nowrap" title="{{ vl.hasAide }}" onClick="{{ vl.lancerHas }}">{{ vl.hasTxt }}</button>
+                  </sc-if>
+                  <sc-if value="{{ vl.hasVu }}" hint-placeholder-val="{{ true }}">
+                    <span class="{{ vl.hasCls }}" style="font-size:10px;white-space:nowrap" title="{{ vl.hasAide }}">{{ vl.hasTxt }}</span>
+                  </sc-if>
+                </td>
+                <td style="min-width:17ch">
+                  <span class="{{ vl.deployCls }}" style="font-size:10px;white-space:nowrap" title="{{ vl.deployAide }}">{{ vl.deployTxt }}</span>
+                  <span style="display:block;font-size:10px;margin-top:2px;line-height:1.4;color:{{ vl.deployCouleur }}">{{ vl.deployDetail }}</span>
+                </td>
+                <td style="text-align:right;width:1%">
+                  <button type="button" class="{{ vl.faireCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;white-space:nowrap" title="{{ vl.faireAide }}" onClick="{{ vl.faire }}">{{ vl.faireTxt }}</button>
                 </td>
               </tr>
             </sc-for>
           </tbody>
         </table>
             </div>
+            <sc-if value="{{ mesuresOuvertes }}" hint-placeholder-val="{{ false }}">
+              <div style="overflow:auto">
+                <table class="table" style="font-size:11px;width:100%">
+                  <thead><tr>
+                    <th>Instrument</th><th style="text-align:right">UT</th><th style="text-align:right">Trades</th>
+                    <th style="text-align:right">R net</th><th style="text-align:right">PF</th>
+                    <th style="text-align:right">Segments</th><th style="text-align:right">Durée moy.</th>
+                    <th>État</th><th style="text-align:right">Frais</th>
+                  </tr></thead>
+                  <tbody>
+                    <sc-for list="{{ ps.lignes }}" as="vm" hint-placeholder-count="5">
+                      <tr>
+                        <td>{{ vm.nom }}</td>
+                        <td style="text-align:right">{{ vm.ut }}</td>
+                        <td style="text-align:right">{{ vm.n }}</td>
+                        <td style="text-align:right">{{ vm.total }}</td>
+                        <td style="text-align:right">{{ vm.pf }}</td>
+                        <td style="text-align:right">{{ vm.segs }}</td>
+                        <td style="text-align:right">{{ vm.duree }}</td>
+                        <td><span class="{{ vm.etatCls }}" style="font-size:10px" title="{{ vm.etatAide }}">{{ vm.etatTxt }}</span></td>
+                        <td style="text-align:right">{{ vm.frais }}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </sc-if>
+            <span style="font-size:11px;line-height:1.5;max-width:96ch" class="text-muted">La part du portefeuille suppose que les lignes tournent sur la même période et que la taille de position est recalculée à chaque trade. Le creux du portefeuille est celui de sa pire ligne, pas la somme des creux : deux lignes ne traversent pas leur mauvaise passe le même mois.</span>
             <sc-if value="{{ ps.aOrphelins }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--color-divider)">
                 <span style="font-size:12px;line-height:1.5;flex:1;min-width:30ch" class="text-muted">{{ ps.orphelinsTxt }}</span>
@@ -3737,7 +3770,7 @@ class Component extends DCLogic {
       compte4: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte5: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 } },
     commDev: { fxpro: { forex: 'EUR', metal: 'EUR', actionUS: 'USD', actionAutre: 'PCT' } }, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
-    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '', panScan: '',
+    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '', panScan: '', pfMesures: false,
     manqCoches: [], manqMsg: null, grpTout: [],
     ctrlEnCours: false, ctrlMsg: null, ctrlOk: null,
     robuste: null, ailleurs: null, correl: null, calculEnCours: null, recalcul: null,
@@ -4373,12 +4406,10 @@ class Component extends DCLogic {
     // Un numéro magique propre à CHAQUE configuration : le robot ne reconnaît ses
     // positions que par symbole + magique. Deux configurations sur le même instrument
     // partageant le même magique se seraient gérées mutuellement les stops.
-    const magic = (() => {
-      const cle = [v.sym, v.entree, v.ligne, v.periode, v.sl, v.rr, v.sens].join('|');
-      let h = 0;
-      for (let i = 0; i < cle.length; i++) h = ((h * 31 + cle.charCodeAt(i)) >>> 0) % 900000000;
-      return 20000000000 + h;
-    })();
+    // `magicDe` : la même formule que celle qui rattache le journal de trades à sa ligne.
+    // Deux copies auraient fini par diverger, et le journal serait resté orphelin sans
+    // que rien ne le dise.
+    const magic = Number(this.magicDe(v));
     let txt = null;
     try {
       // La fenêtre d'entrée voyage AVEC la ligne, pas avec l'état courant : un robot
@@ -4396,6 +4427,15 @@ class Component extends DCLogic {
     } catch (e) {
       this.setState({ hasardMsg: 'Robot non exporté pour ' + this.nomComplet(v.sym) + ' : ' + (e && e.message) });
       return false;
+    }
+    // La DATE D'EXPORT, seule chose que le déploiement demande de mémoriser : sans elle
+    // on ne distingue pas « robot jamais exporté » de « exporté mais pas encore lancé ».
+    {
+      const m = this.lireLive();
+      const k = String(magic);
+      m[k] = { ...(m[k] || {}), magic: k, sym: v.sym, exporte: Date.now(), stamp };
+      this.ecrireLive(m);
+      this.setState({ liveRev: (this.state.liveRev || 0) + 1 });
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
@@ -5220,6 +5260,16 @@ GROUPES = {
       await new Promise((r) => setTimeout(r, 0));
       iF++;
       if (!/\.csv$/i.test(f.name)) { refuses.push(f.name + ' (pas un CSV — exportez en CSV, pas en Excel)'); continue; }
+      // LE JOURNAL DES TRADES RÉELS passe ici, avant le chargeur de bougies : il porte un
+      // nom réservé, et le confondre avec un historique produirait une série de seize
+      // colonnes que le lecteur de bougies refuserait sans expliquer pourquoi.
+      if (/^SIV_trades_/i.test(f.name)) {
+        try {
+          const n = await this.lireJournalLive(await f.text(), f.name);
+          ajoutes.push(f.name + ' — ' + this.pl(n, 'trade réel lu', 'trades réels lus'));
+        } catch (e) { refuses.push(f.name + ' (journal de trades illisible : ' + (e && e.message) + ')'); }
+        continue;
+      }
       // un export dans la mauvaise unité de temps est l'erreur nº 1 des premiers dépôts
       const utNom = f.name.match(/_(M\d+|H4|D1|W1|MN1)\b/i);
       if (utNom) { refuses.push(f.name + ' (unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste)'); continue; }
@@ -6832,6 +6882,9 @@ GROUPES = {
       bhPartOptBouton: partOpt === null ? '' : 'Utiliser ' + partOpt + ' %',
       appliquerPartOpt: () => this.setState({ bhPart: partOpt }),
       bhDetPct: pc(detBrut), bhDetAn: pc(detAn),
+      // Le bandeau du portefeuille en reprend le résultat en une case ; le bloc
+      // « Et si j'avais simplement détenu ? » reste en place pour le détail.
+      bhDetTxt: pc(detBrut),
       bhDetDD: detDD === null ? '—' : '−' + fr1(detDD, 1) + ' %',
       bhDetRatio: rD === null ? '—' : fr1(rD, 2),
       bhCfdPct: Number.isFinite(detCfd) ? pc(detCfd) : '—',
@@ -10803,6 +10856,77 @@ GROUPES = {
   // ————— séries déposées : gardées telles quelles, relues au démarrage —————
   CLE_SERIES = 'simula.series.v1';
   CLE_COUV = 'simula.couverture.v1';
+  CLE_LIVE = 'simula.liveMt5.v1';
+  // ————— CE QUE LE ROBOT A VRAIMENT FAIT —————
+  //
+  // Le robot tient un relevé permanent de ses trades, un fichier par CONFIGURATION
+  // (SIV_trades_<SYMBOLE>_<MAGIC>.csv). On le range par MAGIQUE et non par symbole :
+  // deux configurations sur le même instrument ont deux magiques distincts, et c'est le
+  // seul lien fiable entre une ligne de portefeuille et son robot.
+  //
+  // Rangé dans l'espace étanche du compte actif, comme tout le reste : le journal du
+  // compte démo n'a rien à faire dans le compte réel.
+  lireLive() {
+    try { return JSON.parse(localStorage.getItem(this.cle(this.CLE_LIVE)) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  ecrireLive(m) {
+    try { localStorage.setItem(this.cle(this.CLE_LIVE), JSON.stringify(m || {})); } catch (e) {}
+  }
+  // Le fichier est un CSV « ; » à en-tête nommé. On lit PAR NOM de colonne et non par
+  // position : le générateur peut en ajouter une, un lecteur positionnel se décalerait
+  // en silence — exactement le défaut qu'on a corrigé sur le journal de conformité.
+  async lireJournalLive(texte, nomFichier) {
+    const lignes = String(texte || '').split(/\r?\n/).filter((x) => x.trim());
+    if (!lignes.length) throw new Error('fichier vide');
+    let entete = null;
+    const fermes = [], ouverts = [];
+    for (const l of lignes) {
+      if (l.startsWith('#')) continue;
+      const ch = l.split(';');
+      if (ch[0] === 'ticket') { entete = ch.map((x) => x.trim()); continue; }
+      // OUV; — une position encore ouverte : ticket, date, entrée, stop, objectif
+      if (ch[0] === 'OUV') {
+        ouverts.push({ ticket: ch[1], t: ch[2], entree: Number(ch[3]), sl: Number(ch[4]), tp: Number(ch[5]) });
+        continue;
+      }
+      if (!entete) continue;
+      const o = {};
+      entete.forEach((k, i) => { o[k] = ch[i] === undefined ? '' : ch[i].trim(); });
+      if (!o.ticket) continue;
+      fermes.push({ ticket: o.ticket, sym: o.symbole, sens: o.sens,
+        t0: o.ouverture, t1: o.fermeture, motif: o.motif,
+        r: Number(o.profit_R), devise: Number(o.profit_devise),
+        frais: Number(o.frais), magic: String(o.magic || ''), build: o.build || '' });
+    }
+    // Le magique vient des lignes fermées ; à défaut, du nom du fichier — une
+    // configuration qui n'a encore qu'une position ouverte n'a pas de ligne fermée.
+    const dansNom = String(nomFichier || '').match(/_(\d+)\.csv$/i);
+    const magic = (fermes.length && fermes[0].magic) || (dansNom ? dansNom[1] : '');
+    if (!magic) throw new Error('magique introuvable — le nom du fichier doit finir par _<magique>.csv');
+    const clos = fermes.map((x) => x.ticket);
+    const m = this.lireLive();
+    m[magic] = {
+      magic,
+      sym: (fermes[0] && fermes[0].sym) || (m[magic] && m[magic].sym) || '',
+      build: (fermes.length && fermes[fermes.length - 1].build) || '',
+      trades: fermes,
+      // une position dont le ticket a une ligne de fermeture n'est plus ouverte
+      ouverts: ouverts.filter((x) => !clos.includes(x.ticket)),
+      depot: Date.now(), fichier: nomFichier || '',
+    };
+    this.ecrireLive(m);
+    this.setState({ liveRev: (this.state.liveRev || 0) + 1 });
+    return fermes.length + m[magic].ouverts.length;
+  }
+  // Le magique d'une ligne : la MÊME formule que l'export du robot, sans quoi le
+  // rattachement ne peut pas tomber juste. Écrite une fois, appelée aux deux endroits.
+  magicDe(v) {
+    const cle = [v.sym, v.entree, v.ligne, v.periode, v.sl, v.rr, v.sens].join('|');
+    let h = 0;
+    for (let i = 0; i < cle.length; i++) h = ((h * 31 + cle.charCodeAt(i)) >>> 0) % 900000000;
+    return String(20000000000 + h);
+  }
   // ————— CE QUE COUVRENT VRAIMENT LES BOUGIES —————
   //
   // « Bougies ✓ » répondait par oui ou par non. Une série à jour et une série arrêtée en
@@ -14027,6 +14151,12 @@ GROUPES = {
       // compte. La décision tient dans le verdict ; le reste est de la documentation.
       // Le contrôle du hasard en série ne sert plus au quotidien — chaque fiche porte le
       // sien — mais il balaie encore un scan entier d'un coup. Il vit sous ce bouton.
+      // Les onze diagnostics quittent le tableau. Ils ont servi à VALIDER la ligne, pas
+      // à la piloter : les garder en colonnes faisait raconter à la page un travail déjà
+      // fait, au lieu de dire ce qu'il reste à faire.
+      mesuresOuvertes: !!s.pfMesures,
+      mesuresTxt: s.pfMesures ? 'masquer les mesures' : 'Toutes les mesures',
+      basculerMesures: () => this.setState({ pfMesures: !s.pfMesures }),
       lotTxt: s.ouvLot ? 'masquer le contrôle en lot' : 'contrôle en lot…',
       basculerLot: () => this.setState({ ouvLot: !s.ouvLot }),
       setModeLecture: () => this.setState({ modeTable: 'lecture' }),
@@ -14541,6 +14671,82 @@ GROUPES = {
                 + ' Contrôle le plus fin enregistré : ' + f.tirages.toLocaleString('fr-FR') + ' tirages.'
                 + (plusFin ? ' Cliquez pour le refaire à ' + t.toLocaleString('fr-FR') + ' tirages.' : '') };
           })(),
+          // ————— OÙ EN EST LE DÉPLOIEMENT —————
+          //
+          // Rien à saisir : l'état se DÉDUIT du journal de trades que le robot écrit
+          // tout seul, rattaché par MAGIQUE. La seule chose que l'application mémorise
+          // en plus est la date d'export du robot, posée au clic sur « Robot MT5 » —
+          // sans elle on ne distingue pas « jamais exporté » de « exporté, pas lancé ».
+          ...(() => {
+            const mg = this.magicDe(v);
+            const j = (this.lireLive() || {})[mg] || null;
+            const jour = (ms) => new Date(ms).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+            const fermes = (j && j.trades) || [];
+            const ouverts = (j && j.ouverts) || [];
+            if (!fermes.length && !ouverts.length) {
+              return !j || !j.exporte
+                ? { deployTxt: 'robot à exporter', deployCls: 'tag tag-outline', deployDetail: '',
+                    deployAide: 'Aucun robot exporté pour cette configuration, et aucun journal déposé.',
+                    deployEtat: 'aExporter', deployEcart: null }
+                : { deployTxt: 'à tester dans MT5', deployCls: 'tag tag-outline',
+                    deployDetail: 'robot exporté le ' + jour(j.exporte),
+                    deployAide: 'Le robot a été exporté mais aucun trade n’est encore remonté. Lancez-le dans MT5, '
+                      + 'puis déposez ici le fichier SIV_trades_… que le terminal écrit dans Common/Files.',
+                    deployEtat: 'aTester', deployEcart: null };
+            }
+            if (!fermes.length) {
+              const o = ouverts[0];
+              return { deployTxt: 'position ouverte', deployCls: 'tag tag-accent',
+                deployDetail: 'entrée ' + o.entree + ' · stop ' + o.sl + ' · objectif ' + o.tp,
+                deployAide: 'Position ouverte depuis le ' + o.t + ', aucune fermeture encore relevée.',
+                deployEtat: 'ouvert', deployEcart: null };
+            }
+            // ————— LES QUATRE CHIFFRES DU LIVE, ET PAS UN DE PLUS —————
+            // Pas de courbe de capital : cinq trades ne disent rien sur un creux, et une
+            // courbe donnerait à ce bruit l'autorité d'une mesure.
+            const rReel = fermes.reduce((a, x) => a + (Number(x.r) || 0), 0);
+            const nReel = fermes.length;
+            const rMesure = Number(v.total) || 0;
+            const nMesure = Number(v.n) || 0;
+            const annees = Number(v.annees) || (nMesure && v.rAn ? rMesure / Number(v.rAn) : 0);
+            // les mois écoulés depuis le premier trade réel : c'est le rythme ATTENDU
+            const t0 = Date.parse(String(fermes[0].t0 || '').replace(/\./g, '-').replace(' ', 'T'));
+            const mois = Number.isFinite(t0) ? Math.max(0.3, (Date.now() - t0) / (30.44 * 86400000)) : 1;
+            const attendu = annees > 0 ? (nMesure / annees) * (mois / 12) : 0;
+            // le résultat attendu sur la MÊME durée, pour que l'écart compare deux
+            // grandeurs de même échelle
+            const rAttendu = annees > 0 ? (rMesure / annees) * (mois / 12) : 0;
+            const ecart = Math.abs(rAttendu) > 0.5
+              ? Math.abs(rReel - rAttendu) / Math.abs(rAttendu) * 100 : null;
+            const motifs = {};
+            for (const x of fermes) motifs[x.motif || '?'] = (motifs[x.motif || '?'] || 0) + 1;
+            const motifsTxt = Object.keys(motifs).sort().map((k2) => k2 + ' ' + motifs[k2]).join(' · ');
+            const grave = ecart !== null && ecart > 20;
+            return {
+              deployTxt: 'en live', deployCls: 'tag tag-accent',
+              deployDetail: (ecart === null ? nReel + ' trades pris'
+                : 'écart MT5 de ' + Math.round(ecart) + ' %' + (grave ? ' — à débrancher' : '')
+                  + ' · ' + nReel + ' trades pris'),
+              deployCouleur: grave ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
+              deployAide: 'Réel : ' + sg(rReel, 1) + ' R sur ' + nReel + ' trades. '
+                + 'Mesuré, ramené à la même durée : ' + sg(rAttendu, 1) + ' R sur '
+                + Math.round(attendu) + ' trades attendus. '
+                + (ecart === null ? ''
+                  : 'Écart ' + Math.round(ecart) + ' % — sous 15 % c’est l’artefact de reconstruction attendu, '
+                    + 'au-delà de 20 % il faut débrancher et comprendre. ')
+                + 'Sorties : ' + motifsTxt + '. '
+                + 'Si Sivula sort surtout sur paliers et MT5 surtout sur sl, l’écart est expliqué.',
+              deployEtat: grave ? 'ecart' : 'live', deployEcart: ecart,
+              // relevé pour l'action de fin de ligne, calculée juste après
+              _ecartPose: (() => { this._ecartLive = this._ecartLive || {};
+                this._ecartLive[mg] = ecart; return true; })(),
+              // le dépli : les quatre chiffres, écrits
+              liveRReel: sg(rReel, 1) + ' R', liveRAttendu: sg(rAttendu, 1) + ' R',
+              liveNReel: String(nReel), liveNAttendu: Math.round(attendu) + ' attendus',
+              liveEcart: ecart === null ? '—' : Math.round(ecart) + ' %',
+              liveMotifs: motifsTxt,
+            };
+          })(),
           // la configuration brute, pour l'export du robot
           _v: v,
           // valeurs non formatées, pour la comparaison à la détention
@@ -14553,8 +14759,49 @@ GROUPES = {
             this.setState({ dragSym: sym, dragDepuis: null, dragPf: null });
           },
           dragEnd: () => this.setState({ dragSym: null }),
+          // la ligne cliquée se distingue : sans repère, on ne sait plus laquelle on
+          // vient de saisir pour la glisser sur un autre portefeuille
+          fondSel: s.selSym === sym ? 'color-mix(in srgb,var(--color-accent) 7%,transparent)' : 'transparent',
           selectionner: () => this.setState({ selSym: s.selSym === sym ? null : sym }),
           auBacktest: (e) => { e.stopPropagation(); this.versBacktest({ ...v, _sid: v.sid }); },
+          // ————— UNE SEULE ACTION PAR LIGNE : celle de l'étape où elle en est —————
+          // Trois boutons sur chaque ligne demandaient à l'utilisateur de choisir lui-même
+          // laquelle des trois lui restait à faire. C'est la ligne qui le sait.
+          ...(() => {
+            const vr = { ...v, _sid: v.sid || v._sid };
+            const h = this.verdictHasard(vr);
+            const mg = this.magicDe(v);
+            const j = (this.lireLive() || {})[mg] || null;
+            const fermes = (j && j.trades) || [];
+            const t = Math.max(200, Number(s.nTirages) || 200);
+            const f = this.meilleurHasardFait(v);
+            const bt = (e) => { if (e && e.stopPropagation) e.stopPropagation();
+              this.versBacktest({ ...v, _sid: v.sid }); };
+            const has = (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.controlerUne(vr); };
+            const rob = (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.exporterRobot(v); };
+            if (!h) {
+              return { faireTxt: 'Contrôler le hasard', faireCls: 'tag tag-accent', faire: has,
+                faireAide: 'Le hasard n’a pas été mesuré sur cette configuration : rien ne dit encore qu’elle vaut mieux qu’un tirage au sort.' };
+            }
+            if (h.verdict !== 'se distingue nettement' && h.verdict !== 'se distingue' && t > (f ? f.tirages : 0)) {
+              return { faireTxt: 'Pousser à ' + t.toLocaleString('fr-FR'), faireCls: 'tag tag-accent', faire: has,
+                faireAide: 'Le contrôle à ' + (f ? f.tirages : 0) + ' tirages ne tranche pas. Le refaire plus fin peut le trancher.' };
+            }
+            if (!j || !j.exporte) {
+              return { faireTxt: 'Robot MT5', faireCls: 'tag tag-accent', faire: rob,
+                faireAide: 'Télécharge l’Expert Advisor de cette configuration, et note la date d’export.' };
+            }
+            if (!fermes.length && !((j && j.ouverts) || []).length) {
+              return { faireTxt: 'Saisir le résultat', faireCls: 'tag tag-accent', faire: () => {},
+                faireAide: 'Lancez le robot dans MT5, puis déposez ici le fichier SIV_trades_… écrit dans Common/Files. Le glisser-déposer marche partout sur cette page.' };
+            }
+            if (this._ecartLive && this._ecartLive[mg] > 20) {
+              return { faireTxt: 'Comparer', faireCls: 'tag tag-accent', faire: bt,
+                faireAide: 'L’écart avec la mesure dépasse 20 % : rejouez la configuration dans le Backtest et confrontez-la au journal.' };
+            }
+            return { faireTxt: 'Backtest', faireCls: 'tag tag-neutral', faire: bt,
+              faireAide: 'Rejouer cette configuration dans le Backtest.' };
+          })(),
           retirer: (e) => { e.stopPropagation(); this.basculerValide(sym, v); },
           // placement sans glisser : avec beaucoup de validés, la carte du portefeuille
           // est souvent hors de l'écran et le glisser-déposer devient impraticable
@@ -14653,7 +14900,58 @@ GROUPES = {
               ? lignes : lignes.filter((x) => (x.ticker || x.sym) === selBh);
             const choisirBh = (v) => () => this.setState({ bhSel: { ...(this.state.bhSel || {}), [k]: v } });
             const somme = lignes.reduce((acc, x) => acc + (Number(String(x.total).replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0), 0);
+            // ————— LE BANDEAU DU PORTEFEUILLE —————
+            // Quatre cases, dont la comparaison à la simple détention : c'était la seule
+            // conclusion actionnable de la page, et elle vivait en pied de section, sous
+            // dix-sept colonnes de mesures qui racontaient un travail déjà fait.
+            const nombre = (x) => Number(String(x).replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+            const rAns = lignes.map((x) => nombre(x.rAn));
+            const sommeAn = rAns.reduce((a, b) => a + b, 0);
+            // Le creux du portefeuille est celui de sa PIRE ligne, pas la somme des creux :
+            // deux lignes ne traversent pas leur mauvaise passe le même mois, et les
+            // additionner annoncerait un creux que personne n'a jamais encaissé.
+            const pireCreux = lignes.reduce((a, x) => Math.max(a, Math.abs(nombre(x.dd))), 0);
+            const euroR2 = (Number(s.capital) || 0) * (Number(s.risquePct) || 0) / 100;
+            // « Reste à faire » : la page s'ouvre sur une tâche, pas sur un rappel de mesures.
+            const aFaire = { aTester: 0, aExporter: 0, aControler: 0, ecart: 0 };
+            for (const x of lignes) {
+              if (x.deployEtat === 'aTester') aFaire.aTester++;
+              else if (x.deployEtat === 'aExporter') aFaire.aExporter++;
+              else if (x.deployEtat === 'ecart') aFaire.ecart++;
+              if (/Contrôler|Pousser/.test(x.faireTxt || '')) aFaire.aControler++;
+            }
+            const bouts = [];
+            if (aFaire.aTester) bouts.push(aFaire.aTester + ' à tester');
+            if (aFaire.aExporter) bouts.push(aFaire.aExporter + ' à exporter');
+            if (aFaire.aControler) bouts.push(aFaire.aControler + ' à contrôler');
+            if (aFaire.ecart) bouts.push(aFaire.ecart + ' en écart');
+            const nAFaire = aFaire.aTester + aFaire.aExporter + aFaire.aControler + aFaire.ecart;
+            // La PART DU PORTEFEUILLE que porte chaque ligne : une ligne à 55 % et une à
+            // 12 % ne se surveillent pas pareil, et aucune des dix-sept colonnes ne le disait.
+            const maxAn = Math.max(1e-9, ...rAns.map((x) => Math.abs(x)));
+            const lignesPart = lignes.map((x) => {
+              const a = nombre(x.rAn);
+              const part = sommeAn > 0 ? a / sommeAn * 100 : 0;
+              return { ...x,
+                partTxt: sommeAn > 0 ? Math.round(part) + ' %' : '—',
+                partBarre: 'linear-gradient(to right,var(--color-accent) '
+                  + Math.round(Math.max(0, Math.min(100, Math.abs(a) / maxAn * 100)))
+                  + '%,var(--color-accent-200) 0)',
+                partAide: sommeAn > 0
+                  ? 'Cette ligne porte ' + Math.round(part) + ' % du R par an du portefeuille.'
+                  : 'Part non calculable : le portefeuille ne rapporte rien par an.' };
+            });
             return { cle: String(k), nom: p.nom || 'Portefeuille ' + (k + 1),
+              lignes: lignesPart,
+              pfRAn: sg(sommeAn, 1) + ' R / an',
+              pfRTotal: sg(somme, 1) + ' R cumulés',
+              pfCreux: Math.round(pireCreux) + ' stops',
+              pfCreuxEur: euroR2 > 0
+                ? '− ' + EUR.format(pireCreux * euroR2) + ' sur ' + EUR.format(Number(s.capital) || 0)
+                : 'capital non saisi',
+              pfReste: nAFaire ? this.pl(nAFaire, 'ligne', 'lignes') : 'rien',
+              pfResteDetail: bouts.length ? bouts.join(', ') : 'tout est en place',
+              pfResteCouleur: nAFaire ? 'var(--color-accent-700)' : 'var(--color-text)',
               resume: this.pl(lignes.length, 'ligne', 'lignes') + ' · ' + sg(somme, 1) + ' R cumulés',
               renommer: (e) => this.majPf(pfListe.map((q, j) => (j === k ? { ...q, nom: e.target.value } : q))),
               robotsTxt: lignes.length > 1 ? 'Les ' + lignes.length + ' robots MT5' : 'Robot MT5',
@@ -14761,8 +15059,7 @@ GROUPES = {
                 if (s.pfSuppr !== k) { this.setState({ pfSuppr: k }); return; }
                 this.setState({ pfSuppr: null });
                 this.majPf(pfListe.filter((q, j) => j !== k));
-              },
-              lignes };
+              } };
           }).filter(Boolean),
           // masqué = ne porte aucune ligne validée, la même règle que pfSections
           aPfVides: pfListe.some((p) => !this.nLignesPf(p)),

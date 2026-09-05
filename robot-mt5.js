@@ -567,11 +567,12 @@ double AdxAgr(long sec, int per, int shift)
 }
 
 //+------------------------------------------------------------------+
-void OnDeinit(const int reason) { ConfFermer(); PanneauNettoyer(); ChartRedraw(0); }
+void OnDeinit(const int reason) { ConfFermer(); LivFermer(); PanneauNettoyer(); ChartRedraw(0); }
 
 int OnInit()
 {
    ConfOuvrir();
+   LivOuvrir();
    trade.SetExpertMagicNumber(InpMagic);
    trade.SetDeviationInPoints(InpSlippagePoints);
    trade.SetTypeFillingBySymbol(_Symbol);
@@ -639,6 +640,72 @@ void ConfFermer()
    FileClose(g_confFic);
    g_confFic = INVALID_HANDLE;
 }
+
+//+------------------------------------------------------------------+
+//| JOURNAL DES TRADES RÉELS — un relevé, pas un outil de mise au point|
+//+------------------------------------------------------------------+
+//
+// Distinct du journal de conformité, et TOUJOURS ACTIF : un journal qu'on oublie
+// d'activer ne sert à rien le jour où l'écart apparaît. Celui-ci ne sert pas à
+// déboguer une exécution, il sert à savoir, six mois plus tard, ce que le robot a
+// vraiment fait — et à le comparer, ligne à ligne, à ce que Sivula avait mesuré.
+//
+// Même dossier que la conformité : l'utilisateur n'a qu'un endroit à connaître.
+//
+//   …/MetaQuotes/Terminal/Common/Files/SIV_trades_<SYMBOLE>_<MAGIC>.csv
+//
+// Ouvert en AJOUT : le fichier survit aux redémarrages du terminal, et l'en-tête n'est
+// écrit que s'il est neuf. Le nom porte le magique et non le build : c'est le magique
+// qui identifie la CONFIGURATION, et deux configurations sur le même instrument doivent
+// écrire dans deux fichiers.
+int g_livFic = INVALID_HANDLE;
+
+void LivOuvrir()
+{
+   if(g_livFic != INVALID_HANDLE) return;
+   string nom = "SIV_trades_" + _Symbol + "_" + IntegerToString((long)InpMagic) + ".csv";
+   StringReplace(nom, "#", "");
+   bool neuf = !FileIsExist(nom, FILE_COMMON);
+   g_livFic = FileOpen(nom, FILE_READ | FILE_WRITE | FILE_TXT | FILE_ANSI | FILE_COMMON);
+   if(g_livFic == INVALID_HANDLE)
+   {
+      Print("Journal des trades : écriture impossible (", GetLastError(), ").");
+      return;
+   }
+   FileSeek(g_livFic, 0, SEEK_END);
+   if(neuf)
+      FileWriteString(g_livFic, "ticket;symbole;sens;ouverture;entree;stop_initial;objectif;"
+                      + "fermeture;sortie;motif;volume;profit_devise;profit_R;frais;magic;build\r\n");
+   Print("Journal des trades : Common/Files/", nom);
+}
+
+void LivFermer()
+{
+   if(g_livFic == INVALID_HANDLE) return;
+   FileClose(g_livFic);
+   g_livFic = INVALID_HANDLE;
+}
+
+void Liv(string ligne)
+{
+   if(g_livFic != INVALID_HANDLE) FileWriteString(g_livFic, ligne + "\r\n");
+   else Print("SIVTRADE;", ligne);
+}
+// dates en yyyy.MM.dd HH:mm, décimale « . » : le lecteur du site n'a pas à deviner
+string LivH(datetime t) { return TimeToString(t, TIME_DATE | TIME_MINUTES); }
+string LivP(double x)   { return DoubleToString(x, _Digits); }
+
+// La position en cours, telle qu'elle a été OUVERTE. Le stop courant bouge avec les
+// paliers ; le risque initial, lui, ne bouge pas — et c'est lui qui définit le R de
+// Sivula. Diviser par le risque courant donnerait deux colonnes non comparables.
+ulong    g_livTicket  = 0;
+double   g_livOuv     = 0.0;
+double   g_livSl0     = 0.0;
+double   g_livTp      = 0.0;
+double   g_livLots    = 0.0;
+double   g_livRisque  = 0.0;
+datetime g_livT0      = 0;
+bool     g_livPalier  = false;
 
 void Conf(string ligne)
 {
@@ -845,6 +912,34 @@ void SurveillerSortie()
            DoubleToString(swapTot, 2),
            DoubleToString(commTot, 2),
            EnumToString((ENUM_DEAL_REASON)HistoryDealGetInteger(d, DEAL_REASON))));
+
+      // LA LIGNE DU RELEVÉ. Le motif vient de DEAL_REASON, pas d'une comparaison de
+      // prix : « sorti au stop » et « sorti au stop RELEVÉ par un palier » se ressemblent
+      // au centième près, et c'est pourtant la distinction qui explique les écarts.
+      {
+         ENUM_DEAL_REASON dr = (ENUM_DEAL_REASON)HistoryDealGetInteger(d, DEAL_REASON);
+         string motif = (dr == DEAL_REASON_TP) ? "tp"
+                      : (dr == DEAL_REASON_SL) ? (g_livPalier ? "palier" : "sl")
+                      : "manuel";
+         double prof = HistoryDealGetDouble(d, DEAL_PROFIT);
+         double frais = swapTot + commTot;
+         // profit_R sur le risque INITIAL : c'est la définition de Sivula. Rapporté au
+         // risque courant, un trade sorti sur un palier vaudrait mécaniquement plus.
+         string pr = (g_livRisque > 0.0) ? DoubleToString(prof / g_livRisque, 3) : "";
+         Liv(StringFormat("%I64u;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%I64u;%s",
+             t, _Symbol,
+#ifdef SENS_VENTE
+             "vente",
+#else
+             "achat",
+#endif
+             LivH(g_livT0), LivP(g_livOuv), LivP(g_livSl0), LivP(g_livTp),
+             LivH((datetime)HistoryDealGetInteger(d, DEAL_TIME)),
+             LivP(HistoryDealGetDouble(d, DEAL_PRICE)), motif,
+             DoubleToString(g_livLots, 2), DoubleToString(prof, 2), pr,
+             DoubleToString(frais, 2), (ulong)InpMagic, "${stamp}"));
+      }
+      g_livTicket = 0; g_livPalier = false;
       break;
    }
 }
@@ -1062,6 +1157,10 @@ void GererPaliers()
          // c'est ce qu'il faut pour savoir si le robot sécurise là où le moteur sécurise.
          Conf(StringFormat("P|%s|%s|%s|%s|%s", ConfH(TimeCurrent()),
               DoubleToString(parcours, 2), ConfP(sl), ConfP(nouveau), ConfP(extreme)));
+         // Un palier a bougé le stop : la sortie qui suivra sera un « palier » et non un
+         // « sl ». C'est LA distinction qui explique l'essentiel des écarts avec Sivula —
+         // le moteur sort sur le palier, MT5 sort sur le niveau du stop en intrabar.
+         g_livPalier = true;
          trade.PositionModify(ticket, nouveau, tp);
       }
    }
@@ -1381,6 +1480,26 @@ bool Entrer()
       Conf(StringFormat("E|%s|%s|%s|%s|%s|%s",
            ConfH(ArraySize(hb) > 0 ? hb[0] : 0), ConfH(TimeCurrent()),
            ConfP(prix), ConfP(stop), ConfP(objectif), DoubleToString(lots, 2)));
+
+      // La position telle qu'elle vient d'être ouverte. Le risque en devise est calculé
+      // ICI, sur la distance au stop INITIAL : c'est le dénominateur du R de Sivula.
+      g_livTicket = g_posTicket;
+      g_livOuv    = prix;
+      g_livSl0    = stop;
+      g_livTp     = objectif;
+      g_livLots   = lots;
+      g_livT0     = TimeCurrent();
+      g_livPalier = false;
+      {
+         double tv = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+         double ts = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         g_livRisque = (tv > 0.0 && ts > 0.0)
+            ? MathAbs(prix - stop) / ts * tv * lots : 0.0;
+      }
+      // Une position ENCORE OUVERTE est invisible dans un journal qui n'écrit qu'à la
+      // fermeture — et c'est justement celle qu'on veut voir le lundi matin.
+      Liv(StringFormat("OUV;%I64u;%s;%s;%s;%s",
+          g_livTicket, LivH(g_livT0), LivP(prix), LivP(stop), LivP(objectif)));
    }
    return true;
 }
