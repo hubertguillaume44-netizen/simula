@@ -925,20 +925,6 @@
   <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
 
     <!--
-      LE BANDEAU D'EXEMPLE. Il ne se ferme pas : il tombe quand la démonstration s'arrête,
-      et pas avant. Un utilisateur qui oublie qu'il regarde un exemple et décide dessus
-      est un problème d'une autre nature qu'une maladresse d'interface.
-    -->
-    <sc-if value="{{ aExemple }}" hint-placeholder-val="{{ false }}">
-      <div class="blueprint" style="padding:14px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;background:var(--color-accent-900);border-color:var(--color-accent-900)">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.2;color:var(--color-accent-100)">Vous regardez un exemple.</strong>
-        <span style="font-size:13px;line-height:1.5;flex:1;min-width:36ch;color:var(--color-accent-100)">Ces chiffres viennent de bougies de démonstration : ils ne sont pas les vôtres et aucune décision ne doit être prise dessus.</span>
-        <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:13px" onClick="{{ quitterExemple }}">Passer à mes données</button>
-      </div>
-    </sc-if>
-
-    <!--
       LA MÊME ALERTE LÀ OÙ LES SCANS SONT AFFICHÉS. La page des nouveautés ne suffit
       pas : personne ne l'ouvre avant de lire un TOP. Quand la dernière livraison qui
       déplace des chiffres est postérieure à des scans en mémoire, ça se dit ici aussi.
@@ -4325,7 +4311,7 @@ class Component extends DCLogic {
     // Le TOP classe par R net, et la lecture haute donne toujours un meilleur R que la
     // basse : sans cette condition, le tamis retenait mécaniquement la version optimiste
     // de chaque configuration — celle sur laquelle on ne peut pas s'engager.
-    sPrudent: true, onbCache: false, exemple: false, exempleEtape: 0, nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
+    sPrudent: true, onbCache: false, exempleEtape: 0, nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -7819,7 +7805,6 @@ GROUPES = {
   // Le scan de démonstration est un VRAI calcul de quelques secondes, pas une animation :
   // c'est lui qui prouve que l'outil fonctionne. Un faux chargement fait exactement
   // l'inverse, et se voit tout de suite.
-  CLE_EXEMPLE = 'simula.exemple.v1';
   // La grille de l'exemple : la grille livrée, élargie aux deux types d'entrée et aux
   // deux moyennes. Une vingtaine de milliers de combinaisons réellement mesurées —
   // assez pour que le balayage dure, assez peu pour qu'on l'attende sans partir.
@@ -7854,14 +7839,10 @@ GROUPES = {
   async voirExemple() {
     if (this._exempleEnRoute) return;
     this._exempleEnRoute = true;
-    try { localStorage.setItem(this.CLE_EXEMPLE, '1'); } catch (e) {}
-    this.setState({ exemple: true, exempleEtape: 1, onbCache: true });
+    this.setState({ exempleEtape: 1, onbCache: true });
     // 1. les quatre instruments. Ils vivent dans le compte de découverte, semé à son
     // ouverture : y passer charge les bougies, le relevé de frais fictif et rien d'autre.
     if (this.compteActif !== 'demo') {
-      // d'où l'on vient : « Passer à mes données » doit rendre la main sur CE compte-là,
-      // pas laisser l'utilisateur dans la démonstration en croyant en être sorti
-      this._compteAvant = this.compteActif;
       this.changerCompte('demo');
       await this.attendreEtat(() => !this.state.chargeCompte, 60000);
     }
@@ -7874,14 +7855,6 @@ GROUPES = {
     this.setState({ vue: 'scan', exempleEtape: 2, univers, ut: 'H1',
       ...this.GRILLE_V2, ...this.GRILLE_EXEMPLE, tradesMin: 40, segMin: 3 },
       () => this.lancerScan(true));
-  }
-  quitterExemple() {
-    try { localStorage.removeItem(this.CLE_EXEMPLE); } catch (e) {}
-    this._exempleFiche = false;
-    const avant = this._compteAvant;
-    this._compteAvant = null;
-    this.setState({ exemple: false, exempleEtape: 0, detail: null, vue: 'backtest', onbCache: true },
-      () => { if (avant && avant !== this.compteActif) this.changerCompte(avant); });
   }
   // Amplitude médiane d'une bougie, en % du prix. Sert de plancher de crédibilité à un
   // stop suiveur : en dessous, la sortie dépend du chemin intra-bougie que la donnée
@@ -8577,16 +8550,12 @@ GROUPES = {
     const favoris = sauve && sauve.favoris ? sauve.favoris : base;
     let onbCache = false;
     let risqueVu = false;
-    // le bandeau d'exemple survit au rechargement : c'est tout son intérêt. Un onglet
-    // rouvert le lendemain sur des chiffres de démonstration doit encore le dire.
-    let exemple = false;
     try {
       onbCache = localStorage.getItem('simula.onboarding.vu') === '1';
       risqueVu = !!localStorage.getItem('simula.risque.v1');
-      exemple = localStorage.getItem(this.CLE_EXEMPLE) === '1' && this.compteActif === 'demo';
     } catch (e) {}
     this.setState({ pret: true, runs: this.lireRuns(), pfs, favoris,
-      valides: (sauve && sauve.valides) || [], onbCache, risqueVu, exemple });
+      valides: (sauve && sauve.valides) || [], onbCache, risqueVu });
     // Le backtest du démarrage coûte plusieurs secondes de fil principal : il n'est
     // lancé que si l'utilisateur est déjà sur cette vue. Sur les autres, il part à
     // l'ouverture de l'onglet Backtest.
@@ -16275,7 +16244,10 @@ GROUPES = {
       })(),
       // ————— LES DEUX PREMIÈRES MINUTES —————
       ...(() => {
-        const vide = !!s.pret && !s.exemple && !(s.deposes || []).length && !this.aScanData;
+        // Le compte est vide ou il ne l'est pas : la question se pose sur les séries
+        // présentes, pas sur un drapeau de session qu'un changement de compte pouvait
+        // laisser derrière lui.
+        const vide = !!s.pret && !(s.deposes || []).length && !this.aScanData;
         const et = s.exempleEtape || 0;
         const pas = [
           ['1', 'Quatre instruments chargés', 'Des bougies H1 fictives, avec un relevé de frais fictif : le compte de découverte, à côté du vôtre.'],
@@ -16290,8 +16262,6 @@ GROUPES = {
           exempleBouton: et === 1 ? 'Chargement des instruments\u2026'
             : et === 2 ? 'Scan en cours\u2026' : 'Voir un exemple complet \u00b7 2 min',
           exempleNote: 'Rien n\u2019est écrit dans votre compte : l\u2019exemple vit dans le compte de démonstration.',
-          aExemple: !!s.exemple,
-          quitterExemple: () => this.quitterExemple(),
         };
       })(),
       aOnboarding: !!s.pret && !s.onbCache && !this.aScanData && !(s.runs && s.runs.length),
