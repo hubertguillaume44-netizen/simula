@@ -104,6 +104,11 @@ const preambule = `<script>
   window.__siv = siv;
 })();
 </script>
+<script>
+// Le journal des livraisons voyage avec le fichier unique : servi en voisin, il serait
+// absent d'une page ouverte en « file:// », et la page des nouveautés resterait vide.
+window.__sivNouv = ${JSON.stringify(JSON.parse(lire("nouveautes.json")))};
+</script>
 `;
 html = remplacer(html, "<head>", "<head>\n" + preambule, "Sivula.dc.html");
 

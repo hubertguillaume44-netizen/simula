@@ -1,0 +1,45 @@
+{
+  "_lisez_moi": "Journal des livraisons de Sivula, lu par la page (tiroir « Nouveautés »). Une entrée par livraison, la plus récente en premier. `portee` vaut « mesure » (les chiffres bougent, il faut relancer), « interface » (rien à refaire, les mesures sont inchangées) ou « correctif ». Sur une entrée « mesure », la page compte les scans en mémoire antérieurs à sa date et propose de les relancer.",
+  "entrees": [
+    {
+      "id": "260905-cfgvar",
+      "date": "2026-09-05",
+      "portee": "mesure",
+      "titre": "Une fiche rejoue la configuration qui a été mesurée",
+      "texte": "Une ligne de scan porte sa variante : filtre, sécurisation, lecture haute ou basse, durée. En rouvrir une la reconstruisait avec les réglages de la page au lieu de rejouer ce qui avait été mesuré. Et la clé sous laquelle chaque configuration mesurée est gardée ne portait ni le type d’entrée ni la moyenne : une grille qui balaie deux entrées et deux lignes en écrasait trois sur quatre. Mesuré : une ligne affichée à 776 trades et + 49,0 R se rouvrait à 634 trades et + 3,6 R.",
+      "refaire": "Les chiffres du TOP et de l’historique n’ont pas bougé — ils viennent du scan lui-même. Ce sont les fiches, les contrôles du hasard et les robots exportés depuis une fiche qui pouvaient décrire une autre configuration. Un scan relancé garde des clés complètes et se rejoue à l’identique."
+    },
+    {
+      "id": "260905-semis",
+      "date": "2026-09-05",
+      "portee": "correctif",
+      "titre": "Les séries de démonstration ne dérivent plus",
+      "texte": "Le générateur perdait ses bits de poids faible : le produit d’un entier de 31 bits par 1 103 515 245 dépasse les 53 bits exacts d’un nombre flottant. La série « énergie » partait de 78 pour finir à 5,6 millions, avec une dérive annoncée négative, et l’exemple affichait + 2 800 R sur un instrument fictif. La même série finit maintenant à 131.",
+      "refaire": "Ne concerne que le compte de découverte. Ses séries sont refaites à la prochaine ouverture ; aucune bougie que vous avez déposée n’est touchée."
+    },
+    {
+      "id": "260905-demarrage",
+      "date": "2026-09-05",
+      "portee": "interface",
+      "titre": "Les deux premières minutes",
+      "texte": "Tant qu’aucune série n’est chargée, un cadre en tête propose « Voir un exemple complet » : quatre instruments fictifs, un vrai balayage de 24 192 combinaisons, puis la meilleure configuration ouverte trade par trade. Un bandeau reste visible tant que la démonstration est active et rend la main sur votre compte.",
+      "refaire": "Rien à refaire : aucune mesure n’est changée."
+    },
+    {
+      "id": "260905-rappel",
+      "date": "2026-09-05",
+      "portee": "interface",
+      "titre": "Le scan prévient quand il a fini",
+      "texte": "Le titre de l’onglet porte la progression puis « ✓ Scan terminé », effacé au retour sur l’onglet. Une notification système annonce le résultat — instruments, combinaisons, durée, configurations retenues — et un son court, coupé par défaut, se règle dans le panneau du scanner. L’autorisation n’est demandée qu’au lancement d’un balayage de plus de cinq minutes.",
+      "refaire": "Rien à refaire : aucune mesure n’est changée."
+    },
+    {
+      "id": "260905-sauvegarde",
+      "date": "2026-09-05",
+      "portee": "interface",
+      "titre": "La sauvegarde se relit, et le stockage est protégé",
+      "texte": "« Importer un fichier » complète l’export : le contenu du fichier et celui de l’espace actuel sont affichés avant tout écrasement, avec Fusionner, Remplacer ou Annuler. La date de la dernière sauvegarde est rappelée sous les deux boutons. Le stockage réclame la persistance au navigateur — sans elle, vos bougies et vos scans peuvent être vidés sans avertissement quand le disque se remplit.",
+      "refaire": "Rien à refaire : aucune mesure n’est changée."
+    }
+  ]
+}

@@ -151,7 +151,7 @@
     <nav style="display:flex;gap:24px;align-items:center;margin-inline-start:auto">
       <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
         <button type="button" onClick="{{ ouvrirTiroir }}" title="Mémoire, sauvegarde et confidentialité" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg)">
-          <span style="width:7px;height:7px;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}
+          <span style="width:7px;height:7px;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
         </button>
       </sc-if>
     </nav>
@@ -252,6 +252,40 @@
         </div>
         <button type="button" onClick="{{ fermerTiroir }}" style="cursor:pointer;font:inherit;font-size:12px;background:none;border:1px solid var(--color-divider);padding:4px 11px;color:inherit">Fermer</button>
       </div>
+
+      <!--
+        CE QUI A CHANGÉ. La plus récente en haut, alimentée par nouveautes.json — le
+        fichier du dépôt, pas une liste recopiée ici. Sur une entrée « mesure », la ligne
+        qui relie la livraison aux données : combien de scans en mémoire lui sont
+        antérieurs, et de quoi les relancer. C'est le seul endroit de l'application qui
+        fait ce lien, et c'est précisément ce qui manquait quand un correctif du moteur a
+        déplacé les résultats sans que rien ne le dise.
+      -->
+      <sc-if value="{{ aNouveautes }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Nouveautés</span>
+            <button type="button" onClick="{{ marquerNouvLues }}" style="cursor:pointer;font:inherit;font-size:11px;background:none;border:0;padding:0;color:var(--color-accent-700);opacity:{{ nouvLireOpacite }}">Tout marquer comme lu</button>
+          </div>
+          <sc-for list="{{ nouveautes }}" as="nv" hint-placeholder-count="2">
+            <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:6px;border-color:{{ nv.bord }}">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <span style="width:6px;height:6px;background:{{ nv.point }};flex:none"></span>
+                <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;border:1px solid {{ nv.bord }};padding:1px 7px;color:{{ nv.bord }}" title="{{ nv.porteeAide }}">{{ nv.portee }}</span>
+                <span style="font-size:11px" class="text-muted">{{ nv.quand }}</span>
+              </div>
+              <strong style="font-size:13px;line-height:1.35">{{ nv.titre }}</strong>
+              <span style="font-size:11px;line-height:1.55" class="text-muted">{{ nv.texte }}</span>
+              <span style="font-size:11px;line-height:1.55;display:{{ nv.affRefaire }}">{{ nv.refaire }}</span>
+              <div style="display:{{ nv.affRelance }};flex-direction:column;gap:6px;padding-top:7px;border-top:1px solid var(--color-divider)">
+                <span style="font-size:11px;line-height:1.55;color:var(--color-accent-700)">{{ nv.relanceTxt }}</span>
+                <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:12px;align-self:flex-start" onClick="{{ nv.relancer }}" title="{{ nv.relanceAide }}">Relancer ces scans</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
 
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
@@ -897,6 +931,20 @@
         <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.2;color:var(--color-accent-100)">Vous regardez un exemple.</strong>
         <span style="font-size:13px;line-height:1.5;flex:1;min-width:36ch;color:var(--color-accent-100)">Ces chiffres viennent de bougies de démonstration : ils ne sont pas les vôtres et aucune décision ne doit être prise dessus.</span>
         <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:13px" onClick="{{ quitterExemple }}">Passer à mes données</button>
+      </div>
+    </sc-if>
+
+    <!--
+      LA MÊME ALERTE LÀ OÙ LES SCANS SONT AFFICHÉS. La page des nouveautés ne suffit
+      pas : personne ne l'ouvre avant de lire un TOP. Quand la dernière livraison qui
+      déplace des chiffres est postérieure à des scans en mémoire, ça se dit ici aussi.
+    -->
+    <sc-if value="{{ aScansPerimes }}" hint-placeholder-val="{{ false }}">
+      <div class="blueprint" style="padding:12px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-color:var(--color-accent)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-size:12px;line-height:1.55;flex:1;min-width:38ch">{{ scansPerimesTxt }}</span>
+        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ voirNouveaute }}">Ce qui a changé</button>
+        <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ relancerPerimes }}" title="{{ scansPerimesAide }}">Relancer ces scans</button>
       </div>
     </sc-if>
 
@@ -4064,7 +4112,7 @@ class Component extends DCLogic {
     // Le TOP classe par R net, et la lecture haute donne toujours un meilleur R que la
     // basse : sans cette condition, le tamis retenait mécaniquement la version optimiste
     // de chaque configuration — celle sur laquelle on ne peut pas s'engager.
-    sPrudent: true, onbCache: false, exemple: false, exempleEtape: 0, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
+    sPrudent: true, onbCache: false, exemple: false, exempleEtape: 0, nouv: [], nouvLu: '', deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -5808,6 +5856,7 @@ GROUPES = {
     this.inventaireStockage(true).then(() => this.mesurerPlace());
     this.reclamerPersistance();
     this.suivreRetourOnglet();
+    this.chargerNouveautes();
     this.baremesChanges();
     this.forceUpdate();
   }
@@ -7383,6 +7432,78 @@ GROUPES = {
     try { localStorage.setItem(this.cle('simula.semis.v'), String(this.SEMIS_V)); } catch (e) {}
     this.setState({ deposes: [...this.SYM_DEMO], seriesRev: (this.state.seriesRev || 0) + 1 });
   }
+  // ————— CE QUI A CHANGÉ —————
+  //
+  // Un correctif du moteur a déjà déplacé des résultats sans que rien ne le dise. Cette
+  // page existe surtout pour ça : relier une livraison aux données de l'utilisateur.
+  // Trois portées, pas une de plus — « mesure » (les chiffres bougent, il faut
+  // relancer), « interface » (rien à refaire, et on le dit) et « correctif ».
+  CLE_NOUV_LU = 'simula.nouveautes.lu.v1';
+  PORTEES = {
+    mesure: ['Mesure', 'var(--color-accent-700)', 'Les chiffres bougent : les scans antérieurs ne sont plus comparables aux nouveaux.'],
+    correctif: ['Correctif', 'var(--color-text)', 'Un défaut corrigé. Les mesures ne changent que si l\u2019entrée le dit.'],
+    interface: ['Interface', 'var(--color-neutral-500)', 'Rien à refaire : les mesures sont inchangées.'],
+  };
+  async chargerNouveautes() {
+    let j = null;
+    try {
+      // le fichier unique porte sa copie : pas de voisin à servir en « file:// »
+      if (typeof window !== 'undefined' && window.__sivNouv) j = window.__sivNouv;
+      else {
+        const r = await fetch('nouveautes.json', { cache: 'no-store' });
+        if (r.ok) j = await r.json();
+      }
+    } catch (e) { j = null; }
+    const liste = (j && Array.isArray(j.entrees)) ? j.entrees.filter((x) => x && x.date && x.titre) : [];
+    liste.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    let lu = '';
+    try { lu = localStorage.getItem(this.CLE_NOUV_LU) || ''; } catch (x) {}
+    this.setState({ nouv: liste, nouvLu: lu });
+  }
+  marquerNouvLues() {
+    const d = (this.state.nouv || [])[0];
+    const v = d ? String(d.date) : '';
+    try { localStorage.setItem(this.CLE_NOUV_LU, v); } catch (e) {}
+    this.setState({ nouvLu: v });
+  }
+  // La dernière entrée qui déplace des chiffres. C'est elle qui sert de repère aux scans
+  // en mémoire, ici comme sur les pages où ces scans sont affichés.
+  derniereMesure() {
+    return (this.state.nouv || []).find((x) => x.portee === 'mesure') || null;
+  }
+  // Les scans en mémoire antérieurs à une date. Comptés sur les LIGNES, pas sur les
+  // archives : une ligne remplacée par un scan neuf disparaît du compte toute seule,
+  // sinon le chiffre ne baisserait jamais et l'avertissement deviendrait un décor.
+  scansAnciens(dateISO) {
+    const t = Date.parse(String(dateISO) + 'T00:00:00Z');
+    if (!Number.isFinite(t)) return [];
+    const vus = new Map();
+    for (const r of this.lignesScan || []) {
+      if (!r._sid || !r._sdate) continue;
+      const d = Date.parse(r._sdate);
+      if (!Number.isFinite(d) || d >= t) continue;
+      if (!vus.has(r._sid)) vus.set(r._sid, { id: r._sid, date: r._sdate, n: 0 });
+      vus.get(r._sid).n += 1;
+    }
+    return [...vus.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  }
+  // Relance le plus récent des scans périmés, avec SA grille et SES instruments — pas
+  // ceux du panneau. Les autres restent à relancer un par un : mélanger deux grilles
+  // dans un seul balayage produirait un scan qui ne correspond à aucun des deux.
+  relancerAnciens(dateISO) {
+    const vieux = this.scansAnciens(dateISO);
+    if (!vieux.length || this.state.scanEnCours) return;
+    const a = (this.state.archives || []).find((x) => x.id === vieux[0].id);
+    const g = {};
+    if (a && a.reglages) for (const k of this.REGLAGES) if (a.reglages[k] !== undefined) g[k] = a.reglages[k];
+    if (a && a.plan) for (const k of this.CHAMPS_PLAN) if (a.plan[k] !== undefined) g[k] = a.plan[k];
+    const univers = (a && a.universPlan && a.universPlan.length)
+      ? [...a.universPlan]
+      : [...new Set((this.lignesScan || []).filter((r) => r._sid === vieux[0].id).map((r) => r.sym))];
+    if (!univers.length) return;
+    this.setState({ ...g, univers, vue: 'scan', tiroir: false }, () => this.lancerScan(true));
+  }
+
   // ————— LES DEUX PREMIÈRES MINUTES —————
   //
   // Un nouveau client arrive sur une application vide qui ne montre rien avant qu'il ait
@@ -15210,6 +15331,55 @@ GROUPES = {
       setOosMin: (e) => this.setState({ oosMin: Number(e.target.value) }),
       colonnes,
       ficheMsg: s.ficheMsg, aFicheMsg: !!s.ficheMsg,
+      // ————— CE QUI A CHANGÉ —————
+      ...(() => {
+        const liste = s.nouv || [];
+        const lu = s.nouvLu || '';
+        const nonLu = (x) => String(x.date) > lu;
+        const mois = (d) => {
+          const t = Date.parse(String(d) + 'T00:00:00Z');
+          return Number.isFinite(t)
+            ? new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+            : String(d);
+        };
+        const derniere = liste.find((x) => x.portee === 'mesure') || null;
+        const vieux = derniere ? this.scansAnciens(derniere.date) : [];
+        const phrase = (n) => this.pl(n, 'de vos scans est antérieur', 'de vos scans sont antérieurs')
+          + ' à ce correctif. ' + (n > 1 ? 'Leurs chiffres ne sont plus comparables' : 'Ses chiffres ne sont plus comparables')
+          + ' aux nouveaux.';
+        const aide = vieux.length
+          ? 'Relance le plus récent de ces scans avec SA grille et SES instruments, pas ceux du panneau. Les autres restent à relancer un par un : mélanger deux grilles dans un seul balayage produirait un scan qui ne correspond à aucune des deux.'
+          : '';
+        return {
+          aNouveautes: liste.length > 0,
+          nouvLireOpacite: liste.some(nonLu) ? '1' : '.4',
+          marquerNouvLues: () => this.marquerNouvLues(),
+          affNouvPoint: liste.some(nonLu) ? 'inline-block' : 'none',
+          nouveautes: liste.map((x) => {
+            const [nom, bord, aidePortee] = this.PORTEES[x.portee] || this.PORTEES.correctif;
+            const anciens = x.portee === 'mesure' ? this.scansAnciens(x.date) : [];
+            return {
+              portee: nom, bord, porteeAide: aidePortee,
+              point: nonLu(x) ? 'var(--color-accent)' : 'transparent',
+              quand: mois(x.date), titre: x.titre, texte: x.texte,
+              refaire: x.refaire || '', affRefaire: x.refaire ? 'block' : 'none',
+              affRelance: anciens.length ? 'flex' : 'none',
+              relanceTxt: anciens.length ? phrase(anciens.length) : '',
+              relanceAide: aide,
+              relancer: () => this.relancerAnciens(x.date),
+            };
+          }),
+          // et la même alerte là où ces scans sont affichés
+          aScansPerimes: !!derniere && vieux.length > 0
+            && (s.vue === 'scan' || s.vue === 'historique') && !s.scanEnCours,
+          scansPerimesTxt: derniere
+            ? phrase(vieux.length) + ' \u00ab\u00a0' + derniere.titre + '\u00a0\u00bb, livré le ' + mois(derniere.date) + '.'
+            : '',
+          scansPerimesAide: aide,
+          relancerPerimes: () => derniere && this.relancerAnciens(derniere.date),
+          voirNouveaute: () => this.setState({ tiroir: true }),
+        };
+      })(),
       // ————— LES DEUX PREMIÈRES MINUTES —————
       ...(() => {
         const vide = !!s.pret && !s.exemple && !(s.deposes || []).length && !this.aScanData;
