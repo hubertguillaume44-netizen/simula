@@ -64,13 +64,6 @@
    ]
   },
   {
-   "terme": "brut) Même sous-jacent, plusieurs flux",
-   "texte": "Replier ou déplier cette section",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Capital alloué au court terme",
    "texte": "La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».",
    "vues": [
@@ -281,6 +274,14 @@
    ]
   },
   {
+   "terme": "États-Unis Europe Asie Mettre jour",
+   "texte": "Replier ou déplier cette section",
+   "vues": [
+    "Marché",
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Exporter en CSV",
    "texte": "Enregistre la liste complète en CSV, ouvrable dans un tableur",
    "vues": [
@@ -362,6 +363,13 @@
    "texte": "Voir ce qui occupe la mémoire et libérer poste par poste",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Mesurer une config par régime",
+   "texte": "Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.",
+   "vues": [
+    "Marché"
    ]
   },
   {

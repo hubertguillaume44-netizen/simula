@@ -34,7 +34,7 @@
 window.__sivNouv = {"_lisez_moi":"Journal des livraisons de Sivula, lu par la page (tiroir « Nouveautés »). Une entrée par livraison, la plus récente en premier. `portee` vaut « mesure » (les chiffres bougent, il faut relancer), « interface » (rien à refaire, les mesures sont inchangées) ou « correctif ». Sur une entrée « mesure », la page compte les scans en mémoire antérieurs à sa date et propose de les relancer.","entrees":[{"id":"260905-cfgvar","date":"2026-09-05","portee":"mesure","titre":"Une fiche rejoue la configuration qui a été mesurée","texte":"Une ligne de scan porte sa variante : filtre, sécurisation, lecture haute ou basse, durée. En rouvrir une la reconstruisait avec les réglages de la page au lieu de rejouer ce qui avait été mesuré. Et la clé sous laquelle chaque configuration mesurée est gardée ne portait ni le type d’entrée ni la moyenne : une grille qui balaie deux entrées et deux lignes en écrasait trois sur quatre. Mesuré : une ligne affichée à 776 trades et + 49,0 R se rouvrait à 634 trades et + 3,6 R.","refaire":"Les chiffres du TOP et de l’historique n’ont pas bougé — ils viennent du scan lui-même. Ce sont les fiches, les contrôles du hasard et les robots exportés depuis une fiche qui pouvaient décrire une autre configuration. Un scan relancé garde des clés complètes et se rejoue à l’identique."},{"id":"260905-semis","date":"2026-09-05","portee":"correctif","titre":"Les séries de démonstration ne dérivent plus","texte":"Le générateur perdait ses bits de poids faible : le produit d’un entier de 31 bits par 1 103 515 245 dépasse les 53 bits exacts d’un nombre flottant. La série « énergie » partait de 78 pour finir à 5,6 millions, avec une dérive annoncée négative, et l’exemple affichait + 2 800 R sur un instrument fictif. La même série finit maintenant à 131.","refaire":"Ne concerne que le compte de découverte. Ses séries sont refaites à la prochaine ouverture ; aucune bougie que vous avez déposée n’est touchée."},{"id":"260905-demarrage","date":"2026-09-05","portee":"interface","titre":"Les deux premières minutes","texte":"Tant qu’aucune série n’est chargée, un cadre en tête propose « Voir un exemple complet » : quatre instruments fictifs, un vrai balayage de 24 192 combinaisons, puis la meilleure configuration ouverte trade par trade. Un bandeau reste visible tant que la démonstration est active et rend la main sur votre compte.","refaire":"Rien à refaire : aucune mesure n’est changée."},{"id":"260905-rappel","date":"2026-09-05","portee":"interface","titre":"Le scan prévient quand il a fini","texte":"Le titre de l’onglet porte la progression puis « ✓ Scan terminé », effacé au retour sur l’onglet. Une notification système annonce le résultat — instruments, combinaisons, durée, configurations retenues — et un son court, coupé par défaut, se règle dans le panneau du scanner. L’autorisation n’est demandée qu’au lancement d’un balayage de plus de cinq minutes.","refaire":"Rien à refaire : aucune mesure n’est changée."},{"id":"260905-sauvegarde","date":"2026-09-05","portee":"interface","titre":"La sauvegarde se relit, et le stockage est protégé","texte":"« Importer un fichier » complète l’export : le contenu du fichier et celui de l’espace actuel sont affichés avant tout écrasement, avec Fusionner, Remplacer ou Annuler. La date de la dernière sauvegarde est rappelée sous les deux boutons. Le stockage réclame la persistance au navigateur — sans elle, vos bougies et vos scans peuvent être vidés sans avertissement quand le disque se remplit.","refaire":"Rien à refaire : aucune mesure n’est changée."}]};
 // Les explications extraites à la construction voyagent de même : sans elles le panneau
 // d'aide serait vide dans le fichier unique.
-window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l’application, cherchables","vues":["Toutes les pages"]},{"terme":"· /","texte":"Cocher ou décocher tout le groupe","vues":["Nouveau scan"]},{"terme":"×","texte":"Cliquez pour retirer cette valeur","vues":["Nouveau scan"]},{"terme":"×","texte":"Un escalier = un trade, avec ses paliers dans l'ordre. Cliquez pour le retirer.","vues":["Nouveau scan"]},{"terme":"À ranger","texte":"Remet la configuration validée et sa place dans les portefeuilles telles qu'elles étaient avant le dernier retrait.","vues":["Portefeuille"]},{"terme":"Adopter","texte":"Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement","vues":["Toutes les pages"]},{"terme":"Backtest","texte":"Charger cette configuration dans le Backtest et la relancer","vues":["Historique"]},{"terme":"BE","texte":"Sorties sur stop déplacé ; entre parenthèses les stops sautés par un écart de cotation","vues":["Toutes les pages"]},{"terme":"bougies H1 Déposer un relevé","texte":"Enregistre les noms des instruments sans bougies, un par ligne.","vues":["Mes instruments"]},{"terme":"brut) Même sous-jacent, plusieurs flux","texte":"Replier ou déplier cette section","vues":["Toutes les pages"]},{"terme":"Capital alloué au court terme","texte":"La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».","vues":["Journal"]},{"terme":"Capital immobilisé","texte":"Part du temps où le capital est réellement en position. Le reste du temps, il est disponible pour autre chose.","vues":["Portefeuille"]},{"terme":"Ce qu'il fallait encaisser","texte":"La pire perte qu'il fallait traverser sans abandonner. Pour la stratégie, elle est déduite de sa plus longue série de pertes d'affilée — pas d'une courbe d'équité datée, que le scan ne conserve pas : le vrai creux est donc un peu plus profond. La détention, elle, n'a ni stop ni objectif : elle subit le creux du marché en entier.","vues":["Portefeuille"]},{"terme":"Ce que ça rend en tout","texte":"Ce que le capital devient sur toute la période, gains réinvestis.","vues":["Portefeuille"]},{"terme":"Cible de Tout ranger","texte":"Destination du bouton « Tout ranger dans… ».","vues":["Portefeuille"]},{"terme":"Classer par","texte":"Classer les lignes par ce critère","vues":["Historique"]},{"terme":"combinaisons Lancer le scan","texte":"Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Nouveau scan"]},{"terme":"Condition de la ligne NON restaurée","texte":"La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.","vues":["Backtest"]},{"terme":"Conditions comparées","texte":"Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.","vues":["Nouveau scan"]},{"terme":"configs validées Tirages par configuration","texte":"Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.","vues":["Historique"]},{"terme":"Contrôle du hasard","texte":"On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.","vues":["Historique"]},{"terme":"Contrôler","texte":"Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.","vues":["Historique"]},{"terme":"court la fin du scan","texte":"Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.","vues":["Nouveau scan"]},{"terme":"Coût réel","texte":"Spread, commission et portage tels que votre relevé les chiffre, ramenés à la part de risque qu'ils emportent.","vues":["Portefeuille"]},{"terme":"Creux","texte":"Pire creux de l'année, en R","vues":["Toutes les pages"]},{"terme":"Creux redouté","texte":"Creux à partir duquel vous considérez avoir perdu le contrôle. La dernière case donne la fréquence à laquelle un tirage le dépasse.","vues":["Portefeuille"]},{"terme":"de de capital, stop posé","texte":"Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.","vues":["Mes instruments"]},{"terme":"de la ligne NON restaurée","texte":"Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.","vues":["Backtest"]},{"terme":"Déposez le relevé de symboles de votre courtier","texte":"Un fichier CSV, lu dans votre navigateur.","vues":["Toutes les pages"]},{"terme":"Déposez les bougies H1 de vos instruments","texte":"Vous pouvez en déposer plusieurs à la fois.","vues":["Toutes les pages"]},{"terme":"Distance du stop","texte":"À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.","vues":["Nouveau scan"]},{"terme":"Distance du stop suiveur, en % sous le plus haut ?","texte":"Sous l'amplitude médiane d'une bougie, la sortie dépend du chemin parcouru À L'INTÉRIEUR de la bougie, que vos données ne contiennent pas. Ordres de grandeur sur une paire de devises : H1 plancher 0,15 %, zone crédible 0,4 à 0,6 % · H4 plancher 0,3 %, zone 0,8 à 1,2 % · Daily plancher 0,6 %, zone 1,2 à 2 %. Un indice, l'or ou une action bougent deux à trois fois plus. Ne descendez pas sous la moitié de votre stop de départ.","vues":["Backtest"]},{"terme":"Durée de tenue comparée","texte":"Un trade qui n'atteint ni son stop ni son objectif reste ouvert indéfiniment et paie le portage. Comparez « sans limite » à une fermeture après N bougies.","vues":["Nouveau scan"]},{"terme":"écartée est inexploitable, pas décevante","texte":"Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.","vues":["Toutes les pages"]},{"terme":"Écarter","texte":"Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.","vues":["Portefeuille"]},{"terme":"Effacer les séries gardées","texte":"Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.","vues":["Journal"]},{"terme":"En euros","texte":"La stratégie est chiffrée à mise fixe : 1 R vaut toujours le même montant, jamais réévalué. Composer la mise sur un capital qui grossit donnerait un total spectaculaire mais inatteignable — les lots devraient grossir dans la même proportion. La détention, elle, est par nature composée : c'est le même prix qui monte.","vues":["Portefeuille"]},{"terme":"Entrée Ligne balayée","texte":"La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.","vues":["Backtest"]},{"terme":"Essayer sans rien fournir","texte":"Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.","vues":["Toutes les pages"]},{"terme":"Et si j'avais simplement détenu ?","texte":"Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.","vues":["Portefeuille"]},{"terme":"Exporter en CSV","texte":"Enregistre la liste complète en CSV, ouvrable dans un tableur","vues":["Toutes les pages"]},{"terme":"Filtres","texte":"Nombre de conditions qui doivent être remplies pour autoriser l'entrée","vues":["Backtest"]},{"terme":"fois Les deux scripts MT5","texte":"Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.","vues":["Mes instruments"]},{"terme":"grille Lancer quand même SIVULA","texte":"Bougies, tarifs, scans et réglages sont propres au compte choisi.","vues":["Toutes les pages"]},{"terme":"Grilles enregistrées Sauver celle-ci","texte":"Recharger cette grille dans les réglages ci-dessus","vues":["Nouveau scan"]},{"terme":"groupe Périodes de la ligne","texte":"Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.","vues":["Nouveau scan"]},{"terme":"hasard qui font aussi bien","texte":"On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.","vues":["Historique"]},{"terme":"La fiche","texte":"Ouvrir la fiche détaillée de cet instrument, sous la grille","vues":["Historique"]},{"terme":"Lancez un premier balayage","texte":"Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.","vues":["Toutes les pages"]},{"terme":"Les deux scripts MT5","texte":"Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.","vues":["Mes instruments"]},{"terme":"Lisez le classement et retenez ce qui tient","texte":"Une configuration validée rejoint votre portefeuille.","vues":["Toutes les pages"]},{"terme":"Mémoire Demander la protection","texte":"Voir ce qui occupe la mémoire et libérer poste par poste","vues":["Toutes les pages"]},{"terme":"n° au coût · mesurées","texte":"Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)","vues":["Historique"]},{"terme":"n° au coût mesurées","texte":"Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.","vues":["Historique"]},{"terme":"Objectif","texte":"Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.","vues":["Backtest"]},{"terme":"Objectifs visés","texte":"Combien de fois votre risque vous cherchez à gagner. 2 = risquer 100 € pour tenter d'en gagner 200. Le scan essaie chaque valeur cochée.","vues":["Nouveau scan"]},{"terme":"Par an","texte":"Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.","vues":["Portefeuille"]},{"terme":"Part détenue","texte":"Part du capital simplement détenue dans la colonne « Les deux ». Le reste est travaillé par la stratégie.","vues":["Portefeuille"]},{"terme":"Période","texte":"Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.","vues":["Backtest"]},{"terme":"Période mesurée","texte":"Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.","vues":["Portefeuille"]},{"terme":"Poids du meilleur","texte":"Part du meilleur trade dans le gain de l'année : au-delà de 25 %, l'année tient sur un coup","vues":["Toutes les pages"]},{"terme":"portage calculé sur la détention","texte":"Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.","vues":["Mes instruments"]},{"terme":"Poser la question à l’assistant","texte":"Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.","vues":["Toutes les pages"]},{"terme":"que vaut 1 R partout","texte":"Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.","vues":["Mes instruments"]},{"terme":"Rendement par unité de creux","texte":"Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.","vues":["Portefeuille"]},{"terme":"Risque","texte":"Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.","vues":["Backtest","Journal"]},{"terme":"Risque par trade","texte":"C'est ce réglage qui convertit les R en pourcentages : à mise fixe, 1 R vaut ce pourcentage du capital de départ, sur chaque trade et sans jamais être réévalué.","vues":["Portefeuille"]},{"terme":"Sans risque","texte":"Le rendement d'un placement sans risque sur la même durée — le plancher que tout le reste doit battre.","vues":["Portefeuille"]},{"terme":"Sauver celle-ci","texte":"Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.","vues":["Nouveau scan"]},{"terme":"Scan en cours","texte":"Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Toutes les pages"]},{"terme":"Scanner","texte":"Ouvre le scanner avec cet instrument seul dans l’univers.","vues":["Mes instruments"]},{"terme":"Sécurisation comparée","texte":"Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.","vues":["Nouveau scan"]},{"terme":"Seuils ·","texte":"Les seuils qui décident quelles configurations s’affichent. Ils ne changent rien au calcul du scan : ce sont ceux de l’entonnoir de l’Historique, et il n’en existe qu’un jeu.","vues":["Nouveau scan"]},{"terme":"Simple détention Reste faire","texte":"Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.","vues":["Portefeuille"]},{"terme":"Simple détention Reste faire","texte":"Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.","vues":["Portefeuille"]},{"terme":"Sortie risque Stop","texte":"À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.","vues":["Backtest"]},{"terme":"Stop suiveur sous","texte":"Replier ou déplier ce cadre","vues":["Historique"]},{"terme":"sur Tout sélectionner Tout désélectionner","texte":"Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\\Files\\Sivula\\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.","vues":["Nouveau scan"]},{"terme":"Tirages","texte":"Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.","vues":["Toutes les pages"]},{"terme":"tirages au hasard","texte":"Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.","vues":["Portefeuille"]},{"terme":"tirages au hasard","texte":"Combien d’entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n’est mesurable. Montez-le et une fiche déjà contrôlée propose de pousser plus loin.","vues":["Historique"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.","vues":["Toutes les pages"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.","vues":["Backtest"]},{"terme":"Tous","texte":"Moyenne équipondérée des instruments du portefeuille","vues":["Toutes les pages"]},{"terme":"Tous les scans","texte":"Affiche l’ensemble des scans en mémoire.","vues":["Toutes les pages"]},{"terme":"Tout ranger dans","texte":"Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.","vues":["Portefeuille"]},{"terme":"TP","texte":"Sorties sur objectif atteint","vues":["Toutes les pages"]},{"terme":"vaut 1 R partout de","texte":"Le capital sur lequel le pourcentage de risque s’applique.","vues":["Mes instruments"]},{"terme":"Verdict","texte":"Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.","vues":["Historique"]},{"terme":"Votre stratégie Acheter et garder","texte":"Le même achat conservé chez votre courtier : spread, commission et portage de chaque nuit déduits.","vues":["Portefeuille"]}]};
+window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l’application, cherchables","vues":["Toutes les pages"]},{"terme":"· /","texte":"Cocher ou décocher tout le groupe","vues":["Nouveau scan"]},{"terme":"×","texte":"Cliquez pour retirer cette valeur","vues":["Nouveau scan"]},{"terme":"×","texte":"Un escalier = un trade, avec ses paliers dans l'ordre. Cliquez pour le retirer.","vues":["Nouveau scan"]},{"terme":"À ranger","texte":"Remet la configuration validée et sa place dans les portefeuilles telles qu'elles étaient avant le dernier retrait.","vues":["Portefeuille"]},{"terme":"Adopter","texte":"Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement","vues":["Toutes les pages"]},{"terme":"Backtest","texte":"Charger cette configuration dans le Backtest et la relancer","vues":["Historique"]},{"terme":"BE","texte":"Sorties sur stop déplacé ; entre parenthèses les stops sautés par un écart de cotation","vues":["Toutes les pages"]},{"terme":"bougies H1 Déposer un relevé","texte":"Enregistre les noms des instruments sans bougies, un par ligne.","vues":["Mes instruments"]},{"terme":"Capital alloué au court terme","texte":"La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».","vues":["Journal"]},{"terme":"Capital immobilisé","texte":"Part du temps où le capital est réellement en position. Le reste du temps, il est disponible pour autre chose.","vues":["Portefeuille"]},{"terme":"Ce qu'il fallait encaisser","texte":"La pire perte qu'il fallait traverser sans abandonner. Pour la stratégie, elle est déduite de sa plus longue série de pertes d'affilée — pas d'une courbe d'équité datée, que le scan ne conserve pas : le vrai creux est donc un peu plus profond. La détention, elle, n'a ni stop ni objectif : elle subit le creux du marché en entier.","vues":["Portefeuille"]},{"terme":"Ce que ça rend en tout","texte":"Ce que le capital devient sur toute la période, gains réinvestis.","vues":["Portefeuille"]},{"terme":"Cible de Tout ranger","texte":"Destination du bouton « Tout ranger dans… ».","vues":["Portefeuille"]},{"terme":"Classer par","texte":"Classer les lignes par ce critère","vues":["Historique"]},{"terme":"combinaisons Lancer le scan","texte":"Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Nouveau scan"]},{"terme":"Condition de la ligne NON restaurée","texte":"La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.","vues":["Backtest"]},{"terme":"Conditions comparées","texte":"Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.","vues":["Nouveau scan"]},{"terme":"configs validées Tirages par configuration","texte":"Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.","vues":["Historique"]},{"terme":"Contrôle du hasard","texte":"On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.","vues":["Historique"]},{"terme":"Contrôler","texte":"Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.","vues":["Historique"]},{"terme":"court la fin du scan","texte":"Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.","vues":["Nouveau scan"]},{"terme":"Coût réel","texte":"Spread, commission et portage tels que votre relevé les chiffre, ramenés à la part de risque qu'ils emportent.","vues":["Portefeuille"]},{"terme":"Creux","texte":"Pire creux de l'année, en R","vues":["Toutes les pages"]},{"terme":"Creux redouté","texte":"Creux à partir duquel vous considérez avoir perdu le contrôle. La dernière case donne la fréquence à laquelle un tirage le dépasse.","vues":["Portefeuille"]},{"terme":"de de capital, stop posé","texte":"Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.","vues":["Mes instruments"]},{"terme":"de la ligne NON restaurée","texte":"Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.","vues":["Backtest"]},{"terme":"Déposez le relevé de symboles de votre courtier","texte":"Un fichier CSV, lu dans votre navigateur.","vues":["Toutes les pages"]},{"terme":"Déposez les bougies H1 de vos instruments","texte":"Vous pouvez en déposer plusieurs à la fois.","vues":["Toutes les pages"]},{"terme":"Distance du stop","texte":"À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.","vues":["Nouveau scan"]},{"terme":"Distance du stop suiveur, en % sous le plus haut ?","texte":"Sous l'amplitude médiane d'une bougie, la sortie dépend du chemin parcouru À L'INTÉRIEUR de la bougie, que vos données ne contiennent pas. Ordres de grandeur sur une paire de devises : H1 plancher 0,15 %, zone crédible 0,4 à 0,6 % · H4 plancher 0,3 %, zone 0,8 à 1,2 % · Daily plancher 0,6 %, zone 1,2 à 2 %. Un indice, l'or ou une action bougent deux à trois fois plus. Ne descendez pas sous la moitié de votre stop de départ.","vues":["Backtest"]},{"terme":"Durée de tenue comparée","texte":"Un trade qui n'atteint ni son stop ni son objectif reste ouvert indéfiniment et paie le portage. Comparez « sans limite » à une fermeture après N bougies.","vues":["Nouveau scan"]},{"terme":"écartée est inexploitable, pas décevante","texte":"Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.","vues":["Toutes les pages"]},{"terme":"Écarter","texte":"Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.","vues":["Portefeuille"]},{"terme":"Effacer les séries gardées","texte":"Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.","vues":["Journal"]},{"terme":"En euros","texte":"La stratégie est chiffrée à mise fixe : 1 R vaut toujours le même montant, jamais réévalué. Composer la mise sur un capital qui grossit donnerait un total spectaculaire mais inatteignable — les lots devraient grossir dans la même proportion. La détention, elle, est par nature composée : c'est le même prix qui monte.","vues":["Portefeuille"]},{"terme":"Entrée Ligne balayée","texte":"La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.","vues":["Backtest"]},{"terme":"Essayer sans rien fournir","texte":"Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.","vues":["Toutes les pages"]},{"terme":"Et si j'avais simplement détenu ?","texte":"Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.","vues":["Portefeuille"]},{"terme":"États-Unis Europe Asie Mettre jour","texte":"Replier ou déplier cette section","vues":["Marché","Toutes les pages"]},{"terme":"Exporter en CSV","texte":"Enregistre la liste complète en CSV, ouvrable dans un tableur","vues":["Toutes les pages"]},{"terme":"Filtres","texte":"Nombre de conditions qui doivent être remplies pour autoriser l'entrée","vues":["Backtest"]},{"terme":"fois Les deux scripts MT5","texte":"Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.","vues":["Mes instruments"]},{"terme":"grille Lancer quand même SIVULA","texte":"Bougies, tarifs, scans et réglages sont propres au compte choisi.","vues":["Toutes les pages"]},{"terme":"Grilles enregistrées Sauver celle-ci","texte":"Recharger cette grille dans les réglages ci-dessus","vues":["Nouveau scan"]},{"terme":"groupe Périodes de la ligne","texte":"Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.","vues":["Nouveau scan"]},{"terme":"hasard qui font aussi bien","texte":"On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.","vues":["Historique"]},{"terme":"La fiche","texte":"Ouvrir la fiche détaillée de cet instrument, sous la grille","vues":["Historique"]},{"terme":"Lancez un premier balayage","texte":"Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.","vues":["Toutes les pages"]},{"terme":"Les deux scripts MT5","texte":"Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.","vues":["Mes instruments"]},{"terme":"Lisez le classement et retenez ce qui tient","texte":"Une configuration validée rejoint votre portefeuille.","vues":["Toutes les pages"]},{"terme":"Mémoire Demander la protection","texte":"Voir ce qui occupe la mémoire et libérer poste par poste","vues":["Toutes les pages"]},{"terme":"Mesurer une config par régime","texte":"Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.","vues":["Marché"]},{"terme":"n° au coût · mesurées","texte":"Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)","vues":["Historique"]},{"terme":"n° au coût mesurées","texte":"Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.","vues":["Historique"]},{"terme":"Objectif","texte":"Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.","vues":["Backtest"]},{"terme":"Objectifs visés","texte":"Combien de fois votre risque vous cherchez à gagner. 2 = risquer 100 € pour tenter d'en gagner 200. Le scan essaie chaque valeur cochée.","vues":["Nouveau scan"]},{"terme":"Par an","texte":"Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.","vues":["Portefeuille"]},{"terme":"Part détenue","texte":"Part du capital simplement détenue dans la colonne « Les deux ». Le reste est travaillé par la stratégie.","vues":["Portefeuille"]},{"terme":"Période","texte":"Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.","vues":["Backtest"]},{"terme":"Période mesurée","texte":"Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.","vues":["Portefeuille"]},{"terme":"Poids du meilleur","texte":"Part du meilleur trade dans le gain de l'année : au-delà de 25 %, l'année tient sur un coup","vues":["Toutes les pages"]},{"terme":"portage calculé sur la détention","texte":"Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.","vues":["Mes instruments"]},{"terme":"Poser la question à l’assistant","texte":"Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.","vues":["Toutes les pages"]},{"terme":"que vaut 1 R partout","texte":"Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.","vues":["Mes instruments"]},{"terme":"Rendement par unité de creux","texte":"Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.","vues":["Portefeuille"]},{"terme":"Risque","texte":"Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.","vues":["Backtest","Journal"]},{"terme":"Risque par trade","texte":"C'est ce réglage qui convertit les R en pourcentages : à mise fixe, 1 R vaut ce pourcentage du capital de départ, sur chaque trade et sans jamais être réévalué.","vues":["Portefeuille"]},{"terme":"Sans risque","texte":"Le rendement d'un placement sans risque sur la même durée — le plancher que tout le reste doit battre.","vues":["Portefeuille"]},{"terme":"Sauver celle-ci","texte":"Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.","vues":["Nouveau scan"]},{"terme":"Scan en cours","texte":"Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Toutes les pages"]},{"terme":"Scanner","texte":"Ouvre le scanner avec cet instrument seul dans l’univers.","vues":["Mes instruments"]},{"terme":"Sécurisation comparée","texte":"Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.","vues":["Nouveau scan"]},{"terme":"Seuils ·","texte":"Les seuils qui décident quelles configurations s’affichent. Ils ne changent rien au calcul du scan : ce sont ceux de l’entonnoir de l’Historique, et il n’en existe qu’un jeu.","vues":["Nouveau scan"]},{"terme":"Simple détention Reste faire","texte":"Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.","vues":["Portefeuille"]},{"terme":"Simple détention Reste faire","texte":"Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.","vues":["Portefeuille"]},{"terme":"Sortie risque Stop","texte":"À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.","vues":["Backtest"]},{"terme":"Stop suiveur sous","texte":"Replier ou déplier ce cadre","vues":["Historique"]},{"terme":"sur Tout sélectionner Tout désélectionner","texte":"Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\\Files\\Sivula\\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.","vues":["Nouveau scan"]},{"terme":"Tirages","texte":"Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.","vues":["Toutes les pages"]},{"terme":"tirages au hasard","texte":"Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.","vues":["Portefeuille"]},{"terme":"tirages au hasard","texte":"Combien d’entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n’est mesurable. Montez-le et une fiche déjà contrôlée propose de pousser plus loin.","vues":["Historique"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.","vues":["Toutes les pages"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.","vues":["Backtest"]},{"terme":"Tous","texte":"Moyenne équipondérée des instruments du portefeuille","vues":["Toutes les pages"]},{"terme":"Tous les scans","texte":"Affiche l’ensemble des scans en mémoire.","vues":["Toutes les pages"]},{"terme":"Tout ranger dans","texte":"Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.","vues":["Portefeuille"]},{"terme":"TP","texte":"Sorties sur objectif atteint","vues":["Toutes les pages"]},{"terme":"vaut 1 R partout de","texte":"Le capital sur lequel le pourcentage de risque s’applique.","vues":["Mes instruments"]},{"terme":"Verdict","texte":"Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.","vues":["Historique"]},{"terme":"Votre stratégie Acheter et garder","texte":"Le même achat conservé chez votre courtier : spread, commission et portage de chaque nuit déduits.","vues":["Portefeuille"]}]};
 </script>
 
 <meta charset="utf-8">
@@ -1427,60 +1427,121 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
     </sc-if>
 
 
-      <div class="seg" style="align-self:flex-start">
-        <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneUs }}" onChange="{{ setZoneUs }}">États-Unis</label>
-        <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneEurope }}" onChange="{{ setZoneEurope }}">Europe</label>
-        <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneAsie }}" onChange="{{ setZoneAsie }}">Asie</label>
-      </div>
-
       <sc-if value="{{ zoneMesuree }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:30px">
-          <section class="card blueprint" style="padding:24px 26px;gap:20px">
+          <!--
+            UN VERDICT, PUIS LES PREUVES.
+
+            La section empilait deux titres de 28 px — « État du marché · zone » puis
+            « Mesuré sur vos exports, pas recopié » — pour dire la même chose, suivis d'un
+            paragraphe qui ANNONÇAIT ce que la page allait montrer. Une phrase qui dit ce
+            que les chiffres du jour disent remplace les trois.
+
+            Et « 62 sur 100 », est-ce haut ou bas ? Sans point de comparaison dans le
+            temps, le chiffre ne décidait rien. La frise le donne, et elle est calculable
+            depuis les bougies déjà chargées.
+          -->
+          <section class="card blueprint" style="padding:0;gap:0">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start">
-              <div>
-                <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">État du marché · {{ zoneNom }}</div>
-                <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Mesuré sur vos exports, pas recopié</h3>
-                <p class="card-body" style="margin:8px 0 0;max-width:74ch">Combien de titres de la zone tiennent au-dessus de leur moyenne 200 jours, ce qu'a fait la médiane sur vingt séances, et comment se comportent les indices. Aucun chiffre n'est affiché avant le calcul.</p>
-                <button type="button" onClick="{{ basculerMarc }}" title="Replier ou déplier cette section" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;white-space:nowrap;color:inherit;text-align:left">{{ chevronMarc }}</button>
+            <div style="background:var(--color-accent-100);padding:18px 22px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:38ch;display:flex;flex-direction:column;gap:5px">
+                <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase" class="text-muted">{{ zEnTete }}</span>
+                <span style="font-family:var(--font-heading);font-size:27px;line-height:1.1;letter-spacing:-.005em">{{ zVerdict }}</span>
+                <span style="font-size:13px;line-height:1.55;max-width:82ch">{{ zSousTitre }}</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-                <span class="tag {{ zTag }}">{{ zLabel }}</span>
-                <button class="btn btn-primary" type="button" onClick="{{ calcZone }}">Mettre à jour</button>
-                <span style="font-size:12px" class="text-muted">Dernier calcul : {{ zDate }}</span>
+                <div class="seg">
+                  <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneUs }}" onChange="{{ setZoneUs }}">États-Unis <span style="font-size:9px;opacity:.7">{{ ongUsTxt }}</span></label>
+                  <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneEurope }}" onChange="{{ setZoneEurope }}">Europe <span style="font-size:9px;opacity:.7">{{ ongEuropeTxt }}</span></label>
+                  <label class="seg-opt"><input type="radio" name="zoneMarche" checked="{{ zoneAsie }}" onChange="{{ setZoneAsie }}">Asie <span style="font-size:9px;opacity:.7">{{ ongAsieTxt }}</span></label>
+                </div>
+                <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ calcZone }}">Mettre à jour</button>
+                <button type="button" onClick="{{ basculerMarc }}" title="Replier ou déplier cette section" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;white-space:nowrap;color:inherit">{{ chevronMarc }}</button>
               </div>
             </div>
+
             <sc-if value="{{ ouvMarc }}" hint-placeholder-val="{{ true }}">
             <sc-if value="{{ zoneEnCours }}" hint-placeholder-val="{{ false }}">
-              <p style="margin:0;font-size:13px" class="text-muted">Calcul en cours — chaque titre est rechargé et remesuré.</p>
+              <p style="margin:0;padding:14px 22px;font-size:13px" class="text-muted">Calcul en cours — chaque titre est rechargé et remesuré.</p>
             </sc-if>
             <sc-if value="{{ aZone }}" hint-placeholder-val="{{ false }}">
-              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
-                <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-                  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                  <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Score de régime</div>
-                  <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ zScore }}</div>
-                  <div style="font-size:12px" class="text-muted">sur 100 · {{ zN }} instruments</div>
+              <div style="padding:16px 22px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider)">
+                <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Le score depuis 2020</span>
+                  <span style="font-size:11px" class="text-muted">{{ friseTxt }}</span>
                 </div>
-                <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-                  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                  <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Au-dessus de la MM200</div>
-                  <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ zBreadth }}</div>
-                  <div style="font-size:12px" class="text-muted">{{ zHausse }} instruments</div>
+                <sc-if value="{{ aFrise }}" hint-placeholder-val="{{ true }}">
+                  <!--
+                    Deux pièges de rendu : pas de `preserveAspectRatio="none"`, qui écrase
+                    le tracé et transforme le point en ellipse ; et le dernier point rentre
+                    à 986, pas à 1000, sinon le bord le coupe en deux.
+                  -->
+                  <svg viewBox="0 0 1000 90" style="width:100%;height:auto;display:block">
+                    <line x1="14" y1="45" x2="986" y2="45" stroke="var(--color-divider)" stroke-dasharray="3 4"></line>
+                    <polyline points="{{ frisePath }}" fill="none" stroke="var(--color-accent-700)" stroke-width="1.6" vector-effect="non-scaling-stroke"></polyline>
+                    <circle cx="{{ friseCx }}" cy="{{ friseCy }}" r="3.4" fill="var(--color-accent-900)"></circle>
+                  </svg>
+                  <div style="position:relative;height:13px">
+                    <sc-for list="{{ friseAnnees }}" as="fa" hint-placeholder-count="7">
+                      <span style="position:absolute;left:{{ fa.x }}px;transform:translateX(-50%);font-size:10px" class="text-muted">{{ fa.an }}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+
+              <!--
+                TROIS VALEURS EN LIGNE, ET LA VEILLE À CÔTÉ. Le score a quitté les cases :
+                il est devenu le verdict. Les trois qui restent disent le mouvement, ce
+                qu'un instantané ne dit pas.
+              -->
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--color-divider)">
+                <div style="padding:13px 22px;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Au-dessus de la MM200</span>
+                  <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap">
+                    <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.1">{{ zBreadth }}</strong>
+                    <span style="font-size:11px" class="text-muted">{{ zVeilleBreadth }}</span>
+                  </div>
+                  <span style="font-size:11px" class="text-muted">{{ zHausse }} instruments</span>
                 </div>
-                <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-                  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                  <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Médiane 20 séances</div>
-                  <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ zMedian }}</div>
-                  <div style="font-size:12px" class="text-muted">variation du titre médian</div>
+                <div style="padding:13px 22px;display:flex;flex-direction:column;gap:2px;border-inline-start:1px solid var(--color-divider)">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Médiane 20 séances</span>
+                  <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap">
+                    <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.1">{{ zMedian }}</strong>
+                    <span style="font-size:11px" class="text-muted">{{ zVeilleMedian }}</span>
+                  </div>
+                  <span style="font-size:11px" class="text-muted">variation du titre médian</span>
                 </div>
-                <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:4px">
-                  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                  <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Indices tenus</div>
-                  <div style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ zIndices }}</div>
-                  <div style="font-size:12px" class="text-muted">au-dessus de leur MM200</div>
+                <div style="padding:13px 22px;display:flex;flex-direction:column;gap:2px;border-inline-start:1px solid var(--color-divider)">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Indices tenus</span>
+                  <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap">
+                    <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.1">{{ zIndices }}</strong>
+                    <span style="font-size:11px" class="text-muted">{{ zVeilleIndices }}</span>
+                  </div>
+                  <span style="font-size:11px" class="text-muted">au-dessus de leur MM200</span>
                 </div>
               </div>
+
+              <div style="padding:11px 22px;display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider)">
+                <span style="font-size:11px;line-height:1.5" class="text-muted">C’est un indicateur de VOTRE univers, pas un indice de marché : avec quatre titres d’énergie exportés, le secteur pèse ce que vos exports lui donnent. Mesuré sur {{ zN }} instruments, {{ zBougie }}.</span>
+                <sc-if value="{{ aPerimees }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ perimeesTxt }}</span>
+                </sc-if>
+              </div>
+
+              <!--
+                LA PHRASE QUI RELIE LA PAGE AU RESTE DE L'APPLICATION. Rien ne faisait ce
+                rapprochement : la page mesurait le marché et s'arrêtait là.
+              -->
+              <sc-if value="{{ aLien }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--color-neutral-100);padding:14px 22px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--color-divider)">
+                  <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce que ça change pour vos lignes</span>
+                  <span style="font-size:13px;line-height:1.55;max-width:96ch"><strong>{{ zLienTxt }}</strong> {{ zLienSuite }}</span>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:10px" onClick="{{ voirLesLignes }}">{{ zLienBouton }}</button>
+                    <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:10px" onClick="{{ mesurerParRegime }}" title="Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.">Mesurer une config par régime</button>
+                  </div>
+                </div>
+              </sc-if>
             </sc-if>
             </sc-if>
           </section>
@@ -12225,6 +12286,9 @@ GROUPES = {
     const actions = this.essai ? this.DEMO : Object.keys(carte);
     const indices = this.essai ? [] : this.ZONES[z].indices;
     const mesures = [];
+    // les séries complètes, gardées le temps du calcul : elles servent à la frise du
+    // score, qui se calcule une fois ici et se relit ensuite
+    const series = [];
     for (const sym of [...actions, ...indices]) {
       await this.charger(sym);
       const df = this.dfs[sym];
@@ -12232,13 +12296,36 @@ GROUPES = {
       const d1 = M.resampler(df, 'D1');
       if (d1.n < 205) continue;
       const last = d1.c[d1.n - 1];
-      const m200 = M.sma(d1.c, 200)[d1.n - 1];
+      const sma = M.sma(d1.c, 200);
+      const m200 = sma[d1.n - 1];
       const v20 = d1.n > 20 ? (last / d1.c[d1.n - 21] - 1) * 100 : NaN;
       mesures.push({ sym, secteur: carte[sym] || 'Indice',
-        auDessus: m200 ? last > m200 : false, v20, indice: indices.includes(sym) });
+        auDessus: m200 ? last > m200 : false, v20, indice: indices.includes(sym),
+        // % au-dessus ou en dessous de la MM200, et l'heure de la dernière bougie :
+        // sans elle, une série figée depuis trois semaines passe pour un titre stable
+        vsM200: m200 ? (last / m200 - 1) * 100 : NaN,
+        dernier: df.t[df.n - 1] });
+      series.push({ sym, t: d1.t, c: d1.c, n: d1.n, sma, indice: indices.includes(sym) });
       await new Promise((r) => setTimeout(r, 0));
     }
     if (!mesures.length) { this.setState({ regimeEnCours: false }); return; }
+    // ————— LES SÉRIES PÉRIMÉES SORTENT DU CALCUL —————
+    //
+    // Une série arrêtée depuis trois semaines garde son dernier cours : elle compte donc
+    // comme un titre stable, donc au-dessus de sa MM200 si elle l'était le jour de l'arrêt.
+    // Elle gonfle la largeur du marché, et le marché paraît meilleur qu'il n'est. Au-delà
+    // de 48 h de retard sur la série la plus fraîche, elle est écartée — et on dit
+    // laquelle, avec sa dernière date.
+    const tFin = Math.max(...mesures.map((m) => m.dernier || 0));
+    const RETARD = 48 * 3600000;
+    const perimees = mesures.filter((m) => tFin - (m.dernier || 0) > RETARD)
+      .map((m) => ({ sym: m.sym, date: m.dernier }));
+    const perimSet = new Set(perimees.map((x) => x.sym));
+    const vivantes = mesures.filter((m) => !perimSet.has(m.sym));
+    if (!vivantes.length) { this.setState({ regimeEnCours: false }); return; }
+    mesures.length = 0;
+    for (const m of vivantes) mesures.push(m);
+    const seriesVives = series.filter((x) => !perimSet.has(x.sym));
     const fr1 = (x) => (Number.isNaN(x) ? '—' : x.toFixed(1).replace('.', ','));
     const sg1 = (x) => (Number.isNaN(x) ? '—' : (x >= 0 ? '+ ' : '− ') + Math.abs(x).toFixed(2).replace('.', ',') + ' %');
     const au = mesures.filter((m) => m.auDessus).length;
@@ -12261,6 +12348,10 @@ GROUPES = {
       const tri = [...l].sort((a, b) => (b.v20 || 0) - (a.v20 || 0));
       const nom2 = (x) => x.sym + ' ' + sg1(x.v20);
       return { nom, n: l.length, v20: sg1(moy), moy,
+        // la part au-dessus de la MM200, en clair : c'est elle qui encode la teinte de la
+        // case et qui décide de l'ordre, du plus tenu au plus faible
+        part: dessus / l.length,
+        syms: l.map((x) => x.sym),
         tete: tri.slice(0, 3).map(nom2).join(' · '),
         queue: tri.length > 3 ? 'En retrait : ' + tri.slice(-2).map(nom2).join(' · ') : 'Tous les titres suivis figurent ci-dessus',
         largeur: dessus + ' / ' + l.length,
@@ -12268,9 +12359,61 @@ GROUPES = {
         tag: moy > 0 ? 'tag-accent' : 'tag-outline',
         etat: moy > 0 ? 'Porteur' : 'En retrait' };
     }).sort((a, b) => b.moy - a.moy);
+    // ————— LA FRISE : LE SCORE JOUR PAR JOUR, CALCULÉ UNE FOIS —————
+    //
+    // « 62 sur 100 », est-ce haut ou bas ? Sans point de comparaison dans le temps, le
+    // chiffre ne décide rien. Il est calculable depuis les bougies déjà chargées : on le
+    // fait ici, une fois, et la page relit la série au lieu de la refaire à chaque rendu.
+    const parJour = new Map();
+    for (const sr of seriesVives) {
+      for (let i = 200; i < sr.n; i++) {
+        const j = Math.floor(sr.t[i] / 86400000);
+        let e = parJour.get(j);
+        if (!e) { e = { au: 0, n: 0, ia: 0, ni: 0, v: [] }; parJour.set(j, e); }
+        const dessus = sr.sma[i] ? sr.c[i] > sr.sma[i] : false;
+        e.n++; if (dessus) e.au++;
+        if (sr.indice) { e.ni++; if (dessus) e.ia++; }
+        if (i >= 20 && sr.c[i - 20]) e.v.push((sr.c[i] / sr.c[i - 20] - 1) * 100);
+      }
+    }
+    const nMax = Math.max(...[...parJour.values()].map((e) => e.n));
+    const jours = [...parJour.keys()].sort((a2, b2) => a2 - b2)
+      // un jour où moins de 60 % de l'univers a des bougies ne mesure pas le même marché
+      .filter((j) => parJour.get(j).n >= nMax * 0.6);
+    const medDe = (l) => {
+      if (!l.length) return NaN;
+      const t = [...l].sort((x, y) => x - y);
+      return t.length % 2 ? t[(t.length - 1) / 2] : (t[t.length / 2 - 1] + t[t.length / 2]) / 2;
+    };
+    const scoreDe = (e) => Math.round(e.n
+      ? (e.au / e.n * 100) * 0.6 + (e.ni ? e.ia / e.ni * 100 : e.au / e.n * 100) * 0.4
+      : 0);
+    const hist = jours.map((j) => [j, scoreDe(parJour.get(j))]);
+    // la veille : c'est elle qui dit le MOUVEMENT, et trois valeurs sans mouvement ne
+    // disent rien de plus qu'un instantané
+    const veille = (() => {
+      if (jours.length < 2) return null;
+      const e = parJour.get(jours[jours.length - 2]);
+      return { score: scoreDe(e), breadth: fr1(e.au / e.n * 100) + ' %',
+        median: sg1(medDe(e.v)),
+        indices: e.ni ? e.ia + ' / ' + e.ni : '—' };
+    })();
+    const scoresH = hist.map((x) => x[1]);
+    const medHist = Math.round(medDe(scoresH));
+    const bas = hist.reduce((a2, x) => (a2 === null || x[1] < a2[1] ? x : a2), null);
     this.setState({ regimeEnCours: false, regimes: { ...(this.state.regimes || {}), [z]: {
       score, n: mesures.length,
       zone: z, date: new Date().toISOString(),
+      // L'HEURE DE LA DERNIÈRE BOUGIE, pas celle du calcul : si l'export a trois semaines,
+      // le score affiché est celui d'il y a trois semaines.
+      tFin, perimees,
+      hist, medHist, veille,
+      bas: bas ? { jour: bas[0], score: bas[1] } : null,
+      // les instruments de l'univers, nommés : c'est le seul niveau où le régime devient
+      // actionnable — un score de 62 ne dit pas quoi faire, « XOM.US est passé sous sa
+      // MM200 » si
+      titres: mesures.filter((m) => !m.indice).map((m) => ({ sym: m.sym, secteur: m.secteur,
+        v20: m.v20, vsM200: m.vsM200, dernier: m.dernier })),
       label: score >= 65 ? 'RISK-ON' : score >= 40 ? 'Neutre' : 'RISK-OFF',
       tag: score >= 65 ? 'tag-accent' : score >= 40 ? 'tag-neutral' : 'tag-outline',
       breadth: fr1(breadth) + ' %', median: sg1(med),
@@ -15774,6 +15917,54 @@ GROUPES = {
         })),
         supprimer: () => this.supprimerRun(r.id),
       }; }),
+      // L'HEURE DE LA DERNIÈRE BOUGIE DANS L'ONGLET DE CHAQUE ZONE : l'Asie clôture à
+      // 08:00, ce n'est pas un retard. Sans elle, trois zones aux heures différentes
+      // paraissent trois zones dont deux sont en retard.
+      ...(() => {
+        const h = (z) => {
+          const r = (s.regimes || {})[z];
+          if (!r || !r.tFin) return '';
+          const d = new Date(r.tFin);
+          return String(d.getUTCHours()).padStart(2, '0') + ':'
+            + String(d.getUTCMinutes()).padStart(2, '0');
+        };
+        return { ongUsTxt: h('us'), ongEuropeTxt: h('europe'), ongAsieTxt: h('asie') };
+      })(),
+      // ————— CE QUE LE RÉGIME CHANGE POUR VOS LIGNES —————
+      //
+      // Rien dans la page ne faisait ce rapprochement : elle mesurait le marché et
+      // s'arrêtait là. C'est pourtant la seule raison de la regarder.
+      ...(() => {
+        const rz = (s.regimes || {})[s.zoneMarche] || null;
+        const lignes = this.normValides(s.valides);
+        const nF = lignes.filter((v) => (v._reg && v._reg.btMtf)
+          || /tendance/i.test(String(v.filtres || ''))).length;
+        if (!rz || !lignes.length) {
+          return { aLien: false, zLienTxt: '', zLienSuite: '', zLienBouton: '' };
+        }
+        const ecart = rz.score - (rz.medHist ?? rz.score);
+        const sens = ecart >= 5 ? 'leur est plus favorable que la moyenne de leur historique'
+          : ecart <= -5 ? 'leur est moins favorable que la moyenne de leur historique'
+          : 'est comparable à la moyenne de leur historique';
+        return {
+          aLien: true,
+          zLienTxt: 'Vos ' + this.pl(lignes.length, 'ligne rangée a été mesurée', 'lignes rangées ont été mesurées')
+            + ' sur des années à ' + (rz.medHist ?? '—') + ' de score médian — le régime actuel, '
+            + rz.score + ', ' + sens + '.',
+          // Ce que la ligne fait vraiment, pas un seuil de score qu'aucun calcul n'emploie :
+          // un filtre de tendance porte sur le COURS de l'instrument, pas sur ce score.
+          zLienSuite: nF
+            ? (nF === 1 ? 'L\u2019une d\u2019elles porte' : nF + ' d\u2019entre elles portent')
+              + ' un filtre de tendance : elles ne prennent aucune entrée quand le cours passe sous sa ligne. '
+              + (rz.bas ? 'Dans un régime aussi bas que ' + new Date(rz.bas.jour * 86400000)
+                .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+                + ' (score ' + rz.bas.score + '), elles n\u2019auraient pas tradé.' : '')
+            : 'Aucune ne porte de filtre de tendance : elles prennent leurs entrées quel que soit le régime.',
+          zLienBouton: 'Voir ' + this.pl(lignes.length, 'la ligne', 'les ' + lignes.length + ' lignes'),
+          voirLesLignes: () => this.setState({ vue: 'portefeuille' }, () => this.ecrireSession()),
+          mesurerParRegime: () => this.setState({ vue: 'backtest' }, () => this.ecrireSession()),
+        };
+      })(),
       zoneUs: s.zoneMarche === 'us', zoneEurope: s.zoneMarche === 'europe', zoneAsie: s.zoneMarche === 'asie',
       setZoneUs: () => this.setState({ zoneMarche: 'us' }, () => { this.ecrireSession(); if (!(this.state.regimes || {}).us) this.calcRegime('us'); }),
       setZoneEurope: () => this.setState({ zoneMarche: 'europe' }, () => { this.ecrireSession(); if (!(this.state.regimes || {}).europe) this.calcRegime('europe'); }),
@@ -15785,12 +15976,105 @@ GROUPES = {
         const rz = (s.regimes || {})[s.zoneMarche] || null;
         const dz = rz && rz.date ? new Date(rz.date).toLocaleDateString('fr-FR',
           { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+        // ————— L'HEURE DE LA BOUGIE, PAS CELLE DU CALCUL —————
+        //
+        // « Dernier calcul : 5 septembre » ne dit rien de l'âge des données : si l'export
+        // a trois semaines, le score affiché est celui d'il y a trois semaines. Aucun
+        // chiffre de marché ne s'affiche donc sans l'heure de la bougie qui l'a produit.
+        const heure = (ms) => {
+          if (!ms) return '—';
+          const d = new Date(ms);
+          const auj = new Date();
+          const memeJour = d.toDateString() === auj.toDateString();
+          const hh = String(d.getUTCHours()).padStart(2, '0') + ':'
+            + String(d.getUTCMinutes()).padStart(2, '0');
+          return memeJour ? 'aujourd\u2019hui ' + hh
+            : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' ' + hh;
+        };
+        const moisAnnee = (j) => new Date(j * 86400000)
+          .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        // ————— LE VERDICT, calculé depuis le score et la médiane —————
+        //
+        // La section empilait deux titres de 28 px pour dire la même chose, puis un
+        // paragraphe qui ANNONÇAIT ce que la page allait montrer. Une phrase qui dit ce
+        // que les chiffres du jour disent remplace les trois.
+        const med = rz ? Number(String(rz.median).replace(/[^\d,.-]/g, '').replace(',', '.')) : NaN;
+        const medNeg = rz && /\u2212|-/.test(String(rz.median));
+        const medVal = Number.isFinite(med) ? (medNeg ? -Math.abs(med) : Math.abs(med)) : NaN;
+        const sc = rz ? rz.score : null;
+        const verdict = !rz ? 'Zone non mesurée'
+          : sc >= 65 && medVal > 0 ? 'Hausse installée, et elle s\u2019élargit'
+          : sc >= 65 ? 'Hausse installée, mais qui s\u2019essouffle'
+          : sc >= 40 && medVal > 0 ? 'Marché partagé, qui reprend des couleurs'
+          : sc >= 40 ? 'Marché partagé, et qui se tasse'
+          : medVal > 0 ? 'Marché bas, mais qui rebondit'
+          : 'Marché bas, et qui continue de baisser';
+        const parts = rz ? String(rz.breadth).replace(',', '.') : '';
+        const pct = rz ? parseFloat(parts) : NaN;
+        // l'accord suit le sujet : « un titre sur deux tient au-dessus de SA moyenne »,
+        // « deux tiers des titres tiennent au-dessus de LEUR moyenne »
+        const tiers = !Number.isFinite(pct) ? ''
+          : pct >= 63 && pct <= 70 ? 'Deux tiers des titres tiennent au-dessus de leur moyenne 200 jours'
+          : pct >= 74 ? 'Trois titres sur quatre tiennent au-dessus de leur moyenne 200 jours'
+          : pct >= 46 && pct <= 54 ? 'Un titre sur deux tient au-dessus de sa moyenne 200 jours'
+          : pct <= 26 ? 'Un titre sur quatre seulement tient au-dessus de sa moyenne 200 jours'
+          : Math.round(pct) + ' % des titres tiennent au-dessus de leur moyenne 200 jours';
+        const sousTitre = !rz ? ''
+          : rz.score + ' sur 100. ' + tiers + ', '
+            + (medVal > 0 ? 'et' : 'mais') + ' le titre médian a '
+            + (medVal >= 0 ? 'gagné ' : 'perdu ')
+            + Math.abs(medVal).toFixed(1).replace('.', ',') + ' % en vingt séances : '
+            + (medVal > 0
+              ? 'la hausse gagne des valeurs par rapport au mois dernier.'
+              : 'la hausse repose sur moins de valeurs qu\u2019il y a un mois.');
+        // ————— LA FRISE —————
+        //
+        // Pas de `preserveAspectRatio="none"` : il écrase le tracé et transforme le point
+        // en ellipse. Et le dernier point rentre à 986, pas à 1000, sinon le bord le coupe
+        // en deux.
+        const H = rz && rz.hist && rz.hist.length > 1 ? rz.hist : null;
+        const frise = (() => {
+          if (!H) return { aFrise: false, frisePath: '', friseAnnees: [], friseCx: '986', friseCy: '45' };
+          const j0 = H[0][0], j1 = H[H.length - 1][0];
+          const X = (j) => 14 + (j - j0) / Math.max(1, j1 - j0) * (986 - 14);
+          const Y = (v) => 78 - (v / 100) * 66;
+          const pts = H.map(([j, v]) => X(j).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
+          const annees = [];
+          let anVue = null;
+          for (const [j] of H) {
+            const an = new Date(j * 86400000).getUTCFullYear();
+            if (an !== anVue) { anVue = an; annees.push({ an: String(an), x: X(j).toFixed(1) }); }
+          }
+          return { aFrise: true, frisePath: pts, friseAnnees: annees,
+            friseCx: X(j1).toFixed(1), friseCy: Y(H[H.length - 1][1]).toFixed(1) };
+        })();
         return {
           aZone: !!rz, zoneEnCours: !!s.regimeEnCours && s.regimeZone === s.zoneMarche,
           zScore: rz ? rz.score : '—', zLabel: rz ? rz.label : 'Non mesuré', zTag: rz ? rz.tag : 'tag-outline',
           zBreadth: rz ? rz.breadth : '—', zMedian: rz ? rz.median : '—',
           zIndices: rz ? rz.indices : '—', zHausse: rz ? rz.hausse : '—', zN: rz ? rz.n : '—',
           zSecteurs: rz ? rz.secteurs : [], zDate: dz,
+          zVerdict: verdict, zSousTitre: sousTitre,
+          zBougie: rz ? 'bougies jusqu\u2019à ' + heure(rz.tFin) : 'aucune bougie mesurée',
+          zEnTete: rz ? (this.ZONES[s.zoneMarche] || this.ZONES.us).nom.toUpperCase()
+            + ' \u00b7 bougies jusqu\u2019à ' + heure(rz.tFin) : '',
+          ...frise,
+          friseTxt: rz && H
+            ? rz.score + ' aujourd\u2019hui \u00b7 médiane ' + rz.medHist
+              + (rz.bas ? ' \u00b7 plus bas ' + rz.bas.score + ' en ' + moisAnnee(rz.bas.jour) : '')
+            : '',
+          zVeilleBreadth: rz && rz.veille ? 'hier ' + rz.veille.breadth : '',
+          zVeilleMedian: rz && rz.veille ? 'hier ' + rz.veille.median : '',
+          zVeilleIndices: rz && rz.veille ? 'hier ' + rz.veille.indices : '',
+          // les séries écartées, nommées, avec leur dernière date
+          aPerimees: !!(rz && rz.perimees && rz.perimees.length),
+          perimeesTxt: rz && rz.perimees && rz.perimees.length
+            ? this.pl(rz.perimees.length, 'série écartée du calcul', 'séries écartées du calcul')
+              + ' : elles ont plus de 48 h de retard sur les autres, et un cours figé compte '
+              + 'à tort comme un titre stable au-dessus de sa moyenne. '
+              + rz.perimees.slice(0, 6).map((x) => x.sym + ' (' + heure(x.date) + ')').join(' \u00b7 ')
+              + (rz.perimees.length > 6 ? ' \u2026' : '')
+            : '',
         };
       })(),
       regimeEnCours: s.regimeEnCours,
