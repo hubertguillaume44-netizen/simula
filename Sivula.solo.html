@@ -142,6 +142,14 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding:0 10px" onClick="{{ fermerSauv }}">Fermer</button>
   </div>
   </sc-if>
+  <sc-if value="{{ aRetrouve }}" hint-placeholder-val="{{ false }}">
+  <div style="background:var(--color-accent);color:var(--color-bg);padding:8px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <strong style="font-size:12px;white-space:nowrap">Des bougies sont récupérables</strong>
+    <span style="font-size:12px;flex:1;min-width:260px;line-height:1.5;opacity:.92">{{ retrouveTxt }}</span>
+    <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ retrouver }}">{{ retrouveBouton }}</button>
+    <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:4px 10px" onClick="{{ masquerRetrouve }}">Plus tard</button>
+  </div>
+  </sc-if>
   <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
   <div style="background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <strong style="font-size:12px;white-space:nowrap">Aucune sauvegarde hors de ce navigateur</strong>
@@ -13298,6 +13306,11 @@ GROUPES = {
     this.setState((q) => ({
       // en mode silencieux le panneau reste fermé : on ne veut que le total
       inventaire: silencieux ? q.inventaire : postes,
+      // LES BLOCS RÉCUPÉRABLES SORTENT DU MODE SILENCIEUX. L'inventaire complet n'est
+      // posé qu'à l'ouverture du tiroir ; ce poste-là doit être connu au démarrage,
+      // puisque c'est lui qui décide si l'application a de quoi remplir un compte
+      // qu'elle s'apprête à déclarer vide.
+      horsIndex: postes.filter((x) => x.type === 'horsIndex'),
       inventaireEnCours: false,
       place: q.place ? { ...q.place, aNous } : { aNous } }));
     return postes;
@@ -13347,7 +13360,7 @@ GROUPES = {
     const noms = (p.cles || []).map((x) => String(x).slice(k.length + 1));
     try { localStorage.setItem(k, JSON.stringify([...new Set([...idx, ...noms])])); } catch (e) {}
     await this.reprendreSeries();
-    await this.inventaireStockage();
+    await this.inventaireStockage(!this.state.tiroir);
     await this.mesurerPlace();
   }
   async libererPoste(p) {
@@ -14779,6 +14792,33 @@ GROUPES = {
       tiroirOuvert: !!s.tiroir,
       ouvrirTiroir: () => this.setState({ tiroir: true }),
       fermerTiroir: () => this.setState({ tiroir: false, inventaire: null }),
+      // ————— DES BOUGIES RETROUVÉES NE DOIVENT PAS ATTENDRE QU'ON LES CHERCHE —————
+      //
+      // `reconcilierSeries` sait reconnaître la signature d'une éviction : l'index des
+      // séries a disparu de localStorage alors que les blocs sont toujours dans
+      // IndexedDB. Elle ne touche à rien — à raison, elle ne peut pas distinguer un
+      // effacement volontaire — et s'en remet à l'inventaire. Mais l'inventaire est au
+      // fond d'un tiroir, et personne n'ouvre un tiroir devant un compte qui s'annonce
+      // vide : l'application disait « Votre compte est vide — c'est normal » en ayant
+      // sous la main de quoi le remplir.
+      //
+      // Le compte des séries retrouvées est posé par `inventaireStockage`, qui tourne au
+      // démarrage. On le remonte ici, avec le bouton qui les rend.
+      ...(() => {
+        const hors = (s.horsIndex || []).filter((p2) => p2.compte === this.compteActif);
+        const n = hors.reduce((a, p2) => a + (p2.n || 0), 0);
+        return {
+          aRetrouve: n > 0 && !s.retrouveMasque,
+          retrouveTxt: (n > 1 ? n + ' séries de bougies sont' : 'Une série de bougies est')
+            + ' dans le stockage de ce navigateur mais absente' + (n > 1 ? 's' : '')
+            + ' de la liste des séries : c\u2019est la signature d\u2019un index effacé par le '
+            + 'navigateur, pas d\u2019une suppression de votre part. Les blocs sont intacts — '
+            + 'les adopter les rend scannables, sans rien retélécharger.',
+          retrouveBouton: n > 1 ? 'Récupérer les ' + n + ' séries' : 'Récupérer la série',
+          retrouver: () => { for (const p2 of hors) this.adopterHorsIndex(p2); },
+          masquerRetrouve: () => this.setState({ retrouveMasque: true }),
+        };
+      })(),
       // ————— CE QUI N'EST PROTÉGÉ PAR RIEN SE DIT AVANT LA PERTE —————
       //
       // Le code refusait tout avertissement préventif : « l'étiquette de sauvegarde dit
