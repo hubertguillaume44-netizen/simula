@@ -8354,7 +8354,10 @@ GROUPES = {
     return { fen, complete: false, hors, motif, tient,
       verrou: !tient && !motif,
       etiq: tient ? 'tient des deux côtés' : 'fenêtre choisie',
-      sous: tient ? '' : (motif ? 'exception écrite' : 'non validable') };
+      // La dérogation automatique se DIT. Sans cette ligne, une configuration qui a tenu
+      // des deux côtés est affichée comme n'importe quelle autre : la fenêtre réduite
+      // reste dans la colonne, mais rien n'explique pourquoi elle ne bloque plus rien.
+      sous: tient ? 'tient des deux côtés' : (motif ? 'exception écrite' : 'non validable') };
   }
   // L'ÉTIQUETTE QUI SUIT LA LIGNE PARTOUT : scan, historique, portefeuille, journal.
   // Sans elle, on retrouve dans six mois une ligne à + 41 R sans savoir qu'elle a été
