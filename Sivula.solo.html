@@ -1159,8 +1159,48 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       dans une phrase, chaque pourcentage est suivi de ce sur quoi il porte, et la
       confusion devient impossible. Ces valeurs changent deux fois par an.
     -->
-    <div class="blueprint" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);align-self:stretch">
+    <div class="blueprint" style="display:flex;flex-direction:column;align-self:stretch">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+      <!--
+        LES DEUX FICHIERS QUE MT5 ATTEND, ET LA MARCHE À SUIVRE.
+
+        Écrite dans la page, pas dans une infobulle : c'est la première fois que
+        l'utilisateur touche MetaEditor, et il n'a aucune raison de savoir où se trouve
+        MQL5\Files ni qu'il faut compiler. Une consigne qu'on doit survoler pour lire
+        n'est pas une consigne.
+
+        La notice passe EN TÊTE et sur toute la largeur : produire les deux fichiers est
+        ce qu'on fait en premier, et une fois pour toutes. Le capital et le risque, qui
+        changent deux fois par an, se lisent en dessous.
+
+        Les quatre étapes tiennent sur une seule rangée quand la largeur le permet, et se
+        replient en deux puis en une. Le flux suit la lecture — 1, 2, 3, 4 de gauche à
+        droite — au lieu des deux colonnes de deux qu'imposait la demi-largeur.
+
+        En flex plutôt qu'en grille : `repeat(auto-fit, minmax(210px, 1fr))` fabrique
+        cinq pistes sur 1 370 px pour quatre étapes, donc une colonne vide et des
+        largeurs inégales. Quatre éléments à `flex:1 1 210px` se partagent la rangée à
+        égalité, quel que soit son nombre.
+      -->
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--color-divider);min-width:0">
+        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+          <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
+          <span style="font-size:11px" class="text-muted">une seule fois</span>
+          <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
+          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.">{{ listeMt5Txt }}</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px 18px;font-size:11px;line-height:1.5">
+          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">1</span><span>Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois.</strong></span></span>
+          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">2</span><span>Placez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>. À remplacer quand votre sélection change.</span></span>
+          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">3</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur un graphique, puis <code>Export_H1_Sivula</code>.</span></span>
+          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">4</span><span>Les fichiers produits sont dans <code>MQL5\Files\Sivula\</code> — déposez-les ici.</span></span>
+        </div>
+        <span style="font-size:10px;line-height:1.5" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — les boutons de gauche ne sont là que si vous préférez cliquer.</span>
+        <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5">{{ mt5Copie }}</span>
+        </sc-if>
+      </div>
 
       <div style="background:var(--color-accent-100);padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-width:0">
         <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap">
@@ -1218,35 +1258,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         </div>
       </div>
 
-      <!--
-        LES DEUX FICHIERS QUE MT5 ATTEND, ET LA MARCHE À SUIVRE.
-
-        Écrite dans la page, pas dans une infobulle : c'est la première fois que
-        l'utilisateur touche MetaEditor, et il n'a aucune raison de savoir où se trouve
-        MQL5\Files ni qu'il faut compiler. Une consigne qu'on doit survoler pour lire
-        n'est pas une consigne.
-
-        Les quatre étapes se lisent 1-2 à gauche, 3-4 à droite : `grid-auto-flow:column`
-        avec deux rangées, sinon la numérotation partirait en zigzag et la notice
-        deviendrait fausse.
-      -->
-      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:9px;border-inline-start:1px solid var(--color-divider);min-width:0">
-        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
-          <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
-          <span style="font-size:11px" class="text-muted">une seule fois</span>
-          <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
-          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.">{{ listeMt5Txt }}</button>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;grid-auto-flow:column;gap:5px 16px;font-size:11px;line-height:1.5">
-          <span style="display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">1</span><span>Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois.</strong></span></span>
-          <span style="display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">2</span><span>Placez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>. À remplacer quand votre sélection change.</span></span>
-          <span style="display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">3</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur un graphique, puis <code>Export_H1_Sivula</code>.</span></span>
-          <span style="display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">4</span><span>Les fichiers produits sont dans <code>MQL5\Files\Sivula\</code> — déposez-les ici.</span></span>
-        </div>
-        <span style="font-size:10px;line-height:1.5;margin-top:auto" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — les boutons de gauche ne sont là que si vous préférez cliquer.</span>
-        <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
-          <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5">{{ mt5Copie }}</span>
-        </sc-if>
       </div>
     </div>
 
