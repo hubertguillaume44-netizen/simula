@@ -398,7 +398,7 @@
               </sc-if>
             </div>
           </sc-if>
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="Voir ce qui occupe la mémoire et libérer poste par poste">{{ inventaireBouton }}</button>
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
           <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
             <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ libLibereTxt }}</p>
           </sc-if>
@@ -15124,8 +15124,26 @@ GROUPES = {
           garderRevenues: () => this.setState({ revenuesVu: true }),
         };
       })(),
-      inventaireBouton: s.inventaire ? 'Masquer le détail'
-        : (s.inventaireEnCours ? 'Mesure…' : 'Libérer de la place'),
+      // ————— UN BOUTON QUI DIT AUSSI CE QU'IL REND —————
+      //
+      // Il s'appelait « Libérer de la place ». C'est pourtant lui, et lui seul, qui mène
+      // au bouton « Adopter » qui rend des bougies restées dans le stockage après un
+      // effacement de l'index. Personne ne clique « Libérer de la place » pour RETROUVER
+      // quelque chose : la seule porte de secours de l'application portait le nom d'un
+      // geste de ménage.
+      ...(() => {
+        const n = (s.horsIndex || []).reduce((a, x) => a + (x.n || 0), 0);
+        return {
+          inventaireBouton: s.inventaire ? 'Masquer le détail'
+            : s.inventaireEnCours ? 'Mesure…'
+            : n ? 'Voir la mémoire \u00b7 ' + n + (n > 1 ? ' séries récupérables' : ' série récupérable')
+            : 'Voir ce qui occupe la mémoire',
+          inventaireAide: n
+            ? n + (n > 1 ? ' séries de bougies sont' : ' série de bougies est')
+              + ' dans le stockage sans figurer dans la liste : ouvrez ce détail pour les récupérer.'
+            : 'Voir ce qui occupe la mémoire, poste par poste, et libérer ce dont vous n\u2019avez plus besoin.',
+        };
+      })(),
       ouvrirInventaire: () => {
         if (s.inventaire) { this.setState({ inventaire: null }); return; }
         this.setState({ inventaireEnCours: true });

@@ -359,13 +359,6 @@
    ]
   },
   {
-   "terme": "Mémoire Demander la protection",
-   "texte": "Voir ce qui occupe la mémoire et libérer poste par poste",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Mesurer une config par régime",
    "texte": "Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.",
    "vues": [
