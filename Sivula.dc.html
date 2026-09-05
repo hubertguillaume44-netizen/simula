@@ -916,41 +916,68 @@
     -->
     <div style="display:flex;flex-direction:column;gap:14px;border:1px dashed {{ bordureDepot }};background:{{ fondDepot }};padding:2px" onDragOver="{{ surSurvol }}" onDragLeave="{{ surSortie }}" onDrop="{{ surDepot }}">
 
-    <div style="display:flex;gap:14px;flex-wrap:wrap;align-self:flex-start">
-      <div class="blueprint" style="padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:132px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Capital</span>
-        <div style="display:flex;align-items:baseline;gap:4px">
-          <input class="input" type="number" step="1000" style="min-height:1.7rem;height:1.7rem;font-size:15px;font-family:var(--font-heading);padding:0 4px;border:0;width:100%" value="{{ capitalTete }}" onChange="{{ setCapitalTete }}">
-          <span style="font-size:12px" class="text-muted">€</span>
-        </div>
+    <!--
+      UN SEUL CADRE, ET UNE PHRASE.
+
+      Les quatre réglages vivaient dans quatre `.blueprint` accolés : les marques de
+      repère se doublaient à chaque jointure — huit marques là où il en faut quatre — et
+      dans ce système une marque désigne un OBJET, pas un champ de saisie.
+
+      Surtout, « stop 1 % » et « risque / trade 1 % » se tenaient côte à côte, même unité,
+      même valeur, et ne veulent pas dire la même chose : l'un est une distance de prix
+      sous l'entrée, l'autre une part de capital engagée. Rien ne l'indiquait. Dans une
+      phrase, chaque pourcentage est suivi de ce sur quoi il porte, et la confusion
+      devient impossible.
+
+      Et le chiffre le plus important de l'application — la traduction en euros de tout ce
+      qu'elle affiche en R — était le plus petit texte de la page, en gris, corps 11, à
+      droite des champs. Il devient la conclusion de la phrase.
+    -->
+    <div class="blueprint" style="padding:14px 18px;display:flex;flex-direction:column;gap:0;align-self:stretch">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="font-size:15px;line-height:2.1;padding-bottom:11px">
+        Sur un capital de
+        <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:15px;font-family:var(--font-heading);padding:0 6px;width:11ch;text-align:center;vertical-align:baseline" type="number" step="1000" value="{{ capitalTete }}" onChange="{{ setCapitalTete }}">
+        €, je risque
+        <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:15px;font-family:var(--font-heading);padding:0 6px;width:6ch;text-align:center;vertical-align:baseline" type="number" step="0.1" min="0.1" value="{{ risqueTete }}" onChange="{{ setRisqueTete }}">
+        % par trade, avec un stop posé
+        <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:15px;font-family:var(--font-heading);padding:0 6px;width:6ch;text-align:center;vertical-align:baseline" type="number" step="0.1" min="0.1" value="{{ slTete }}" onChange="{{ setSlTete }}">
+        % sous mon prix d’entrée.
       </div>
-      <div class="blueprint" style="padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:118px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Stop</span>
-        <div style="display:flex;align-items:baseline;gap:4px">
-          <input class="input" type="number" step="0.1" min="0.1" style="min-height:1.7rem;height:1.7rem;font-size:15px;font-family:var(--font-heading);padding:0 4px;border:0;width:100%" value="{{ slTete }}" onChange="{{ setSlTete }}">
-          <span style="font-size:12px" class="text-muted">%</span>
-        </div>
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:11px">
+        <span style="font-size:15px;line-height:1.5">Donc
+          <strong style="font-family:var(--font-heading);font-size:26px;line-height:1;letter-spacing:-.01em">{{ teteEuroR }}</strong>
+          en jeu à chaque trade — c’est ce que vaut <strong>1 R</strong> partout dans l’application.</span>
+        <!--
+          La détention est d'une autre nature que les trois autres : elle ne dimensionne
+          pas le risque, elle sert au calcul du portage. Elle n'a rien à faire dans la
+          même rangée.
+        -->
+        <span style="font-size:12px;margin-inline-start:auto;display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap" class="text-muted" title="Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.">Portage calculé sur la détention
+          <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:9ch;text-align:center" type="number" step="0.5" min="0" placeholder="mesurée" value="{{ nuitsTete }}" onChange="{{ setNuitsTete }}">
+          nuits</span>
       </div>
-      <div class="blueprint" style="padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:118px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Risque / trade</span>
-        <div style="display:flex;align-items:baseline;gap:4px">
-          <input class="input" type="number" step="0.1" min="0.1" style="min-height:1.7rem;height:1.7rem;font-size:15px;font-family:var(--font-heading);padding:0 4px;border:0;width:100%" value="{{ risqueTete }}" onChange="{{ setRisqueTete }}">
-          <span style="font-size:12px" class="text-muted">%</span>
-        </div>
-      </div>
-      <div class="blueprint" style="padding:8px 12px;display:flex;flex-direction:column;gap:2px;min-width:132px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Détention</span>
-        <div style="display:flex;align-items:baseline;gap:4px">
-          <input class="input" type="number" step="0.5" min="0" placeholder="mesurée" style="min-height:1.7rem;height:1.7rem;font-size:15px;font-family:var(--font-heading);padding:0 4px;border:0;width:100%" value="{{ nuitsTete }}" onChange="{{ setNuitsTete }}">
-          <span style="font-size:12px" class="text-muted">j</span>
-        </div>
-      </div>
-      <div style="align-self:center;max-width:44ch;font-size:11px;line-height:1.5" class="text-muted">{{ teteResume }}</div>
     </div>
+
+    <!--
+      TROIS ACTIONS DE POIDS DIFFÉRENTS, DONC TROIS NIVEAUX. Elles étaient empilées et
+      centrées, un bouton encadré puis deux libellés bleus qui ressemblaient à des liens.
+      Et « la liste des 1 944 manquants » annonçait un nombre inquiétant sans dire de quoi
+      il parlait.
+    -->
+    <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;align-self:stretch">
+      <label class="btn btn-primary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
+        Déposer des bougies H1
+        <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+      </label>
+      <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
+        Déposer un relevé de symboles
+        <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+      </label>
+      <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne, à coller dans InpSymboles de l’export MT5.">{{ exporterManquantsTxt }}</button>
+      <span style="font-size:11px;line-height:1.5;max-width:44ch;margin-inline-start:auto;text-align:right" class="text-muted">Le glisser-déposer marche sur toute la page : ces boutons ne sont là que si vous préférez cliquer.</span>
+    </div>
+
 
       <sc-if value="{{ aConfirmBareme }}" hint-placeholder-val="{{ false }}">
         <div style="width:100%;border:1px solid var(--color-accent);padding:10px 12px;display:flex;flex-direction:column;gap:8px">
@@ -1023,22 +1050,6 @@
                 <span style="font-size:12px;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</span>
               </button>
             </sc-for>
-          </div>
-
-          <div style="padding:11px 13px;display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider)">
-            <label class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">
-              Déposer des bougies H1
-              <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-            </label>
-            <label class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">
-              Déposer un relevé de symboles
-              <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-            </label>
-            <!--
-              La liste des manquants n'a plus à être cochée à la main : le filtre « À faire »
-              définit déjà exactement la sélection.
-            -->
-            <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne, à coller dans InpSymboles de l’export MT5.">{{ exporterManquantsTxt }}</button>
           </div>
         </aside>
 
@@ -15179,6 +15190,10 @@ GROUPES = {
       setNuitsTete: (e) => this.maj({ nuitsSaisi: e.target.value === '' ? null : Number(e.target.value) }),
       teteResume: EUR.format((Number(s.capital) || 0) * (Number(s.risquePct) || 0) / 100)
         + ' risqués par trade · 1 R = ce montant. La détention sert au portage : vide = celle que vos backtests ont mesurée.',
+      // Le même calcul, seul : c'est la conclusion de la phrase de réglages, et le chiffre
+      // le plus important de l'application — la traduction en euros de tout ce qu'elle
+      // affiche en R.
+      teteEuroR: EUR.format((Number(s.capital) || 0) * (Number(s.risquePct) || 0) / 100),
       vueCourtiers: this.state.vue === 'courtiers',
       setVueCourtiers: () => this.setState({ vue: 'courtiers' }),
       _newsAuto: this.newsAuto(),
@@ -15508,8 +15523,12 @@ GROUPES = {
           fbTousTxt: 'Tous · ' + tous.length,
           fbAvecTxt: 'Prêts · ' + nAvec,
           fbSansTxt: 'À faire · ' + manquants.length,
+          // « les 1 944 manquants » annonçait un nombre inquiétant sans dire de quoi il
+          // parlait : ce sont des instruments du relevé de courtier dont les bougies ne
+          // sont pas encore là, pas des données perdues.
           exporterManquantsTxt: manquants.length
-            ? 'Exporter la liste des ' + manquants.length + ' manquants' : 'Rien à télécharger',
+            ? 'Exporter la liste des ' + manquants.length.toLocaleString('fr-FR') + ' sans bougies'
+            : 'Rien à télécharger',
           sansManquants: manquants.length === 0,
           // La sélection à la main a disparu : le filtre « À faire » EST la sélection.
           exporterManquants: () => {
