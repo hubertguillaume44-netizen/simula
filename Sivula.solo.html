@@ -232,27 +232,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
     </div>
   </sc-if>
 
-  <sc-if value="{{ dlgVerrou }}" hint-placeholder-val="{{ false }}">
-    <div class="dialog-backdrop" style="position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px">
-      <div class="dialog blueprint" style="max-width:420px;width:100%;padding:26px 28px;display:flex;flex-direction:column;gap:16px;background:var(--color-bg);box-shadow:var(--shadow-lg)">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Accès personnel</div>
-        <div class="dialog-title" style="font-family:var(--font-heading);font-size:26px;line-height:1.1">Ces trois pages sont privées</div>
-        <p class="dialog-body text-muted" style="margin:0;font-size:14px">Vue d'ensemble, Immobilier et Investissement moyen long terme contiennent un patrimoine réel. Le code ouvre l'accès sur cet appareil, et il y reste.</p>
-        <div class="field">
-          <label for="codeAcces">Code</label>
-          <input id="codeAcces" class="input" type="password" name="simula-acces" autoComplete="off" autoCorrect="off" spellCheck="{{ false }}" value="{{ codeSaisi }}" onChange="{{ majCode }}" onKeyDown="{{ toucheCode }}" autoFocus="{{ true }}">
-        </div>
-        <sc-if value="{{ codeErreur }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0;font-size:13px;color:var(--color-accent-800)">Ce code ne correspond pas.</p>
-        </sc-if>
-        <div class="dialog-actions" style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn btn-ghost" type="button" onClick="{{ fermerVerrou }}">Annuler</button>
-          <button class="btn btn-primary" type="button" onClick="{{ validerCode }}">Ouvrir</button>
-        </div>
-      </div>
-    </div>
-  </sc-if>
 
   <sc-if value="{{ dlgValid }}" hint-placeholder-val="{{ false }}">
     <div class="dialog-backdrop" style="position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;background:color-mix(in srgb,var(--color-text) 32%,transparent)">
@@ -679,351 +658,13 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
     </div>
   
 
-  <sc-if value="{{ isApercu }}" hint-placeholder-val="{{ false }}">
-      <div class="seg">
-        <label class="seg-opt"><input type="radio" name="vue" checked="{{ isCompact }}" onChange="{{ setCompact }}">Vue compacte</label>
-        <label class="seg-opt"><input type="radio" name="vue" checked="{{ isDeroulee }}" onChange="{{ setDeroulee }}">Vue déroulée</label>
-      </div>
-    </sc-if>
   </div>
   </sc-if>
 
 
 
-  <sc-if value="{{ isApercu }}" hint-placeholder-val="{{ false }}">
-  <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
 
-    <section style="display:grid;grid-template-columns:{{ heroCols }};gap:30px">
-      <div class="card blueprint" style="padding:24px 26px;gap:18px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
-          <div>
-            <div class="card-kicker">Ce que vous possédez, dettes déduites</div>
-            <div style="font-family:var(--font-heading);font-weight:600;font-size:58px;line-height:1;letter-spacing:-.02em;margin-top:6px">847 320 €</div>
-            <div style="display:flex;gap:12px;align-items:center;margin-top:10px;font-size:13px;flex-wrap:wrap">
-              <span class="tag tag-accent">+ 34 180 € en 12 mois</span>
-              <span class="text-muted">dont 11 400 € que vous avez épargnés, 22 780 € gagnés par vos placements</span>
-            </div>
-          </div>
-          <div style="font-size:12px;line-height:1.9;text-align:right;color:color-mix(in srgb,var(--color-text) 60%,transparent)">
-            <div>Ce que vous possédez <strong style="color:var(--color-text)">1 194 500 €</strong></div>
-            <div>Ce qu'il reste à rembourser <strong style="color:var(--color-text)">− 347 180 €</strong></div>
-            <div>Disponible tout de suite <strong style="color:var(--color-text)">42 600 €</strong></div>
-          </div>
-        </div>
-        <svg viewBox="0 0 900 210" preserveAspectRatio="none" style="width:100%;height:200px;display:block">
-          <line x1="0" y1="35" x2="900" y2="35" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="90" x2="900" y2="90" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="145" x2="900" y2="145" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="196" x2="900" y2="196" stroke="var(--color-divider)"></line>
-          <path d="M0,178 L75,168 L150,172 L225,155 L300,142 L375,149 L450,132 L525,121 L600,127 L675,106 L750,93 L825,82 L900,64 L900,210 L0,210 Z" fill="var(--color-accent)" fill-opacity="0.12"></path>
-          <path d="M0,178 L75,168 L150,172 L225,155 L300,142 L375,149 L450,132 L525,121 L600,127 L675,106 L750,93 L825,82 L900,64" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
-          <circle cx="900" cy="64" r="4" fill="var(--color-accent)"></circle>
-        </svg>
-        <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">
-          <span>Août 25</span><span>Nov. 25</span><span>Févr. 26</span><span>Mai 26</span><span>Juil. 26</span>
-        </div>
-      </div>
 
-      <div class="card blueprint" style="padding:22px 24px;gap:16px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Où est votre argent</div>
-        <div style="display:flex;height:14px;width:100%;gap:2px">
-          <div style="width:44%;background:var(--color-accent-800)"></div>
-          <div style="width:21%;background:var(--color-accent-600)"></div>
-          <div style="width:26%;background:var(--color-accent-400)"></div>
-          <div style="width:9%;background:var(--color-accent-200)"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:11px;font-size:13px">
-          <div style="display:grid;grid-template-columns:12px 1fr auto 44px;gap:10px;align-items:center">
-            <span style="width:10px;height:10px;background:var(--color-accent-800)"></span><span>Immobilier</span><strong>372 000 €</strong><span class="text-muted" style="text-align:right">44 %</span>
-          </div>
-          <div style="display:grid;grid-template-columns:12px 1fr auto 44px;gap:10px;align-items:center">
-            <span style="width:10px;height:10px;background:var(--color-accent-600)"></span><span>Épargne sans risque</span><strong>178 400 €</strong><span class="text-muted" style="text-align:right">21 %</span>
-          </div>
-          <div style="display:grid;grid-template-columns:12px 1fr auto 44px;gap:10px;align-items:center">
-            <span style="width:10px;height:10px;background:var(--color-accent-400)"></span><span>Bourse long terme</span><strong>220 900 €</strong><span class="text-muted" style="text-align:right">26 %</span>
-          </div>
-          <div style="display:grid;grid-template-columns:12px 1fr auto 44px;gap:10px;align-items:center">
-            <span style="width:10px;height:10px;background:var(--color-accent-200)"></span><span>Poche court terme</span><strong>76 020 €</strong><span class="text-muted" style="text-align:right">9 %</span>
-          </div>
-        </div>
-        <p class="card-body" style="margin:0">Votre équilibre est proche de celui que vous avez choisi : la bourse pèse 3,6 points de trop, rien d'urgent.</p>
-      </div>
-    </section>
-
-    <section style="display:grid;grid-template-columns:{{ deciderCols }};gap:30px">
-      <div class="card blueprint" style="padding:24px 26px;gap:18px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;justify-content:space-between">
-          <div>
-            <div class="card-kicker">Décider</div>
-            <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Où placer votre prochain versement</h3>
-            <p class="card-body" style="margin:6px 0 0;max-width:52ch">Trois usages possibles du même montant. Aucun n'est « le bon » dans l'absolu — comparez, puis tranchez.</p>
-          </div>
-          <div class="field" style="width:210px">
-            <label>Montant à placer</label>
-            <input class="input" type="number" step="500" value="{{ montant }}" onChange="{{ setMontant }}">
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
-          <div class="blueprint" style="padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;justify-content:space-between;align-items:center"><span class="tag tag-neutral">Risque faible</span><span style="font-size:12px" class="text-muted">2,6 %/an</span></div>
-            <div class="card-title">Fonds euros</div>
-            <p class="card-body" style="margin:0;min-height:56px">Capital garanti par l'assureur, retrait sous 15 jours. Rendement connu à l'avance, hors revalorisation annuelle.</p>
-            <div style="border-top:1px solid var(--color-divider);padding-top:10px">
-              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Dans {{ horizon }} ans</div>
-              <div style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1.2">{{ valSecure }}</div>
-              <div style="font-size:12px" class="text-muted">soit {{ gainSecure }} de gain</div>
-            </div>
-          </div>
-
-          <div class="blueprint" style="padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;background:color-mix(in srgb,var(--color-accent) 6%,transparent)">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;justify-content:space-between;align-items:center"><span class="tag tag-outline">Risque élevé</span><span style="font-size:12px" class="text-muted">7 %/an, hypothèse de calcul</span></div>
-            <div class="card-title">ETF actions monde (PEA)</div>
-            <p class="card-body" style="margin:0;min-height:56px">Capital non garanti : une baisse de 30 % sur une année s'est déjà produite. Le rendement moyen passé de cette classe d'actif ne préjuge pas du futur.</p>
-            <div style="border-top:1px solid var(--color-divider);padding-top:10px">
-              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Dans {{ horizon }} ans</div>
-              <div style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1.2;color:var(--color-accent-700)">{{ valActions }}</div>
-              <div style="font-size:12px" class="text-muted">fourchette {{ fourchette }}</div>
-            </div>
-          </div>
-
-          <div class="blueprint" style="padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;justify-content:space-between;align-items:center"><span class="tag tag-outline">Dette</span><span style="font-size:12px" class="text-muted">1,84 %/an</span></div>
-            <div class="card-title">Rembourser le crédit</div>
-            <p class="card-body" style="margin:0;min-height:56px">Gain certain, égal au taux de vos emprunts. À comparer aux deux autres colonnes : c'est le seul rendement connu d'avance.</p>
-            <div style="border-top:1px solid var(--color-divider);padding-top:10px">
-              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Intérêts évités</div>
-              <div style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1.2">{{ valDette }}</div>
-              <div style="font-size:12px" class="text-muted">et {{ moisGagnes }} de crédit en moins</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary" type="button">Noter ce choix dans mon journal</button>
-          <button class="btn btn-secondary" type="button">Comparer plus finement</button>
-          <span style="font-size:12px" class="text-muted">Sivula ne passe aucun ordre et ne détient aucun avoir : cette page est un calculateur, la décision et son exécution restent les vôtres.</span>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:20px">
-        <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">À regarder ce mois-ci</h4>
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Votre Livret A est plein</div>
-          <p class="card-body" style="margin:0">7 400 € rapportent 1,7 % alors que votre fonds euros rapporte 2,6 %. Un virement suffit.</p>
-          <button class="btn btn-secondary" type="button" style="align-self:flex-start">Voir comment faire</button>
-        </div>
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Assurance-vie de 2019</div>
-          <p class="card-body" style="margin:0">À partir de mars 2027, retirer de cette assurance-vie coûtera beaucoup moins d'impôt. Patientez si vous le pouvez.</p>
-        </div>
-      </div>
-    </section>
-
-    <section style="display:grid;grid-template-columns:{{ bottomCols }};gap:30px">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Vos derniers mouvements</h4>
-        <table class="table">
-          <thead><tr><th>Date</th><th>Ce qui s'est passé</th><th>Où</th><th style="text-align:right">Montant</th></tr></thead>
-          <tbody>
-            <tr><td>28 juil.</td><td>Versement automatique</td><td>PEA — ETF Monde</td><td style="text-align:right">+ 600 €</td></tr>
-            <tr><td>25 juil.</td><td>Loyer reçu</td><td>Studio Lyon 7</td><td style="text-align:right">+ 745 €</td></tr>
-            <tr><td>21 juil.</td><td>Argent déplacé</td><td>Fonds € → ETF obligataire</td><td style="text-align:right">12 000 €</td></tr>
-            <tr><td>15 juil.</td><td>Mensualité de crédit</td><td>T3 Nantes</td><td style="text-align:right">− 812 €</td></tr>
-            <tr><td>09 juil.</td><td>Vente avec bénéfice</td><td>Poche court terme</td><td style="text-align:right">+ 1 940 €</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card blueprint" style="padding:20px 22px;gap:16px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Vos objectifs</div>
-        <div style="display:flex;flex-direction:column;gap:15px">
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>Matelas de sécurité</span><strong>Atteint</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:100%;background:var(--color-accent)"></div></div>
-            <div style="font-size:11px" class="text-muted">6 mois de dépenses de côté</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>Apport pour la maison</span><strong>62 %</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:62%;background:var(--color-accent)"></div></div>
-            <div style="font-size:11px" class="text-muted">74 400 € sur 120 000 € · visé pour 2029</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span>Revenu à la retraite</span><strong>29 %</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:29%;background:var(--color-accent)"></div></div>
-            <div style="font-size:11px" class="text-muted">Objectif 1 400 €/mois à 64 ans</div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-  </sc-if>
-
-  <sc-if value="{{ isImmo }}" hint-placeholder-val="{{ false }}">
-  <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
-    <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Valeur de vos biens</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">719 000 €</div>
-        <div style="font-size:12px" class="text-muted">Estimation de juin 2026</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Reste à rembourser</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">347 180 €</div>
-        <div style="font-size:12px" class="text-muted">Taux moyen 1,84 % · dernière échéance 2039</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Ce que ça vous rapporte</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">+ 318 €</div>
-        <div style="font-size:12px" class="text-muted">Par mois, une fois tout payé</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Part de vos revenus qui part en crédit</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">27,4 %</div>
-        <div style="font-size:12px" class="text-muted">Vous pourriez emprunter ≈ 118 000 € de plus</div>
-      </div>
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:14px">
-      <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Vos biens</h4>
-      <table class="table">
-        <thead><tr><th>Bien</th><th>Situation</th><th style="text-align:right">Valeur</th><th style="text-align:right">Crédit restant</th><th style="text-align:right">Loyer net</th><th style="text-align:right">Rendement</th><th style="text-align:right">Chaque mois</th></tr></thead>
-        <tbody>
-          <tr><td>Maison — Nantes</td><td>Vous y habitez</td><td style="text-align:right">396 000 €</td><td style="text-align:right">211 400 €</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">− 812 €</td></tr>
-          <tr><td>Studio — Lyon 7</td><td>Loué meublé</td><td style="text-align:right">183 000 €</td><td style="text-align:right">78 300 €</td><td style="text-align:right">745 €</td><td style="text-align:right">4,1 %</td><td style="text-align:right">+ 214 €</td></tr>
-          <tr><td>T3 — Rennes centre</td><td>Loué vide</td><td style="text-align:right">140 000 €</td><td style="text-align:right">57 480 €</td><td style="text-align:right">610 €</td><td style="text-align:right">3,6 %</td><td style="text-align:right">+ 104 €</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section style="display:grid;grid-template-columns:2fr 1fr;gap:30px">
-      <div class="card blueprint" style="padding:22px 24px;gap:16px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Ce qu'il vous reste à rembourser, année après année</div>
-        <svg viewBox="0 0 900 200" preserveAspectRatio="none" style="width:100%;height:190px;display:block">
-          <line x1="0" y1="30" x2="900" y2="30" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="90" x2="900" y2="90" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="150" x2="900" y2="150" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="188" x2="900" y2="188" stroke="var(--color-divider)"></line>
-          <path d="M0,38 L129,58 L257,80 L386,102 L514,126 L643,150 L771,172 L900,188 L900,200 L0,200 Z" fill="var(--color-accent)" fill-opacity="0.1"></path>
-          <path d="M0,38 L129,58 L257,80 L386,102 L514,126 L643,150 L771,172 L900,188" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
-        </svg>
-        <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">
-          <span>2026</span><span>2028</span><span>2030</span><span>2032</span><span>2035</span><span>2039</span>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:20px">
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Louer le T3 en meublé</div>
-          <p class="card-body" style="margin:0">Le meublé vous permet de déduire beaucoup plus de charges : environ 91 € de plus par mois dès 2027.</p>
-          <button class="btn btn-primary" type="button" style="align-self:flex-start">Voir le calcul</button>
-        </div>
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Ne remboursez pas par anticipation</div>
-          <p class="card-body" style="margin:0">Vos crédits coûtent 1,84 %. Placer cette somme rapporte davantage sur la durée qui vous reste.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-  </sc-if>
-
-  <sc-if value="{{ isMarches }}" hint-placeholder-val="{{ false }}">
-  <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
-    <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Valeur de vos placements</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">220 900 €</div>
-        <div style="font-size:12px" class="text-muted">PEA + assurance-vie</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Ce que vous avez versé</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">168 300 €</div>
-        <div style="font-size:12px" class="text-muted">Depuis 2016</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Gain</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1;color:var(--color-accent-700)">+ 52 600 €</div>
-        <div style="font-size:12px" class="text-muted">soit 8,4 % par an en moyenne</div>
-      </div>
-      <div class="card blueprint" style="padding:18px 20px;gap:6px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Frais payés</div>
-        <div style="font-family:var(--font-heading);font-weight:600;font-size:30px;line-height:1.1">0,31 %</div>
-        <div style="font-size:12px" class="text-muted">Par an · 685 € en 2025</div>
-      </div>
-    </section>
-
-    <section style="display:grid;grid-template-columns:2fr 1fr;gap:30px">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Ce que vous détenez</h4>
-        <table class="table">
-          <thead><tr><th>Support</th><th>Compte</th><th style="text-align:right">Valeur</th><th style="text-align:right">Gain</th><th style="text-align:right">Part</th><th style="text-align:right">Part visée</th></tr></thead>
-          <tbody>
-            <tr><td>ETF actions monde</td><td>PEA</td><td style="text-align:right">96 400 €</td><td style="text-align:right">+ 31,4 %</td><td style="text-align:right">43,6 %</td><td style="text-align:right">40 %</td></tr>
-            <tr><td>ETF actions États-Unis</td><td>PEA</td><td style="text-align:right">41 200 €</td><td style="text-align:right">+ 24,9 %</td><td style="text-align:right">18,7 %</td><td style="text-align:right">18 %</td></tr>
-            <tr><td>ETF pays émergents</td><td>Assurance-vie</td><td style="text-align:right">18 700 €</td><td style="text-align:right">+ 6,2 %</td><td style="text-align:right">8,5 %</td><td style="text-align:right">10 %</td></tr>
-            <tr><td>ETF obligations €</td><td>Assurance-vie</td><td style="text-align:right">34 100 €</td><td style="text-align:right">+ 2,8 %</td><td style="text-align:right">15,4 %</td><td style="text-align:right">18 %</td></tr>
-            <tr><td>SCPI diversifiée</td><td>Assurance-vie</td><td style="text-align:right">30 500 €</td><td style="text-align:right">+ 4,4 %</td><td style="text-align:right">13,8 %</td><td style="text-align:right">14 %</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card blueprint" style="padding:20px 22px;gap:14px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Écart avec ce que vous aviez prévu</div>
-        <div style="display:flex;flex-direction:column;gap:13px;font-size:13px">
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;justify-content:space-between"><span>Actions</span><strong>3,6 points de trop</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:78%;background:var(--color-accent-700)"></div></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;justify-content:space-between"><span>Obligations</span><strong>2,6 points de moins</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:44%;background:var(--color-accent-400)"></div></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;justify-content:space-between"><span>Pays émergents</span><strong>1,5 point de moins</strong></div>
-            <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:32%;background:var(--color-accent-400)"></div></div>
-          </div>
-        </div>
-        <p class="card-body" style="margin:0">Pas besoin de vendre : diriger vos deux prochains versements vers les obligations suffit à revenir à l'équilibre.</p>
-        <button class="btn btn-primary" type="button" style="align-self:flex-start">Rediriger mes versements</button>
-      </div>
-    </section>
-
-    <section class="card blueprint" style="padding:22px 24px;gap:16px">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="card-kicker">Ce que vous avez versé, ce que ça vaut</div>
-      <svg viewBox="0 0 900 210" preserveAspectRatio="none" style="width:100%;height:200px;display:block">
-        <line x1="0" y1="40" x2="900" y2="40" stroke="var(--color-divider)"></line>
-        <line x1="0" y1="100" x2="900" y2="100" stroke="var(--color-divider)"></line>
-        <line x1="0" y1="160" x2="900" y2="160" stroke="var(--color-divider)"></line>
-        <line x1="0" y1="200" x2="900" y2="200" stroke="var(--color-divider)"></line>
-        <path d="M0,196 L90,182 L180,168 L270,154 L360,140 L450,126 L540,112 L630,98 L720,84 L810,70 L900,56" fill="none" stroke="var(--color-neutral-500)" stroke-width="2" stroke-dasharray="5 4"></path>
-        <path d="M0,196 L90,178 L180,170 L270,138 L360,150 L450,112 L540,96 L630,104 L720,72 L810,50 L900,26" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
-      </svg>
-      <div style="display:flex;gap:20px;font-size:12px" class="text-muted">
-        <span style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:2px;background:var(--color-accent)"></span>Valeur de votre portefeuille</span>
-        <span style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:2px;background:var(--color-neutral-500)"></span>Somme de vos versements</span>
-      </div>
-    </section>
-  </main>
-  </sc-if>
 
   <sc-if value="{{ isCourt }}" hint-placeholder-val="{{ false }}">
   <main style="max-width:1480px;margin:0 auto;padding:26px 32px;display:flex;flex-direction:column;gap:34px">
@@ -4860,7 +4501,7 @@ const moisAn = (ms) => {
 };
 
 class Component extends DCLogic {
-  state = { tab: 'accueil', layout: null, montant: null, capital: 76020, risquePct: 1, vue: 'marche',
+  state = { tab: 'accueil', capital: 76020, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
     btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '', bande: null,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
@@ -4922,7 +4563,7 @@ class Component extends DCLogic {
     // la colonne du scan : quelle étape est ouverte, quel facteur est déplié
     etapeScan: 2, facteurOuvert: '', fenDetail: false, grillesVues: false,
     // la valeur de l'en-tête de « Mes instruments » qu'on est en train de corriger
-    champTete: '', nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
+    champTete: '', nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -4946,7 +4587,6 @@ class Component extends DCLogic {
     if (this.essai) return base + '.essai';
     return this.state.deverrouille ? base + '.perso' : base + '.client';
   }
-  get codeAttendu() { return String(this.props.codeAcces ?? '2580'); }
 
   lirePf() {
     try {
@@ -14153,51 +13793,25 @@ GROUPES = {
     this.setState({ marche: rows });
   }
 
-  get layout() { return this.state.layout ?? (this.props.vueParDefaut ?? 'compacte'); }
-  get montant() { return this.state.montant ?? (this.props.montantDefaut ?? 5000); }
-  get horizon() { return this.props.horizonAns ?? 10; }
-
   // l'onglet est persisté avec la session : recharger revient là où on travaillait
   go(tab) { return (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ tab }, () => this.ecrireSession()); }; }
 
-  // cadenas retiré le temps du chantier : les trois pages privées sont ouvertes hors essai
   get prive() { return !this.essai; }
-  // onglet affiché : les trois pages privées retombent sur Trading quand le cadenas est fermé
+  // ————— LES TROIS PAGES PATRIMOINE ONT ÉTÉ RETIRÉES —————
+  // « Aperçu », « Immo » et « Marchés » étaient le vestige du tableau de bord d'origine :
+  // des montants de maquette (847 320 €, 719 000 €…) écrits en dur, présentés comme des
+  // données personnelles, sur des pages devenues inatteignables — aucun bouton n'appelait
+  // plus goApercu, et le cadenas n'avait plus d'ouverture. Une session enregistrée avant
+  // ce retrait peut encore porter leur onglet : elle retombe sur Trading.
   get tabVu() {
     const t = this.state.tab;
     if (t === 'accueil') return 'accueil';
-    return !this.prive && (t === 'apercu' || t === 'immo' || t === 'marches') ? 'court' : t;
+    return (t === 'apercu' || t === 'immo' || t === 'marches') ? 'court' : t;
   }
-  ouvrirVerrou = (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    this.setState({ dlgVerrou: true, codeSaisi: '', codeErreur: false });
-  };
-  fermerVerrou = () => this.setState({ dlgVerrou: false, codeSaisi: '', codeErreur: false });
-  validerCode = () => {
-    if (this.state.codeSaisi.trim() !== this.codeAttendu) return this.setState({ codeErreur: true });
-    try { localStorage.setItem(this.CLE_VERROU, '1'); } catch (e) {}
-    this.setState({ deverrouille: true, dlgVerrou: false, codeSaisi: '', codeErreur: false, tab: 'apercu' },
-      () => {
-        const session = this.lireSession();
-        // le déverrouillage change d'espace de stockage : l'historique personnel
-        // n'a pas à être plus récent que celui de l'espace précédent
-        this._poseT = 0;
-        this.chargerHasardFaits();
-        this.lireScanComplet().then((g) => {
-          if (g && !this.blocDepasse(g)) this.appliquerScan(this.reprendreScan(g), { scanDate: g.date });
-        });
-        this.setState({
-          ...(session || {}),
-          tab: 'apercu',
-          pfs: (this.lirePf() || {}).pfs || this.state.pfs,
-          runs: this.lireRuns(),
-        }, () => this.lancerTest());
-      });
-  };
-  reverrouiller = () => {
-    try { localStorage.removeItem(this.CLE_VERROU); } catch (e) {}
-    this.setState({ deverrouille: false, tab: 'court' });
-  };
+  // Le cadenas (boîte de code, déverrouillage) est parti avec les pages patrimoine.
+  // `deverrouille` et sa restauration au démarrage restent : ils décident de l'ESPACE DE
+  // STOCKAGE (.perso ou .client) — un utilisateur déverrouillé autrefois doit continuer
+  // à lire ses données là où elles sont.
 
   // Efface TOUT le stockage d'un scan : la clé localStorage, le blob IndexedDB (lu en
   // premier au démarrage) et le témoin de sauvegarde — sans ce dernier, le démarrage
@@ -14231,10 +13845,6 @@ GROUPES = {
   }
   renderVals() {
     const tab = this.tabVu;
-    const compact = this.layout === 'compacte';
-    const m = Number(this.montant) || 0;
-    const n = this.horizon;
-    const grow = (r) => m * Math.pow(1 + r, n);
     const euroR = (Number(this.state.capital) || 0) * (Number(this.state.risquePct) || 0) / 100;
     const s = this.state;
     const fr = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(d).replace('.', ','));
@@ -15113,21 +14723,10 @@ GROUPES = {
       })(),
       aEnTetePage: false,
       goAccueil: this.go('accueil'),
-      isApercu: tab === 'apercu', isImmo: tab === 'immo', isMarches: tab === 'marches',
-      curApercu: tab === 'apercu' ? 'page' : undefined,
-      curImmo: tab === 'immo' ? 'page' : undefined,
-      curMarches: tab === 'marches' ? 'page' : undefined,
-      goApercu: this.go('apercu'), goImmo: this.go('immo'), goMarches: this.go('marches'),
-      goDecider: this.go('apercu'),
       isCourt: tab === 'court',
       curCourt: tab === 'court' ? 'page' : undefined,
       goCourt: this.go('court'),
       essai: this.essai, complet: this.prive,
-      verrouille: false,
-      deverrouille: false,
-      dlgVerrou: this.state.dlgVerrou, codeSaisi: this.state.codeSaisi, codeErreur: this.state.codeErreur,
-      ouvrirVerrou: this.ouvrirVerrou, fermerVerrou: this.fermerVerrou,
-      validerCode: this.validerCode, reverrouiller: this.reverrouiller,
       ...(() => {
         const d = s.dlgValid;
         if (!d) return { dlgValid: false };
@@ -15249,8 +14848,6 @@ GROUPES = {
       mentionEditeur: 'Éditeur : à compléter avant mise en ligne (dénomination, forme juridique, '
         + 'siège, RCS, contact). Simulateur logiciel — aucun agrément d\u2019intermédiaire financier '
         + 'n\u2019est requis pour cette activité, et aucun n\u2019est revendiqué.',
-      majCode: (e) => this.setState({ codeSaisi: e.target.value, codeErreur: false }),
-      toucheCode: (e) => { if (e.key === 'Enter') this.validerCode(); if (e.key === 'Escape') this.fermerVerrou(); },
       sousTitre: '',
       titreRegime: this.essai ? 'Régime, mesuré sur les séries de démonstration' : 'Régime, mesuré sur vos fichiers',
       libelleIndices: this.essai ? 'Indices' : 'Indices tenus',
@@ -20929,22 +20526,7 @@ GROUPES = {
             () => this.ecrireSession()),
         };
       })(),
-      pageKicker: titles[0], pageTitle: titles[1], pageIntro: titles[2],
-      isCompact: compact, isDeroulee: !compact,
-      setCompact: () => this.setState({ layout: 'compacte' }),
-      setDeroulee: () => this.setState({ layout: 'deroulee' }),
-      heroCols: compact ? '2fr 1fr' : '1fr',
-      deciderCols: compact ? '2fr 1fr' : '1fr',
-      bottomCols: compact ? '2fr 1fr' : '1fr',
-      montant: m,
-      setMontant: (e) => this.setState({ montant: Number(e.target.value) }),
-      horizon: n,
-      valSecure: EUR.format(grow(0.026)),
-      gainSecure: EUR.format(grow(0.026) - m),
-      valActions: EUR.format(grow(0.07)),
-      fourchette: EUR.format(grow(0.03)) + ' \u2192 ' + EUR.format(grow(0.105)),
-      valDette: EUR.format(m * (Math.pow(1.0184, n) - 1)),
-      moisGagnes: Math.round(m / 812) + ' mois'
+      pageKicker: titles[0], pageTitle: titles[1], pageIntro: titles[2]
     };
   }
 }
