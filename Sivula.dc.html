@@ -982,36 +982,6 @@
       </div>
     </sc-if>
 
-    <!--
-      LE COMPTE VIDE. Le plus gros risque de perdre quelqu'un qui aurait payé : une
-      application qui ne montre rien tant qu'il n'a pas exporté des CSV depuis MetaEditor.
-      Les quatre instruments de démonstration existaient déjà — voici le déclencheur.
-    -->
-    <sc-if value="{{ aVide }}" hint-placeholder-val="{{ false }}">
-      <section class="card blueprint" style="padding:24px 26px;gap:18px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div>
-          <div class="card-kicker">Premier passage</div>
-          <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Votre compte est vide — c'est normal</h3>
-          <p class="card-body" style="margin:8px 0 0;max-width:78ch">Sivula ne mesure que vos propres bougies : tant que vous n'avez rien importé, il n'a rien à montrer. Le temps de préparer vos fichiers, voici l'outil au travail sur quatre instruments fictifs.</p>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
-          <sc-for list="{{ etapesExemple }}" as="e" hint-placeholder-count="3">
-            <div style="display:flex;flex-direction:column;gap:5px;border-inline-start:2px solid {{ e.trait }};padding-inline-start:12px">
-              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ e.rang }}</div>
-              <strong style="font-family:var(--font-heading);font-size:16px;line-height:1.25">{{ e.titre }}</strong>
-              <span style="font-size:12px;line-height:1.5" class="text-muted">{{ e.dit }}</span>
-            </div>
-          </sc-for>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-primary" type="button" style="min-height:2.6rem" onClick="{{ voirExemple }}">{{ exempleBouton }}</button>
-          <button class="btn btn-secondary" type="button" style="min-height:2.6rem" onClick="{{ allerImporter }}">J'ai déjà mes fichiers</button>
-          <span style="font-size:12px;line-height:1.5;max-width:46ch" class="text-muted">{{ exempleNote }}</span>
-        </div>
-      </section>
-    </sc-if>
-
     <sc-if value="{{ essai }}" hint-placeholder-val="{{ false }}">
       <div class="blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;background:color-mix(in srgb,var(--color-accent) 6%,transparent)">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -17631,28 +17601,9 @@ GROUPES = {
           voirNouveaute: () => this.setState({ tiroir: true }),
         };
       })(),
-      // ————— LES DEUX PREMIÈRES MINUTES —————
-      ...(() => {
-        // Le compte est vide ou il ne l'est pas : la question se pose sur les séries
-        // présentes, pas sur un drapeau de session qu'un changement de compte pouvait
-        // laisser derrière lui.
-        const vide = !!s.pret && !(s.deposes || []).length && !this.aScanData;
-        const et = s.exempleEtape || 0;
-        const pas = [
-          ['1', 'Quatre instruments chargés', 'Des bougies H1 fictives, avec un relevé de frais fictif : le compte de découverte, à côté du vôtre.'],
-          ['2', 'Un vrai scan', 'Une vingtaine de milliers de configurations réellement mesurées. Pas une animation — le chiffre qui s\u2019affiche est calculé.'],
-          ['3', 'Une configuration ouverte', 'La meilleure ligne s\u2019ouvre trade par trade : dates d\u2019entrée, de sortie, motif, R de chacun.'],
-        ];
-        return {
-          aVide: vide,
-          etapesExemple: pas.map(([rang, titre, dit], i) => ({ rang, titre, dit,
-            trait: et > i ? 'var(--color-accent)' : 'var(--color-divider)' })),
-          voirExemple: () => this.voirExemple(),
-          exempleBouton: et === 1 ? 'Chargement des instruments\u2026'
-            : et === 2 ? 'Scan en cours\u2026' : 'Voir un exemple complet \u00b7 2 min',
-          exempleNote: 'Rien n\u2019est écrit dans votre compte : l\u2019exemple vit dans le compte de démonstration.',
-        };
-      })(),
+      // Le cadre « Votre compte est vide — c'est normal » a été retiré : la page dit déjà
+      // ce qu'il faut déposer, et « Scanner un exemple » reste offert par la présentation
+      // juste en dessous. `voirExemple` vit toujours, appelée par `lancerExemple`.
       aOnboarding: !!s.pret && !s.onbCache && !this.aScanData && !(s.runs && s.runs.length),
       masquerOnboarding: () => {
         try { localStorage.setItem('simula.onboarding.vu', '1'); } catch (e) {}
