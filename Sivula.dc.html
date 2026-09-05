@@ -106,6 +106,14 @@
     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding:0 10px" onClick="{{ fermerSauv }}">Fermer</button>
   </div>
   </sc-if>
+  <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
+  <div style="background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <strong style="font-size:12px;white-space:nowrap">Aucune sauvegarde hors de ce navigateur</strong>
+    <span style="font-size:12px;flex:1;min-width:260px;line-height:1.5;opacity:.9">{{ sansSauvTxt }}</span>
+    <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ sansSauvAgir }}">{{ sansSauvBouton }}</button>
+    <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:4px 10px" onClick="{{ masquerSansSauv }}">Plus tard</button>
+  </div>
+  </sc-if>
   <sc-if value="{{ aConfirmScan }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:color-mix(in srgb,var(--color-text) 45%,transparent)">
       <div class="blueprint" style="max-width:640px;width:100%;padding:26px 28px;display:flex;flex-direction:column;gap:14px;background:var(--color-bg)">
@@ -154,7 +162,7 @@
     </sc-if>
     <nav style="display:flex;gap:24px;align-items:center;margin-inline-start:auto">
       <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
-        <button type="button" onClick="{{ ouvrirTiroir }}" title="Mémoire, sauvegarde et confidentialité" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg)">
+        <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg)">
           <span style="width:7px;height:7px;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
         </button>
       </sc-if>
@@ -13599,6 +13607,12 @@ GROUPES = {
           + 'Utilisez « Exporter mes données » après chaque séance.' });
     }
   }
+  // Vue intégrée (aperçu, iframe) : `showSaveFilePicker` y est interdit, donc la
+  // sauvegarde automatique dans un fichier ne peut PAS être activée. C'est le cas
+  // exact où le travail ne tient qu'au stockage du navigateur.
+  dansIframe() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
   // Le navigateur évince le stockage « au mieux » sans avertir : on demande la
   // permanence, puis on prévient si un scan a disparu depuis la dernière séance.
   async protegerStockage() {
@@ -14729,16 +14743,69 @@ GROUPES = {
       tiroirOuvert: !!s.tiroir,
       ouvrirTiroir: () => this.setState({ tiroir: true }),
       fermerTiroir: () => this.setState({ tiroir: false, inventaire: null }),
+      // ————— CE QUI N'EST PROTÉGÉ PAR RIEN SE DIT AVANT LA PERTE —————
+      //
+      // Le code refusait tout avertissement préventif : « l'étiquette de sauvegarde dit
+      // déjà l'état ». Elle ne le disait pas — elle affichait « Enregistré à 18:02 » sans
+      // aucun fichier derrière. Et dans une vue intégrée, l'écriture directe dans un
+      // fichier est INTERDITE par le navigateur : la sauvegarde automatique ne peut même
+      // pas être activée, l'export manuel est la seule protection qui existe.
+      //
+      // Le bandeau ne s'affiche que s'il y a quelque chose à perdre, et se ferme.
+      ...(() => {
+        const auto = !!(s.autoNom && !s.autoAttente);
+        const aPerdre = (this.lignesScan || []).length > 0
+          || ((s.deposes || []).length > 0)
+          || ((s.valides || []).length > 0);
+        const montrer = !auto && aPerdre && !s.risqueMasque
+          && !this.essai && this.compteActif !== 'demo';
+        const integre = this.dansIframe();
+        return {
+          aSansSauv: montrer,
+          sansSauvTxt: integre
+            ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
+              + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
+              + 'machine. Dans une vue intégrée comme celle-ci, le navigateur interdit l\u2019écriture '
+              + 'directe dans un fichier : la sauvegarde automatique ne peut pas être activée. '
+              + 'Exportez maintenant, et rouvrez Sivula dans un onglet à lui pour l\u2019activer.'
+            : 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur. '
+              + 'Un navigateur qui vide son espace emporte les scans, les portefeuilles et les bougies. '
+              + 'Choisissez un fichier de sauvegarde automatique : il s\u2019écrit sur votre disque à '
+              + 'chaque modification, sans clic.',
+          sansSauvBouton: integre ? 'Exporter mes données' : 'Choisir le fichier de sauvegarde',
+          sansSauvAgir: integre ? () => this.exporterTout() : () => this.choisirFichierAuto(),
+          masquerSansSauv: () => this.setState({ risqueMasque: true }),
+        };
+      })(),
       ...(() => {
         const p = s.place;
         const auto = !!(s.autoNom && !s.autoAttente);
         const plein = p && p.part > 0.9;
-        // la pastille dit ce qui mérite votre attention, dans cet ordre : mémoire
-        // saturée, puis sauvegarde absente, puis rien à signaler
+        // ————— LA PASTILLE NE PROMET PAS CE QU'ELLE NE TIENT PAS —————
+        //
+        // Elle affichait « Enregistré à 18:02 » dès que l'horloge d'enregistrement avait
+        // tourné — c'est-à-dire TOUJOURS, puisque `autoHeure` est posée à la fin du cycle
+        // périodique, que le fichier de sauvegarde existe ou non. Sans fichier, cet
+        // « enregistré » ne désigne que le stockage du navigateur : celui qui disparaît
+        // quand le navigateur vide son espace, et avec lui tout le travail.
+        //
+        // Le calcul `auto` existait déjà ici, et n'était utilisé nulle part. La pastille
+        // dit maintenant lequel des deux enregistrements a eu lieu.
         return {
-          tiroirPastille: plein ? 'var(--color-accent-900)' : 'var(--color-accent)',
+          tiroirPastille: (plein || !auto) ? 'var(--color-accent-900)' : 'var(--color-accent)',
           tiroirEtat: plein ? 'Mémoire presque pleine'
+            : !auto ? 'Dans ce navigateur seulement'
             : (s.autoHeure ? 'Enregistré à ' + s.autoHeure : 'Enregistrement auto'),
+          tiroirAide: plein
+            ? 'Le stockage du navigateur est presque plein : les prochains scans risquent de ne pas tenir.'
+            : !auto
+              ? 'Aucun fichier de sauvegarde : tout ce qui est ici ne vit que dans le stockage de ce '
+                + 'navigateur, pour cette adresse. Un navigateur qui vide son espace — au redémarrage '
+                + 'de la machine sur certaines configurations — emporte les scans, les portefeuilles et '
+                + 'les bougies. Ouvrez ce tiroir et choisissez un fichier de sauvegarde automatique : '
+                + 'il s\u2019écrit sur votre disque à chaque modification, sans clic.'
+              : 'Le fichier de sauvegarde est à jour'
+                + (s.autoHeure ? ' — dernière écriture à ' + s.autoHeure + '.' : '.'),
         };
       })(),
       aEnTetePage: false,
