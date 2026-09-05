@@ -255,7 +255,41 @@
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
         <p style="margin:0;font-size:12px;line-height:1.55"><strong>Rien ne quitte votre navigateur.</strong> <span class="text-muted">Aucun fichier n'est envoyé : tout est lu et calculé sur votre machine, et enregistré sur cet appareil seulement. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
-        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ exporterTout }}">Exporter mes données</button>
+        <!--
+          Un export sans import n'est pas une sauvegarde : le fichier produit ne pouvait
+          pas être relu. Et la DATE sous les deux boutons est ce qui pousse à cliquer —
+          un bouton d'export que personne ne clique ne sauve rien.
+        -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ exporterTout }}">Exporter mes données</button>
+          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
+            Importer un fichier
+            <input type="file" accept="application/json,.json" onChange="{{ choisirImport }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+        </div>
+        <span style="font-size:11px;line-height:1.5;color:{{ sauvCouleur }}">{{ sauvQuand }}</span>
+
+        <!--
+          L'IMPORT NE REMPLACE JAMAIS EN SILENCE. C'est le bouton le plus dangereux de
+          l'application : le contenu d'un espace est le travail de plusieurs semaines, et
+          rien ne le rend. On montre ce que le fichier porte, ce que l'espace porte, puis
+          on laisse choisir.
+        -->
+        <sc-if value="{{ aDlgImport }}" hint-placeholder-val="{{ false }}">
+          <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-color:var(--color-accent)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce fichier contient</span>
+            <strong style="font-size:13px;line-height:1.35">{{ impNom }}</strong>
+            <span style="font-size:11px;line-height:1.55" class="text-muted">{{ impQuoi }}</span>
+            <span style="font-size:11px;line-height:1.55;color:var(--color-accent-700)">{{ impIci }} Que faut-il en faire ?</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:12px" onClick="{{ fusionnerImport }}" title="{{ impFusionAide }}">Fusionner</button>
+              <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:12px" onClick="{{ remplacerImport }}" title="{{ impRemplaceAide }}">Remplacer</button>
+              <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ annulerImport }}">Annuler</button>
+            </div>
+            <span style="font-size:10px;line-height:1.5" class="text-muted">Fusionner n’écrit que ce qui manque ici. Remplacer écrase l’espace actuel : ce qu’il porte et qui n’est pas dans le fichier est perdu.</span>
+          </div>
+        </sc-if>
         <sc-if value="{{ aCommChamps }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:7px;padding-top:9px;border-top:1px solid var(--color-divider)">
             <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Commissions — {{ nomCompteTiroir }}</span>
@@ -294,7 +328,21 @@
           <div style="height:4px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
             <div style="height:100%;background:{{ placeCouleur }};width:{{ placePart }}"></div>
           </div>
-          <span style="font-size:12px" class="text-muted">{{ placeTxt }}</span>
+          <span style="font-size:12px" class="text-muted">{{ placeTxt }}<span style="display:block;font-size:11px">{{ placeDetail }}</span></span>
+          <!--
+            L'état de persistance, séparé de la barre par un filet : « protégé » n'est pas
+            un détail de confort, c'est la différence entre des données qui survivent au
+            remplissage du disque et des données que le navigateur peut jeter sans le dire.
+          -->
+          <sc-if value="{{ aPersistance }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:8px">
+              <span class="{{ persistCls }}" style="font-size:10px;white-space:nowrap">{{ persistTxt }}</span>
+              <span style="font-size:11px;line-height:1.5;flex:1;min-width:22ch" class="text-muted">{{ persistPhrase }}</span>
+              <sc-if value="{{ aRedemander }}" hint-placeholder-val="{{ false }}">
+                <button class="btn btn-ghost" type="button" style="min-height:1.7rem;font-size:11px;padding-inline:9px" onClick="{{ redemanderPersist }}">Demander la protection</button>
+              </sc-if>
+            </div>
+          </sc-if>
           <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="Voir ce qui occupe la mémoire et libérer poste par poste">{{ inventaireBouton }}</button>
           <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
             <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ libLibereTxt }}</p>
@@ -5698,6 +5746,7 @@ GROUPES = {
     if (this.compteActif === 'demo') this.semerDecouverte();
     // l'inventaire d'abord : c'est lui qui pose le total détenu que la jauge affiche
     this.inventaireStockage(true).then(() => this.mesurerPlace());
+    this.reclamerPersistance();
     this.baremesChanges();
     this.forceUpdate();
   }
@@ -11294,6 +11343,29 @@ GROUPES = {
     }
   }
   // place restante dans le navigateur : mesurée avant un dépôt et affichée en continu
+  // ————— RÉCLAMER LA PERSISTANCE DU STOCKAGE —————
+  //
+  // Sans cet appel, l'origine est en stockage « best-effort » : le navigateur peut vider
+  // IndexedDB quand le disque se remplit, SANS AVERTISSEMENT — cent mégaoctets de
+  // bougies et de scans disparaissent, et rien dans l'application ne peut les rendre.
+  // Avec, l'espace est marqué persistant et ne part plus tout seul.
+  //
+  // L'API manque sur certains navigateurs : on la teste, et on n'affiche rien plutôt
+  // qu'une erreur. Une promesse de protection qu'on ne peut pas tenir vaut moins que le
+  // silence.
+  async reclamerPersistance(force) {
+    try {
+      if (!navigator.storage || !navigator.storage.persisted) return;
+      let ok = await navigator.storage.persisted();
+      if (!ok && navigator.storage.persist) {
+        // Chrome accorde sans rien demander quand le site est installé ou visité
+        // souvent ; Firefox pose la question. Dans les deux cas, ne demander qu'une fois
+        // au chargement suffit — insister à chaque rendu ferait un dialogue par visite.
+        ok = await navigator.storage.persist();
+      }
+      this.setState({ persistant: !!ok, persistanceConnue: true });
+    } catch (e) { /* API absente ou refusée : on n'affiche rien */ }
+  }
   async mesurerPlace() {
     try {
       const e = await navigator.storage.estimate();
@@ -11889,7 +11961,107 @@ GROUPES = {
     a.download = 'simula-sauvegarde-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(a.href);
-    this.setState({ sauvMsg: Object.keys(dump).length + ' blocs exportés.' });
+    // La DATE de la dernière sauvegarde. Un bouton d'export que personne ne clique ne
+    // sauve rien : c'est la date qui pousse à cliquer, et elle n'existait nulle part.
+    try { localStorage.setItem(this.cleGlobale(this.CLE_SAUV), String(Date.now())); } catch (e) {}
+    this.setState({ sauvMsg: Object.keys(dump).length + ' blocs exportés.',
+      sauvDate: Date.now() });
+  }
+  // ————— APPLIQUER L'IMPORT, une fois l'issue choisie —————
+  // « Remplacer » écrit tout ; « Fusionner » n'écrit que les clés ABSENTES d'ici, donc
+  // rien de ce qui existe déjà n'est touché. C'est la seule fusion honnête sans
+  // réconcilier deux historiques de scan, et l'écran le dit en toutes lettres.
+  async appliquerImport(mode) {
+    const d = this.state.dlgImport;
+    if (!d) return;
+    this.setState({ dlgImport: null });
+    let n = 0, sautes = 0;
+    for (const [k, v] of Object.entries(d.donnees)) {
+      if (k.startsWith('gros:')) {
+        const cleG = k.slice(5);
+        if (mode === 'fusion') {
+          let deja = null;
+          try { deja = await this.grosGet(cleG); } catch (e) {}
+          if (deja) { sautes++; continue; }
+        }
+        try { await this.grosSet(cleG, JSON.parse(v)); n++; } catch (e) {}
+        continue;
+      }
+      if (mode === 'fusion' && localStorage.getItem(k) !== null) { sautes++; continue; }
+      try { localStorage.setItem(k, v); n++; } catch (e) {}
+    }
+    const session = this.lireSession(), scanSauve = await this.lireScanComplet(),
+      reg = this.lireRegimes(), pf = this.lirePf();
+    this._poseT = 0;
+    this.chargerHasardFaits();
+    if (scanSauve) this.appliquerScan(this.reprendreScan(scanSauve));
+    this.baremes = {}; await this.chargerBaremes();
+    const nSeries = await this.reprendreSeries();
+    this.setState({
+      ...(session || {}),
+      ...(reg ? { regimes: reg } : {}),
+      ...(pf ? { pfs: pf.pfs, favoris: pf.favoris, valides: pf.valides || [] } : {}),
+      runs: this.lireRuns(),
+      sauvMsg: (mode === 'fusion' ? 'Fusion : ' : 'Remplacement : ') + n + ' blocs écrits'
+        + (sautes ? ', ' + sautes + ' déjà présents et donc conservés' : '')
+        + ' — fichier daté du ' + (d.date || '?') + '.'
+        + (nSeries ? ' ' + nSeries + ' séries de bougies remises en place.' : ''),
+    }, () => this.lancerTest());
+  }
+  CLE_SAUV = 'simula.derniereSauvegarde.v1';
+  // ————— CE QUE LE FICHIER CONTIENT, AVANT DE TOUCHER À QUOI QUE CE SOIT —————
+  //
+  // Un import qui écrase sans demander est le bouton le plus dangereux de
+  // l'application : le contenu d'un espace est le travail de plusieurs semaines, et rien
+  // ne le rend. On lit donc le fichier, on montre ce qu'il porte, on montre ce que
+  // l'espace actuel porte, et on laisse trois issues.
+  async examinerImport(fichier) {
+    if (!fichier) return;
+    try {
+      const b = JSON.parse(await fichier.text());
+      if (!b || b.outil !== 'simula' || !b.donnees) {
+        return this.setState({ sauvMsg: 'Ce fichier ne vient pas de Sivula.' });
+      }
+      // On compte SANS rien écrire : les clés du dump disent déjà ce qu'il porte.
+      const d = b.donnees;
+      const cles = Object.keys(d);
+      const lireJ = (k) => { try { return JSON.parse(d[k]); } catch (e) { return null; } };
+      // Les clés portent l'espace ET le compte entre la base et le suffixe :
+      // « gros:simula.series.v1.client.demo|DEMO-TECH ». Chercher « base| » ne trouvait
+      // donc rien, et le dialogue annonçait « 0 série » devant un fichier de 7 Mo.
+      const estUn = (k, base, gros) => (gros ? k.startsWith('gros:' + base) : k.startsWith(base));
+      const nSeries = cles.filter((k) => estUn(k, this.CLE_SERIES, true) && k.includes('|')).length;
+      let nScans = 0, nConfigs = 0, nPfs = 0, nLignes = 0;
+      const comptes = [];
+      for (const k of cles) {
+        if (estUn(k, this.CLE_SCAN, true)) {
+          const v = lireJ(k);
+          const arch = (v && v.archives) || [];
+          nScans += arch.length;
+          nConfigs += (v && v.lignes && v.lignes.n) || (v && Array.isArray(v.lignes) ? v.lignes.length : 0);
+        }
+        if (estUn(k, this.CLE_PF, false)) {
+          const v = lireJ(k);
+          if (v) { nPfs += (v.pfs || []).length; nLignes += (v.valides || []).length; }
+        }
+        // Un dump peut porter PLUSIEURS comptes : annoncer le premier trouvé désignait
+        // « fxpro » devant un fichier dont toutes les données sont sur « demo ».
+        const m = k.replace(/^gros:/, '').match(/\.(fxpro|compte\d|demo)(\||$)/);
+        if (m && !comptes.includes(m[1])) comptes.push(m[1]);
+      }
+      const ici = {
+        series: (this.state.deposes || []).length,
+        scans: (this.state.archives || []).length,
+        configs: this.lignesScan.length,
+        pfs: (this.state.pfs || []).length,
+        lignes: this.normValides(this.state.valides || []).length,
+      };
+      this.setState({ dlgImport: {
+        nom: fichier.name, date: (b.date || '').slice(0, 10),
+        compte: comptes.map((c) => this.nomCourtier(c)).join(', '),
+        blocs: cles.length, series: nSeries, scans: nScans, configs: nConfigs,
+        pfs: nPfs, lignes: nLignes, ici, donnees: d } });
+    } catch (e) { this.setState({ sauvMsg: 'Fichier illisible.' }); }
   }
   async importerTout(fichier) {
     if (!fichier) return;
@@ -12955,6 +13127,43 @@ GROUPES = {
           depotDetail: d.nom + ' — un gros historique prend quelques secondes. Les fichiers restent dans ce navigateur.',
           depotPart: Math.round(d.fait / Math.max(1, d.total) * 100) + '%' };
       })(),
+      // ————— LA SAUVEGARDE, ET SA DATE —————
+      ...(() => {
+        let t = 0;
+        try { t = Number(localStorage.getItem(this.cleGlobale(this.CLE_SAUV))) || 0; } catch (e) {}
+        if (s.sauvDate) t = Math.max(t, s.sauvDate);
+        const j = t ? Math.floor((Date.now() - t) / 86400000) : null;
+        const d = s.dlgImport;
+        const nb = (n, un, pl) => n.toLocaleString('fr-FR') + ' ' + (n > 1 ? pl : un);
+        return {
+          // Un bouton d'export que personne ne clique ne sauve rien : c'est la DATE qui
+          // pousse à cliquer, et elle n'existait nulle part.
+          sauvQuand: !t ? 'Jamais exporté — rien de ce qui est ici n’existe ailleurs.'
+            : 'Dernière sauvegarde : ' + (j === 0 ? 'aujourd’hui' : j === 1 ? 'hier' : 'il y a ' + j + ' jours') + '.',
+          sauvCouleur: (!t || j > 30) ? 'var(--color-accent-700)' : 'var(--color-neutral-500)',
+          choisirImport: (e) => { const f = e.target.files && e.target.files[0];
+            if (f) this.examinerImport(f); e.target.value = ''; },
+          aDlgImport: !!d,
+          impNom: d ? d.nom : '',
+          impQuoi: d ? (d.date ? 'daté du ' + d.date + ' · ' : '')
+            + (d.compte ? 'compte ' + d.compte + ' · ' : '')
+            + nb(d.series, 'série', 'séries') + ' · '
+            + nb(d.scans, 'scan', 'scans')
+            + (d.configs ? ' (' + d.configs.toLocaleString('fr-FR') + ' configurations)' : '')
+            + ' · ' + nb(d.pfs, 'portefeuille', 'portefeuilles') + ', '
+            + nb(d.lignes, 'ligne', 'lignes') : '',
+          impIci: d ? 'Votre espace actuel porte ' + nb(d.ici.series, 'série', 'séries')
+            + ' et ' + nb(d.ici.scans, 'scan', 'scans')
+            + (d.ici.configs ? ' (' + d.ici.configs.toLocaleString('fr-FR') + ' configurations)' : '')
+            + ', ' + nb(d.ici.pfs, 'portefeuille', 'portefeuilles')
+            + ' et ' + nb(d.ici.lignes, 'ligne rangée', 'lignes rangées') + '.' : '',
+          impFusionAide: 'N’écrit que ce qui manque ici : tout ce que votre espace porte déjà est conservé tel quel.',
+          impRemplaceAide: 'Écrase l’espace actuel par le contenu du fichier. Ce que vous avez ici et qui n’est pas dans le fichier est perdu.',
+          fusionnerImport: () => this.appliquerImport('fusion'),
+          remplacerImport: () => this.appliquerImport('remplace'),
+          annulerImport: () => this.setState({ dlgImport: null }),
+        };
+      })(),
       ...(() => {
         const p = s.place;
         if (!p) return { aPlace: false, placePart: '0%', placeTxt: '', placeCouleur: 'var(--color-accent)' };
@@ -12969,9 +13178,25 @@ GROUPES = {
           placePart: Math.min(100, p.aNous !== undefined && p.quota
             ? Math.round(p.aNous / p.quota * 100) : pc) + '%',
           placeCouleur: sature ? 'var(--color-accent-900)' : 'var(--color-accent)',
-          placeTxt: (p.aNous !== undefined ? mo(p.aNous) + ' Mo de bougies et de scans'
-            : 'mesure en cours…')
+          // L'ÉCHELLE, sans quoi la barre ne dit rien : « 101 Mo » ne se juge pas, « 101 Mo
+          // sur 2,1 Go » se juge d'un coup d'œil.
+          placeTxt: (p.aNous !== undefined ? mo(p.aNous) + ' Mo utilisés' : 'mesure en cours…')
+            + (p.quota ? ' sur ' + (p.quota >= 1073741824
+              ? (p.quota / 1073741824).toFixed(1).replace('.', ',') + ' Go'
+              : mo(p.quota) + ' Mo') + ' disponibles' : '')
             + (sature ? ' · le navigateur a refusé le dernier enregistrement : libérez de la place' : ''),
+          placeDetail: 'bougies et scans',
+          // La pastille d'état : « protégé » n'est pas un détail de confort, c'est la
+          // différence entre des données qui survivent au remplissage du disque et des
+          // données que le navigateur peut jeter sans le dire.
+          aPersistance: !!s.persistanceConnue,
+          persistCls: 'tag ' + (s.persistant ? 'tag-accent' : 'tag-outline'),
+          persistTxt: s.persistant ? 'stockage protégé' : 'stockage non protégé',
+          persistPhrase: s.persistant
+            ? 'le navigateur ne peut plus l\u2019effacer seul'
+            : 'le navigateur peut vider ces données quand le disque se remplit, sans prévenir. Exportez régulièrement.',
+          aRedemander: !s.persistant,
+          redemanderPersist: () => this.reclamerPersistance(true),
           // après une suppression, ce chiffre reste figé un moment : le navigateur
           // récupère la place quand il veut, et rien dans la page ne peut l'y forcer
           aLibLibere: !!s.libLibere,
@@ -16389,7 +16614,10 @@ GROUPES = {
         return p.join(' · ');
       })(),
       exporterTout: () => { this.exporterTout(); },
-      importerTout: (e) => this.importerTout(e.target.files && e.target.files[0]),
+      // Les DEUX points d'import passent par l'examen : celui-ci écrasait encore en
+      // silence, et c'est le même fichier, le même danger.
+      importerTout: (e) => { const f = e.target.files && e.target.files[0];
+        if (f) this.examinerImport(f); e.target.value = ''; },
       sauvMsg: s.sauvMsg || '',
       aSauvMsg: !!s.sauvMsg,
       nCumulTxt: (s.archives && s.archives.length)
