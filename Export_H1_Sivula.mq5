@@ -36,6 +36,13 @@
 // FAUX : le nom exact d'un symbole varie d'un compte à l'autre (GOLD, XAUUSD, #Germany40,
 // GER40.cash…), et un nom erroné produit un fichier manquant qu'on ne remarque qu'au
 // moment de mesurer. Le terminal, lui, connaît ses propres noms.
+// Source PRIORITAIRE de la liste : un symbole par ligne, lignes vides et lignes « # »
+// ignorées. Écrit par Sivula, remplacé à chaque changement de sélection.
+//
+// LA LISTE NE VIT PAS DANS CE FICHIER. En dur, il faudrait rouvrir MetaEditor et
+// recompiler à chaque changement de sélection — pour un geste hebdomadaire, c'est
+// inacceptable. Ce script se compile UNE fois et ne bouge plus ; c'est le .txt qui change.
+input string   InpFichierListe = "Sivula\\symboles.txt"; // Liste de symboles (prioritaire)
 input string   InpSymboles  = "";             // Symboles ("*" = tout, vide = le graphique)
 // UN AN AVANT le début de la mesure, pas le début lui-même. Le moteur a besoin de
 // 400 jours d'amorce (AMORCE_JOURS) pour ses agrégats, et la médiane du spread porte
@@ -210,6 +217,7 @@ bool Exporter(string sym)
    {
       PrintFormat("%s : symbole inconnu du courtier — vérifiez l'orthographe exacte "
                   "dans l'Observation du marché (certains portent un « # »).", sym);
+      Rate(sym, "symbole inconnu du courtier");
       return false;
    }
 
@@ -224,9 +232,16 @@ bool Exporter(string sym)
    {
       PrintFormat("%s : aucune bougie H1 depuis %s. Si « historique incomplet » est "
                   "apparu, augmentez InpAttenteSec.", sym, TimeToString(InpDu, TIME_DATE));
+      Rate(sym, "historique H1 vide depuis " + TimeToString(InpDu, TIME_DATE));
       return false;
    }
    if(n > InpMaxBarres) n = InpMaxBarres;
+   // Un historique plus court que demandé n'empêche pas l'export, mais il explique
+   // qu'un scan mesure six ans sur un instrument et deux sur son voisin. On le NOTE
+   // sans faire échouer : le fichier est écrit, seulement plus court qu'attendu.
+   if(r[0].time > InpDu + 86400 * 40)
+      Rate(sym, StringFormat("exporté, mais l'historique ne remonte qu'au %s au lieu du %s",
+           TimeToString(r[0].time, TIME_DATE), TimeToString(InpDu, TIME_DATE)));
 
    // Le « # » de certains symboles (#Japan225) n'est pas valide dans un nom de fichier
    // sur tous les systèmes, et Sivula reconnaît l'instrument sans lui.
@@ -237,6 +252,7 @@ bool Exporter(string sym)
    if(f == INVALID_HANDLE)
    {
       PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
+      Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
       return false;
    }
 
@@ -418,6 +434,48 @@ bool Exporter(string sym)
    return true;
 }
 
+//+------------------------------------------------------------------+
+//| La liste, lue dans un fichier plutôt que saisie.                  |
+//+------------------------------------------------------------------+
+int LireListeFichier(string chemin, string &out[])
+{
+   if(StringLen(chemin) == 0 || !FileIsExist(chemin)) return 0;
+   int f = FileOpen(chemin, FILE_READ | FILE_TXT | FILE_ANSI);
+   if(f == INVALID_HANDLE)
+   {
+      PrintFormat("%s existe mais n'a pas pu être ouvert (%d).", chemin, GetLastError());
+      return 0;
+   }
+   int n = 0;
+   while(!FileIsEnding(f))
+   {
+      string l = FileReadString(f);
+      StringTrimLeft(l); StringTrimRight(l);
+      if(StringLen(l) == 0) continue;
+      if(StringGetCharacter(l, 0) == '#') continue;   // en-tête écrit par Sivula
+      ArrayResize(out, n + 1);
+      out[n++] = l;
+   }
+   FileClose(f);
+   return n;
+}
+
+// ————— LE COMPTE RENDU —————
+// Un Print par symbole se perd dans un journal de plusieurs milliers de lignes :
+// l'utilisateur ne sait pas que trois instruments sur quarante ne sont pas sortis. Les
+// échecs sont donc COLLECTÉS, avec leur raison, et récapitulés à la fin.
+string g_ratesNom[];
+string g_ratesPourquoi[];
+
+void Rate(string sym, string pourquoi)
+{
+   int k = ArraySize(g_ratesNom);
+   ArrayResize(g_ratesNom, k + 1);
+   ArrayResize(g_ratesPourquoi, k + 1);
+   g_ratesNom[k] = sym;
+   g_ratesPourquoi[k] = pourquoi;
+}
+
 void OnStart()
 {
    // Le plafond « Barres max dans le graphique » borne aussi l'HISTORIQUE que le
@@ -437,11 +495,19 @@ void OnStart()
       return;
    }
 
+   string syms[];
+   int nFic = LireListeFichier(InpFichierListe, syms);
+   if(nFic > 0)
+      PrintFormat("Liste lue dans %s : %d symbole(s). InpSymboles est ignoré.",
+                  InpFichierListe, nFic);
    string liste = InpSymboles;
    StringTrimLeft(liste);
    StringTrimRight(liste);
-   string syms[];
-   if(StringLen(liste) == 0)
+   if(nFic > 0)
+   {
+      // rien à faire : la liste du fichier l'emporte
+   }
+   else if(StringLen(liste) == 0)
    {
       ArrayResize(syms, 1);
       syms[0] = _Symbol;
@@ -470,16 +536,27 @@ void OnStart()
       if(k <= 0) { Print("Liste de symboles vide après nettoyage."); return; }
    }
 
-   int faits = 0, rates = 0;
+   int faits = 0, demandes = 0;
    for(int i = 0; i < ArraySize(syms); i++)
    {
       string s = syms[i];
       StringTrimLeft(s); StringTrimRight(s);
       if(StringLen(s) == 0) continue;
+      demandes++;
       if(IsStopped()) { Print("Interrompu."); break; }
       PrintFormat("──── %s (%d/%d) ────", s, i + 1, ArraySize(syms));
-      if(Exporter(s)) faits++; else rates++;
+      if(Exporter(s)) faits++;
+      // les échecs sans motif enregistré viennent d'un chemin non instrumenté :
+      // les compter quand même, plutôt que de les perdre
+      else if(ArraySize(g_ratesNom) == 0
+              || g_ratesNom[ArraySize(g_ratesNom) - 1] != s) Rate(s, "échec non détaillé");
    }
-   PrintFormat("TERMINÉ : %d fichier(s) écrit(s), %d échec(s). Dossier : MQL5/Files.",
-               faits, rates);
+   int rates = ArraySize(g_ratesNom);
+   PrintFormat("════ TERMINÉ : %d demandé(s), %d exporté(s), %d échec(s). "
+               "Dossier : MQL5\\Files. ════", demandes, faits, rates);
+   for(int i = 0; i < rates; i++)
+      PrintFormat("   ✗ %s — %s", g_ratesNom[i], g_ratesPourquoi[i]);
+   if(rates > 0)
+      Print("Ces instruments n'ont PAS de fichier : Sivula ne pourra pas les scanner. "
+            "Ajoutez-les à l'Observation du marché, ou retirez-les de symboles.txt.");
 }

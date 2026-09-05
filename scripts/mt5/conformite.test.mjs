@@ -394,10 +394,11 @@ test("le relevé de symboles porte les colonnes que l'application cherche", () =
   // Symbol ET Point, et n'y trouve la contrainte que sous le nom StopsLevel. Renommer
   // une seule de ces colonnes fait relire le fichier comme un relevé retraité, sans
   // minimum de stop — et le contrôle de faisabilité redevient muet, en silence.
-  const src = readFileSync(new URL("../../Export_Symboles_Sivula.mq5", import.meta.url), "utf8");
-  const entete = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"/);
+  const src = readFileSync(new URL("../../Sivula_Releve.mq5", import.meta.url), "utf8");
+  // trois fragments depuis que le relevé porte l'heure et les tailles de contrat
+  const entete = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"\s*\n?\s*"([^"]*)"/);
   assert.ok(entete, "en-tête introuvable dans le script");
-  const cols = (entete[1] + entete[2]).replace(/\\r\\n/, "").split(";").map((x) => x.trim());
+  const cols = (entete[1] + entete[2] + entete[3]).replace(/\\r\\n/, "").split(";").map((x) => x.trim());
   for (const c of ["Symbol", "Point", "StopsLevel", "Bid", "Spread", "SwapMode",
     "SwapLong", "SwapShort", "ContractSize", "FreezeLevel"]) {
     assert.ok(cols.includes(c), `colonne « ${c} » absente de l'en-tête`);
@@ -407,4 +408,77 @@ test("le relevé de symboles porte les colonnes que l'application cherche", () =
   // le séparateur doit être le point-virgule : l'analyseur ne lit que celui-là
   assert.ok(!/FileWriteString\(f, "[^"]*,[^"]*Point/.test(src),
     "l'en-tête semble séparé par des virgules");
+  // Les colonnes ajoutées viennent APRÈS celles que Sivula cherche. Le lecteur travaille
+  // par nom, mais une colonne insérée AVANT StopsLevel déplacerait la contrainte pour
+  // tout lecteur positionnel — et l'ordre est ce que le fichier promet.
+  for (const c of ["heure_releve", "TickValue", "TickSize", "VolumeMin", "VolumeStep", "Statut"]) {
+    assert.ok(cols.indexOf(c) > cols.indexOf("CurrencyProfit"),
+      `« ${c} » doit venir après les colonnes historiques`);
+  }
+});
+
+// ————— LA LISTE NE VIT PAS DANS LE .mq5 —————
+// C'est le point qui décide de l'utilisabilité : en dur, il faut rouvrir MetaEditor et
+// recompiler à chaque changement de sélection, pour un geste hebdomadaire.
+for (const fichier of ["Sivula_Releve.mq5", "Export_H1_Sivula.mq5"]) {
+  test(`${fichier} prend sa liste dans un fichier, en priorité`, () => {
+    const src = readFileSync(new URL("../../" + fichier, import.meta.url), "utf8");
+    assert.match(src, /input string\s+InpFichierListe\s*=\s*"Sivula\\\\symboles\.txt"/,
+      "le chemin par défaut doit être celui que Sivula écrit");
+    assert.match(src, /if\(StringGetCharacter\(l, 0\) == '#'\) continue;/,
+      "l'en-tête commenté écrit par Sivula doit être ignoré");
+    // priorité : la liste du fichier l'emporte sur la saisie
+    assert.match(src, /rien à faire : la liste du fichier l'emporte/,
+      "la branche prioritaire doit exister");
+  });
+}
+
+test("le script de bougies récapitule ses échecs avec leur raison", () => {
+  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  // un Print par symbole se perd dans le journal : le bilan doit être groupé à la fin
+  assert.match(src, /TERMINÉ : %d demandé\(s\), %d exporté\(s\), %d échec\(s\)/);
+  for (const motif of ["symbole inconnu du courtier", "historique H1 vide depuis",
+    "l'historique ne remonte qu'au"]) {
+    assert.ok(src.includes(motif), `motif d'échec « ${motif} » absent`);
+  }
+});
+
+// ————— LE RELEVÉ PRODUIT EST-IL LISIBLE PAR LE SITE ? —————
+//
+// Le script écrit, la page lit : les deux vivent dans deux fichiers différents et rien
+// ne les tenait ensemble. On extrait le VRAI lecteur de la page et on lui donne une ligne
+// au format que le script produit — colonnes ajoutées comprises. C'est le seul contrôle
+// qui interdise à l'un de dériver de l'autre.
+test("le relevé écrit par Sivula_Releve se relit dans l'application", () => {
+  const page = readFileSync(new URL("../../Sivula.dc.html", import.meta.url), "utf8");
+  const i = page.indexOf("  analyserBareme(txt) {");
+  const j = page.indexOf("\n    return table;\n  }", i);
+  assert.ok(i > 0 && j > i, "analyserBareme introuvable dans la page");
+  const corps = page.slice(i, j + 22).replace(/^ {2}analyserBareme\(txt\) \{/, "function analyserBareme(txt){");
+  const analyser = new Function(corps + " return analyserBareme;")();
+
+  // l'en-tête EXACT du script, lu dans le script lui-même
+  const src = readFileSync(new URL("../../Sivula_Releve.mq5", import.meta.url), "utf8");
+  const m = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"\s*\n?\s*"([^"]*)"/);
+  const entete = (m[1] + m[2] + m[3]).replace(/\\r\\n/, "");
+
+  const ligne = ["GOLD", "Gold vs US Dollar", "CFD\\Metals", "0.01000000", "2",
+    "2350.12", "2350.34", "22", "100.00", "2", "-4.2000", "-1.8000", "200", "0", "USD",
+    "2026.09.05 08:40", "1.000000", "0.01000000", "0.01", "0.01", "ok"].join(";");
+  assert.equal(entete.split(";").length, ligne.split(";").length,
+    "autant de valeurs que de colonnes");
+
+  const t = analyser(entete + "\n" + ligne + "\n");
+  assert.ok(t.GOLD, "GOLD n'a pas été lu");
+  // les quatre grandeurs dont dépend le coût, plus la contrainte de stop
+  assert.equal(t.GOLD.point, 0.01);
+  assert.equal(t.GOLD.spreadPts, 22);
+  assert.equal(t.GOLD.lot, 100);
+  assert.equal(t.GOLD.bid, 2350.12);
+  assert.equal(t.GOLD.stopsLevel, 200,
+    "StopsLevel est la raison d'être du relevé : sans lui Sivula compte des trades que "
+    + "le courtier n'aurait jamais acceptés");
+  // SwapMode 2 (montant par lot) doit ressortir en convention interne 1
+  assert.equal(t.GOLD.swapType, 1);
+  assert.equal(t.GOLD.devise, "USD");
 });

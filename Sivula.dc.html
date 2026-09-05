@@ -974,8 +974,35 @@
         Déposer un relevé de symboles
         <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
       </label>
-      <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne, à coller dans InpSymboles de l’export MT5.">{{ exporterManquantsTxt }}</button>
+      <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne.">{{ exporterManquantsTxt }}</button>
       <span style="font-size:11px;line-height:1.5;max-width:44ch;margin-inline-start:auto;text-align:right" class="text-muted">Le glisser-déposer marche sur toute la page : ces boutons ne sont là que si vous préférez cliquer.</span>
+    </div>
+
+    <!--
+      LES DEUX FICHIERS QUE MT5 ATTEND, ET LA MARCHE À SUIVRE.
+
+      Écrite dans la page, pas dans une infobulle : c'est la première fois que
+      l'utilisateur touche MetaEditor, et il n'a aucune raison de savoir où se trouve
+      MQL5\Files ni qu'il faut compiler. Une consigne qu'on doit survoler pour lire n'est
+      pas une consigne.
+    -->
+    <div class="blueprint" style="padding:14px 18px;display:flex;flex-direction:column;gap:10px;align-self:stretch">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+        <strong style="font-family:var(--font-heading);font-size:16px;margin-inline-end:5px">Produire ces fichiers depuis MT5</strong>
+        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:14px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.">{{ listeMt5Txt }}</button>
+        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:14px" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
+      </div>
+      <div style="display:grid;grid-template-columns:20px 1fr;gap:6px 10px;font-size:12px;line-height:1.6">
+        <span class="text-muted">1</span><span>Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois.</strong></span>
+        <span class="text-muted">2</span><span>Placez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>. À remplacer quand votre sélection change.</span>
+        <span class="text-muted">3</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur un graphique, puis <code>Export_H1_Sivula</code>.</span>
+        <span class="text-muted">4</span><span>Les fichiers produits sont dans <code>MQL5\Files\Sivula\</code> — déposez-les ici.</span>
+      </div>
+      <span style="font-size:11px;line-height:1.5" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul.</span>
+      <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5">{{ mt5Copie }}</span>
+      </sc-if>
     </div>
 
 
@@ -2085,7 +2112,7 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-ghost" type="button" onClick="{{ toutUnivers }}">Tout sélectionner</button>
               <button class="btn btn-ghost" type="button" onClick="{{ viderUnivers }}">Tout désélectionner</button>
-              <button class="btn btn-secondary" type="button" onClick="{{ copierPourMt5 }}" title="Copie les noms des instruments sélectionnés — ou du catalogue entier si vous n'en avez sélectionné aucun — séparés par des virgules, dans l'orthographe de VOTRE courtier. À coller dans InpSymboles du script d'export MT5.">Copier pour MT5</button>
+              <button class="btn btn-secondary" type="button" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\Files\Sivula\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.">{{ listeMt5Txt }}</button>
             </div>
           </div>
           <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
@@ -10868,6 +10895,56 @@ GROUPES = {
   CLE_SERIES = 'simula.series.v1';
   CLE_COUV = 'simula.couverture.v1';
   CLE_LIVE = 'simula.liveMt5.v1';
+  // ————— UN ZIP SANS BIBLIOTHÈQUE —————
+  //
+  // Deux fichiers texte ne justifient pas d'embarquer un compresseur. Le format ZIP
+  // accepte la méthode « stocké » (0) : les octets sont copiés tels quels, et il ne
+  // reste qu'à écrire les en-têtes et le CRC. Une trentaine de lignes, aucune
+  // dépendance, et les scripts arrivent en un seul téléchargement au lieu de deux —
+  // ce qui compte quand le navigateur bloque les téléchargements multiples.
+  zipStocke(fichiers) {
+    const enc = new TextEncoder();
+    // table CRC-32 : le ZIP la réclame par fichier, et un CRC faux fait refuser
+    // l'archive par l'explorateur de Windows sans dire pourquoi
+    if (!this._crcT) {
+      const t = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c >>> 0;
+      }
+      this._crcT = t;
+    }
+    const crc32 = (buf) => {
+      let c = 0xFFFFFFFF;
+      for (let i = 0; i < buf.length; i++) c = this._crcT[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+      return (c ^ 0xFFFFFFFF) >>> 0;
+    };
+    const u16 = (v) => [v & 255, (v >>> 8) & 255];
+    const u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+    const morceaux = [], central = [];
+    let position = 0;
+    for (const [nom, bin] of fichiers) {
+      const n = enc.encode(nom);
+      const c = crc32(bin);
+      // 0x0800 : le nom de fichier est en UTF-8. Sans ce drapeau, un accent dans un nom
+      // ressort en mojibake sous Windows.
+      const local = [...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0),
+        ...u16(0), ...u16(0), ...u32(c), ...u32(bin.length), ...u32(bin.length),
+        ...u16(n.length), ...u16(0)];
+      morceaux.push(new Uint8Array(local), n, bin);
+      central.push([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0),
+        ...u16(0), ...u16(0), ...u32(c), ...u32(bin.length), ...u32(bin.length),
+        ...u16(n.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0),
+        ...u32(position), ...Array.from(n)]);
+      position += local.length + n.length + bin.length;
+    }
+    const cd = [].concat(...central);
+    const fin = [...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(fichiers.length),
+      ...u16(fichiers.length), ...u32(cd.length), ...u32(position), ...u16(0)];
+    return new Blob([...morceaux, new Uint8Array(cd), new Uint8Array(fin)],
+      { type: 'application/zip' });
+  }
   // ————— CE QUE LE ROBOT A VRAIMENT FAIT —————
   //
   // Le robot tient un relevé permanent de ses trades, un fichier par CONFIGURATION
@@ -12718,40 +12795,92 @@ GROUPES = {
       // erroné ne produit pas d'erreur, il produit un fichier MANQUANT qu'on ne remarque
       // qu'en cherchant pourquoi l'instrument n'apparaît pas. Le relevé de frais du
       // compte porte déjà le nom exact : on le lit là.
-      copierPourMt5: () => {
-        const choisis = (s.univers && s.univers.length) ? s.univers : [...this.SYMBOLES];
+      // ————— LES DEUX FICHIERS QUE MT5 ATTEND —————
+      //
+      // Le presse-papier est remplacé par un FICHIER. Coller une liste de cent
+      // vingt-sept noms dans un champ de saisie de MetaEditor, puis recompiler à chaque
+      // changement de sélection, n'est pas tenable pour un geste hebdomadaire. Les deux
+      // scripts lisent maintenant `Sivula\symboles.txt` : ils se compilent une fois et
+      // ne bougent plus, c'est le .txt qu'on remplace.
+      ...(() => {
         const cle = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
-        const noms = [], sansReleve = [];
-        for (const sym of choisis) {
-          const l = this.ligneCourtier(cle, sym);
-          // faute de relevé, on garde le nom du catalogue : il est souvent bon, et un
-          // nom présent que le terminal refusera vaut mieux qu'un instrument oublié
-          if (l && l.sym) noms.push(l.sym); else { noms.push(sym); sansReleve.push(sym); }
-        }
-        const txt = [...new Set(noms)].join(',');
-        const dire = (ok) => this.setState({ mt5Copie: (ok ? 'Copié : ' : 'Fichier enregistré : ')
-          + [...new Set(noms)].length + ' instruments, à coller dans InpSymboles.'
-          + (sansReleve.length
-            ? ' ' + sansReleve.length + ' sans relevé de frais — nom du catalogue employé ('
-              + sansReleve.slice(0, 4).join(', ') + (sansReleve.length > 4 ? '…' : '')
-              + '), vérifiez-les dans l\u2019Observation du marché.'
-            : '') });
-        // Le presse-papier est refusé dans certains cadres : on retombe alors sur un
-        // fichier, qui marche partout.
-        const replier = () => {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(new Blob([txt + '\n'], { type: 'text/plain;charset=utf-8' }));
-          a.download = 'symboles-mt5.txt';
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-          dire(false);
+        // Le nom du COURTIER, pas celui du catalogue : « #Japan225 » chez l'un,
+        // « JP225 » chez l'autre. Un nom que le terminal ne reconnaît pas produit une
+        // ligne « symbole inconnu » et rien d'autre.
+        const nomCourtier = (sym) => { const l = this.ligneCourtier(cle, sym);
+          return (l && l.sym) || sym; };
+        const dispo = (sym) => {
+          const b = (this.dfs || {})[sym] || (this.dfs || {})[this.fluxDe(sym).base];
+          return !!b;
         };
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(txt).then(() => dire(true), replier);
-          } else replier();
-        } catch (e) { replier(); }
-      },
+        // La sélection courante ; à défaut, les instruments SANS bougies — c'est le cas
+        // d'usage réel : on télécharge ce qui manque, pas ce qu'on a déjà.
+        const choisis = (s.univers && s.univers.length)
+          ? s.univers : this.SYMBOLES.filter((x) => !dispo(x));
+        const noms = [...new Set(choisis.map(nomCourtier))];
+        return {
+          nListeMt5: noms.length,
+          listeMt5Txt: noms.length
+            ? ((s.univers && s.univers.length) ? 'Liste pour MT5 · ' + noms.length + ' sélectionnés'
+              : 'Liste pour MT5 · ' + noms.length + ' sans bougies')
+            : 'Liste pour MT5 · rien à demander',
+          sansListeMt5: noms.length === 0,
+          telechargerListe: () => {
+            const entete = '# symboles.txt — écrit par Sivula le '
+              + new Date().toLocaleString('fr-FR') + '\n'
+              + '# ' + noms.length + ' instrument(s), orthographe de ' + this.nomCompteActif() + '\n'
+              + '# À placer dans MQL5\\Files\\Sivula\\ — remplacez-le quand votre sélection change.\n';
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([entete + noms.join('\n') + '\n'],
+              { type: 'text/plain;charset=utf-8' }));
+            a.download = 'symboles.txt';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+            this.setState({ mt5Copie: 'symboles.txt écrit — ' + noms.length
+              + ' instrument(s). Placez-le dans MQL5\\Files\\Sivula\\ (MT5 : Fichier > Ouvrir le dossier de données).' });
+          },
+          // Les scripts sont servis TELS QUELS depuis le dépôt : aucune valeur n'y est
+          // injectée, donc rien à regénérer et rien qui puisse diverger de ce qui est
+          // versionné. Un ZIP « stocké » — sans compression — évite d'embarquer une
+          // bibliothèque pour deux fichiers texte.
+          telechargerScripts: async () => {
+            const noms2 = ['Sivula_Releve.mq5', 'Export_H1_Sivula.mq5'];
+            const fichiers = [];
+            for (const n of noms2) {
+              try {
+                const r = await fetch('./' + n);
+                if (!r.ok) throw new Error(r.status);
+                fichiers.push([n, new Uint8Array(await r.arrayBuffer())]);
+              } catch (e) { /* on dira lesquels manquent */ }
+            }
+            if (!fichiers.length) {
+              this.setState({ mt5Copie: 'Les deux scripts ne sont pas à côté de cette page : '
+                + 'prenez Sivula_Releve.mq5 et Export_H1_Sivula.mq5 dans le dossier de Sivula, '
+                + 'à côté de ce fichier HTML.' });
+              return;
+            }
+            try {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(this.zipStocke(fichiers));
+              a.download = 'scripts-mt5-sivula.zip';
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+            } catch (e) {
+              // le ZIP a échoué : deux téléchargements successifs valent mieux que rien
+              for (const [n, bin] of fichiers) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([bin], { type: 'text/plain' }));
+                a.download = n;
+                a.click();
+                await new Promise((z) => setTimeout(z, 350));
+              }
+            }
+            this.setState({ mt5Copie: fichiers.length + ' script(s) téléchargé(s) — '
+              + 'à placer dans MQL5\\Scripts, puis à compiler dans MetaEditor (F7). Une seule fois.'
+              + (fichiers.length < 2 ? ' Un des deux n’a pas pu être lu.' : '') });
+          },
+        };
+      })(),
       mt5Copie: s.mt5Copie || '',
       aMt5Copie: !!s.mt5Copie,
       viderUnivers: () => this.setState({ univers: [], mt5Copie: '' }),
