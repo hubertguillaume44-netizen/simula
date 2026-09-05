@@ -1979,35 +1979,6 @@
     <sc-if value="{{ vueScan }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:14px">
 
-      <!--
-        LE DEVIS, COLLANT, AU-DESSUS DE TOUT.
-
-        Le bouton « Lancer le scan » vivait au bas de trois cadres repliables, soit trois
-        écrans et demi : on cochait des instruments, on descendait, on cochait des
-        conditions, on descendait encore, et on lançait sans plus voir ce qu'on venait de
-        demander. Une case cochée peut tripler une heure de calcul — le nombre et la durée
-        étaient DÉJÀ calculés, ils étaient simplement affichés trop loin du bouton pour
-        servir. Ils sont maintenant à côté de lui, et ne quittent plus l'écran.
-      -->
-      <div style="position:sticky;top:{{ filTop }};z-index:5;background:var(--color-accent-900);color:var(--color-bg);padding:10px 18px;display:flex;align-items:center;gap:22px;flex-wrap:wrap">
-        <div style="display:flex;flex-direction:column;gap:1px">
-          <span style="font-family:var(--font-heading);font-weight:600;font-size:32px;line-height:1;letter-spacing:-.01em">{{ combiTxt }}</span>
-          <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.75">combinaisons demandées</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:1px;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:22px">
-          <span style="font-family:var(--font-heading);font-weight:600;font-size:26px;line-height:1">{{ dureeCourte }}</span>
-          <span style="font-size:10px;opacity:.75">{{ dureeSource }} · {{ coeursCourt }}</span>
-        </div>
-        <span style="font-size:11px;line-height:1.5;opacity:.8;max-width:46ch;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:22px">{{ calculCombinaisons }}</span>
-        <div style="display:flex;gap:8px;margin-inline-start:auto;align-items:center">
-          <button class="btn btn-secondary" type="button" style="min-height:2.3rem;font-size:12px;padding-inline:14px" onClick="{{ enregistrerGrille }}" title="Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.">Sauver cette grille</button>
-          <button id="lancerScan" class="btn btn-primary" type="button" style="min-height:2.3rem;padding-inline:18px" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
-          <sc-if value="{{ scanEnCours }}" hint-placeholder-val="{{ false }}">
-            <button class="btn btn-secondary" type="button" style="min-height:2.3rem;font-size:12px;padding-inline:12px" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
-            <button class="btn btn-secondary" type="button" style="min-height:2.3rem;font-size:12px;padding-inline:12px" onClick="{{ arreterScan }}" title="Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
-          </sc-if>
-        </div>
-      </div>
 
       <!--
         L'autorisation de prévenir, demandée AU LANCEMENT d'un scan long et avec sa
@@ -2032,166 +2003,343 @@
 
       <div style="display:grid;grid-template-columns:430px 1fr;gap:14px;align-items:start">
 
-        <aside class="blueprint" style="position:sticky;top:{{ scanTopAside }};padding:14px 16px;display:flex;flex-direction:column;gap:0">
+        <!--
+          LA COLONNE EN TROIS ÉTAPES, UNE SEULE OUVERTE.
+
+          Elle empilait onze groupes de même poids visuel, chacun avec son petit ×N gris à
+          droite. Trois défauts se cumulaient : les multiplicateurs étaient dispersés et
+          jamais comparés — celui qui trouve son scan trop long coupe alors au hasard, et
+          souvent un instrument alors que retirer deux objectifs va cinq fois plus vite ;
+          deux totaux vivaient à deux endroits sans que le lien soit écrit ; et rien ne
+          distinguait un réglage qui multiplie le temps de calcul d'un réglage qui n'y
+          change rien.
+
+          L'ordre suit la question qu'on se pose réellement : sur quoi, quoi faire varier,
+          comment mesurer.
+        -->
+        <aside class="blueprint" style="position:sticky;top:{{ scanTopAside }};padding:0;display:flex;flex-direction:column;gap:0">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <!--
-            CHAQUE BLOC ANNONCE SON PROPRE MULTIPLICATEUR. C'est le cœur de la refonte :
-            un réglage dont on ne voit pas le facteur se coche sans y penser, et la
-            facture n'arrive qu'une heure plus tard.
-          -->
-          <!--
-            LA FENÊTRE DE MESURE, EN TÊTE DE COLONNE.
 
-            Le libellé du quatrième choix est délibéré : « une date que je choisis » nomme
-            la responsabilité, « personnalisé » la masque. Il ne se reformule pas.
-          -->
-          <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:11px;border-bottom:1px solid var(--color-divider)">
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Fenêtre de mesure</div>
-              <strong style="font-family:var(--font-heading);font-size:19px">{{ fenDuree }}</strong>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <sc-for list="{{ fenChoix }}" as="fx" hint-placeholder-count="4">
-                <label class="radio" style="font-size:12px"><input type="radio" name="fenetre" checked="{{ fx.actif }}" onChange="{{ fx.choisir }}"><span class="dot"></span>{{ fx.nom }}</label>
-              </sc-for>
-            </div>
-            <span style="font-size:10px;line-height:1.5" class="text-muted">Les deux fenêtres du milieu utilisent la date charnière déjà réglée plus bas. Choisies avant de voir le résultat, elles servent à tester ; choisies après, elles servent à se tromper.</span>
-            <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:9px">
-              <span style="font-size:11px" class="text-muted">Du</span>
-              <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:118px" type="date" value="{{ fenDu }}" onChange="{{ setFenDu }}" disabled="{{ fenDatesOff }}">
-              <span style="font-size:11px" class="text-muted">au</span>
-              <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:118px" type="date" value="{{ fenAu }}" onChange="{{ setFenAu }}" disabled="{{ fenDatesOff }}">
-            </div>
-            <span style="font-size:10px;line-height:1.45" class="text-muted">Actif seulement sur le dernier choix.</span>
-            <!--
-              LE FREIN MÉCANIQUE, ÉCRIT AVANT QU'IL NE COÛTE UNE HEURE DE CALCUL. Le
-              sélecteur ne rend pas une fenêtre courte utilisable : il rend visible
-              qu'elle ne l'est pas.
-            -->
-            <sc-if value="{{ aFenFrein }}" hint-placeholder-val="{{ false }}">
-              <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                <strong style="font-size:11px;line-height:1.3">Un frein mécanique à connaître</strong>
-                <span style="font-size:10px;line-height:1.5" class="text-muted">{{ fenFreinTxt }}</span>
-              </div>
-            </sc-if>
-            <sc-if value="{{ aFenAmorce }}" hint-placeholder-val="{{ false }}">
-              <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px;border-color:var(--color-accent)">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                <strong style="font-size:11px;line-height:1.3;color:var(--color-accent-700)">Amorce trop courte</strong>
-                <span style="font-size:10px;line-height:1.5">{{ fenAmorceTxt }}</span>
-              </div>
-            </sc-if>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:8px;padding:11px 0">
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Quoi scanner</div>
-              <strong style="font-family:var(--font-heading);font-size:19px">{{ nbUnivers }} / {{ nbTotal }}</strong>
-            </div>
-            <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Nom ou ticker… (ex. aapl, .FR, USD)">
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
-              <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="6">
-                <button type="button" class="{{ gr.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="Cocher ou décocher tout le groupe" onClick="{{ gr.basculerGroupe }}">{{ gr.nom }} · {{ gr.choisis }} / {{ gr.n }}</button>
-              </sc-for>
-            </div>
-            <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirInstruments }}">Ouvrir la liste des {{ nbTotal }} →</button>
-            <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ prixInstrument }}</span>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--color-divider);padding:11px 0">
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Grille balayée</div>
-              <strong style="font-family:var(--font-heading);font-size:19px">{{ multGrille }}</strong>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <span style="font-size:11px" class="text-muted">Unité de temps</span>
-              <div style="display:flex;gap:0">
-                <sc-for list="{{ choixUts }}" as="cu2" hint-placeholder-count="3">
-                  <button type="button" class="{{ cu2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:12px;padding:5px 2px" title="{{ cu2.aide }}" onClick="{{ cu2.choisir }}">{{ cu2.nom }}</button>
-                </sc-for>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Ce qui déclenche l’achat</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multEntrees }}</span>
-              </div>
-              <div style="display:flex;gap:5px;flex-wrap:wrap">
-                <sc-for list="{{ choixEntrees }}" as="ce" hint-placeholder-count="5">
-                  <button type="button" class="{{ ce.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce.basculer }}">{{ ce.nom }}</button>
-                </sc-for>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Lignes balayées</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multLignes }}</span>
-              </div>
-              <div style="display:flex;gap:5px;flex-wrap:wrap">
-                <sc-for list="{{ choixLignes }}" as="cl" hint-placeholder-count="3">
-                  <button type="button" class="{{ cl.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl.basculer }}">{{ cl.nom }}</button>
-                </sc-for>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Sens du trade</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multSens }}</span>
-              </div>
-              <div style="display:flex;gap:5px;flex-wrap:wrap">
-                <sc-for list="{{ choixSens }}" as="cs2" hint-placeholder-count="2">
-                  <button type="button" class="{{ cs2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs2.aide }}" onClick="{{ cs2.basculer }}">{{ cs2.nom }}</button>
-                </sc-for>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Longueurs · stops · objectifs</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multNombres }}</span>
-              </div>
-              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px;text-align:left" onClick="{{ ouvrirNombres }}">{{ resumeNombres }}</button>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Conditions comparées</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multConditions }}</span>
-              </div>
-              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirConditions }}">Les {{ nCondTotal }} conditions…</button>
-              <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                <span style="font-size:11px" class="text-muted">Sécurisation, lecture, durée</span>
-                <span style="font-size:11px;font-family:var(--font-heading)" class="text-muted">{{ multSecu }}</span>
-              </div>
-              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirSecu2 }}">Modifier…</button>
-            </div>
-            <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ btFrais }}" onChange="{{ toggleFrais }}"><span class="dot"></span>Compter les frais réels du symbole<span class="aide" title="{{ aideFrais }}">?</span></label>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:11px">
-            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Grilles enregistrées</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 8px;flex:1" type="text" value="{{ nomGrille }}" onChange="{{ setNomGrille }}" placeholder="Nom de la grille">
-            </div>
-        <sc-if value="{{ aMesGrilles }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <sc-for list="{{ mesGrilles }}" as="mg" hint-placeholder-count="2">
-              <span class="tag tag-outline" style="display:inline-flex;align-items:center;gap:7px;padding-inline-end:4px">
-                <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;color:inherit;text-align:left" onClick="{{ mg.rappeler }}" title="Recharger cette grille dans les réglages ci-dessus">{{ mg.nom }}<span style="display:block;font-size:10px;opacity:.65;text-transform:none;letter-spacing:0">{{ mg.detail }}</span></button>
-                <button type="button" style="cursor:pointer;border:none;background:none;padding:0 2px;font:inherit;color:inherit;opacity:.5" onClick="{{ mg.supprimer }}" title="Supprimer cette grille">×</button>
+          <!-- ————— 1 · SUR QUOI ————— -->
+          <div style="display:flex;flex-direction:column;background:{{ e1Fond }};border-inline-start:3px solid {{ e1Trait }}">
+            <button type="button" onClick="{{ ouvrirEtape1 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:12px 14px;display:flex;gap:10px;align-items:baseline;width:100%">
+              <span style="font-family:var(--font-heading);font-size:15px;opacity:.5;flex:none">1</span>
+              <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                <span style="font-size:14px;font-weight:{{ e1Gras }}">Sur quoi</span>
+                <span style="font-size:11px;line-height:1.4" class="text-muted">{{ e1Resume }}</span>
               </span>
-            </sc-for>
+              <span style="font-size:11px;opacity:.55;flex:none">{{ e1Chevron }}</span>
+            </button>
+            <sc-if value="{{ e1Ouvert }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:11px;padding:0 14px 13px">
+
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                    <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase" class="text-muted">Quoi scanner</span>
+                    <strong style="font-family:var(--font-heading);font-size:17px">{{ nbUnivers }} / {{ nbTotal }}</strong>
+                  </div>
+                  <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Nom ou ticker… (ex. aapl, .FR, USD)">
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="6">
+                      <button type="button" class="{{ gr.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="Cocher ou décocher tout le groupe" onClick="{{ gr.basculerGroupe }}">{{ gr.nom }} · {{ gr.choisis }} / {{ gr.n }}</button>
+                    </sc-for>
+                  </div>
+                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirInstruments }}">Ouvrir la liste des {{ nbTotal }} →</button>
+                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ prixInstrument }}</span>
+                </div>
+
+                <!--
+                  LA FENÊTRE DE MESURE, REPLIÉE. Six éléments visibles en permanence pour un
+                  réglage dont la valeur par défaut convient neuf fois sur dix : deux lignes
+                  suffisent, le reste s'ouvre quand on en a besoin. Le paragraphe qui met en
+                  garde n'est pas supprimé — il s'affiche au moment où une réduction est
+                  choisie, là où il sert à changer d'avis.
+                -->
+                <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                    <span style="font-size:12px">{{ fenLigne }}</span>
+                    <strong style="font-family:var(--font-heading);font-size:17px">{{ fenDuree }}</strong>
+                  </div>
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fenDates }}</span>
+                  <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;text-align:left;color:var(--color-accent-700);align-self:flex-start" onClick="{{ basculerFenDetail }}">{{ fenLienTxt }}</button>
+                  <sc-if value="{{ fenDetail }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
+                      <div style="display:flex;flex-direction:column;gap:3px">
+                        <sc-for list="{{ fenChoix }}" as="fx" hint-placeholder-count="4">
+                          <label class="radio" style="font-size:12px"><input type="radio" name="fenetre" checked="{{ fx.actif }}" onChange="{{ fx.choisir }}"><span class="dot"></span>{{ fx.nom }}</label>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+                        <span style="font-size:11px" class="text-muted">Du</span>
+                        <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:116px" type="date" value="{{ fenDu }}" onChange="{{ setFenDu }}" disabled="{{ fenDatesOff }}">
+                        <span style="font-size:11px" class="text-muted">au</span>
+                        <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:116px" type="date" value="{{ fenAu }}" onChange="{{ setFenAu }}" disabled="{{ fenDatesOff }}">
+                      </div>
+                      <span style="font-size:10px;line-height:1.45" class="text-muted">Les deux champs ne servent que sur le dernier choix.</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ aFenAvertir }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;line-height:1.5;color:var(--color-accent-700)">Choisies avant de voir le résultat, ces fenêtres servent à tester ; choisies après, elles servent à se tromper. Les deux du milieu utilisent la date charnière réglée dans les seuils.</span>
+                  </sc-if>
+                  <sc-if value="{{ aFenFrein }}" hint-placeholder-val="{{ false }}">
+                    <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px">
+                      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                      <strong style="font-size:11px;line-height:1.3">Un frein mécanique à connaître</strong>
+                      <span style="font-size:10px;line-height:1.5" class="text-muted">{{ fenFreinTxt }}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ aFenAmorce }}" hint-placeholder-val="{{ false }}">
+                    <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px;border-color:var(--color-accent)">
+                      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                      <strong style="font-size:11px;line-height:1.3;color:var(--color-accent-700)">Amorce trop courte</strong>
+                      <span style="font-size:10px;line-height:1.5">{{ fenAmorceTxt }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--color-divider);padding-top:10px">
+                  <span style="font-size:11px" class="text-muted">Unité de temps — la matière, pas la variation</span>
+                  <div style="display:flex;gap:0">
+                    <sc-for list="{{ choixUts }}" as="cu2" hint-placeholder-count="3">
+                      <button type="button" class="{{ cu2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:12px;padding:5px 2px" title="{{ cu2.aide }}" onClick="{{ cu2.choisir }}">{{ cu2.nom }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+
+              </div>
+            </sc-if>
           </div>
-        </div>
-        </sc-if>
-            <span style="font-size:10px;line-height:1.45" class="text-muted">{{ coeursTxt }}</span>
-            <label class="radio" style="font-size:11px"><input type="checkbox" checked="{{ sonScan }}" onChange="{{ toggleSonScan }}"><span class="dot"></span>Un son court à la fin du scan<span class="aide" title="Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.">?</span></label>
-            <sc-if value="{{ aChoixCoeurs }}" hint-placeholder-val="{{ true }}">
-              <button type="button" class="{{ regimeCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px;align-self:flex-start" onClick="{{ basculerRegime }}" title="{{ regimeAide }}">{{ regimeNom }}</button>
+
+          <!-- ————— 2 · CE QUI VARIE ————— -->
+          <div style="display:flex;flex-direction:column;background:{{ e2Fond }};border-inline-start:3px solid {{ e2Trait }};border-top:1px solid var(--color-divider)">
+            <button type="button" onClick="{{ ouvrirEtape2 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:12px 14px;display:flex;gap:10px;align-items:baseline;width:100%">
+              <span style="font-family:var(--font-heading);font-size:15px;opacity:.5;flex:none">2</span>
+              <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                <span style="font-size:14px;font-weight:{{ e2Gras }}">Ce qui varie</span>
+                <span style="font-size:11px;line-height:1.4" class="text-muted">{{ e2Resume }}</span>
+              </span>
+              <span style="font-size:11px;opacity:.55;flex:none">{{ e2Chevron }}</span>
+            </button>
+            <sc-if value="{{ e2Ouvert }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:7px;padding:0 14px 13px">
+                <!--
+                  RANGÉES PAR COÛT DÉCROISSANT, et le rang est CALCULÉ : cocher les deux sens
+                  ou retirer un objectif change l'ordre. C'est lui qui répond à « qu'est-ce
+                  que je coupe pour aller plus vite », et c'est la fonctionnalité — pas une
+                  préférence de mise en page. L'ordre visuel vient de `order` sur le
+                  conteneur flex : chaque bloc garde donc son propre éditeur, ouvert à sa
+                  place dans la colonne et pas dans un panneau qui recouvre la page.
+                -->
+                <div style="display:flex;flex-direction:column;border:1px solid var(--color-divider);overflow:hidden">
+
+                  <div style="order:{{ fNombresRang }};border-bottom:1px solid var(--color-divider)">
+                    <button type="button" onClick="{{ fNombresOuvrir }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;width:100%;padding:9px 11px;display:flex;gap:10px;align-items:baseline">
+                      <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                        <span style="font-size:12px">Longueurs · stops · objectifs</span>
+                        <span style="font-size:10px;line-height:1.4" class="text-muted">{{ fNombresDetail }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-size:13px;flex:none">{{ fNombresMult }}</span>
+                    </button>
+                    <sc-if value="{{ fNombresVu }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:7px;padding:0 11px 11px">
+                        <div style="display:flex;flex-direction:column;gap:3px">
+                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Longueurs de la ligne</span>
+                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
+                            <sc-for list="{{ chipsPeriodes }}" as="cp2" hint-placeholder-count="5">
+                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cp2.retirer }}">{{ cp2.texte }} ×</button>
+                            </sc-for>
+                            <input type="text" onKeyDown="{{ ajoutPeriode }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
+                          </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:3px">
+                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Distance du stop (%)</span>
+                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
+                            <sc-for list="{{ chipsSls }}" as="cs3" hint-placeholder-count="4">
+                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cs3.retirer }}">{{ cs3.texte }} ×</button>
+                            </sc-for>
+                            <input type="text" onKeyDown="{{ ajoutSl }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
+                          </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:3px">
+                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Objectifs visés</span>
+                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
+                            <sc-for list="{{ chipsRrs }}" as="cr2" hint-placeholder-count="4">
+                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cr2.retirer }}">{{ cr2.texte }} ×</button>
+                            </sc-for>
+                            <input type="text" onKeyDown="{{ ajoutRr }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-ghost" style="min-height:1.6rem;font-size:10px;align-self:flex-start;padding-inline:8px" onClick="{{ ouvrirNombres }}">Ouvrir en grand…</button>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <div style="order:{{ fConditionsRang }};border-bottom:1px solid var(--color-divider)">
+                    <button type="button" onClick="{{ fConditionsOuvrir }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;width:100%;padding:9px 11px;display:flex;gap:10px;align-items:baseline">
+                      <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                        <span style="font-size:12px">Conditions comparées</span>
+                        <span style="font-size:10px;line-height:1.4" class="text-muted">{{ fConditionsDetail }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-size:13px;flex:none">{{ fConditionsMult }}</span>
+                    </button>
+                    <sc-if value="{{ fConditionsVu }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:6px;padding:0 11px 11px">
+                        <div style="display:flex;gap:5px;flex-wrap:wrap">
+                          <sc-for list="{{ choixFiltres }}" as="cf2" hint-placeholder-count="8">
+                            <button type="button" class="{{ cf2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cf2.expl }}" onClick="{{ cf2.basculer }}">{{ cf2.nom }}</button>
+                          </sc-for>
+                        </div>
+                        <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
+                        <button type="button" class="btn btn-ghost" style="min-height:1.6rem;font-size:10px;align-self:flex-start;padding-inline:8px" onClick="{{ ouvrirConditions }}">Ouvrir en grand…</button>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <div style="order:{{ fLignesRang }};border-bottom:1px solid var(--color-divider)">
+                    <button type="button" onClick="{{ fLignesOuvrir }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;width:100%;padding:9px 11px;display:flex;gap:10px;align-items:baseline">
+                      <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                        <span style="font-size:12px">Lignes balayées</span>
+                        <span style="font-size:10px;line-height:1.4" class="text-muted">{{ fLignesDetail }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-size:13px;flex:none">{{ fLignesMult }}</span>
+                    </button>
+                    <sc-if value="{{ fLignesVu }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0 11px 11px">
+                        <sc-for list="{{ choixLignes }}" as="cl3" hint-placeholder-count="3">
+                          <button type="button" class="{{ cl3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl3.basculer }}">{{ cl3.nom }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <div style="order:{{ fEntreesRang }};border-bottom:1px solid var(--color-divider)">
+                    <button type="button" onClick="{{ fEntreesOuvrir }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;width:100%;padding:9px 11px;display:flex;gap:10px;align-items:baseline">
+                      <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                        <span style="font-size:12px">Ce qui déclenche l’achat</span>
+                        <span style="font-size:10px;line-height:1.4" class="text-muted">{{ fEntreesDetail }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-size:13px;flex:none">{{ fEntreesMult }}</span>
+                    </button>
+                    <sc-if value="{{ fEntreesVu }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0 11px 11px">
+                        <sc-for list="{{ choixEntrees }}" as="ce2" hint-placeholder-count="5">
+                          <button type="button" class="{{ ce2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce2.basculer }}">{{ ce2.nom }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                  <div style="order:{{ fSensRang }}">
+                    <button type="button" onClick="{{ fSensOuvrir }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;width:100%;padding:9px 11px;display:flex;gap:10px;align-items:baseline">
+                      <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                        <span style="font-size:12px">Sens du trade</span>
+                        <span style="font-size:10px;line-height:1.4" class="text-muted">{{ fSensDetail }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-size:13px;flex:none">{{ fSensMult }}</span>
+                    </button>
+                    <sc-if value="{{ fSensVu }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0 11px 11px">
+                        <sc-for list="{{ choixSens }}" as="cs4" hint-placeholder-count="2">
+                          <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+
+                </div>
+                <span style="font-size:10px;line-height:1.45" class="text-muted">Rangés du plus coûteux au moins coûteux. Chaque ligne s’ouvre à sa place, sans quitter la colonne.</span>
+                <sc-if value="{{ aSecuHors }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ secuHorsTxt }}</span>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- ————— 3 · COMMENT MESURER ————— -->
+          <div style="display:flex;flex-direction:column;background:{{ e3Fond }};border-inline-start:3px solid {{ e3Trait }};border-top:1px solid var(--color-divider)">
+            <button type="button" onClick="{{ ouvrirEtape3 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:12px 14px;display:flex;gap:10px;align-items:baseline;width:100%">
+              <span style="font-family:var(--font-heading);font-size:15px;opacity:.5;flex:none">3</span>
+              <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+                <span style="font-size:14px;font-weight:{{ e3Gras }}">Comment mesurer</span>
+                <span style="font-size:11px;line-height:1.4" class="text-muted">{{ e3Resume }}</span>
+              </span>
+              <span style="font-size:11px;opacity:.55;flex:none">{{ e3Chevron }}</span>
+            </button>
+            <sc-if value="{{ e3Ouvert }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:0 14px 13px">
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                    <span style="font-size:12px">Sécurisation, lecture, durée</span>
+                    <span style="font-family:var(--font-heading);font-size:13px">{{ multSecu }}</span>
+                  </div>
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">Ce bloc multiplie lui aussi le calcul, mais il décrit comment la position est tenue : il se règle ici, pas dans ce qu’on fait varier.</span>
+                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirSecu2 }}">Modifier…</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
+                  <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ btFrais }}" onChange="{{ toggleFrais }}"><span class="dot"></span>Compter les frais réels du symbole<span class="aide" title="{{ aideFrais }}">?</span></label>
+                  <label class="radio" style="font-size:11px"><input type="checkbox" checked="{{ sonScan }}" onChange="{{ toggleSonScan }}"><span class="dot"></span>Un son court à la fin du scan<span class="aide" title="Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.">?</span></label>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                    <span style="font-size:12px">Seuils d’affichage</span>
+                    <span style="font-family:var(--font-heading);font-size:13px">{{ nSeuilsActifs }}</span>
+                  </div>
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">Ils ne changent rien au calcul : ils décident lesquelles de ses configurations s’affichent.</span>
+                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirSeuils }}">Régler les seuils…</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ coeursTxt }}</span>
+                  <sc-if value="{{ aChoixCoeurs }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" class="{{ regimeCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px;align-self:flex-start" onClick="{{ basculerRegime }}" title="{{ regimeAide }}">{{ regimeNom }}</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!--
+            LE DEVIS, EN PIED ET AU CORPS DU TEXTE.
+
+            Le nombre s'affichait en 32 px en tête de page et le sous-total en 19 px au
+            milieu de la colonne, sans que le lien entre les deux soit écrit nulle part.
+            Ce n'est pas un titre, c'est une conséquence : à cette taille il occupait la
+            place du sujet. Un seul bandeau, au même corps que la durée, avec la
+            décomposition qui dit d'où vient le chiffre — c'est elle qui supprime le doublon.
+          -->
+          <div style="background:var(--color-accent-900);color:var(--color-bg);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:12px;line-height:1.35"><strong>{{ combiTxt }} combinaisons</strong> · {{ dureeCourte }}</span>
+              <span style="font-size:11px;line-height:1.4;opacity:.8" title="{{ calculCombinaisons }}">{{ decompoTxt }}</span>
+            </div>
+            <button id="lancerScan" type="button" style="cursor:pointer;border:none;width:100%;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:13px;padding:9px 10px;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
+            <sc-if value="{{ scanEnCours }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:6px">
+                <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:5px 9px;flex:1" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
+                <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:5px 9px;flex:1" onClick="{{ arreterScan }}" title="Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- Les grilles enregistrées sortent de l'accordéon : elles ne se règlent pas, elles se rappellent. -->
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px 14px">
+            <div style="display:flex;gap:6px;align-items:center">
+              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ basculerGrilles }}">Grilles enregistrées · {{ nGrilles }}</button>
+              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:9px;margin-inline-start:auto" onClick="{{ enregistrerGrille }}" title="Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.">Sauver celle-ci</button>
+            </div>
+            <sc-if value="{{ grillesVues }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 8px" type="text" value="{{ nomGrille }}" onChange="{{ setNomGrille }}" placeholder="Nom de la grille">
+                <sc-if value="{{ aMesGrilles }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                    <sc-for list="{{ mesGrilles }}" as="mg" hint-placeholder-count="2">
+                      <span class="tag tag-outline" style="display:inline-flex;align-items:center;gap:7px;padding-inline-end:4px">
+                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;color:inherit;text-align:left" onClick="{{ mg.rappeler }}" title="Recharger cette grille dans les réglages ci-dessus">{{ mg.nom }}<span style="display:block;font-size:10px;opacity:.65;text-transform:none;letter-spacing:0">{{ mg.detail }}</span></button>
+                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0 2px;font:inherit;color:inherit;opacity:.5" onClick="{{ mg.supprimer }}" title="Supprimer cette grille">×</button>
+                      </span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
             </sc-if>
           </div>
         </aside>
@@ -4311,7 +4459,9 @@ class Component extends DCLogic {
     // Le TOP classe par R net, et la lecture haute donne toujours un meilleur R que la
     // basse : sans cette condition, le tamis retenait mécaniquement la version optimiste
     // de chaque configuration — celle sur laquelle on ne peut pas s'engager.
-    sPrudent: true, onbCache: false, exempleEtape: 0, nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
+    sPrudent: true, onbCache: false, exempleEtape: 0,
+    // la colonne du scan : quelle étape est ouverte, quel facteur est déplié
+    etapeScan: 2, facteurOuvert: '', fenDetail: false, grillesVues: false, nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false, dlgVerrou: false, codeSaisi: '', codeErreur: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -9040,7 +9190,7 @@ GROUPES = {
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
       'vue', 'derniereVue', 'modeTable', 'ouvLot', 'sonScan', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
-      'fenMode', 'fenDu', 'fenAu',
+      'fenMode', 'fenDu', 'fenAu', 'etapeScan',
       'coupureRegime', 'pleinRegime', 'gEntrees', 'gLignes', 'gFiltres', 'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf',
       'gLignePente', 'gPenteRecul', 'triCumul', 'tTradesMin', 'tSegMin', 'tDdMax', 'tWinMin', 'tOosMin', 'tWfMin', 'tDureeMax', 'sPrudent',
       'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
@@ -9124,6 +9274,46 @@ GROUPES = {
   // Une condition cochée peut porter plusieurs périodes et plusieurs lignes : elle se
   // développe alors en autant de sous-variantes distinctes. Chacune est mesurée
   // séparément, sinon « MM 50 » et « MM 200 » se confondraient dans le classement.
+  // ————— CE QUI MULTIPLIE, ET DE COMBIEN —————
+  //
+  // Les six facteurs qui composent le nombre de réglages par instrument, avec leur
+  // multiplicateur RÉEL — développé, pas compté sur la liste cochée : une condition peut
+  // se déplier en plusieurs variantes, et un ×3 annoncé qui en vaut 27 ne répond pas à la
+  // question qu'on lui pose. Leur produit vaut exactement `multGrille`, sinon le
+  // classement mentirait sur ce qu'il y a à couper.
+  facteursScan(etat) {
+    const s = etat || this.state;
+    const dev = (table, choix, def) => this.developper(s, table, choix, def).length;
+    const per = this.nombres(s.gPeriodes, [26]).length;
+    const sls = this.nombres(s.gSls, [1]).length;
+    const rrs = this.nombres(s.gRrs, [2.5]).length;
+    const nomsDe = (liste, table) => (liste || []).map((k) => (table[k] || [k])[0] || k);
+    const court = (l, n) => (l.length > n ? l.slice(0, n).join(' · ') + '\u2026' : l.join(' · '));
+    return [
+      { cle: 'nombres', nom: 'Longueurs · stops · objectifs', n: per * sls * rrs,
+        detail: per + ' longueurs \u00b7 ' + sls + ' stops \u00b7 ' + rrs + ' objectifs' },
+      { cle: 'conditions', nom: 'Conditions comparées',
+        n: dev(this.VARIANTES_FILTRE, s.gFiltres, 'aucun'),
+        detail: court(nomsDe(s.gFiltres && s.gFiltres.length ? s.gFiltres : ['aucun'], this.VARIANTES_FILTRE), 4) },
+      { cle: 'lignes', nom: 'Lignes balayées', n: Math.max(1, (s.gLignes || []).length),
+        detail: court((s.gLignes || []).map((k) => LIGNES_TXT[k] || k), 4) || 'aucune' },
+      { cle: 'entrees', nom: 'Ce qui déclenche l\u2019achat', n: Math.max(1, (s.gEntrees || []).length),
+        detail: court((s.gEntrees || []).map((k) => ENTREES_TXT[k] || k), 3) || 'aucune' },
+      { cle: 'sens', nom: 'Sens du trade', n: dev(this.SENS_VARIANTES, s.gSens, 'achat'),
+        detail: (s.gSens || []).length > 1 ? 'achat et vente à découvert'
+          : ((s.gSens || [])[0] === 'vente' ? 'vente à découvert seule' : 'achat seul') },
+    ];
+  }
+  // La sécurisation, la lecture et la durée multiplient AUSSI, mais elles décrivent
+  // comment on mesure, pas ce qu'on fait varier : elles se règlent à l'étape 3. Le
+  // chiffre reste dit, sinon la décomposition du bandeau ne retomberait pas sur ses pieds.
+  facteurSecu(etat) {
+    const s = etat || this.state;
+    const dev = (table, choix, def) => this.developper(s, table, choix, def).length;
+    return dev(this.SECU_VARIANTES, s.gSecus, 'aucune')
+      * dev(this.TEMPS_VARIANTES, s.gTemps, 'jamais')
+      * dev(this.LECTURE_VARIANTES, s.gLectures, 'favorable');
+  }
   conditionsBalayees(etat) {
     const s = etat || this.state;
     const conds = this.developper(s, this.VARIANTES_FILTRE, s.gFiltres, 'aucun');
@@ -15298,33 +15488,17 @@ GROUPES = {
           + aCharger * ((v && v.secParInstrument) ? Math.min(3, v.secParInstrument) : 1.2);
         return {
           dureeCourte: '≈ ' + this.duree(sec),
-          dureeSource: v ? 'à la vitesse du dernier scan' : 'estimation avant votre premier scan',
-          coeursCourt: this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
           // LE PRIX D'UNE CASE COCHÉE, en clair. C'est ce qui manquait : une case peut
           // tripler une heure de calcul sans que rien ne l'annonce.
           prixInstrument: 'Chaque instrument coché ajoute ' + parInstr.toLocaleString('fr-FR')
             + ' combinaisons, soit ' + this.duree(parInstr / cps) + ' de calcul.',
         };
       })(),
-      scanTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 70) + 'px',
-      multGrille: (this.conditionsBalayees(s).length * ((s.gEntrees || []).length || 1)
-        * ((s.gLignes || []).length || 1) * this.nombres(s.gPeriodes, [26]).length
-        * this.nombres(s.gSls, [1]).length * this.nombres(s.gRrs, [2.5]).length).toLocaleString('fr-FR'),
-      multEntrees: '×' + ((s.gEntrees || []).length || 1),
-      multLignes: '×' + ((s.gLignes || []).length || 1),
-      multSens: '×' + ((s.gSens || []).length || 1),
-      multNombres: this.nombres(s.gPeriodes, [26]).length + ' × '
-        + this.nombres(s.gSls, [1]).length + ' × ' + this.nombres(s.gRrs, [2.5]).length,
-      // virgule décimale : le reste de la page écrit « 0,7 % », pas « 0.7 »
-      resumeNombres: (() => {
-        const j = (l) => l.map((x) => String(x).replace('.', ',')).join(' · ');
-        return j(this.nombres(s.gPeriodes, [26])) + '  |  '
-          + j(this.nombres(s.gSls, [1])) + ' %  |  ' + j(this.nombres(s.gRrs, [2.5]));
-      })(),
-      nCondTotal: Object.keys(this.VARIANTES_FILTRE).length,
-      multConditions: ((s.gFiltres || []).length || 1) + ' de '
-        + Object.keys(this.VARIANTES_FILTRE).length + ' · ×'
-        + ((s.gFiltres || []).length || 1) + ' le temps',
+      // le bandeau collant du haut a disparu — la colonne remonte sous le fil
+      scanTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 8) + 'px',
+      // Les multiplicateurs dispersés dans onze groupes ont été remplacés par les cinq
+      // facteurs classés de `facteursScan` : un ×N qu'on ne peut comparer à aucun autre
+      // ne répond à aucune question. Seul celui de la sécurisation subsiste, à l'étape 3.
       resumeConditions: ((s.gFiltres || []).length
         ? (s.gFiltres || []).map((k) => (this.VARIANTES_FILTRE[k] || [k])[0]).join(' · ')
           + ' — chacune est essayée sur toute la grille'
@@ -16070,6 +16244,68 @@ GROUPES = {
         };
       })(),
 
+      // ————— LA COLONNE EN TROIS ÉTAPES —————
+      ...(() => {
+        const ouverte = [1, 2, 3].includes(s.etapeScan) ? s.etapeScan : 2;
+        const fen = this.fenetre(s);
+        const fact = this.facteursScan(s);
+        const nSecu = this.facteurSecu(s);
+        const parInstr = fact.reduce((a, f) => a * f.n, 1) * nSecu;
+        const span = this.spanDispo(s.univers && s.univers.length ? s.univers
+          : [...new Set(this.lignesScan.map((r) => r.sym))]);
+        const dispo = span ? this.ansTxt(span.fin - span.debut) : '—';
+        const poser = (n) => () => this.setState({ etapeScan: n }, () => this.ecrireSession());
+        const etage = (n) => ({
+          ouvert: ouverte === n,
+          fond: ouverte === n ? 'transparent' : 'var(--color-neutral-100)',
+          trait: ouverte === n ? 'var(--color-accent)' : 'transparent',
+          chevron: ouverte === n ? '\u25be' : '\u25b8',
+          gras: ouverte === n ? '600' : '400',
+        });
+        const e1 = etage(1), e2 = etage(2), e3 = etage(3);
+        // LE RANG D'UN FACTEUR EST CALCULÉ, jamais figé : cocher les deux sens ou retirer
+        // un objectif change l'ordre, parce que la question « qu'est-ce que je coupe »
+        // change avec eux.
+        const rangs = {};
+        [...fact].sort((a, b) => b.n - a.n || a.cle.localeCompare(b.cle))
+          .forEach((f, i) => { rangs[f.cle] = i; });
+        const ouvF = s.facteurOuvert || '';
+        const parCle = {};
+        for (const f of fact) parCle[f.cle] = f;
+        const trous = {};
+        for (const f of fact) {
+          const P = f.cle[0].toUpperCase() + f.cle.slice(1);
+          trous['f' + P + 'Rang'] = String(rangs[f.cle]);
+          trous['f' + P + 'Mult'] = '\u00d7' + f.n.toLocaleString('fr-FR');
+          trous['f' + P + 'Detail'] = f.detail;
+          trous['f' + P + 'Vu'] = ouvF === f.cle;
+          trous['f' + P + 'Ouvrir'] = () => this.setState({ facteurOuvert: ouvF === f.cle ? '' : f.cle });
+        }
+        return {
+          ...trous,
+          e1Ouvert: e1.ouvert, e1Fond: e1.fond, e1Trait: e1.trait, e1Chevron: e1.chevron, e1Gras: e1.gras,
+          e2Ouvert: e2.ouvert, e2Fond: e2.fond, e2Trait: e2.trait, e2Chevron: e2.chevron, e2Gras: e2.gras,
+          e3Ouvert: e3.ouvert, e3Fond: e3.fond, e3Trait: e3.trait, e3Chevron: e3.chevron, e3Gras: e3.gras,
+          ouvrirEtape1: poser(1), ouvrirEtape2: poser(2), ouvrirEtape3: poser(3),
+          e1Resume: this.pl(s.univers.length || 0, 'instrument', 'instruments')
+            + ' \u00b7 ' + dispo + ' \u00b7 ' + (s.ut || 'H1'),
+          e2Resume: parInstr.toLocaleString('fr-FR') + ' réglages par instrument',
+          e3Resume: (s.btFrais ? 'frais réels' : 'sans frais') + ' \u00b7 sécurisation \u00b7 seuils',
+          // La sécurisation multiplie elle aussi : le dire ici est ce qui empêche la
+          // décomposition du bandeau de paraître fausse.
+          aSecuHors: nSecu > 1,
+          secuHorsTxt: 'Sécurisation, lecture et durée multiplient aussi (\u00d7' + nSecu
+            + ') : elles se règlent à l\u2019étape 3, parce qu\u2019elles décrivent comment on mesure.',
+          decompoTxt: this.pl(s.univers.length || 1, 'instrument', 'instruments')
+            + ' \u00d7 ' + parInstr.toLocaleString('fr-FR') + ' réglages \u00b7 '
+            + this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
+          lancerOpacite: this.universDuCompte(s.univers).length ? '1' : '.5',
+          nGrilles: (this.lireGrilles() || []).length,
+          grillesVues: !!s.grillesVues,
+          basculerGrilles: () => this.setState({ grillesVues: !s.grillesVues }),
+        };
+      })(),
+
       // ————— LA FENÊTRE DE MESURE —————
       ...(() => {
         const fen = this.fenetre(s);
@@ -16119,6 +16355,21 @@ GROUPES = {
           setFenDu: (e) => this.setState({ fenDu: e.target.value }, () => this.ecrireSession()),
           setFenAu: (e) => this.setState({ fenAu: e.target.value }, () => this.ecrireSession()),
           fenDatesOff: (s.fenMode || 'tout') !== 'choisie',
+          // LA FENÊTRE REPLIÉE : deux lignes par défaut. Six éléments visibles en
+          // permanence pour un réglage dont la valeur par défaut convient neuf fois sur
+          // dix, c'est six fois trop.
+          fenLigne: fen.complete ? 'Tout l\u2019historique' : this.fenLibelle(fen),
+          fenDates: fen.complete
+            ? 'du ' + jj(t0) + ' au ' + jj(t1)
+            : 'du ' + jj(d) + ' au ' + jj(f) + ' \u00b7 ' + this.dureeEcart(tot - dedans) + ' écartés',
+          fenDetail: !!s.fenDetail || !fen.complete,
+          basculerFenDetail: () => this.setState({ fenDetail: !(s.fenDetail || !fen.complete) }),
+          fenLienTxt: (s.fenDetail || !fen.complete)
+            ? 'replier le choix de la période'
+            : 'mesurer sur une partie seulement\u2026',
+          // L'avertissement n'est pas supprimé, il est déplacé : il s'affiche au moment où
+          // une réduction est réellement choisie, là où il sert à changer d'avis.
+          aFenAvertir: !fen.complete,
           // LE FREIN MÉCANIQUE, dit avant qu'il ne coûte une heure de calcul.
           aFenFrein: !fen.complete,
           fenFreinTxt: 'Une année d\u2019historique en H1 donne quinze à trente trades selon l\u2019instrument. '

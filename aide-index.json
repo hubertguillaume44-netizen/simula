@@ -92,13 +92,6 @@
    ]
   },
   {
-   "terme": "cette grille Lancer le scan",
-   "texte": "Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Cible de Tout ranger",
    "texte": "Destination du bouton « Tout ranger dans… ».",
    "vues": [
@@ -110,6 +103,13 @@
    "texte": "Classer les lignes par ce critère",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "combinaisons Lancer le scan",
+   "texte": "Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -295,7 +295,7 @@
    ]
   },
   {
-   "terme": "Grilles enregistrées",
+   "terme": "Grilles enregistrées Sauver celle-ci",
    "texte": "Recharger cette grille dans les réglages ci-dessus",
    "vues": [
     "Nouveau scan"
@@ -464,7 +464,7 @@
    ]
   },
   {
-   "terme": "Sauver cette grille",
+   "terme": "Sauver celle-ci",
    "texte": "Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.",
    "vues": [
     "Nouveau scan"
