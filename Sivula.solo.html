@@ -1547,28 +1547,66 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           </section>
 
           <sc-if value="{{ aZone }}" hint-placeholder-val="{{ false }}">
-            <section style="display:flex;flex-direction:column;gap:14px">
-              <div>
-                <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Les secteurs de la zone {{ zoneNom }}</h4>
-                <p style="margin:4px 0 0;font-size:13px;max-width:78ch" class="text-muted">Moyenne des variations sur vingt séances, et part des titres du secteur au-dessus de leur moyenne 200 jours.</p>
+            <!--
+              LES SECTEURS DEVIENNENT UNE CARTE.
+
+              Six lignes de tableau se lisent une par une ; une carte se lit d'un coup. La
+              teinte dit la largeur, l'ordre va du plus tenu au plus faible, et « En tête »
+              — une colonne qu'on ne lisait jamais en entier — devient l'infobulle de la
+              case. Coût assumé : il faut survoler pour l'avoir.
+            -->
+            <section class="card blueprint" style="padding:0;gap:0">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="padding:14px 20px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
+                <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Les secteurs</span>
+                <span style="font-size:11px" class="text-muted">part des titres au-dessus de leur MM200 · variation à 20 séances · ★ = un instrument que vous suivez</span>
               </div>
-              <table class="table">
-                <thead><tr><th>Secteur</th><th style="text-align:right">20 séances</th><th>Titres au-dessus de la MM200</th><th>En tête</th><th>État</th></tr></thead>
-                <tbody>
-                  <sc-for list="{{ zSecteurs }}" as="zs" hint-placeholder-count="6">
-                    <tr>
-                      <td><strong>{{ zs.nom }}</strong><div style="font-size:12px" class="text-muted">{{ zs.n }} titres</div></td>
-                      <td style="text-align:right">{{ zs.v20 }}</td>
-                      <td style="min-width:140px">
-                        <div style="height:6px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><div style="height:6px;width:{{ zs.barre }};background:var(--color-accent)"></div></div>
-                        <div style="font-size:12px;margin-top:4px" class="text-muted">{{ zs.largeur }}</div>
-                      </td>
-                      <td style="font-size:12px">{{ zs.tete }}</td>
-                      <td><span class="tag {{ zs.tag }}">{{ zs.etat }}</span></td>
-                    </tr>
-                  </sc-for>
-                </tbody>
-              </table>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--color-divider)">
+                <sc-for list="{{ zSecteurs }}" as="zs" hint-placeholder-count="6">
+                  <div style="background:{{ zs.fond }};color:{{ zs.encre }};padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0" title="{{ zs.aide }}">
+                    <span style="font-size:11px;line-height:1.3">{{ zs.nom }}{{ zs.etoile }}</span>
+                    <strong style="font-family:var(--font-heading);font-size:18px;line-height:1.15">{{ zs.pct }}</strong>
+                    <span style="font-size:10px;line-height:1.4;opacity:{{ zs.voile }}">{{ zs.v20 }} · {{ zs.n }} titres</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <!--
+                VOS INSTRUMENTS DE LA ZONE, NOMMÉS. Le score en agrège des dizaines et
+                n'en montre aucun : c'est le seul niveau où le régime devient actionnable.
+              -->
+              <sc-if value="{{ aTitres }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 20px;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--color-divider)">
+                  <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
+                    <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Les instruments que vous tradez, dans cette zone</span>
+                    <span style="font-size:11px" class="text-muted">c’est ce que le score agrège sans le dire</span>
+                  </div>
+                  <div style="overflow-x:auto">
+                    <table class="table" style="font-size:12px">
+                      <thead><tr>
+                        <th>Instrument</th><th>Secteur</th>
+                        <th style="text-align:right">20 séances</th>
+                        <th style="min-width:17ch">Position vs MM200</th>
+                        <th style="min-width:13ch">Ligne rangée</th>
+                      </tr></thead>
+                      <tbody>
+                        <sc-for list="{{ zTitres }}" as="zt" hint-placeholder-count="6">
+                          <tr>
+                            <td><strong>{{ zt.nom }}</strong></td>
+                            <td class="text-muted">{{ zt.secteur }}</td>
+                            <td style="text-align:right">{{ zt.v20 }}</td>
+                            <td>
+                              <span style="display:block;height:5px;background:color-mix(in srgb,var(--color-text) 10%,transparent)"><span style="display:block;height:5px;width:{{ zt.barre }};background:{{ zt.barreFond }}"></span></span>
+                              <span style="font-size:11px;line-height:1.4;color:{{ zt.vsCouleur }}">{{ zt.vsTxt }}</span>
+                            </td>
+                            <td><span class="{{ zt.etatCls }}" style="font-size:10px;white-space:nowrap">{{ zt.etat }}</span></td>
+                          </tr>
+                        </sc-for>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </sc-if>
             </section>
           </sc-if>
         </div>
@@ -16032,6 +16070,17 @@ GROUPES = {
         // Pas de `preserveAspectRatio="none"` : il écrase le tracé et transforme le point
         // en ellipse. Et le dernier point rentre à 986, pas à 1000, sinon le bord le coupe
         // en deux.
+        // les instruments que VOUS suivez : ils portent l'étoile des secteurs et peuplent
+        // le tableau nommé
+        const suivis = new Set(this.symsSuivis.length ? this.symsSuivis
+          : (this.essai ? this.SYM_DEMO : this.PORTEFEUILLE));
+        const clesV = new Set(this.normValides(s.valides).map((x) => x.ticker || x.sym));
+        const scannes = new Set((this.lignesScan || []).map((x) => x.sym));
+        const etatLigne = (sym) => clesV.has(sym)
+          ? { etat: 'en portefeuille', etatCls: 'tag tag-accent' }
+          : scannes.has(sym)
+            ? { etat: 'écartée au scan', etatCls: 'tag tag-outline' }
+            : { etat: 'non scanné', etatCls: '' };
         const H = rz && rz.hist && rz.hist.length > 1 ? rz.hist : null;
         const frise = (() => {
           if (!H) return { aFrise: false, frisePath: '', friseAnnees: [], friseCx: '986', friseCy: '45' };
@@ -16053,7 +16102,57 @@ GROUPES = {
           zScore: rz ? rz.score : '—', zLabel: rz ? rz.label : 'Non mesuré', zTag: rz ? rz.tag : 'tag-outline',
           zBreadth: rz ? rz.breadth : '—', zMedian: rz ? rz.median : '—',
           zIndices: rz ? rz.indices : '—', zHausse: rz ? rz.hausse : '—', zN: rz ? rz.n : '—',
-          zSecteurs: rz ? rz.secteurs : [], zDate: dz,
+          zDate: dz,
+          // ————— LES SECTEURS DEVIENNENT UNE CARTE —————
+          //
+          // Six lignes de tableau se lisent une par une ; une carte se lit d'un coup. La
+          // teinte encode la largeur, l'ordre va du plus tenu au plus faible — et
+          // `repeat(3, …)` plutôt qu'`auto-fit` : avec six secteurs, `auto-fit` laisse à
+          // la dernière rangée des pistes vides qui se peignent en gris et ressemblent à
+          // des tuiles cassées.
+          zSecteurs: (rz ? [...rz.secteurs] : [])
+            .sort((a2, b2) => (b2.part ?? 0) - (a2.part ?? 0))
+            .map((x) => {
+              const part = (x.part ?? 0) * 100;
+              const fond = part >= 80 ? 'var(--color-accent-500)'
+                : part >= 60 ? 'var(--color-accent-400)'
+                : part >= 45 ? 'var(--color-accent-200)'
+                : part >= 30 ? 'var(--color-accent-100)'
+                : part >= 15 ? 'var(--color-neutral-200)' : 'var(--color-neutral-300)';
+              // encre claire sur les deux teintes les plus sombres seulement
+              const encre = part >= 60 ? 'var(--color-bg)' : 'var(--color-text)';
+              const tenus = (x.syms || []).some((y) => suivis.has(y));
+              return { ...x,
+                pct: Math.round(part) + ' %', fond, encre,
+                voile: part >= 60 ? '.8' : '.65',
+                etoile: tenus ? ' \u2605' : '',
+                aide: x.tete + (x.queue ? ' — ' + x.queue : '') };
+            }),
+          // ————— VOS INSTRUMENTS DE LA ZONE, NOMMÉS —————
+          //
+          // Le score agrège quarante-sept instruments et n'en montre aucun. C'est le seul
+          // niveau où le régime devient actionnable : un score de 62 ne dit pas quoi
+          // faire, « XOM.US est passé sous sa MM200 et sa ligne a été écartée au scan » si.
+          zTitres: (() => {
+            const l = (rz && rz.titres ? rz.titres : []).filter((x) => suivis.has(x.sym));
+            const mx = Math.max(1, ...l.map((x) => Math.abs(x.vsM200 || 0)));
+            return l.sort((a2, b2) => (b2.vsM200 || 0) - (a2.vsM200 || 0)).map((x) => {
+              const dessus = (x.vsM200 || 0) >= 0;
+              return { sym: x.sym, secteur: x.secteur,
+                nom: this.nomComplet(x.sym),
+                v20: Number.isFinite(x.v20)
+                  ? (x.v20 >= 0 ? '+ ' : '\u2212 ') + Math.abs(x.v20).toFixed(1).replace('.', ',') + ' %' : '—',
+                vsTxt: Number.isFinite(x.vsM200)
+                  ? (dessus ? '+ ' : '\u2212 ') + Math.abs(x.vsM200).toFixed(1).replace('.', ',') + ' %'
+                    + (dessus ? ' au-dessus' : ' en dessous') : '—',
+                vsCouleur: dessus ? 'var(--color-accent-700)' : 'var(--color-accent-900)',
+                barre: Math.round(Math.min(1, Math.abs(x.vsM200 || 0) / mx) * 100) + '%',
+                barreFond: dessus ? 'var(--color-accent)' : 'var(--color-neutral-500)',
+                ...etatLigne(x.sym),
+              };
+            });
+          })(),
+          aTitres: !!(rz && rz.titres && rz.titres.some((x) => suivis.has(x.sym))),
           zVerdict: verdict, zSousTitre: sousTitre,
           zBougie: rz ? 'bougies jusqu\u2019à ' + heure(rz.tFin) : 'aucune bougie mesurée',
           zEnTete: rz ? (this.ZONES[s.zoneMarche] || this.ZONES.us).nom.toUpperCase()
