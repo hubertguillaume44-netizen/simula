@@ -6,6 +6,22 @@
 <script src="./support.js"></script>
 </head>
 <body>
+<!--
+  LE FORMULAIRE QUE NETLIFY DOIT VOIR.
+
+  Netlify recense les formulaires au DÉPLOIEMENT, en lisant le HTML livré. Or cette page
+  est rendue par le runtime DC, côté navigateur : le formulaire du panneau n'existe pas
+  encore quand le robot passe, et les envois seraient refusés en 404 sans que rien ne
+  l'explique. Cette copie statique et masquée existe pour être lue par lui, et par lui
+  seul — elle déclare les champs, rien de plus. C'est la parade documentée par Netlify,
+  et elle ne coûte pas une ligne de JavaScript.
+-->
+<form name="avis" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="hidden" name="form-name" value="avis">
+  <input type="text" name="bot-field">
+  <input type="text" name="note"><input type="text" name="motifs"><textarea name="message"></textarea>
+  <input type="email" name="courriel"><textarea name="contexte"></textarea>
+</form>
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/industry-cbc1f2df-2f0f-4cb9-a754-a8a64e9401b6/styles.css">
@@ -3760,6 +3776,122 @@
     </details>
   </footer>
 
+
+  <!--
+    LES DEUX BOUTONS, ET LE PANNEAU.
+
+    Un PANNEAU LATÉRAL, jamais une fenêtre modale : un client qui doit fermer ce qu'il
+    regarde pour le décrire ne le décrit pas. L'application reste visible derrière, et
+    l'écran dont il parle aussi.
+
+    Rien ne bouge tout seul : pas de bulle animée, pas de badge rouge, pas d'ouverture
+    automatique. Sur un outil de mesure, un élément qui s'agite décrédibilise le reste.
+  -->
+  <div style="position:fixed;right:18px;bottom:18px;z-index:70;display:flex;gap:8px">
+    <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:12px" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
+    <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:14px" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
+  </div>
+
+  <sc-if value="{{ avisOuvert }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:80;display:flex;justify-content:flex-end;pointer-events:none">
+      <!--
+        Pas de voile sombre : l'application doit rester LISIBLE pendant qu'on la décrit.
+        Le panneau seul capte les clics, le reste de la page continue de vivre.
+      -->
+      <div class="blueprint" style="pointer-events:auto;width:min(430px,96vw);height:100%;overflow:auto;background:var(--color-bg);border-left:1px solid var(--color-divider);padding:18px 20px;display:flex;flex-direction:column;gap:0">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-family:var(--font-heading);font-size:24px;line-height:1.1;letter-spacing:-.005em">Dites-moi ce qui cloche</span>
+            <span style="font-size:12px" class="text-muted">Une idée, une gêne, un mot mal choisi. Tout est lu.</span>
+          </div>
+          <button type="button" style="cursor:pointer;background:none;border:0;font:inherit;font-size:18px;line-height:1;opacity:.5;padding:0 2px" onClick="{{ fermerAvis }}" title="Fermer">×</button>
+        </div>
+
+        <sc-if value="{{ avisEnvoye }}" hint-placeholder-val="{{ false }}">
+          <!--
+            Le panneau ne se ferme PAS tout seul à l'envoi : une fermeture immédiate laisse
+            un doute sur le fait que ce soit parti. Il le dit, puis se retire.
+          -->
+          <div style="padding:28px 0;display:flex;flex-direction:column;gap:6px">
+            <span style="font-family:var(--font-heading);font-size:22px;line-height:1.15;color:var(--color-accent-700)">Reçu, merci</span>
+            <span style="font-size:13px;line-height:1.55">C’est arrivé chez moi. Si vous avez laissé votre adresse, je réponds moi-même.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ avisFormulaire }}" hint-placeholder-val="{{ true }}">
+        <form name="avis" method="POST" data-netlify="true" netlify-honeypot="bot-field" target="avis-recu" onSubmit="{{ avisSoumis }}" style="display:flex;flex-direction:column;gap:0">
+          <input type="hidden" name="form-name" value="avis">
+          <input type="hidden" name="contexte" value="{{ avisContexteBrut }}">
+          <p style="display:none"><input type="text" name="bot-field" tabIndex="-1"></p>
+
+          <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding:14px 0">
+            <span style="font-size:12px" class="text-muted">Cette page, sur cinq</span>
+            <div style="display:flex;gap:4px;align-items:center">
+              <sc-for list="{{ avisEtoiles }}" as="et" hint-placeholder-count="5">
+                <button type="button" style="cursor:pointer;background:none;border:0;padding:0 2px;font-size:24px;line-height:1;color:{{ et.couleur }}" title="{{ et.aide }}" onClick="{{ et.choisir }}">★</button>
+              </sc-for>
+              <span style="font-size:12px;margin-inline-start:8px" class="text-muted">{{ avisNoteTxt }}</span>
+            </div>
+            <input type="hidden" name="note" value="{{ avisNoteVal }}">
+          </div>
+
+          <!--
+            LES PASTILLES NE SONT PAS DÉCORATIVES. Une note plus une pastille suffisent à
+            envoyer, champ libre vide : un client qui n'a pas les mots n'écrira rien, et
+            c'est précisément son avis qui manque le plus.
+          -->
+          <div style="display:flex;gap:5px;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding:14px 0">
+            <sc-for list="{{ avisMotifs }}" as="mo" hint-placeholder-count="4">
+              <button type="button" class="{{ mo.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:3px 9px" onClick="{{ mo.basculer }}">{{ mo.nom }}</button>
+            </sc-for>
+            <input type="hidden" name="motifs" value="{{ avisMotifsVal }}">
+          </div>
+
+          <textarea name="message" rows="4" class="input" placeholder="Ce qui vous a arrêté, dans vos mots." style="height:auto;min-height:5.5rem;font-size:13px;line-height:1.55;resize:vertical" value="{{ avisTexte }}" onChange="{{ setAvisTexte }}"></textarea>
+
+          <label class="radio" style="font-size:12px;margin-top:12px"><input type="checkbox" checked="{{ avisRepondre }}" onChange="{{ toggleAvisRepondre }}"><span class="dot"></span>Me répondre par courriel</label>
+          <!-- le champ d'adresse n'apparaît qu'au clic : demander une adresse d'emblée
+               transforme un avis en inscription -->
+          <sc-if value="{{ avisRepondre }}" hint-placeholder-val="{{ false }}">
+            <input class="input" type="email" name="courriel" placeholder="votre adresse" style="min-height:2rem;height:2rem;font-size:13px;margin-top:7px" value="{{ avisMail }}" onChange="{{ setAvisMail }}">
+          </sc-if>
+
+          <!--
+            LE CONTEXTE, JOINT ET MONTRÉ.
+
+            C'est ce qui transforme « ça ne marche pas » en quelque chose de réparable.
+            Il serait facile de l'envoyer en silence — la plupart des sites le font. Sur un
+            outil qui promet que les données ne quittent pas le navigateur, un envoi
+            discret vers l'extérieur est exactement ce qui casse la confiance le jour où le
+            client le découvre. Il est donc visible, et la phrase qui borne son contenu
+            l'est aussi.
+          -->
+          <div style="background:var(--color-neutral-100);padding:11px 13px;margin-top:16px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+              <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Joint automatiquement</span>
+              <button type="button" style="cursor:pointer;background:none;border:0;font:inherit;font-size:11px;color:var(--color-accent-700);padding:0" onClick="{{ basculerAvisCtx }}">{{ avisVoirTxt }}</button>
+            </div>
+            <span style="font-size:11px;line-height:1.55">{{ avisContexteLisible }}</span>
+            <sc-if value="{{ avisCtxOuvert }}" hint-placeholder-val="{{ false }}">
+              <pre style="margin:0;font-family:Consolas,ui-monospace,monospace;font-size:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:var(--color-bg);padding:8px 9px">{{ avisContexteBrut }}</pre>
+            </sc-if>
+            <span style="font-size:11px;line-height:1.55;color:var(--color-accent-700)">Aucun de vos chiffres n’est joint : ni capital, ni résultats, ni noms d’instruments.</span>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary" type="submit" style="min-height:2.2rem;font-size:12px;padding-inline:18px" disabled="{{ avisVide }}">Envoyer</button>
+            <span style="font-size:11px;line-height:1.5" class="text-muted">{{ avisPied }}</span>
+          </div>
+        </form>
+        </sc-if>
+      </div>
+    </div>
+    <!-- l'envoi part dans ce cadre invisible : le formulaire est un vrai POST, sans
+         fetch ni dépendance, et la page ne se recharge pas — le panneau peut donc dire
+         « Reçu, merci » au lieu de laisser Netlify afficher sa propre page -->
+    <iframe name="avis-recu" title="envoi" style="position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none"></iframe>
+  </sc-if>
 </div></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;essai&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;codeAcces&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2580&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;montantDefaut&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5000,&quot;tsType&quot;:&quot;number&quot;,&quot;unit&quot;:&quot;€&quot;,&quot;min&quot;:500,&quot;max&quot;:50000,&quot;step&quot;:500,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;horizonAns&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:3,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot; ans&quot;,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;vueParDefaut&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;compacte&quot;,&quot;options&quot;:[&quot;compacte&quot;,&quot;deroulee&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mise en page&quot;}}">
 const EUR = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -10593,6 +10725,10 @@ GROUPES = {
   // passage du spread déduit après coup au spread porté par le prix d'entrée. Sans lui,
   // un résultat en cache serait relu comme s'il venait de la nouvelle règle.
   MOTEUR_V = 'e4';
+  // Version de l'APPLICATION, distincte de la règle du moteur : un rapport d'avis a
+  // besoin des deux — « e4 » dit comment les trades sont calculés, la date dit quelle
+  // version de la page l'utilisateur avait sous les yeux.
+  VERSION_APP = '260905';
   signature(cfg) { return this.MOTEUR_V + '|' + this.state.btSym + '|' + this.state.ut + '|' + JSON.stringify(cfg); }
   // tout réglage relance le test : impossible de lire un chiffre qui ne correspond pas à l'écran.
   // Mais un backtest complet par frappe fige l'interface : on regroupe les
@@ -12508,6 +12644,94 @@ GROUPES = {
           barreTacheTxt: tache ? tache.txt : '',
           barreTacheBouton: tache ? tache.bouton : '',
           barreTache: tache ? tache.go : () => {},
+        };
+      })(),
+      // ————— DONNER MON AVIS —————
+      ...(() => {
+        const MOTIFS = ['Un chiffre que je ne comprends pas', 'Trop lent', 'Une idée', 'Ça ne marche pas'];
+        const pris = s.avisMotifs || [];
+        const note = Number(s.avisNote) || 0;
+        const NOTES = ['', 'inutilisable', 'pénible', 'passable', 'bien, mais…', 'rien à redire'];
+        const VUES = { courtiers: 'Mes instruments', scan: 'Nouveau scan', historique: 'Historique',
+          backtest: 'Backtest', portefeuille: 'Portefeuille', marche: 'Marché', journal: 'Journal' };
+        // L'ESPACE DE TRAVAIL, tel que le cloisonnement le nomme : un bogue qui n'arrive
+        // que dans l'espace déverrouillé n'est pas le même qu'un bogue de la démo.
+        const espace = this.essai ? 'essai' : (s.deverrouille ? 'perso' : 'client');
+        const nav = (() => {
+          const u = (navigator && navigator.userAgent) || '';
+          // du plus spécifique au plus général : tout navigateur fondé sur Chromium
+          // annonce aussi « Safari/537 », et prendre le dernier jeton rapportait « Safari »
+          // pour un Chrome — ce qui envoie chercher un bogue là où il n'est pas.
+          for (const [re, nom] of [[/Edg\/([\d.]+)/, 'Edge'], [/OPR\/([\d.]+)/, 'Opera'],
+            [/Firefox\/([\d.]+)/, 'Firefox'], [/Chrome\/([\d.]+)/, 'Chrome'],
+            [/Version\/([\d.]+).*Safari/, 'Safari']]) {
+            const m = u.match(re);
+            if (m) return nom + ' ' + String(m[1]).split('.')[0];
+          }
+          return 'navigateur inconnu';
+        })();
+        // Trois compteurs, et RIEN d'autre : ce sont des tailles, pas des mesures. Le
+        // capital, les résultats et les noms d'instruments restent dans le navigateur.
+        const ctx = {
+          page: VUES[s.vue] || s.vue || '—',
+          espace, version: this.VERSION_APP, moteur: this.MOTEUR_V, navigateur: nav,
+          series: (s.deposes || []).length,
+          scans: (s.archives || []).length,
+          lignes: this.normValides(s.valides || []).length,
+        };
+        const brut = 'page=' + ctx.page + '\nespace=' + ctx.espace + '\nversion=' + ctx.version
+          + '\nmoteur=' + ctx.moteur + '\nnavigateur=' + ctx.navigateur
+          + '\nseries=' + ctx.series + '\nscans=' + ctx.scans + '\nlignes=' + ctx.lignes;
+        return {
+          ouvrirAvis: () => this.setState({ avisOuvert: true, avisEnvoye: false }),
+          fermerAvis: () => this.setState({ avisOuvert: false }),
+          avisOuvert: !!s.avisOuvert,
+          avisEnvoye: !!s.avisEnvoye,
+          avisFormulaire: !s.avisEnvoye,
+          avisEtoiles: [1, 2, 3, 4, 5].map((k) => ({
+            couleur: k <= note ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+            aide: k + ' sur 5 — ' + NOTES[k],
+            choisir: () => this.setState({ avisNote: k }),
+          })),
+          avisNoteTxt: note ? NOTES[note] : '',
+          avisNoteVal: note ? String(note) : '',
+          avisMotifs: MOTIFS.map((nom) => ({
+            nom, cls: 'tag ' + (pris.includes(nom) ? 'tag-accent' : 'tag-outline'),
+            basculer: () => this.setState((q) => {
+              const l = new Set(q.avisMotifs || []);
+              if (l.has(nom)) l.delete(nom); else l.add(nom);
+              return { avisMotifs: [...l] };
+            }),
+          })),
+          avisMotifsVal: pris.join(' · '),
+          avisTexte: s.avisTexte || '',
+          setAvisTexte: (e) => this.setState({ avisTexte: e.target.value }),
+          avisRepondre: !!s.avisRepondre,
+          toggleAvisRepondre: () => this.setState({ avisRepondre: !s.avisRepondre }),
+          avisMail: s.avisMail || '',
+          setAvisMail: (e) => this.setState({ avisMail: e.target.value }),
+          avisCtxOuvert: !!s.avisCtxOuvert,
+          avisVoirTxt: s.avisCtxOuvert ? 'masquer' : 'voir',
+          basculerAvisCtx: () => this.setState({ avisCtxOuvert: !s.avisCtxOuvert }),
+          avisContexteBrut: brut,
+          avisContexteLisible: 'Page ' + ctx.page + ' · espace ' + ctx.espace
+            + ' · version ' + ctx.version + ' · ' + ctx.navigateur + ' · '
+            + this.pl(ctx.series, 'série', 'séries') + ', '
+            + this.pl(ctx.scans, 'scan', 'scans') + ', '
+            + this.pl(ctx.lignes, 'ligne rangée', 'lignes rangées') + '.',
+          // une note OU une pastille suffit : exiger le champ libre reviendrait à ne
+          // recueillir que les avis de ceux qui ont déjà les mots
+          avisVide: !note && !pris.length && !(s.avisTexte || '').trim(),
+          avisPied: 'Arrive chez moi tout de suite. Pas de compte à créer.',
+          avisSoumis: () => {
+            // le POST part dans le cadre invisible ; on ne l'empêche pas, on l'accompagne
+            this.setState({ avisEnvoye: true });
+            setTimeout(() => this.setState({ avisOuvert: false, avisEnvoye: false,
+              avisNote: 0, avisMotifs: [], avisTexte: '', avisRepondre: false, avisMail: '' }), 2000);
+          },
+          // le panneau d'aide arrive ensuite ; le bouton existe déjà pour que la place
+          // soit prise et que les deux ne se disputent pas le coin de l'écran
+          ouvrirAide: () => this.setState({ aideOuverte: true }),
         };
       })(),
       isAccueil: tab === 'accueil',
