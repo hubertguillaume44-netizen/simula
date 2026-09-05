@@ -1524,6 +1524,9 @@
                 <td>
                   <strong>{{ vl.nom }}</strong>
                   <span style="display:block;font-size:11px;line-height:1.45" class="text-muted">{{ vl.reglages }} · {{ vl.filtres }} · {{ vl.ut }} · {{ vl.n }} trades</span>
+                  <!-- la fenêtre suit la ligne jusque dans le portefeuille : c'est là
+                       qu'un chiffre taillé devient une décision -->
+                  <span style="display:{{ vl.fenAff }};font-size:10px;line-height:1.45;color:{{ vl.fenHorsCouleur }}">{{ vl.fenNom }} — {{ vl.fenHors }}</span>
                   <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
                     <sc-for list="{{ vl.cibles }}" as="cb3" hint-placeholder-count="2">
                       <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:0 5px" title="{{ cb3.aide }}" onClick="{{ cb3.basculer }}">{{ cb3.ab }}</button>
@@ -1615,6 +1618,9 @@
                 <td>
                   <strong>{{ vl.nom }}</strong>
                   <span style="display:block;font-size:11px;line-height:1.45" class="text-muted">{{ vl.reglages }} · {{ vl.filtres }} · {{ vl.ut }} · {{ vl.n }} trades</span>
+                  <!-- la fenêtre suit la ligne jusque dans le portefeuille : c'est là
+                       qu'un chiffre taillé devient une décision -->
+                  <span style="display:{{ vl.fenAff }};font-size:10px;line-height:1.45;color:{{ vl.fenHorsCouleur }}">{{ vl.fenNom }} — {{ vl.fenHors }}</span>
                   <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:3px">
                     <sc-for list="{{ vl.cibles }}" as="cb3" hint-placeholder-count="2">
                       <button type="button" class="{{ cb3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:0 5px" title="{{ cb3.aide }}" onClick="{{ cb3.basculer }}">{{ cb3.ab }}</button>
@@ -2047,7 +2053,52 @@
             un réglage dont on ne voit pas le facteur se coche sans y penser, et la
             facture n'arrive qu'une heure plus tard.
           -->
-          <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:11px">
+          <!--
+            LA FENÊTRE DE MESURE, EN TÊTE DE COLONNE.
+
+            Le libellé du quatrième choix est délibéré : « une date que je choisis » nomme
+            la responsabilité, « personnalisé » la masque. Il ne se reformule pas.
+          -->
+          <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:11px;border-bottom:1px solid var(--color-divider)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+              <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Fenêtre de mesure</div>
+              <strong style="font-family:var(--font-heading);font-size:19px">{{ fenDuree }}</strong>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <sc-for list="{{ fenChoix }}" as="fx" hint-placeholder-count="4">
+                <label class="radio" style="font-size:12px"><input type="radio" name="fenetre" checked="{{ fx.actif }}" onChange="{{ fx.choisir }}"><span class="dot"></span>{{ fx.nom }}</label>
+              </sc-for>
+            </div>
+            <span style="font-size:10px;line-height:1.5" class="text-muted">Les deux fenêtres du milieu utilisent la date charnière déjà réglée plus bas. Choisies avant de voir le résultat, elles servent à tester ; choisies après, elles servent à se tromper.</span>
+            <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:9px">
+              <span style="font-size:11px" class="text-muted">Du</span>
+              <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:118px" type="date" value="{{ fenDu }}" onChange="{{ setFenDu }}" disabled="{{ fenDatesOff }}">
+              <span style="font-size:11px" class="text-muted">au</span>
+              <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px;width:118px" type="date" value="{{ fenAu }}" onChange="{{ setFenAu }}" disabled="{{ fenDatesOff }}">
+            </div>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">Actif seulement sur le dernier choix.</span>
+            <!--
+              LE FREIN MÉCANIQUE, ÉCRIT AVANT QU'IL NE COÛTE UNE HEURE DE CALCUL. Le
+              sélecteur ne rend pas une fenêtre courte utilisable : il rend visible
+              qu'elle ne l'est pas.
+            -->
+            <sc-if value="{{ aFenFrein }}" hint-placeholder-val="{{ false }}">
+              <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <strong style="font-size:11px;line-height:1.3">Un frein mécanique à connaître</strong>
+                <span style="font-size:10px;line-height:1.5" class="text-muted">{{ fenFreinTxt }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ aFenAmorce }}" hint-placeholder-val="{{ false }}">
+              <div class="blueprint" style="padding:9px 11px;display:flex;flex-direction:column;gap:4px;border-color:var(--color-accent)">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <strong style="font-size:11px;line-height:1.3;color:var(--color-accent-700)">Amorce trop courte</strong>
+                <span style="font-size:10px;line-height:1.5">{{ fenAmorceTxt }}</span>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;padding:11px 0">
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
               <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0" class="text-muted">Quoi scanner</div>
               <strong style="font-family:var(--font-heading);font-size:19px">{{ nbUnivers }} / {{ nbTotal }}</strong>
@@ -2196,6 +2247,30 @@
             </div>
           </div>
 
+          <!--
+            LE BANDEAU QUI TUE L'ILLUSION EN UNE SECONDE.
+
+            Non refermable, et pour cause : c'est le seul endroit où le résultat de la
+            configuration SUR LA PARTIE ÉCARTÉE est écrit. Une barre à l'échelle réelle,
+            pas décorative — cinq ans et demi retirés doivent occuper cinq ans et demi de
+            largeur.
+          -->
+          <sc-if value="{{ aFenBandeau }}" hint-placeholder-val="{{ false }}">
+            <div style="background:var(--color-accent-900);color:var(--color-bg);padding:14px 18px;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+                <strong style="font-family:var(--font-heading);font-size:20px;line-height:1.15">{{ fenBandeauTitre }}</strong>
+                <span style="font-size:12px;line-height:1.5;flex:1;min-width:26ch;opacity:.85">{{ fenBandeauDates }}</span>
+                <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ fenTout }}">Revenir à tout l’historique</button>
+              </div>
+              <div style="display:flex;height:20px;width:100%;gap:2px">
+                <div style="width:{{ fenPartAvant }};background:color-mix(in srgb,var(--color-bg) 22%,transparent);display:flex;align-items:center;justify-content:center;font-size:10px;overflow:hidden;white-space:nowrap">{{ fenTxtAvant }}</div>
+                <div style="width:{{ fenPartDedans }};background:var(--color-bg);opacity:.92"></div>
+                <div style="width:{{ fenPartApres }};background:color-mix(in srgb,var(--color-bg) 22%,transparent);display:flex;align-items:center;justify-content:center;font-size:10px;overflow:hidden;white-space:nowrap">{{ fenTxtApres }}</div>
+              </div>
+              <span style="font-size:13px;line-height:1.5">{{ fenBandeauHors }}</span>
+            </div>
+          </sc-if>
+
           <div style="overflow-x:auto">
           <table class="table" style="font-size:13px">
             <thead><tr>
@@ -2205,6 +2280,7 @@
               <th style="text-align:right">Gain / perte</th>
               <th style="text-align:right">Creux</th>
               <th style="text-align:right">Époques</th>
+              <th style="min-width:19ch">Mesurée sur</th>
               <th>État</th>
             </tr></thead>
             <tbody>
@@ -2220,7 +2296,19 @@
                   <td style="text-align:right">{{ r.pf }}</td>
                   <td style="text-align:right">{{ r.dd }}</td>
                   <td style="text-align:right">{{ r.segs }}</td>
-                  <td><span class="tag {{ r.tagClass }}">{{ r.etat }}</span></td>
+                  <td>
+                    <span style="font-size:11px;line-height:1.3;display:block">{{ r.fenNom }}</span>
+                    <span style="display:flex;height:5px;width:100%;gap:1px;margin:3px 0">
+                      <span style="width:{{ r.fenAvant }};background:var(--color-divider)"></span>
+                      <span style="width:{{ r.fenDedans }};background:var(--color-accent)"></span>
+                      <span style="width:{{ r.fenApres }};background:var(--color-divider)"></span>
+                    </span>
+                    <span style="font-size:10px;line-height:1.35;color:{{ r.fenHorsCouleur }};display:{{ r.fenHorsAff }}">{{ r.fenHors }}</span>
+                  </td>
+                  <td>
+                    <span class="tag {{ r.tagClass }}" title="{{ r.etatAide }}">{{ r.etat }}</span>
+                    <span style="font-size:10px;line-height:1.35;display:{{ r.fenSousAff }}" class="text-muted">{{ r.fenSous }}</span>
+                  </td>
                 </tr>
               </sc-for>
             </tbody>
@@ -2735,6 +2823,17 @@
                   </div>
 
                   <div style="font-size:10px;line-height:1.5" class="text-muted">{{ tr2.reglages }} · {{ tr2.variante }} · {{ tr2.n }} trades · {{ tr2.segs }} époques · {{ tr2.hasardPhrase }}</div>
+                  <!-- l'étiquette de fenêtre suit la ligne jusqu'ici : sans elle, on
+                       retrouve dans six mois une fiche à + 41 R sans savoir qu'elle a été taillée -->
+                  <div style="display:{{ tr2.fenAff }};flex-direction:column;gap:3px;padding-top:6px;border-top:1px solid var(--color-divider)">
+                    <span style="font-size:10px;line-height:1.4">{{ tr2.fenNom }}</span>
+                    <span style="display:flex;height:4px;width:100%;gap:1px">
+                      <span style="width:{{ tr2.fenAvant }};background:var(--color-divider)"></span>
+                      <span style="width:{{ tr2.fenDedans }};background:var(--color-accent)"></span>
+                      <span style="width:{{ tr2.fenApres }};background:var(--color-divider)"></span>
+                    </span>
+                    <span style="font-size:10px;line-height:1.4;color:{{ tr2.fenHorsCouleur }}">{{ tr2.fenHors }} · {{ tr2.fenEtiq }}</span>
+                  </div>
                   <sc-if value="{{ tr2.aAlerte }}" hint-placeholder-val="{{ false }}">
                     <div style="font-size:10px;line-height:1.5;color:var(--color-accent-900)">{{ tr2.alerteTxt }}</div>
                   </sc-if>
@@ -2852,6 +2951,38 @@
             <button class="btn btn-ghost" type="button" style="min-height:2.6rem" onClick="{{ fermerDetail }}">Fermer</button>
           </div>
         </div>
+        <!--
+          LA FENÊTRE DE CETTE LIGNE, et l'exception écrite.
+
+          Une exception qu'on doit justifier par écrit est une exception qu'on n'utilise
+          pas à la légère : le motif est obligatoire, il est stocké, et il voyage avec la
+          ligne partout où la fenêtre s'affiche.
+        -->
+        <sc-if value="{{ aDFen }}" hint-placeholder-val="{{ false }}">
+          <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;border-color:var(--color-accent)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+              <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Mesurée sur</div>
+              <strong style="font-family:var(--font-heading);font-size:17px">{{ dFenNom }}</strong>
+              <span class="tag {{ dFenTag }}">{{ dFenEtiq }}</span>
+            </div>
+            <div style="display:flex;height:8px;width:100%;gap:2px">
+              <span style="width:{{ dFenAvant }};background:var(--color-divider)"></span>
+              <span style="width:{{ dFenDedans }};background:var(--color-accent)"></span>
+              <span style="width:{{ dFenApres }};background:var(--color-divider)"></span>
+            </div>
+            <span style="font-size:13px;line-height:1.5;color:{{ dFenHorsCouleur }}">{{ dFenHors }}</span>
+            <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:9px">
+              <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ dFenExc }}" onChange="{{ dFenBasculer }}"><span class="dot"></span>La période écartée est inexploitable, pas décevante<span class="aide" title="Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.">?</span></label>
+              <sc-if value="{{ dFenExc }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <input class="input" style="min-height:2rem;height:2rem;font-size:12px;padding:0 8px" type="text" value="{{ dFenMotif }}" onChange="{{ dFenSetMotif }}" placeholder="Pourquoi cette période est inexploitable — obligatoire">
+                  <span style="font-size:11px;line-height:1.5;color:{{ dFenMotifCouleur }}">{{ dFenMotifEtat }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
         <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
@@ -3167,6 +3298,26 @@
 
     <sc-if value="{{ vueBacktest }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:14px">
+      <!--
+        LE MÊME BANDEAU QUE SUR LE SCAN. Le backtest mesure avec la même fenêtre : sans
+        cette ligne, une configuration rejouée sur douze mois choisis afficherait un R
+        total sans dire sur quoi il porte.
+      -->
+      <sc-if value="{{ aFenBt }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--color-accent-900);color:var(--color-bg);padding:13px 17px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+            <strong style="font-family:var(--font-heading);font-size:19px;line-height:1.15">{{ fenBtTitre }}</strong>
+            <span style="font-size:12px;line-height:1.5;flex:1;min-width:26ch;opacity:.85">{{ fenBtDates }}</span>
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ fenTout }}">Revenir à tout l’historique</button>
+          </div>
+          <div style="display:flex;height:16px;width:100%;gap:2px">
+            <div style="width:{{ fenBtAvant }};background:color-mix(in srgb,var(--color-bg) 22%,transparent)"></div>
+            <div style="width:{{ fenBtDedans }};background:var(--color-bg);opacity:.92"></div>
+            <div style="width:{{ fenBtApres }};background:color-mix(in srgb,var(--color-bg) 22%,transparent)"></div>
+          </div>
+          <span style="font-size:13px;line-height:1.5">{{ fenBtHors }}</span>
+        </div>
+      </sc-if>
       <sc-if value="{{ aReglagesRejoues }}" hint-placeholder-val="{{ false }}">
       <div class="blueprint" style="padding:12px 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -3735,6 +3886,9 @@
               </div>
               <div style="font-size:13px" class="text-muted">{{ run.detail }}</div>
               <div style="font-size:13px" class="text-muted">{{ run.second }}</div>
+              <sc-if value="{{ run.aRunFen }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px;color:var(--color-accent-700)">{{ run.runFen }}</div>
+              </sc-if>
               <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
                 <button class="btn btn-secondary" type="button" onClick="{{ run.recharger }}">{{ run.libelleRecharger }}</button>
                 <button class="btn btn-secondary" type="button" onClick="{{ run.recalculer }}">Recalculer avec le moteur actuel</button>
@@ -4127,6 +4281,9 @@ class Component extends DCLogic {
     utPente: 'H4', lignePente: 'mediane', utRsi: 'H1', periodeRsi: 14,
     utAdx: 'H1', periodeAdx: 14, utNuage: 'D1', utPivot: 'D1',
     fMa: false, utMa: 'D1', periodeMa: 200,
+    // LA FENÊTRE DE MESURE. « tout » est le comportement d'avant, et le défaut : un
+    // scan existant, fait sans fenêtre, est réputé porter sur tout l'historique.
+    fenMode: 'tout', fenDu: '2020-01-01', fenAu: '', fenMotifOuvert: null, fenMotifs: {},
     coupureRegime: '2022-01-01', nTirages: 200, hasard: null, pleinRegime: false, workersOk: false, gSens: ['achat'], gLectures: ['favorable', 'prudente'], btSens: 'achat', gSecus: ['aucune'], gTemps: ['jamais'], gDurees: '10 20 40', btDureeMax: 0,
     gTrailing: '0,1 0,15 0,2 0,25 0,5 0,75 1,0 1,25 1,5 1,75 2,0',
     gPeriodeMa: '50 100 200', gLigneMtf: ['mediane'], gPeriodeMtf: '9 26',
@@ -4829,7 +4986,11 @@ class Component extends DCLogic {
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
-    a.download = mod.nomRobot(v, stamp) + '.mq5';
+    // LA FENÊTRE ENTRE DANS LE NOM DU FICHIER. Dans six mois, un .mq5 posé sur un disque
+    // doit dire tout seul sur quoi il a été mesuré : c'est là que l'étiquette compte
+    // vraiment, parce que plus rien autour ne la porte.
+    const marque = this.fenMarque(this.fenetreDeLigne(v));
+    a.download = mod.nomRobot(v, stamp) + (marque ? '_' + marque : '') + '.mq5';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     return true;
@@ -4863,6 +5024,20 @@ class Component extends DCLogic {
   basculerValide(sym, cfg) {
     const l = this.normValides(this.state.valides);
     const k = this.cleValide({ sym, ...(cfg || {}) });
+    // Une configuration mesurée sur une fenêtre réduite ne se range pas dans un
+    // portefeuille tant qu'elle n'a pas tenu sur la partie écartée, ou qu'une exception
+    // n'a pas été écrite. Vérifié ICI, donc pour tous les appelants.
+    const ef = cfg ? this.etatFenetre({ sym, ...cfg }) : null;
+    if (ef && ef.verrou && !l.some((x) => this.cleValide(x) === k)) {
+      this.setState({ hasardMsg: 'Configuration mesurée sur une fenêtre réduite ('
+        + this.fenLibelle(ef.fen) + ') : elle ne peut pas être rangée dans un portefeuille. '
+        + (ef.hors === null
+          ? 'Son résultat sur la partie écartée est encore en cours de mesure.'
+          : 'Sur la partie écartée elle rend ' + this.sgR(ef.hors.total)
+            + ' — elle n\u2019a donc pas marché ailleurs que dans la fenêtre choisie.')
+        + ' Revenez à tout l\u2019historique, ou écrivez pourquoi la période écartée est inexploitable.' });
+      return;
+    }
     // Photo d'avant : un retrait efface la validation ET la place de l'instrument dans
     // les portefeuilles. Sans annulation, un clic de trop se répare à la main.
     if (l.some((x) => this.cleValide(x) === k)) {
@@ -4900,6 +5075,11 @@ class Component extends DCLogic {
           ...(() => { const w = cfg && cfg.n !== undefined ? this.verdict(cfg) : null;
             return w ? { etat: w.label, etatTag: w.tag, etatMotif: w.motif, etatAide: w.motifAide } : {}; })(),
           ut: this.state.ut, sid: cfg && cfg._sid, date: new Date().toISOString(),
+          // La fenêtre de mesure, figée avec la ligne : le scan d'origine peut être
+          // supprimé, l'étiquette doit rester juste. Une ligne validée avant cette
+          // version n'en porte pas et vaut « tout l'historique ».
+          ...(() => { const f = this.fenetreDeLigne({ ...(cfg || {}), sym });
+            return f.complete ? {} : { fen: this.fenPlate(f) }; })(),
           // règle du moteur qui a produit ces chiffres. Sans elle, une ligne mesurée sous
           // l'ancienne règle s'affichait à côté d'un backtest recalculé sous la nouvelle,
           // et partait telle quelle dans l'en-tête du robot exporté.
@@ -5913,6 +6093,7 @@ GROUPES = {
     this.reclamerPersistance();
     this.suivreRetourOnglet();
     this.suivreAides();
+    this.chargerMotifsFen();
     this.chargerNouveautes();
     this.baremesChanges();
     this.forceUpdate();
@@ -7911,6 +8092,326 @@ GROUPES = {
     }
     return this._stopMini[sym];
   }
+  // ————— LA FENÊTRE DE MESURE —————
+  //
+  // Techniquement, un décalage de bornes. Mais choisir la période APRÈS avoir vu le
+  // résultat est la définition du surajustement, et aucun garde-fou existant ne le
+  // rattrape : le hors-échantillon, les cinq époques et le contrôle du hasard mesurent
+  // tous À L'INTÉRIEUR de la fenêtre choisie. Tout ce qui suit sert à rendre ce choix
+  // visible et à en empêcher l'usage silencieux.
+  //
+  // Ce qui se recalcule tout seul, vérifié et non supposé : `resume` tire ses années de
+  // l'écart entre le premier et le dernier trade, `segments` découpe les trades en cinq
+  // parts égales et la coupure hors échantillon prend 70 % des trades. Les trois suivent
+  // donc la fenêtre par construction — un R/an mesuré sur un an ne sera jamais divisé
+  // par 6,6 ans d'historique.
+  FEN_TXT = { tout: 'tout l\u2019historique', avant: 'avant la charnière',
+    apres: 'après la charnière', choisie: 'fenêtre choisie' };
+  AN_MS = 365.25 * 86400000;
+  jourMs(txt, repli) {
+    const t = Date.parse(String(txt || '') + 'T00:00:00Z');
+    return Number.isFinite(t) ? t : repli;
+  }
+  fenetre(etat) {
+    const s = etat || this.state;
+    const mode = this.FEN_TXT[s.fenMode] ? s.fenMode : 'tout';
+    const coupe = this.jourMs(s.coupureRegime || '2022-01-01', Date.UTC(2022, 0, 1));
+    if (mode === 'avant') return this.fenNorm({ m: mode, d: this.DEBUT, f: coupe });
+    if (mode === 'apres') return this.fenNorm({ m: mode, d: Math.max(this.DEBUT, coupe), f: null });
+    if (mode === 'choisie') {
+      const d = Math.max(this.DEBUT, this.jourMs(s.fenDu, this.DEBUT));
+      const f = this.jourMs(s.fenAu, null);
+      return this.fenNorm({ m: mode, d, f: f && f > d ? f : null });
+    }
+    return this.fenNorm({ m: 'tout', d: this.DEBUT, f: null });
+  }
+  fenNorm(x) {
+    const debut = Number(x && x.d) || this.DEBUT;
+    const fin = x && x.f ? Number(x.f) : null;
+    // « complète » et non « mode tout » : une fenêtre choisie qui couvre tout n'est pas
+    // une fenêtre réduite, et ne doit ni bloquer la validation ni afficher de bandeau.
+    return { mode: (x && x.m) || 'tout', debut, fin,
+      complete: debut <= this.DEBUT && !fin };
+  }
+  fenPlate(fen) { return { m: fen.mode, d: fen.debut, f: fen.fin }; }
+  // La fenêtre d'une LIGNE. Les scans faits avant cette version n'en portent pas : ils
+  // sont réputés « tout l'historique », et rien de ce qu'ils affichent ne change.
+  fenetreDeLigne(r) {
+    const tout = this.fenNorm({ m: 'tout', d: this.DEBUT, f: null });
+    if (!r) return tout;
+    if (r.fen) return this.fenNorm(r.fen);
+    if (r._sid) {
+      const a = (this.state.archives || []).find((x) => x.id === r._sid);
+      if (a) return a.fen ? this.fenNorm(a.fen) : tout;
+      if (r._sid === this._sid) return this.fenetre(this.state);
+    }
+    if (r._reg && r._reg.fenMode) return this.fenetre(r._reg);
+    return tout;
+  }
+  // L'AMORCE SE DÉCALE, ELLE NE SE TRONQUE PAS.
+  //
+  // Le moteur exige 400 jours d'amorce avant la première entrée : c'est là que se
+  // calculent moyennes, pentes et zones. La série chargée en porte déjà autant avant
+  // `DEBUT` — `decouper` les garde exprès. Une fenêtre qui commence plus tard hérite donc
+  // de son amorce sans rien faire, SAUF si le fichier lui-même commence trop tard. Dans
+  // ce cas les indicateurs seraient faux sur les premières semaines et le résultat
+  // silencieusement invalide : on refuse la fenêtre au lieu de la mesurer.
+  amorceManque(sym, fen) {
+    if (!fen || fen.debut <= this.DEBUT) return null;
+    const df = this.serieH1(sym);
+    if (!df || !df.n) return null;
+    // Une fenêtre qui commence AVANT la première bougie ne coupe rien : sa vraie borne
+    // de départ est le début du fichier, exactement comme « tout l'historique ». Exiger
+    // une amorce là refuserait des séries que l'application mesure déjà aujourd'hui.
+    if (fen.debut <= df.t[0]) return null;
+    const besoin = fen.debut - (this.M ? this.M.AMORCE_JOURS : 400) * 86400000;
+    return df.t[0] > besoin ? { sym, besoin, premiere: df.t[0] } : null;
+  }
+  amorcesManquantes(syms, fen) {
+    return (syms || []).map((x) => this.amorceManque(x, fen)).filter(Boolean);
+  }
+  // Le tour d'historique réellement disponible sur un jeu d'instruments : c'est le
+  // dénominateur du bandeau, « sur 6,6 disponibles ».
+  spanDispo(syms) {
+    let a = null, b = null;
+    for (const sym of syms || []) {
+      const df = this.serieH1(sym);
+      if (!df || !df.n) continue;
+      const t0 = Math.max(this.DEBUT, df.t[0]);
+      if (a === null || t0 < a) a = t0;
+      if (b === null || df.t[df.n - 1] > b) b = df.t[df.n - 1];
+    }
+    return a === null ? null : { debut: a, fin: b };
+  }
+  ansDe(ms) { return ms / this.AN_MS; }
+  // « 6,6 ans », « 1 an » : la durée telle qu'elle se lit, pas telle qu'elle se calcule
+  ansTxt(ms) {
+    const a = this.ansDe(ms);
+    if (a >= 1.95) return a.toFixed(1).replace('.', ',') + ' ans';
+    if (a >= 0.95) return a < 1.05 ? '1 an' : a.toFixed(1).replace('.', ',') + ' an';
+    return Math.max(1, Math.round(a * 12)) + ' mois';
+  }
+  // « 5,6 ans écartés » mais « 1,1 an écarté » : l'accord suit l'unité affichée, pas la
+  // valeur brute. Un texte qui se contredit dans sa propre phrase se fait relire.
+  ansAccord(ms, sing, plur) {
+    const t = this.ansTxt(ms);
+    const multiple = /ans$/.test(t) || (/mois$/.test(t) && !/^1 /.test(t));
+    return t + ' ' + (multiple ? plur : sing);
+  }
+  // La durée ÉCARTÉE, dite de façon toujours accordable : au-delà de deux ans en années,
+  // en mois en dessous. « les 13 mois écartés » se lit ; « les 1,1 an écartés » non.
+  dureeEcart(ms) {
+    const a = this.ansDe(ms);
+    if (a >= 1.95) return a.toFixed(1).replace('.', ',') + ' ans';
+    return Math.max(1, Math.round(a * 12)) + ' mois';
+  }
+  sgR(x) {
+    return (x >= 0 ? '+ ' : '\u2212 ') + Math.abs(x).toFixed(1).replace('.', ',') + ' R';
+  }
+  jmaCourt(ms) {
+    const d = new Date(ms);
+    return String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
+  }
+  // Le libellé d'une fenêtre, mot pour mot le même partout : colonne, bandeau, fiche,
+  // portefeuille, journal, et jusque dans le nom du robot exporté.
+  fenLibelle(fen) {
+    if (!fen || fen.complete) return 'tout l\u2019historique';
+    if (fen.mode === 'avant') return 'avant la charnière \u2014 ' + this.jmaCourt(fen.debut)
+      + ' \u2192 ' + this.jmaCourt(fen.fin);
+    if (fen.mode === 'apres') return 'après la charnière \u2014 ' + this.jmaCourt(fen.debut)
+      + ' \u2192 aujourd\u2019hui';
+    return 'fenêtre choisie \u00b7 ' + this.jmaCourt(fen.debut)
+      + ' \u2192 ' + (fen.fin ? this.jmaCourt(fen.fin) : 'aujourd\u2019hui');
+  }
+  // Le marqueur court qui entre dans le nom du fichier robot. Dans six mois, un .mq5 sur
+  // le disque doit dire sur quoi il a été mesuré — c'est là que ça compte vraiment.
+  fenMarque(fen) {
+    if (!fen || fen.complete) return '';
+    const a = (ms) => new Date(ms).toISOString().slice(0, 7).replace('-', '');
+    return 'FEN' + a(fen.debut) + '_' + (fen.fin ? a(fen.fin) : 'now');
+  }
+
+  // ————— LE CHIFFRE QUI TUE L'ILLUSION —————
+  //
+  // Le résultat de la configuration SUR LA PARTIE ÉCARTÉE. Il n'existe nulle part
+  // ailleurs dans l'application, et c'est le seul qui tranche : une configuration qui
+  // rend + 41 R sur les douze mois choisis et − 38 R sur les cinq ans retirés n'a pas
+  // marché, elle a été trouvée. C'est un second passage du moteur — jamais sur les
+  // vingt-quatre mille combinaisons d'un scan, seulement sur celles qui s'affichent, et
+  // à la demande. À cette échelle le prix est modeste ; celui de se tromper ne l'est pas.
+  cleHors(r, fen) {
+    return [r.sym, r.entree || '', r.ligne || '', r.periode, r.sl, r.rr, r.filtre || '',
+      fen.mode, fen.debut, fen.fin || ''].join('|');
+  }
+  horsFait(r) {
+    const fen = this.fenetreDeLigne(r);
+    if (!r || fen.complete) return null;
+    const v = (this._hors || new Map()).get(this.cleHors(r, fen));
+    return v === undefined ? null : v;
+  }
+  async mesurerHors(r) {
+    const fen = this.fenetreDeLigne(r);
+    if (!r || fen.complete || !this.M) return null;
+    this._hors = this._hors || new Map();
+    const cle = this.cleHors(r, fen);
+    if (this._hors.has(cle)) return this._hors.get(cle);
+    let res = null;
+    try {
+      await this.charger(r.sym);
+      const df = this.base(r.sym);
+      const h1 = this.serieH1(r.sym);
+      if (df && h1 && h1.n) {
+        const etat = this.etatDeLigne(r);
+        const base = this.cfgDeLigne(r)
+          || this.cfgCourante(r.sym, r.periode, r.sl, r.rr, etat, { entree: r.entree, ligne: r.ligne });
+        const finSerie = h1.t[h1.n - 1];
+        // La partie écartée, c'est le COMPLÉMENT de la fenêtre : ce qui la précède et ce
+        // qui la suit. Le morceau d'avant part de `DEBUT` — jamais plus tôt, sinon il
+        // mesurerait sans son propre amorçage, exactement le défaut qu'on refuse ailleurs.
+        const bouts = [];
+        if (fen.debut > this.DEBUT) bouts.push({ debut: this.DEBUT, fin: fen.debut });
+        if (fen.fin && fen.fin < finSerie) bouts.push({ debut: fen.fin, fin: null });
+        let total = 0, n = 0, couvert = 0;
+        for (const b of bouts) {
+          const c = { ...base, debut: b.debut };
+          if (b.fin) c.fin = b.fin; else delete c.fin;
+          let tr = [];
+          try { tr = this.mesurer(r.sym, c, (etat && etat.ut) || this.state.ut, df); } catch (e) { tr = []; }
+          couvert += Math.max(0, (b.fin || finSerie) - b.debut);
+          if (!tr.length) continue;
+          const rr = this.M.resume(tr);
+          total += rr.total; n += rr.n;
+        }
+        res = { total, n, ans: this.ansDe(couvert), bouts: bouts.length };
+      }
+    } catch (e) { res = null; }
+    this._hors.set(cle, res);
+    this.setState({ horsRev: (this.state.horsRev || 0) + 1 });
+    return res;
+  }
+  // La file : les lignes AFFICHÉES, une à la fois, en rendant la main entre chacune. Une
+  // boucle serrée sur quarante lignes fige l'onglet aussi sûrement qu'un scan.
+  filerHors(lignes) {
+    if (!lignes || !lignes.length) return;
+    this._horsFile = this._horsFile || [];
+    this._hors = this._hors || new Map();
+    for (const r of lignes) {
+      if (!r || !r.sym) continue;
+      const fen = this.fenetreDeLigne(r);
+      if (fen.complete) continue;
+      const cle = this.cleHors(r, fen);
+      if (this._hors.has(cle) || this._horsFile.some((x) => x.cle === cle)) continue;
+      this._horsFile.push({ cle, r });
+    }
+    this.viderFileHors();
+  }
+  async viderFileHors() {
+    if (this._horsTourne) return;
+    this._horsTourne = true;
+    try {
+      while (this._horsFile && this._horsFile.length) {
+        const t = this._horsFile.shift();
+        await this.mesurerHors(t.r);
+        await new Promise((z) => setTimeout(z, 0));
+      }
+    } finally { this._horsTourne = false; }
+  }
+  // ————— UNE FENÊTRE CHOISIE BLOQUE LA VALIDATION —————
+  //
+  // Ce n'est pas une punition : c'est la seule façon d'empêcher qu'un chiffre obtenu sur
+  // douze mois choisis finisse en robot chez le courtier. Deux dérogations, et deux
+  // seulement — l'une automatique, l'autre écrite.
+  CLE_FEN_MOTIFS = 'simula.fenetre.motifs.v1';
+  chargerMotifsFen() {
+    try {
+      const b = localStorage.getItem(this.cle(this.CLE_FEN_MOTIFS));
+      if (b) this.setState({ fenMotifs: JSON.parse(b) || {} });
+    } catch (e) { /* illisible : aucune exception n'est accordée, c'est le bon sens */ }
+  }
+  poserMotifFen(r, texte) {
+    const fen = this.fenetreDeLigne(r);
+    if (fen.complete) return;
+    const suite = { ...(this.state.fenMotifs || {}) };
+    const cle = this.cleHors(r, fen);
+    if (texte) suite[cle] = String(texte).slice(0, 300); else delete suite[cle];
+    this.setState({ fenMotifs: suite });
+    try { localStorage.setItem(this.cle(this.CLE_FEN_MOTIFS), JSON.stringify(suite)); } catch (e) {}
+  }
+  motifFen(r) {
+    const fen = this.fenetreDeLigne(r);
+    if (!r || fen.complete) return null;
+    return (this.state.fenMotifs || {})[this.cleHors(r, fen)] || null;
+  }
+  etatFenetre(r) {
+    const fen = this.fenetreDeLigne(r);
+    if (fen.complete) return { fen, complete: true, verrou: false, etiq: '', sous: '' };
+    const hors = this.horsFait(r);
+    const motif = this.motifFen(r);
+    // PREMIÈRE DÉROGATION, automatique : si la partie écartée est positive, la ligne a
+    // tenu des deux côtés. C'est exactement le cas de la validation glissante, et
+    // l'interdire rendrait la règle absurde.
+    const tient = !!(hors && hors.total > 0);
+    return { fen, complete: false, hors, motif, tient,
+      verrou: !tient && !motif,
+      etiq: tient ? 'tient des deux côtés' : 'fenêtre choisie',
+      sous: tient ? '' : (motif ? 'exception écrite' : 'non validable') };
+  }
+  // L'ÉTIQUETTE QUI SUIT LA LIGNE PARTOUT : scan, historique, portefeuille, journal.
+  // Sans elle, on retrouve dans six mois une ligne à + 41 R sans savoir qu'elle a été
+  // taillée. Un seul calcul, une seule formulation, quatre endroits.
+  fenAffiche(r) {
+    const e = this.etatFenetre(r);
+    const fen = e.fen;
+    const span = this.spanDispo([r.sym]) || { debut: this.DEBUT, fin: Date.now() };
+    const tot = Math.max(1, span.fin - span.debut);
+    const d = Math.max(span.debut, fen.debut);
+    const f = Math.min(span.fin, fen.fin || span.fin);
+    const dedans = Math.max(0, f - d);
+    const pct = (x) => (Math.max(0, Math.min(100, x / tot * 100))).toFixed(1) + '%';
+    const hors = e.hors;
+    return {
+      fen, etatFen: e,
+      fenNom: this.fenLibelle(fen) + (fen.complete ? ' \u00b7 ' + this.ansTxt(tot) : ''),
+      fenAvant: pct(Math.max(0, d - span.debut)),
+      fenDedans: pct(fen.complete ? tot : dedans),
+      fenApres: pct(Math.max(0, span.fin - f)),
+      fenHors: fen.complete ? ''
+        : hors === null ? 'partie écartée : mesure en cours\u2026'
+          : hors.n === 0 ? 'aucun trade sur les ' + this.dureeEcart(tot - dedans) + ' écartés'
+            : this.sgR(hors.total) + ' sur les ' + this.dureeEcart(tot - dedans) + ' écartés',
+      fenHorsAff: fen.complete ? 'none' : 'block',
+      fenHorsCouleur: !hors ? 'var(--color-neutral-500)'
+        : (hors.total > 0 ? 'var(--color-accent-700)' : 'var(--color-accent-900)'),
+      fenSous: e.sous,
+      fenSousAff: e.sous ? 'block' : 'none',
+    };
+  }
+  // La configuration du backtest vue comme une LIGNE : elle porte sa fenêtre, donc
+  // `fenetreDeLigne` la reconnaît et le résultat sur la partie écartée se mesure avec le
+  // même chemin que pour une ligne de scan. Une seule mécanique, pas deux.
+  ligneBacktest() {
+    const s = this.state;
+    return { sym: s.btSym, periode: s.btPeriode, sl: s.btSL, rr: s.btRR,
+      entree: s.btEntree, ligne: s.btLigne, sens: s.btSens,
+      fen: this.fenPlate(this.fenetre(s)) };
+  }
+  // Appelé depuis le rendu, jamais exécuté pendant : un `setState` en plein rendu est
+  // une boucle. On note ce qu'il faut mesurer et on le fait au tour suivant.
+  voudraitHors(lignes) {
+    // ACCUMULE, n'écrase pas : le classement et le backtest demandent chacun les leurs
+    // dans le même rendu, et le second effaçait la demande du premier — le TOP restait
+    // alors indéfiniment sur « mesure en cours ».
+    this._horsVoulu = [...(this._horsVoulu || []), ...(lignes || [])];
+    if (this._horsPlanifie) return;
+    this._horsPlanifie = true;
+    setTimeout(() => {
+      this._horsPlanifie = false;
+      const l = this._horsVoulu || [];
+      this._horsVoulu = [];
+      this.filerHors(l);
+    }, 0);
+  }
+
   mesurer(sym, cfg, ut, repli) {
     const h1 = this.serieH1(sym);
     const u = ut || this.state.ut;
@@ -8433,7 +8934,13 @@ GROUPES = {
       // bougie de décision — un filtre `horaire` sur une décision D1 serait évalué sur
       // des bougies toutes à 00:00. Début égal à fin : inactive.
       heures_entree: { debut: Number(s.btFenDeb) || 0, fin: Number(s.btFenFin) || 0 },
-      debut: this.DEBUT,
+      // LA FENÊTRE DE MESURE, portée par la configuration elle-même. `debut` borne la
+      // première entrée sans toucher aux bougies d'amorce qui la précèdent, `fin` borne
+      // la dernière — les positions déjà ouvertes sont suivies jusqu'à leur sortie.
+      ...(() => {
+        const f = this.fenetre(s);
+        return f.fin ? { debut: f.debut, fin: f.fin } : { debut: f.debut };
+      })(),
     };
   }
 
@@ -8518,13 +9025,15 @@ GROUPES = {
 
   // Ce qui définit la grille d'un scan : à mémoriser dans l'archive pour qu'une reprise
   // reparte à l'identique. REGLAGES ne porte que les réglages du moteur.
-  CHAMPS_PLAN = ['gPeriodes', 'gSls', 'gRrs', 'gEntrees', 'gLignes', 'gFiltres', 'gSens',
+  CHAMPS_PLAN = ['fenMode', 'fenDu', 'fenAu',
+    'gPeriodes', 'gSls', 'gRrs', 'gEntrees', 'gLignes', 'gFiltres', 'gSens',
     'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa',
     'gLigneMtf', 'gPeriodeMtf', 'gLignePente', 'gPenteRecul', 'tradesMin', 'segMin', 'ut'];
   CLE_GRILLES = 'simula.grilles.v1';
   // Les champs qui définissent UN balayage. Volontairement sans les seuils d'affichage
   // ni l'univers : on rappelle une méthode, pas une sélection d'instruments.
-  CHAMPS_GRILLE = ['ut', 'gPeriodes', 'gSls', 'gRrs', 'gEntrees', 'gLignes', 'gFiltres',
+  CHAMPS_GRILLE = ['fenMode', 'fenDu', 'fenAu',
+    'ut', 'gPeriodes', 'gSls', 'gRrs', 'gEntrees', 'gLignes', 'gFiltres',
     'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles',
     'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf', 'gLignePente', 'gPenteRecul',
     'utMtf', 'utRsi', 'periodeRsi', 'fRsiSeuil', 'utAdx', 'periodeAdx', 'fAdxSeuil',
@@ -8559,6 +9068,7 @@ GROUPES = {
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
       'vue', 'derniereVue', 'modeTable', 'ouvLot', 'sonScan', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
+      'fenMode', 'fenDu', 'fenAu',
       'coupureRegime', 'pleinRegime', 'gEntrees', 'gLignes', 'gFiltres', 'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf',
       'gLignePente', 'gPenteRecul', 'triCumul', 'tTradesMin', 'tSegMin', 'tDdMax', 'tWinMin', 'tOosMin', 'tWfMin', 'tDureeMax', 'sPrudent',
       'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
@@ -9792,8 +10302,12 @@ GROUPES = {
       return { i: i + 1, e: x.entree_t, s: x.sortie_t, r: R(x), brut: x.R,
         motif: x.motif, bougies: x.bougies, ambigu: !!x.ambigu, cum: eq };
     });
-    this.setState({ ficheMsg: null, detail: { ...r, ...sup, res, seg: sg, courbe: c, marche, an, tiers, journal,
-      part: trades.length ? sup.coupe / trades.length : 0.7 } });
+    this.setState({ ficheMsg: null, fenMotifOuvert: null,
+      detail: { ...r, ...sup, res, seg: sg, courbe: c, marche, an, tiers, journal,
+        part: trades.length ? sup.coupe / trades.length : 0.7 } });
+    // une ligne ouverte est une ligne affichée : son résultat sur la partie écartée se
+    // mesure maintenant, pas quand l'utilisateur aura déjà décidé
+    this.filerHors([r]);
     return true;
   }
 
@@ -10366,6 +10880,9 @@ GROUPES = {
       for (const r of garde) out.push(r);
     };
     const echecs = [];
+    // la fenêtre de CE scan, figée au lancement : la changer en cours de route donnerait
+    // des lignes mesurées sur deux périodes différentes dans le même classement
+    const fenScan = this.fenetre(s);
     let fait = 0;
     const workers = this.ouvrirWorkers();
     // instruments dont le balayage a été coupé en cours : leurs lignes le portent
@@ -10399,6 +10916,22 @@ GROUPES = {
         // instrument testé mais inexploitable : il reste listé, sinon il disparaît sans explication
         hors.push({ sym, entree: entrees[0], ligne: lignes[0], periode: periodes[0], sl: sls[0], rr: rrs[0],
           n: 0, total: 0, rAn: 0, dd: 0, positifs: 0, segTotal: 5, pf: 0, winRate: 0, sansDonnees: true });
+        continue;
+      }
+      // L'AMORCE, AVANT TOUT LE RESTE. Une fenêtre qui commence en 09/2025 a besoin des
+      // 400 jours qui la précèdent pour que moyennes, pentes et zones soient justes dès sa
+      // première bougie. Si le fichier ne les porte pas, la mesure serait fausse sur les
+      // premières semaines sans que rien ne le dise : on refuse et on l'écrit.
+      const manqueAmorce = this.amorceManque(sym, fenScan);
+      if (manqueAmorce) {
+        const jj = (ms) => new Date(ms).toLocaleDateString('fr-FR');
+        hors.push({ sym, entree: entrees[0], ligne: lignes[0], periode: periodes[0], sl: sls[0], rr: rrs[0],
+          n: 0, total: 0, rAn: 0, dd: 0, positifs: 0, segTotal: 5, pf: 0, winRate: 0,
+          sansDonnees: true, amorce: true,
+          erreur: 'Fenêtre refusée : il faut 400 jours de bougies avant le ' + jj(fenScan.debut)
+            + ' pour que les moyennes soient justes, et ce fichier commence le '
+            + jj(manqueAmorce.premiere) + '.' });
+        echecs.push(sym + ' \u2014 amorce trop courte pour la fenêtre choisie');
         continue;
       }
       // série trop grossièrement arrondie : un résultat y serait un artefact du
@@ -10597,6 +11130,9 @@ GROUPES = {
       elaguees,
       archives: [{ id: sid, date: sdate, n: miennes.length, testees: this.state.scanTestes,
         duree: Date.now() - t0,
+        // La fenêtre de mesure de CE scan. Son absence sur une archive plus ancienne
+        // signifie « tout l'historique » — les scans d'avant ne sont pas invalidés.
+        fen: this.fenPlate(this.fenetre(this.state)),
         // une reprise complète le balayage d'origine : la liste prévue reste celle du
         // départ, et « partiel » ne tombe que si tout est couvert
         universPlan: [...plan],
@@ -10704,7 +11240,11 @@ GROUPES = {
     'fPente', 'utPente', 'lignePente', 'fPenteRecul', 'fPivot', 'utPivot',
     'fResist', 'utResist', 'resistLookback', 'resistMarge', 'spreadSaisi', 'swapSaisi',
     'btSens', 'btDureeMax', 'typeSecu', 'beSeuil1', 'beNiveau1', 'beSeuil2', 'beNiveau2', 'beSeuil3', 'beNiveau3', 'trailingPct', 'secuPrudent',
-    'fZone', 'utZone', 'zoneTouches', 'zoneTol', 'zoneMarge', 'zoneMemoire'];
+    'fZone', 'utZone', 'zoneTouches', 'zoneTol', 'zoneMarge', 'zoneMemoire',
+    // La fenêtre de mesure fait partie des réglages qui produisent le chiffre : sans
+    // elle, rouvrir une ligne la remesurerait sur toute la série et donnerait un autre
+    // résultat que celui affiché.
+    'fenMode', 'fenDu', 'fenAu'];
 
 
   // ————— Contrôle du hasard —————
@@ -13032,8 +13572,20 @@ GROUPES = {
       oos: r.oos === undefined ? '—' : sg(r.oos, 1) + ' R',
       tenue: r.tenue === undefined ? '—' : fr(r.tenue, 0) + ' %',
       ouvrir: () => this.ouvrirFiche(r.sym, r),
-      etat: this.verdict(r).label,
-      tagClass: this.verdict(r).tag,
+      ...(() => {
+        const a = this.fenAffiche(r);
+        const v = this.verdict(r);
+        // Une fenêtre taillée ne peut pas être « validée » : l'étiquette le dit à la
+        // place du verdict, et le verdict reste lisible dans l'infobulle.
+        return { ...a,
+          etat: a.etatFen.verrou ? 'fenêtre choisie' : v.label,
+          tagClass: a.etatFen.verrou ? 'tag-outline' : v.tag,
+          etatAide: a.etatFen.verrou
+            ? 'Mesurée sur ' + this.fenLibelle(a.fen) + ' : non validable tant qu\u2019elle n\u2019a pas '
+              + 'tenu sur la partie écartée, ou qu\u2019une exception n\u2019a pas été écrite. '
+              + 'Verdict des cinq contrôles à l\u2019intérieur de la fenêtre : ' + v.label + '.'
+            : v.motifAide };
+      })(),
     }));
     const COLS = [
       ['entree', 'Entrée', 'Type de déclencheur balayé par le scan.', (r) => ENTREES_TXT[r.entree || s.btEntree] || r.entree || s.btEntree, false],
@@ -13064,6 +13616,10 @@ GROUPES = {
       trier: () => this.setState({ tri: v }),
     }));
     const gardees = retenues.slice(0, 15);
+    // Le résultat sur la partie écartée, demandé pour les lignes AFFICHÉES seulement.
+    // Jamais pour les vingt-quatre mille combinaisons d'un scan : c'est le prix de ne
+    // pas se tromper, et il n'est modeste qu'à cette échelle-là.
+    this.voudraitHors(gardees);
     const scanRowsV = scanRows.map((row, i) => ({
       ...row, cells: COLS_VUE.map(([, , , f]) => ({ v: f(gardees[i]) })),
     }));
@@ -14974,6 +15530,13 @@ GROUPES = {
           : r.testees + ' combinaisons testées · ' + r.fiche.symboles,
         tag: r.type === 'backtest' ? 'tag-accent' : 'tag-neutral',
         typeLabel: r.type === 'backtest' ? 'Backtest' : 'Scan',
+        // LA FENÊTRE, JUSQUE DANS LE JOURNAL. Les enregistrements d'avant cette version
+        // n'en portent pas dans leurs réglages : ils valent « tout l'historique », et la
+        // ligne ne s'affiche pas plutôt que d'affirmer quelque chose qu'on ignore.
+        ...(() => {
+          const f = this.fenetre(r.reglages || {});
+          return { aRunFen: !f.complete, runFen: 'Mesuré sur ' + this.fenLibelle(f) };
+        })(),
         libelleRecharger: r.type === 'backtest' ? 'Recharger cette configuration' : 'Recharger ce scan',
         recharger: () => this.rechargerRun(r),
         recalculer: () => this.recalculerRun(r),
@@ -15459,6 +16022,171 @@ GROUPES = {
       setOosMin: (e) => this.setState({ oosMin: Number(e.target.value) }),
       colonnes,
       ficheMsg: s.ficheMsg, aFicheMsg: !!s.ficheMsg,
+      // la fenêtre du BACKTEST : la page mesure avec la même, elle doit le dire pareil
+      ...(() => {
+        const fenB = this.fenetre(s);
+        if (fenB.complete || !s.btSym || s.vue !== 'backtest') return { aFenBt: false };
+        const r = this.ligneBacktest();
+        const a = this.fenAffiche(r);
+        const hors = this.horsFait(r);
+        const span = this.spanDispo([s.btSym]) || { debut: this.DEBUT, fin: Date.now() };
+        const tot = Math.max(1, span.fin - span.debut);
+        const d = Math.max(span.debut, fenB.debut), f = Math.min(span.fin, fenB.fin || span.fin);
+        const jj = (ms) => new Date(ms).toLocaleDateString('fr-FR');
+        this.voudraitHors([r]);
+        return {
+          aFenBt: true,
+          fenBtTitre: 'Vous mesurez ' + this.ansTxt(Math.max(0, f - d))
+            + ' sur ' + this.ansAccord(tot, 'disponible', 'disponibles'),
+          fenBtDates: 'du ' + jj(d) + ' au ' + jj(f) + ' \u00b7 '
+            + this.dureeEcart(tot - Math.max(0, f - d)) + ' écartés',
+          fenBtAvant: a.fenAvant, fenBtDedans: a.fenDedans, fenBtApres: a.fenApres,
+          fenBtHors: hors === null
+            ? 'Résultat de cette configuration sur la partie écartée : mesure en cours\u2026'
+            : hors.n === 0
+              ? 'Sur la partie écartée, cette configuration ne prend aucun trade : elle n\u2019y a rien prouvé.'
+              : 'Sur la partie écartée, cette configuration rend ' + this.sgR(hors.total)
+                + ' sur ' + this.pl(hors.n, 'trade', 'trades') + '. '
+                + (hors.total > 0 ? 'Elle a donc aussi marché ailleurs qu\u2019ici.'
+                  : 'Elle n\u2019a donc pas marché ailleurs qu\u2019ici.'),
+        };
+      })(),
+
+      // la fenêtre de la ligne OUVERTE, avec son exception écrite
+      ...(() => {
+        const dd = s.detail;
+        if (!dd) return { aDFen: false };
+        const a = this.fenAffiche(dd);
+        const e = a.etatFen;
+        if (e.complete) return { aDFen: false };
+        const brouillon = s.fenMotifOuvert;
+        const motif = brouillon !== undefined && brouillon !== null ? brouillon : (e.motif || '');
+        const coche = brouillon !== undefined && brouillon !== null ? true : !!e.motif;
+        return {
+          aDFen: true,
+          dFenNom: a.fenNom,
+          dFenAvant: a.fenAvant, dFenDedans: a.fenDedans, dFenApres: a.fenApres,
+          dFenHors: e.hors === null
+            ? 'Résultat sur la partie écartée : mesure en cours\u2026'
+            : e.hors.n === 0
+              ? 'Sur la partie écartée, cette configuration ne prend aucun trade : elle n\u2019y a rien prouvé.'
+              : 'Sur la partie écartée, cette configuration rend ' + this.sgR(e.hors.total)
+                + ' sur ' + this.pl(e.hors.n, 'trade', 'trades') + '. '
+                + (e.hors.total > 0 ? 'Elle a donc aussi marché ailleurs qu\u2019ici.'
+                  : 'Elle n\u2019a donc pas marché ailleurs qu\u2019ici.'),
+          dFenHorsCouleur: !e.hors ? 'var(--color-neutral-500)'
+            : (e.hors.total > 0 ? 'var(--color-accent-700)' : 'var(--color-accent-900)'),
+          dFenTag: e.tient ? 'tag-accent' : (e.motif ? 'tag-neutral' : 'tag-outline'),
+          dFenEtiq: e.tient ? 'tient des deux côtés' : (e.motif ? 'exception écrite' : 'non validable'),
+          dFenExc: coche,
+          dFenBasculer: () => {
+            if (coche) { this.poserMotifFen(dd, ''); this.setState({ fenMotifOuvert: null }); }
+            else this.setState({ fenMotifOuvert: '' });
+          },
+          dFenMotif: motif,
+          dFenSetMotif: (ev) => {
+            const v = ev.target.value;
+            this.setState({ fenMotifOuvert: v });
+            // écrit seulement quand il y a vraiment un motif : une case cochée sans
+            // texte ne débloque rien, c'est tout l'intérêt de la contrainte
+            this.poserMotifFen(dd, v.trim().length >= 8 ? v : '');
+          },
+          dFenMotifEtat: motif.trim().length >= 8
+            ? 'Motif enregistré. Il voyage avec la ligne partout où la fenêtre s\u2019affiche, y compris dans le portefeuille.'
+            : 'Huit caractères au minimum. Tant que le motif n\u2019est pas écrit, la ligne reste non validable.',
+          dFenMotifCouleur: motif.trim().length >= 8 ? 'var(--color-accent-700)' : 'var(--color-neutral-500)',
+        };
+      })(),
+
+      // ————— LA FENÊTRE DE MESURE —————
+      ...(() => {
+        const fen = this.fenetre(s);
+        const span = this.spanDispo(s.univers && s.univers.length ? s.univers
+          : [...new Set(this.lignesScan.map((r) => r.sym))]);
+        const t0 = span ? span.debut : this.DEBUT;
+        const t1 = span ? span.fin : Date.now();
+        const tot = Math.max(1, t1 - t0);
+        const d = Math.max(t0, fen.debut);
+        const f = Math.min(t1, fen.fin || t1);
+        const dedans = Math.max(0, f - d);
+        const jj = (ms) => new Date(ms).toLocaleDateString('fr-FR');
+        const pct = (x) => (Math.max(0, Math.min(100, x / tot * 100))).toFixed(1) + '%';
+        // La meilleure ligne du classement : c'est d'elle que parle le bandeau.
+        const best = retenues[0] || null;
+        const hors = best ? this.horsFait(best) : null;
+        const amorces = this.amorcesManquantes(s.univers || [], fen);
+        const coupeMs = this.jourMs(s.coupureRegime || '2022-01-01', Date.UTC(2022, 0, 1));
+        const NOMS = [['tout', 'Tout l\u2019historique disponible'],
+          ['avant', 'Avant la date charnière \u2014 ' + String(s.coupureRegime || '2022-01-01').slice(0, 4) + ' \u2192 ' + String(s.coupureRegime || '2022-01-01').slice(0, 4)],
+          ['apres', 'Après la date charnière'],
+          ['choisie', 'Une date que je choisis']];
+        const poser = (m) => () => this.setState({ fenMode: m }, () => {
+          this.ecrireSession();
+          if (s.vue === 'backtest') this.lancerTest();
+        });
+        return {
+          fenDuree: fen.complete ? this.ansTxt(tot) : this.ansTxt(dedans),
+          fenChoix: NOMS.map(([m, nom]) => ({
+            // Les bornes réellement mesurées, pas les bornes demandées : une charnière
+            // placée avant le premier fichier donnerait « 04/2025 → 2022 », qui se lit
+            // à l'envers et n'annonce rien de ce qui sera mesuré.
+            nom: m === 'avant'
+              ? (coupeMs > t0
+                ? 'Avant la date charnière \u2014 ' + this.jmaCourt(t0) + ' \u2192 ' + this.jmaCourt(coupeMs)
+                : 'Avant la date charnière \u2014 aucune bougie avant ' + this.jmaCourt(coupeMs))
+              : m === 'apres'
+                ? (coupeMs < t1
+                  ? 'Après la date charnière \u2014 ' + this.jmaCourt(Math.max(coupeMs, t0)) + ' \u2192 ' + this.jmaCourt(t1)
+                  : 'Après la date charnière \u2014 aucune bougie après ' + this.jmaCourt(coupeMs))
+                : nom,
+            actif: (s.fenMode || 'tout') === m,
+            choisir: poser(m),
+          })),
+          fenDu: s.fenDu || '2020-01-01',
+          fenAu: s.fenAu || new Date(t1).toISOString().slice(0, 10),
+          setFenDu: (e) => this.setState({ fenDu: e.target.value }, () => this.ecrireSession()),
+          setFenAu: (e) => this.setState({ fenAu: e.target.value }, () => this.ecrireSession()),
+          fenDatesOff: (s.fenMode || 'tout') !== 'choisie',
+          // LE FREIN MÉCANIQUE, dit avant qu'il ne coûte une heure de calcul.
+          aFenFrein: !fen.complete,
+          fenFreinTxt: 'Une année d\u2019historique en H1 donne quinze à trente trades selon l\u2019instrument. '
+            + 'Votre seuil de trades minimum est à ' + (s.tradesMin || 0) + ' : la quasi-totalité des '
+            + 'configurations sortiront du classement d\u2019elles-mêmes. Le sélecteur ne rend pas une '
+            + 'fenêtre courte utilisable \u2014 il rend visible qu\u2019elle ne l\u2019est pas.',
+          aFenAmorce: amorces.length > 0,
+          fenAmorceTxt: amorces.length
+            ? this.pl(amorces.length, 'instrument sélectionné n\u2019a pas', 'instruments sélectionnés n\u2019ont pas')
+              + ' les 400 jours de bougies qu\u2019il faut avant le ' + jj(fen.debut)
+              + ' pour que moyennes, pentes et zones soient justes dès la première bougie mesurée : '
+              + amorces.slice(0, 6).map((x) => x.sym).join(' \u00b7 ')
+              + (amorces.length > 6 ? ' \u2026' : '')
+              + '. Ils seront refusés, pas mesurés de travers.'
+            : '',
+          // LE BANDEAU. Non refermable tant que la fenêtre n'est pas complète.
+          aFenBandeau: !fen.complete && this.aScanData,
+          fenBandeauTitre: 'Vous mesurez ' + this.ansTxt(dedans) + ' sur ' + this.ansAccord(tot, 'disponible', 'disponibles'),
+          fenBandeauDates: 'du ' + jj(d) + ' au ' + jj(f) + ' \u00b7 ' + this.dureeEcart(tot - dedans) + ' écartés',
+          fenPartAvant: pct(Math.max(0, d - t0)),
+          fenPartDedans: pct(dedans),
+          fenPartApres: pct(Math.max(0, t1 - f)),
+          fenTxtAvant: (d - t0) / tot > 0.16 ? 'écarté \u00b7 ' + this.dureeEcart(d - t0) : '',
+          fenTxtApres: (t1 - f) / tot > 0.16 ? 'écarté \u00b7 ' + this.dureeEcart(t1 - f) : '',
+          fenBandeauHors: !best
+            ? 'Aucune configuration ne passe vos seuils sur cette fenêtre \u2014 le résultat sur la partie écartée n\u2019a rien à qualifier.'
+            : hors === null
+              ? 'Mesure en cours du résultat de la meilleure configuration sur les ' + this.dureeEcart(tot - dedans) + ' écartés\u2026'
+              : hors.n === 0
+                ? 'Sur les ' + this.dureeEcart(tot - dedans) + ' écartés' + ', la meilleure configuration de cette fenêtre ne prend aucun trade. Elle n\u2019a donc rien prouvé ailleurs qu\u2019ici.'
+                : 'Sur les ' + this.dureeEcart(tot - dedans) + ' écartés' + ', la meilleure configuration de cette fenêtre rend '
+                  + this.sgR(hors.total) + ' sur ' + this.pl(hors.n, 'trade', 'trades') + '. '
+                  + (hors.total > 0 ? 'Elle a donc aussi marché ailleurs qu\u2019ici.' : 'Elle n\u2019a donc pas marché ailleurs qu\u2019ici.'),
+          fenTout: () => this.setState({ fenMode: 'tout' }, () => {
+            this.ecrireSession();
+            if (s.vue === 'backtest') this.lancerTest();
+          }),
+        };
+      })(),
+
       // ————— L'AIDE —————
       ...(() => {
         const idx = this._aideIdx || [];
@@ -15579,7 +16307,7 @@ GROUPES = {
       lancerExemple: () => this.voirExemple(),
       aDetail: !!d,
       aDetailVu: !!d && (s.vue === 'scan' || s.vue === 'historique'),
-      fermerDetail: () => this.setState({ detail: null }),
+      fermerDetail: () => this.setState({ detail: null, fenMotifOuvert: null }),
       dSym: d ? d.sym : '',
       dConfig: d ? (ENTREES_TXT[s.btEntree] || s.btEntree) + ' · ' + (LIGNES_TXT[s.btLigne] || s.btLigne)
         + ' ' + d.periode + ' en ' + s.ut + ' · stop ' + fr(d.sl, 1) + ' % · objectif ' + fr(d.rr, 1) + ' R'
@@ -15933,6 +16661,18 @@ GROUPES = {
             : 'revalidez-le depuis l\u2019historique',
           filtres: v.filtres || 'filtres inconnus',
           filtresAucun: v.filtres === 'Aucun filtre' || !v.filtres,
+          // LA FENÊTRE, JUSQUE DANS LE PORTEFEUILLE. Une ligne validée porte sa photo de
+          // fenêtre (`fen`), donc l'étiquette reste juste même si le scan d'origine a été
+          // supprimé — et les lignes validées avant cette version affichent, à raison,
+          // « tout l'historique ».
+          ...(() => {
+            const a = this.fenAffiche(v);
+            const e = a.etatFen;
+            return { ...a,
+              fenAff: e.complete ? 'none' : 'block',
+              fenHors: e.complete ? '' : (a.fenHors + (e.motif ? ' \u00b7 exception écrite : ' + e.motif
+                : (e.tient ? ' \u00b7 tient des deux côtés' : ''))) };
+          })(),
           // la sécurisation ne figurait nulle part : une ligne validée ne disait pas
           // ce qui protège la position ni à quels seuils
           secu: v.secu || this.etiqSecu(s) + ' (réglages actuels)',
@@ -17769,6 +18509,27 @@ GROUPES = {
                   }
                   return { aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
                     agirBloque: true, agir: () => {}, opacite: '.62' };
+                })(),
+                // L'ÉTIQUETTE DE FENÊTRE, et le verrou qu'elle pose sur le rangement.
+                ...(() => {
+                  const a = this.fenAffiche(r);
+                  const e = a.etatFen;
+                  return { ...a,
+                    fenAff: e.complete ? 'none' : 'flex',
+                    fenEtiq: e.complete ? '' : (e.tient ? 'tient des deux côtés'
+                      : (e.motif ? 'exception écrite : ' + e.motif : 'non validable')),
+                    // Le verrou ne remplace QUE l'étape qui range au portefeuille.
+                    // Contrôler le hasard sur une fenêtre réduite reste utile — c'est la
+                    // validation qu'on empêche, pas la mesure.
+                    ...(e.verrou && dec.vert && fin && !dejaValide(r.sym, r) ? {
+                      aAgir: true, agirTxt: 'Fenêtre choisie \u00b7 non validable',
+                      agirCls: 'btn btn-ghost', agirBloque: true, agir: () => {},
+                      agirAide: 'Mesurée sur ' + this.fenLibelle(e.fen) + '. '
+                        + (e.hors === null ? 'Son résultat sur la partie écartée est en cours de mesure.'
+                          : 'Sur la partie écartée elle rend ' + this.sgR(e.hors.total) + '.')
+                        + ' Ouvrez la fiche pour revenir à tout l\u2019historique, ou pour écrire '
+                        + 'pourquoi la période écartée est inexploitable.',
+                    } : {}) };
                 })(),
                 // le verdict du hasard en clair, plus le motif du refus quand il y en a un
                 hasardPhrase: dec.phrase,
