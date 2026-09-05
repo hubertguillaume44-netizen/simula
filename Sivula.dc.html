@@ -267,12 +267,24 @@
     <aside style="position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);z-index:70;background:var(--color-bg);border-left:1px solid var(--color-divider);box-shadow:var(--shadow-lg);overflow:auto;padding:20px 22px 30px;display:flex;flex-direction:column;gap:18px">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
         <div style="display:flex;flex-direction:column;gap:2px">
-          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Intendance</span>
-          <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.15">Vos données sur cet appareil</strong>
+          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ tiroirSurTitre }}</span>
+          <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.15">{{ tiroirTitre }}</strong>
         </div>
         <button type="button" onClick="{{ fermerTiroir }}" style="cursor:pointer;font:inherit;font-size:12px;background:none;border:1px solid var(--color-divider);padding:4px 11px;color:inherit">Fermer</button>
       </div>
 
+      <!--
+        DEUX SUJETS, DEUX ONGLETS. Le journal des changements occupait tout le haut du
+        tiroir, avant la sauvegarde, la mémoire et la confidentialité : on venait y
+        chercher ses données et on tombait sur un communiqué. Ce qu'on FAIT et ce qui a
+        CHANGÉ ne se lisent pas au même moment.
+      -->
+      <div class="seg" style="width:100%">
+        <label class="seg-opt" style="flex:1"><input type="radio" name="tiroirOnglet" checked="{{ tOngDonnees }}" onChange="{{ versDonnees }}">Vos données</label>
+        <label class="seg-opt" style="flex:1"><input type="radio" name="tiroirOnglet" checked="{{ tOngNouv }}" onChange="{{ versNouveautes }}">{{ tOngNouvTxt }}</label>
+      </div>
+
+      <sc-if value="{{ tOngNouv }}" hint-placeholder-val="{{ false }}">
       <!--
         CE QUI A CHANGÉ. La plus récente en haut, alimentée par nouveautes.json — le
         fichier du dépôt, pas une liste recopiée ici. Sur une entrée « mesure », la ligne
@@ -306,6 +318,10 @@
           </sc-for>
         </div>
       </sc-if>
+
+      </sc-if>
+
+      <sc-if value="{{ tOngDonnees }}" hint-placeholder-val="{{ true }}">
 
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
@@ -465,6 +481,7 @@
 
       <sc-if value="{{ aRevoirPresentation }}" hint-placeholder-val="{{ false }}">
         <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ revoirPresentation }}">Revoir la présentation</button>
+      </sc-if>
       </sc-if>
     </aside>
   </sc-if>
@@ -17571,11 +17588,26 @@ GROUPES = {
         const aide = vieux.length
           ? 'Relance le plus récent de ces scans avec SA grille et SES instruments, pas ceux du panneau. Les autres restent à relancer un par un : mélanger deux grilles dans un seul balayage produirait un scan qui ne correspond à aucune des deux.'
           : '';
+        const nNonLues = liste.filter(nonLu).length;
         return {
           aNouveautes: liste.length > 0,
-          nouvLireOpacite: liste.some(nonLu) ? '1' : '.4',
+          nouvLireOpacite: nNonLues ? '1' : '.4',
           marquerNouvLues: () => this.marquerNouvLues(),
-          affNouvPoint: liste.some(nonLu) ? 'inline-block' : 'none',
+          affNouvPoint: nNonLues ? 'inline-block' : 'none',
+          // ————— DEUX SUJETS, DEUX ONGLETS —————
+          // Le journal des changements occupait tout le haut du tiroir, avant la
+          // sauvegarde, la mémoire et la confidentialité : on venait chercher ses données
+          // et on tombait sur un communiqué. L'onglet des nouveautés porte son compte de
+          // non-lues, pour qu'on sache s'il vaut le détour sans l'ouvrir.
+          tOngDonnees: (s.tiroirOnglet || 'donnees') !== 'nouveautes',
+          tOngNouv: s.tiroirOnglet === 'nouveautes',
+          tOngNouvTxt: nNonLues ? 'Nouveautés \u00b7 ' + nNonLues : 'Nouveautés',
+          versDonnees: () => this.setState({ tiroirOnglet: 'donnees' }),
+          // ouvrir l'onglet vaut lecture : le point de l'en-tête s'éteint là où il a servi
+          versNouveautes: () => this.setState({ tiroirOnglet: 'nouveautes' }, () => this.marquerNouvLues()),
+          tiroirSurTitre: s.tiroirOnglet === 'nouveautes' ? 'Journal' : 'Intendance',
+          tiroirTitre: s.tiroirOnglet === 'nouveautes'
+            ? 'Ce qui a changé' : 'Vos données sur cet appareil',
           nouveautes: liste.map((x) => {
             const [nom, bord, aidePortee] = this.PORTEES[x.portee] || this.PORTEES.correctif;
             const anciens = x.portee === 'mesure' ? this.scansAnciens(x.date) : [];
