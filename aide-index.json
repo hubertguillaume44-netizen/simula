@@ -57,6 +57,13 @@
    ]
   },
   {
+   "terme": "bougies H1 Déposer un relevé",
+   "texte": "Enregistre les noms des instruments sans bougies, un par ligne.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "brut) Même sous-jacent, plusieurs flux",
    "texte": "Replier ou déplier cette section",
    "vues": [
@@ -176,17 +183,17 @@
    ]
   },
   {
+   "terme": "de de capital, stop posé",
+   "texte": "Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "de la ligne NON restaurée",
    "texte": "Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.",
    "vues": [
     "Backtest"
-   ]
-  },
-  {
-   "terme": "Déposer un relevé de symboles",
-   "texte": "Enregistre les noms des instruments sans bougies, un par ligne.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {
@@ -285,6 +292,13 @@
    "texte": "Nombre de conditions qui doivent être remplies pour autoriser l'entrée",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "fois Les deux scripts MT5",
+   "texte": "Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.",
+   "vues": [
+    "Mes instruments"
    ]
   },
   {
@@ -414,7 +428,7 @@
    ]
   },
   {
-   "terme": "Portage calculé sur la détention nuits",
+   "terme": "portage calculé sur la détention",
    "texte": "Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.",
    "vues": [
     "Mes instruments"
@@ -428,8 +442,8 @@
    ]
   },
   {
-   "terme": "Produire ces fichiers depuis MT5",
-   "texte": "Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.",
+   "terme": "que vaut 1 R partout",
+   "texte": "Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.",
    "vues": [
     "Mes instruments"
    ]
@@ -594,6 +608,13 @@
    "texte": "Sorties sur objectif atteint",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "vaut 1 R partout de",
+   "texte": "Le capital sur lequel le pourcentage de risque s’applique.",
+   "vues": [
+    "Mes instruments"
    ]
   },
   {
