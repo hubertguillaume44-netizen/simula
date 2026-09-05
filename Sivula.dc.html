@@ -4993,7 +4993,13 @@ class Component extends DCLogic {
     const taches = [];
     for (const r of lignes) {
       for (const t of nombres) {
-        if (!this.hasardFait(this.cleHasardFait(r, t))) taches.push([r, t]);
+        // depuis la barre, la règle est celle des fiches : un contrôle DÉJÀ plus fin
+        // rend celui-ci inutile, et son résultat resterait de toute façon masqué
+        if (tirages) {
+          const f = this.meilleurHasardFait(r);
+          if (f && (f.tirages || 0) >= t) continue;
+        } else if (this.hasardFait(this.cleHasardFait(r, t))) continue;
+        taches.push([r, t]);
       }
     }
     if (!taches.length) {
@@ -19701,8 +19707,21 @@ GROUPES = {
       // affichées, pas sur celles du rendu précédent.
       ...(() => {
         const t = Math.max(200, Number(s.nTirages) || 200);
-        const cibles = (this._ciblesHasard || []).filter((r) => r && !r.sansDonnees
-          && (r.n || 0) >= 5 && !this.hasardFait(this.cleHasardFait(r, t)));
+        // LE CONTRÔLE EST MONOTONE : seul un nombre de tirages PLUS GRAND que le meilleur
+        // déjà fait apprend quelque chose. Comparer à « déjà fait à ce nombre exact »
+        // proposait de relancer à 600 une fiche contrôlée à 700 — le calcul tournait, et
+        // la fiche continuait d'afficher son 700, puisque c'est le meilleur qui s'affiche.
+        // Rien ne bougeait, et il n'y avait aucune façon de le comprendre.
+        const possibles = (this._ciblesHasard || []).filter((r) => r && !r.sansDonnees
+          && (r.n || 0) >= 5);
+        const cibles = possibles.filter((r) => {
+          const f = this.meilleurHasardFait(r);
+          return !f || t > (f.tirages || 0);
+        });
+        const dejaMax = possibles.reduce((a2, r) => {
+          const f = this.meilleurHasardFait(r);
+          return f && (f.tirages || 0) > a2 ? f.tirages : a2;
+        }, 0);
         const enCours = !!s.hasardEnCours;
         return {
           lotTirages: t,
@@ -19713,14 +19732,21 @@ GROUPES = {
             : cibles.length
               ? (cibles.length === 1 ? 'Contrôler la fiche affichée'
                 : 'Contrôler les ' + cibles.length + ' affichées')
-              : 'Fiches affichées déjà contrôlées',
+              : dejaMax
+                ? 'Déjà contrôlées à ' + dejaMax.toLocaleString('fr-FR') + ' tirages'
+                : 'Aucune fiche contrôlable',
           boutonLotAide: cibles.length
             ? 'Rejoue au hasard ' + (cibles.length === 1 ? 'la configuration affichée'
               : 'les ' + cibles.length + ' configurations affichées')
-              + ' qui ne l\u2019ont pas encore été à ' + t.toLocaleString('fr-FR')
-              + ' tirages. Celles déjà contrôlées à ce nombre-là sont sautées : leur série n\u2019est pas rechargée.'
-            : 'Toutes les fiches affichées sont déjà contrôlées à ' + t.toLocaleString('fr-FR')
-              + ' tirages. Montez le nombre pour aller plus fin.',
+              + ' qui n\u2019ont pas encore été contrôlées à ' + t.toLocaleString('fr-FR')
+              + ' tirages ou plus. Celles qui l\u2019ont déjà été sont sautées : leur série n\u2019est pas rechargée.'
+            : dejaMax
+              ? 'Les fiches affichées sont déjà contrôlées à ' + dejaMax.toLocaleString('fr-FR')
+                + ' tirages, soit plus fin que les ' + t.toLocaleString('fr-FR') + ' demandés. '
+                + 'Un nombre plus petit n\u2019apprend rien de neuf : c\u2019est le contrôle le plus fin '
+                + 'qui s\u2019affiche sur la fiche. Montez le champ au-dessus de '
+                + dejaMax.toLocaleString('fr-FR') + ' pour aller plus loin.'
+              : 'Aucune des fiches affichées n\u2019a assez de trades pour être rejouée au hasard.',
         };
       })(),
       sansConfig: (s.fiche && s.fiche.symboles ? s.fiche.symboles.split(' · ').filter(Boolean) : [])
