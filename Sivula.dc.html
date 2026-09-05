@@ -3209,7 +3209,16 @@
             <p class="card-body" style="margin:6px 0 0;max-width:70ch">{{ dConfig }}</p>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn btn-primary" type="button" style="min-height:2.6rem" onClick="{{ dVersBacktest }}">Ouvrir dans le Backtest</button>
+            <!--
+              LE RANGEMENT AU PORTEFEUILLE, ICI AUSSI.
+
+              Il n'existait que sur les cartes de l'Historique, et seulement au survol :
+              la fiche ouverte — celle qu'on lit pour décider, depuis le scan comme depuis
+              le Backtest — portait les cinq contrôles et aucune façon d'agir dessus. Le
+              bouton ne disparaît jamais : quand la ligne n'est pas rangeable, il le dit.
+            -->
+            <button class="{{ dRangerCls }}" type="button" style="min-height:2.6rem" onClick="{{ dRanger }}" disabled="{{ dRangerOff }}" title="{{ dRangerAide }}">{{ dRangerTxt }}</button>
+            <button class="btn btn-secondary" type="button" style="min-height:2.6rem" onClick="{{ dVersBacktest }}">Ouvrir dans le Backtest</button>
             <button class="btn btn-ghost" type="button" style="min-height:2.6rem" onClick="{{ fermerDetail }}">Fermer</button>
           </div>
         </div>
@@ -16640,6 +16649,51 @@ GROUPES = {
         };
       })(),
 
+      // ————— RANGER LA FICHE OUVERTE AU PORTEFEUILLE —————
+      //
+      // La fiche portait le verdict des cinq contrôles et aucun moyen d'agir : le
+      // rangement n'existait que sur les cartes de l'Historique, et seulement au survol.
+      ...(() => {
+        const d2 = s.detail;
+        if (!d2 || !d2.sym) {
+          return { dRangerTxt: 'Ranger au portefeuille', dRangerCls: 'btn btn-ghost',
+            dRangerOff: true, dRangerAide: '', dRanger: () => {} };
+        }
+        const dedans = this.estValide(d2.sym, d2);
+        const dec = this.decisionDe(d2);
+        const ef = this.etatFenetre(d2);
+        if (dedans) {
+          return { dRangerTxt: '\u2713 Au portefeuille', dRangerCls: 'btn btn-secondary',
+            dRangerOff: false,
+            dRangerAide: 'Cette configuration est rangée. Cliquez pour l\u2019en retirer.',
+            dRanger: () => this.basculerValide(d2.sym, d2) };
+        }
+        if (ef.verrou) {
+          return { dRangerTxt: 'Fenêtre choisie \u00b7 non validable', dRangerCls: 'btn btn-ghost',
+            dRangerOff: true,
+            dRangerAide: 'Mesurée sur ' + this.fenLibelle(ef.fen) + '. '
+              + (ef.hors === null ? 'Son résultat sur la partie écartée est en cours de mesure.'
+                : 'Sur la partie écartée elle rend ' + this.sgR(ef.hors.total) + '.')
+              + ' Revenez à tout l\u2019historique, ou écrivez ci-dessous pourquoi la période '
+              + 'écartée est inexploitable.',
+            dRanger: () => {} };
+        }
+        if (dec.vert) {
+          return { dRangerTxt: 'Ranger au portefeuille', dRangerCls: 'btn btn-primary',
+            dRangerOff: false, dRangerAide: dec.aide,
+            dRanger: () => this.basculerValide(d2.sym, d2) };
+        }
+        // pas rangeable : le bouton reste, avec le motif — sa disparition ne se
+        // distinguait pas d'une interface cassée
+        // `dec.controle` porte le VERDICT du hasard : vide tant qu'il n'a pas été mesuré.
+        const aControler = !dec.controle;
+        return { dRangerTxt: aControler ? 'Contrôler le hasard' : 'Pas encore validable',
+          dRangerCls: aControler ? 'btn btn-secondary' : 'btn btn-ghost',
+          dRangerOff: aControler ? !!s.hasardEnCours : true,
+          dRangerAide: dec.aide || 'Les cinq contrôles ne passent pas encore.',
+          dRanger: () => { if (aControler) this.controlerUne(d2); } };
+      })(),
+
       // la fenêtre de la ligne OUVERTE, avec son exception écrite
       ...(() => {
         const dd = s.detail;
@@ -19160,8 +19214,12 @@ GROUPES = {
                   const dejaLa = dejaValide(r.sym, r);
                   const mort = r.sansDonnees || (Number(r.n) || 0) < 5;
                   if (mort) {
-                    return { aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
-                      agirBloque: true, agir: () => {}, opacite: '.62' };
+                    return { aAgir: true, agirTxt: 'Non testable',
+                      agirCls: 'btn btn-ghost', agirBloque: true, agir: () => {},
+                      agirAide: r.sansDonnees
+                        ? (r.erreur || 'Cet instrument n\u2019a pas de série exploitable.')
+                        : 'Moins de cinq trades : il n\u2019y a rien à juger.',
+                      opacite: '.62' };
                   }
                   if (dejaLa) {
                     return { aAgir: true, agirTxt: '\u2713 Au portefeuille', agirCls: 'btn btn-secondary',
@@ -19196,8 +19254,14 @@ GROUPES = {
                         this.controlerUne(r); },
                       opacite: '.62' };
                   }
-                  return { aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
-                    agirBloque: true, agir: () => {}, opacite: '.62' };
+                  // RIEN À FAIRE N'EST PAS RIEN À DIRE. Le bouton disparaissait, et
+                  // l'utilisateur ne pouvait pas distinguer « cette ligne n'est pas
+                  // validable » d'une interface cassée. Il reste, désactivé, avec le
+                  // motif — c'est `dec.aide` qui nomme le contrôle qui manque.
+                  return { aAgir: true, agirTxt: 'Pas encore validable',
+                    agirCls: 'btn btn-ghost', agirBloque: true, agir: () => {},
+                    agirAide: dec.aide || 'Les cinq contrôles ne passent pas encore, ou le hasard fait aussi bien que cette configuration.',
+                    opacite: '.62' };
                 })(),
                 // L'ÉTIQUETTE DE FENÊTRE, et le verrou qu'elle pose sur le rangement.
                 ...(() => {
