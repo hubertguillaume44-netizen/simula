@@ -116,9 +116,18 @@
     <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
       <nav style="display:flex;gap:2px;align-items:stretch">
         <sc-for list="{{ groupesNav }}" as="gn" hint-placeholder-count="3">
-          <button type="button" onClick="{{ gn.choisir }}" title="{{ gn.aide }}" style="cursor:pointer;font:inherit;font-size:14px;border:0;border-top:2px solid {{ gn.filet }};padding:0 18px;background:{{ gn.fond }};color:{{ gn.encre }};opacity:{{ gn.voile }};display:inline-flex;align-items:center;gap:8px;transition:background .12s,opacity .12s" style-hover="background:{{ gn.fondSurvol }};opacity:1">
-            <span style="font-family:var(--font-heading);font-size:12px;opacity:.6">{{ gn.num }}</span>{{ gn.nom }}<span style="width:5px;height:5px;border-radius:50%;background:{{ gn.point }}"></span>
-          </button>
+          <!--
+            La description du groupe s'ouvre SOUS l'onglet, alignée à gauche sur lui.
+            En infobulle native elle flottait au-dessus de la ligne d'onglets et
+            recouvrait la bande de droite — c'est-à-dire exactement la tâche du moment,
+            la seule chose que la barre ait à dire.
+          -->
+          <span class="survol" style="display:inline-flex">
+            <button type="button" onClick="{{ gn.choisir }}" style="cursor:pointer;font:inherit;font-size:14px;border:0;border-top:2px solid {{ gn.filet }};padding:0 18px;background:{{ gn.fond }};color:{{ gn.encre }};opacity:{{ gn.voile }};display:inline-flex;align-items:center;gap:8px;min-height:2.6rem">
+              <span style="font-family:var(--font-heading);font-size:12px;opacity:.6">{{ gn.num }}</span>{{ gn.nom }}<span style="width:5px;height:5px;border-radius:50%;background:{{ gn.point }}"></span>
+            </button>
+            <span class="bulle" style="left:0;right:auto;width:max-content;max-width:44ch">{{ gn.aide }}</span>
+          </span>
         </sc-for>
       </nav>
     </sc-if>
@@ -856,17 +865,17 @@
       <sc-if value="{{ aSousOnglets }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:18px;align-items:baseline;flex-wrap:wrap">
           <sc-for list="{{ sousOnglets }}" as="so" hint-placeholder-count="2">
-            <button type="button" onClick="{{ so.choisir }}" title="{{ so.aide }}" style="cursor:pointer;background:none;border:0;padding:0 0 4px;font:inherit;font-size:14px;color:{{ so.couleur }};border-bottom:2px solid {{ so.trait }}">{{ so.nom }}</button>
+            <button type="button" class="{{ so.cls }}" onClick="{{ so.choisir }}" title="{{ so.aide }}" style="cursor:pointer;background:none;border:0;padding:0 0 4px;font:inherit;font-size:14px;font-weight:{{ so.gras }};color:{{ so.couleur }};border-bottom:2px solid {{ so.trait }}">{{ so.nom }}</button>
           </sc-for>
         </div>
       </sc-if>
-      <div style="display:flex;gap:8px 20px;align-items:baseline;flex-wrap:wrap;margin-inline-start:auto">
-        <sc-for list="{{ fil }}" as="fa" hint-placeholder-count="4">
-          <span style="font-size:12px;white-space:nowrap;display:inline-flex;align-items:baseline;gap:6px" title="{{ fa.aide }}">
-            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ fa.quoi }}</span>
-            <strong style="font-family:var(--font-heading);font-size:14px;color:{{ fa.couleur }}">{{ fa.valeur }}</strong>
-          </span>
-        </sc-for>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-inline-start:auto">
+        <span style="font-size:12px;white-space:nowrap" class="text-muted">{{ barreEtat }}</span>
+        <sc-if value="{{ aBarreTache }}" hint-placeholder-val="{{ false }}">
+          <span style="width:1px;height:18px;background:var(--color-divider);flex:none"></span>
+          <span style="font-size:12px;line-height:1.4;color:var(--color-text)">{{ barreTacheTxt }}</span>
+          <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:14px" onClick="{{ barreTache }}">{{ barreTacheBouton }}</button>
+        </sc-if>
       </div>
     </div>
 
@@ -11007,6 +11016,27 @@ GROUPES = {
     this.setState({ liveRev: (this.state.liveRev || 0) + 1 });
     return fermes.length + m[magic].ouverts.length;
   }
+  // L'ÉCART entre ce que le robot a fait et ce que Sivula avait mesuré, en %.
+  //
+  // Écrit ici plutôt que dans la page du portefeuille : la barre de navigation en a
+  // besoin aussi, et deux copies de cette arithmétique auraient fini par annoncer deux
+  // écarts différents pour la même ligne. `null` = rien à comparer.
+  ecartLiveDe(v) {
+    if (!v) return null;
+    const j = (this.lireLive() || {})[this.magicDe(v)];
+    const fermes = (j && j.trades) || [];
+    if (!fermes.length) return null;
+    const rReel = fermes.reduce((a, x) => a + (Number(x.r) || 0), 0);
+    const rMesure = Number(v.total) || 0;
+    const annees = Number(v.annees) || (v.rAn ? rMesure / Number(v.rAn) : 0);
+    const t0 = Date.parse(String(fermes[0].t0 || '').replace(/\./g, '-').replace(' ', 'T'));
+    const mois = Number.isFinite(t0) ? Math.max(0.3, (Date.now() - t0) / (30.44 * 86400000)) : 1;
+    // le résultat mesuré RAMENÉ à la durée réellement écoulée : comparer un total de
+    // six ans à trois mois de live n'aurait aucun sens
+    const rAttendu = annees > 0 ? (rMesure / annees) * (mois / 12) : 0;
+    if (Math.abs(rAttendu) <= 0.5) return null;
+    return { pct: Math.abs(rReel - rAttendu) / Math.abs(rAttendu) * 100, n: fermes.length };
+  }
   // Le magique d'une ligne : la MÊME formule que l'export du robot, sans quoi le
   // rattachement ne peut pas tomber juste. Écrite une fois, appelée aux deux endroits.
   magicDe(v) {
@@ -12290,6 +12320,10 @@ GROUPES = {
           aSousOnglets: gCour[3].length > 1,
           sousOnglets: gCour[3].map(([v, nom, aide]) => ({
             nom, aide,
+            // UN SEUL attribut class : deux annulaient `text-muted` et les onglets
+            // inactifs revenaient à l'encre pleine, indistinguables de l'actif.
+            cls: v === vue ? 'ong' : 'ong text-muted',
+            gras: v === vue ? '600' : '400',
             couleur: v === vue ? 'var(--color-text)' : 'color-mix(in srgb,var(--color-text) 55%,transparent)',
             trait: v === vue ? 'var(--color-accent)' : 'transparent',
             choisir: () => this.setState((p) => ({ vue: v,
@@ -12386,42 +12420,95 @@ GROUPES = {
       // juste à côté de la courbe — le garder à l'écran en permanence coûtait deux
       // centimètres de hauteur pour un chiffre déjà lisible là où on le regarde.
       btTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 10) + 'px',
-      fil: (() => {
+      // ————— LA BARRE NE DÉCRIT PLUS, ELLE PROPOSE —————
+      //
+      // Elle affichait quatre couples étiquette-valeur en capitales corps 9, à l'extrême
+      // droite : COMPTE nº 1 · BOUGIES 149 séries · MESURÉ 104 config. · DERNIER SCAN
+      // il y a 13 h. Aucun des quatre ne demande quoi que ce soit — « 104 configurations
+      // mesurées », est-ce beaucoup ? « il y a 13 h », est-ce récent ? Une barre d'état
+      // dit ce qui a changé ou ce qui cloche ; elle n'inventorie pas ce qui existe.
+      //
+      // Trois valeurs partent. Les étiquettes aussi : une valeur qui a besoin d'une
+      // étiquette au-dessus, dans une barre d'état, est une valeur mal nommée.
+      ...(() => {
         const nSeries = (s.deposes || []).length;
-        const nScan = this.lignesScan.length;
-        const arch = (s.archives || [])[0];
-        const quand = (d) => {
-          if (!d) return null;
-          const t0 = new Date(d).getTime();
-          if (!t0) return null;
-          const h = (Date.now() - t0) / 3600000;
-          if (h < 1) return 'il y a ' + Math.max(1, Math.round(h * 60)) + ' min';
-          if (h < 20) return 'il y a ' + Math.round(h) + ' h';
-          if (h < 44) return 'hier';
-          return new Date(t0).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+        const vue = s.vue || 'scan';
+        const groupe = ['courtiers'].includes(vue) ? 'prep'
+          : ['portefeuille', 'marche', 'journal'].includes(vue) ? 'decide' : 'cherche';
+        const valides = this.normValides(s.valides || []);
+        // le décompte PERTINENT pour le groupe où l'on est, et lui seul
+        const compte = groupe === 'decide'
+          ? (valides.length ? this.pl(valides.length, 'ligne rangée', 'lignes rangées') : 'aucune ligne rangée')
+          : (nSeries ? this.pl(nSeries, 'série', 'séries') : 'aucune série');
+        const nomCompte = this.nomCompteActif();
+
+        // ————— UNE SEULE TÂCHE, LA PLUS URGENTE DU GROUPE OÙ L'ON EST —————
+        //
+        // La navigation — bouton, cible, ancre — vient du chemin guidé qui existe déjà.
+        // Seule la PHRASE est réécrite : « Lancez un premier balayage » ne dit pas
+        // pourquoi maintenant, alors qu'un chiffre le dit d'un coup d'œil.
+        const aller = (v, ancre) => () => this.setState({ vue: v }, () => {
+          this.ecrireSession();
+          if (!ancre) return;
+          setTimeout(() => { const el = document.getElementById(ancre);
+            if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70,
+              behavior: 'smooth' }); }, 60);
+        });
+        let tache = null;
+        if (!((this.baremes || {})[this.compteActif])) {
+          tache = { txt: 'Aucun relevé de courtier — les frais ne sont pas comptés',
+            bouton: 'Déposer', go: aller('courtiers') };
+        } else if (!nSeries) {
+          tache = { txt: 'Aucune bougie déposée — rien n’est scannable',
+            bouton: 'Déposer', go: aller('courtiers') };
+        } else if (!this.lignesScan.length) {
+          tache = { txt: this.pl(nSeries, 'série prête', 'séries prêtes') + ', aucun balayage lancé',
+            bouton: 'Scanner', go: aller('scan', 'lancerScan') };
+        } else if (!valides.length) {
+          tache = { txt: this.lignesScan.length.toLocaleString('fr-FR')
+              + ' configurations mesurées, aucune retenue',
+            bouton: 'Lire', go: aller('scan', 'topScan') };
+        } else if (groupe === 'decide') {
+          // Le chemin guidé est fait : la barre passe à ce qui BOUGE, et dans le groupe
+          // où l'on est. Les quatre étapes d'installation, elles, sont bloquantes et
+          // s'affichent partout — rien d'autre ne peut avancer tant qu'elles manquent.
+          let pire = null, nEcart = 0;
+          for (const v of valides) {
+            const e = this.ecartLiveDe(v);
+            if (e && e.pct > 20) { nEcart++; if (!pire || e.pct > pire.pct) pire = e; }
+          }
+          if (pire) {
+            tache = { txt: this.pl(nEcart, 'ligne en live s’écarte', 'lignes en live s’écartent')
+                + ' de ' + Math.round(pire.pct) + ' % de sa mesure',
+              bouton: 'Comparer', go: aller('portefeuille') };
+          }
+        } else if (groupe === 'cherche') {
+          // un scan vieilli ne compte que si des séries ont été COMPLÉTÉES depuis :
+          // sans données neuves, relancer redonnerait exactement le même résultat, et la
+          // barre proposerait une tâche inventée
+          const arch = (s.archives || [])[0];
+          const t0 = arch && arch.date ? new Date(arch.date).getTime() : 0;
+          const h = t0 ? (Date.now() - t0) / 3600000 : 0;
+          let neuves = 0;
+          if (t0) { const cv = this.lireCouv();
+            for (const k of Object.keys(cv)) if (cv[k] && cv[k].date > t0) neuves++; }
+          if (t0 && neuves > 0) {
+            tache = { txt: 'Votre dernier scan a ' + (h < 44 ? Math.round(h) + ' h' : Math.round(h / 24) + ' j')
+                + ' — ' + this.pl(neuves, 'série a été complétée', 'séries ont été complétées') + ' depuis',
+              bouton: 'Relancer', go: aller('scan', 'lancerScan') };
+          }
+        }
+        return {
+          // La phrase de gauche porte « tout est à jour » quand il n'y a pas de tâche :
+          // le filet et le bouton disparaissent, mais la barre ne se vide pas à moitié.
+          // Une barre dont le contenu change déjà selon la vue devient du bruit si elle
+          // laisse un blanc la moitié du temps.
+          barreEtat: nomCompte + ' · ' + compte + (tache ? '' : ' · tout est à jour'),
+          aBarreTache: !!tache,
+          barreTacheTxt: tache ? tache.txt : '',
+          barreTacheBouton: tache ? tache.bouton : '',
+          barreTache: tache ? tache.go : () => {},
         };
-        const gris = 'color-mix(in srgb,var(--color-text) 45%,transparent)';
-        const l = [
-          // le compte ouvre le fil : le sélecteur est en haut de page, hors du champ de
-          // vision dès qu'on descend, et toute lecture dépend du compte affiché
-          { quoi: 'Compte', valeur: this.libelleCompteActif(),
-            couleur: 'var(--color-text)',
-            aide: 'Compte affiché : bougies, tarifs, scans et réglages sont les siens seuls.'
-              + (s.chargeDuree ? ' Ouvert en ' + (s.chargeDuree / 1000).toFixed(1).replace('.', ',')
-                + ' s : relevé, bougies et scans relus en entier.' : '') },
-          { quoi: 'Bougies', valeur: nSeries ? this.pl(nSeries, 'série', 'séries') : 'aucune',
-            couleur: nSeries ? 'var(--color-text)' : gris,
-            aide: nSeries ? 'Séries H1 présentes pour ce compte : ce sont les seuls instruments scannables.'
-              : 'Aucune série H1 sur ce compte : déposez vos exports dans Mes instruments avant de scanner.' },
-          { quoi: 'Mesuré', valeur: nScan ? nScan.toLocaleString('fr-FR') + ' config.' : 'rien',
-            couleur: nScan ? 'var(--color-text)' : gris,
-            aide: nScan ? 'Configurations en mémoire pour ce compte, tous scans confondus.'
-              : 'Aucun scan en mémoire sur ce compte.' },
-        ];
-        const q = quand(arch && arch.date);
-        if (q) l.push({ quoi: 'Dernier scan', valeur: q, couleur: 'var(--color-text)',
-          aide: 'Date du scan le plus récent conservé pour ce compte.' });
-        return l;
       })(),
       isAccueil: tab === 'accueil',
       // liens de paiement Lemon Squeezy, à coller ici une fois les produits créés.
