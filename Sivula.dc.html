@@ -4497,11 +4497,11 @@
         <div style="display:flex;gap:16px;flex-wrap:wrap">
           <div class="field" style="width:190px">
             <label>Capital alloué au court terme<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».">?</span></label>
-            <input class="input" type="number" step="1000" value="{{ capital }}" onChange="{{ setCapital }}">
+            <input class="input" type="number" step="1000" style="width:100%;min-width:0" value="{{ capital }}" onChange="{{ setCapital }}">
           </div>
           <div class="field" style="width:150px">
             <label>Risque par trade (%)<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.">?</span></label>
-            <input class="input" type="number" step="0.1" value="{{ risquePct }}" onChange="{{ setRisque }}">
+            <input class="input" type="number" step="0.1" style="width:100%;min-width:0" value="{{ risquePct }}" onChange="{{ setRisque }}">
           </div>
         </div>
       </div>
@@ -4515,19 +4515,20 @@
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain attendu par an</div>
           <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15;color:var(--color-accent-700)">{{ gainAn }}</div>
-          <div style="font-size:12px" class="text-muted">sur la base de + 18,4 R par an</div>
+          <div style="font-size:12px" class="text-muted">{{ gainAnBase }}</div>
         </div>
         <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Pire creux à prévoir</div>
           <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15">{{ creuxEuro }}</div>
-          <div style="font-size:12px" class="text-muted">14,2 R observés, majorés de 50 %</div>
+          <div style="font-size:12px" class="text-muted">{{ creuxBase }}</div>
         </div>
         <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Part de votre patrimoine</div>
           <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15">{{ partPatrimoine }}</div>
           <div style="font-size:12px" class="text-muted">{{ verdictPart }}</div>
+          <label style="display:flex;align-items:center;gap:7px;font-size:11px;margin-top:2px" class="text-muted">patrimoine total<input class="input" type="number" step="10000" min="0" style="width:100%;min-width:0;min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px" value="{{ patrimoine }}" onChange="{{ setPatrimoine }}" title="Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste."></label>
         </div>
       </div>
       <p class="card-body" style="margin:0;max-width:80ch">Ce creux est ce que vous devez pouvoir traverser sans changer d'avis. S'il vous paraît insupportable, baissez le risque par trade avant de toucher à la stratégie.</p>
@@ -9799,7 +9800,7 @@ GROUPES = {
       'fenMode', 'fenDu', 'fenAu', 'etapeScan',
       'coupureRegime', 'pleinRegime', 'gEntrees', 'gLignes', 'gFiltres', 'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf',
       'gLignePente', 'gPenteRecul', 'triCumul', 'tTradesMin', 'tSegMin', 'tDdMax', 'tWinMin', 'tOosMin', 'tWfMin', 'tDureeMax', 'sPrudent',
-      'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
+      'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi', 'patrimoine',
       // les contrôles du hasard déjà faits : sans persistance, chaque rechargement
       // relançait la série et la grille pour des lignes déjà jugées
       'hasardA', 'hasardB',
@@ -14800,15 +14801,21 @@ GROUPES = {
           // Le chemin guidé est fait : la barre passe à ce qui BOUGE, et dans le groupe
           // où l'on est. Les quatre étapes d'installation, elles, sont bloquantes et
           // s'affichent partout — rien d'autre ne peut avancer tant qu'elles manquent.
-          let pire = null, nEcart = 0;
+          let pire = null, vPire = null, nEcart = 0;
           for (const v of valides) {
             const e = this.ecartLiveDe(v);
-            if (e && e.pct > 20) { nEcart++; if (!pire || e.pct > pire.pct) pire = e; }
+            if (e && e.pct > 20) { nEcart++; if (!pire || e.pct > pire.pct) { pire = e; vPire = v; } }
           }
           if (pire) {
+            // « Comparer » appelait `aller('portefeuille')` — or cette tâche ne s'affiche
+            // QUE sur les pages du groupe décisions, portefeuille en tête : même bouton
+            // mort que « Déposer ». Il fait maintenant ce que le bouton de la ligne fait
+            // déjà : rejouer la PIRE ligne dans le Backtest, pour confronter mesure et
+            // journal.
             tache = { txt: this.pl(nEcart, 'ligne en live s’écarte', 'lignes en live s’écartent')
                 + ' de ' + Math.round(pire.pct) + ' % de sa mesure',
-              bouton: 'Comparer', go: aller('portefeuille') };
+              bouton: 'Comparer',
+              go: () => this.versBacktest({ ...vPire, _sid: vPire.sid || vPire._sid }) };
           }
         } else if (groupe === 'cherche') {
           // un scan vieilli ne compte que si des séries ont été COMPLÉTÉES depuis :
@@ -18371,8 +18378,17 @@ GROUPES = {
                 faireAide: 'Télécharge l’Expert Advisor de cette configuration, et note la date d’export.' };
             }
             if (!fermes.length && !((j && j.ouverts) || []).length) {
-              return { faireTxt: 'Saisir le résultat', faireCls: 'tag tag-accent', faire: () => {},
-                faireAide: 'Lancez le robot dans MT5, puis déposez ici le fichier SIV_trades_… écrit dans Common/Files. Le glisser-déposer marche partout sur cette page.' };
+              // Le bouton était un `() => {}` : une action en accent, curseur main, qui ne
+              // faisait RIEN au clic — l'aide renvoyait au glisser-déposer sans le dire à
+              // l'écran. Il ouvre maintenant le sélecteur de fichier, branché sur le même
+              // circuit que le dépôt global : `accepterFichiers` reconnaît SIV_trades_….
+              return { faireTxt: 'Saisir le résultat', faireCls: 'tag tag-accent',
+                faire: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                  const inp = document.createElement('input');
+                  inp.type = 'file'; inp.accept = '.csv'; inp.multiple = true;
+                  inp.onchange = () => this.accepterFichiers([...(inp.files || [])]);
+                  inp.click(); },
+                faireAide: 'Lancez le robot dans MT5, puis déposez ici le fichier SIV_trades_… écrit dans Common/Files. Cliquez pour choisir le fichier — le glisser-déposer marche aussi, partout sur cette page.' };
             }
             if (this._ecartLive && this._ecartLive[mg] > 20) {
               return { faireTxt: 'Comparer', faireCls: 'tag tag-accent', faire: bt,
@@ -20833,10 +20849,45 @@ GROUPES = {
       setCapital: (e) => this.setState({ capital: Number(e.target.value) }),
       setRisque: (e) => this.setState({ risquePct: Number(e.target.value) }),
       euroParR: EUR.format(euroR),
-      gainAn: '+ ' + EUR.format(18.4 * euroR),
-      creuxEuro: '\u2212 ' + EUR.format(14.2 * 1.5 * euroR),
-      partPatrimoine: (this.state.capital / 847320 * 100).toFixed(1).replace('.', ',') + ' %',
-      verdictPart: this.state.capital / 847320 > 0.1 ? 'Au-dessus de votre plafond de 10 %' : 'Sous votre plafond de 10 %',
+      // ————— DES CHIFFRES DE MAQUETTE SE FAISAIENT PASSER POUR LES VÔTRES —————
+      //
+      // « Gain attendu par an » multipliait un 18,4 R écrit en dur ; « Pire creux à
+      // prévoir » un 14,2 R écrit en dur ; « Part de votre patrimoine » divisait par un
+      // patrimoine de 847 320 € écrit en dur, avec un « plafond de 10 % » sorti de nulle
+      // part. Trois restes de maquette, affichés en gros corps comme des mesures
+      // personnelles — dans l'application qui répète partout qu'elle ne montre que ce
+      // qu'elle a mesuré.
+      //
+      // Les vraies sources existent : le R/an et le pire creux viennent des lignes
+      // VALIDÉES (les mêmes chiffres que le portefeuille), le patrimoine devient une
+      // valeur à renseigner — tant qu'elle ne l'est pas, la carte dit « — », jamais un
+      // pourcentage inventé.
+      ...(() => {
+        const lignes = this.normValides(this.state.valides)
+          .filter((v) => Number.isFinite(Number(v.rAn)));
+        const rAn = lignes.reduce((a, v) => a + Number(v.rAn), 0);
+        const pire = lignes.reduce((a, v) => Math.max(a, Math.abs(Number(v.dd) || 0)), 0);
+        const pat = Number(this.state.patrimoine) || 0;
+        const part = pat > 0 ? this.state.capital / pat : null;
+        return {
+          gainAn: lignes.length ? (rAn >= 0 ? '+ ' : '\u2212 ') + EUR.format(Math.abs(rAn) * euroR) : '\u2014',
+          gainAnBase: lignes.length
+            ? 'sur la base de ' + sg(rAn, 1) + ' R par an, vos '
+              + this.pl(lignes.length, 'ligne validée', 'lignes validées')
+            : 'aucune ligne validée — ce chiffre viendra de vos décisions',
+          creuxEuro: lignes.length && pire ? '\u2212 ' + EUR.format(pire * 1.5 * euroR) : '\u2014',
+          creuxBase: lignes.length && pire
+            ? fr(pire, 1) + ' R observés sur votre pire ligne, majorés de 50 %'
+            : 'mesuré sur vos lignes validées, quand il y en aura',
+          partPatrimoine: part === null ? '\u2014' : (part * 100).toFixed(1).replace('.', ',') + ' %',
+          verdictPart: part === null
+            ? 'Renseignez votre patrimoine ci-dessous pour situer ce capital.'
+            : (part > 0.1 ? 'Au-dessus du plafond usuel de 10 %' : 'Sous le plafond usuel de 10 %'),
+          patrimoine: this.state.patrimoine || '',
+          setPatrimoine: (e) => this.setState({ patrimoine: Number(e.target.value) || 0 },
+            () => this.ecrireSession()),
+        };
+      })(),
       pageKicker: titles[0], pageTitle: titles[1], pageIntro: titles[2],
       isCompact: compact, isDeroulee: !compact,
       setCompact: () => this.setState({ layout: 'compacte' }),

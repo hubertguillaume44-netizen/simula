@@ -183,6 +183,13 @@
    ]
   },
   {
+   "terme": "de votre patrimoine patrimoine total",
+   "texte": "Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.",
+   "vues": [
+    "Journal"
+   ]
+  },
+  {
    "terme": "Déposez le relevé de symboles de votre courtier",
    "texte": "Un fichier CSV, lu dans votre navigateur.",
    "vues": [
