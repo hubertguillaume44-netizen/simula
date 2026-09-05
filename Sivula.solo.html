@@ -1183,18 +1183,42 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         largeurs inégales. Quatre éléments à `flex:1 1 210px` se partagent la rangée à
         égalité, quel que soit son nombre.
       -->
-      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--color-divider);min-width:0">
+      <div style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:11px;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
         <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
           <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
           <span style="font-size:11px" class="text-muted">une seule fois</span>
           <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
           <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.">{{ listeMt5Txt }}</button>
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:7px 18px;font-size:11px;line-height:1.5">
-          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">1</span><span>Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois.</strong></span></span>
-          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">2</span><span>Placez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>. À remplacer quand votre sélection change.</span></span>
-          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">3</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur un graphique, puis <code>Export_H1_Sivula</code>.</span></span>
-          <span style="flex:1 1 210px;display:grid;grid-template-columns:14px 1fr;gap:7px"><span class="text-muted">4</span><span>Les fichiers produits sont dans <code>MQL5\Files\Sivula\</code> — déposez-les ici.</span></span>
+        <!--
+          L'ORDRE DU PARCOURS, ET PAS UN AUTRE.
+
+          La notice numérotait « placez symboles.txt » en 2, avant même que le relevé
+          existe — or c'est le relevé qui fait apparaître les instruments, donc la
+          sélection, donc la liste. On demandait un fichier qu'il était impossible de
+          produire à ce moment-là.
+
+          Vérifié dans les sources des deux scripts : sans `symboles.txt`,
+          `Sivula_Releve` relève TOUTE l'Observation du marché — il n'a besoin d'aucune
+          liste. `Export_H1_Sivula`, lui, la lit et n'exporte que ce qu'elle nomme.
+          D'où trois temps : on compile, on relève, puis on choisit et on télécharge.
+        -->
+        <div style="display:flex;flex-wrap:wrap;gap:14px 22px;font-size:11px;line-height:1.5">
+        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
+          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">Une seule fois</span><span style="font-size:10px" class="text-muted">à l’installation</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">1</span><span>Bouton <strong>Les deux scripts MT5</strong> ci-dessus. Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7).</span></span>
+        </div>
+        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
+          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">D’abord le relevé</span><span style="font-size:10px" class="text-muted">il ne demande aucune liste</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">2</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur n’importe quel graphique. Sans liste, il relève <strong>toute votre Observation du marché</strong>.</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">3</span><span>Déposez le <code>releve.csv</code> produit ici, par <strong>Déposer un relevé</strong>. Vos instruments apparaissent alors avec leur coût — spread, portage, minimum de stop.</span></span>
+        </div>
+        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
+          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">Ensuite les bougies</span><span style="font-size:10px" class="text-muted">seulement celles que vous demandez</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">4</span><span>Cochez les instruments voulus dans la liste de gauche, puis cliquez <strong>Liste pour MT5</strong> : <code>symboles.txt</code> se télécharge, orthographié comme votre courtier les nomme.</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">5</span><span>Posez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>, puis glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls.</span></span>
+          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">6</span><span>Déposez ces CSV ici, par <strong>Déposer des bougies H1</strong>. Le scan devient possible.</span></span>
+        </div>
         </div>
         <span style="font-size:10px;line-height:1.5" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — les boutons de gauche ne sont là que si vous préférez cliquer.</span>
         <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
