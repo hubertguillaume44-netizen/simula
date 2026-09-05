@@ -3990,7 +3990,7 @@
 
           <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:11px">
             <button class="btn btn-primary" type="button" style="min-height:2.4rem;width:100%" onClick="{{ lancerTest }}">Relancer le test</button>
-            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;width:100%" onClick="{{ sauverBacktest }}" disabled="{{ perime }}">Sauvegarder ce résultat</button>
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;width:100%" onClick="{{ sauverBacktest }}" disabled="{{ perime }}" title="{{ sauverBtAide }}">Sauvegarder ce résultat</button>
             <sc-if value="{{ aRetourHisto }}" hint-placeholder-val="{{ false }}">
               <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;width:100%" onClick="{{ retourHisto }}">↩ Retour à l'historique du scan</button>
               <span style="font-size:11px" class="text-muted">{{ retourHistoTxt }}</span>
@@ -17241,6 +17241,11 @@ GROUPES = {
         };
       })(),
       btSymNom: this.nomComplet(s.btSym),
+      // un bouton qui se grise doit dire pourquoi : « périmé » signifie que les réglages
+      // ont changé depuis la mesure affichée
+      sauverBtAide: (!!res && this.perime())
+        ? 'Les réglages ont changé depuis cette mesure : les chiffres affichés sont périmés. Relancez le test avant de sauvegarder.'
+        : 'Range ce résultat dans le journal des tests (page Journal), avec ses réglages.',
       btPath, btZero, btAire, btGradsY, btGradsX,
       aBtCreux: !!creux,
       btCreuxX: creux ? creux.x : '0', btCreuxY: creux ? creux.y : '0',
