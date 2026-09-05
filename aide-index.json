@@ -8,13 +8,6 @@
    ]
   },
   {
-   "terme": "· /",
-   "texte": "Cocher ou décocher tout le groupe",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "×",
    "texte": "Cliquez pour retirer cette valeur",
    "vues": [
@@ -40,6 +33,13 @@
    "texte": "Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Amorce trop courte",
+   "texte": "Choisir la taille des bougies balayées",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -373,14 +373,14 @@
    ]
   },
   {
-   "terme": "n° au coût · mesurées",
+   "terme": "n° au coût",
    "texte": "Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)",
    "vues": [
     "Historique"
    ]
   },
   {
-   "terme": "n° au coût mesurées",
+   "terme": "n° au coût",
    "texte": "Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.",
    "vues": [
     "Historique"
@@ -595,6 +595,13 @@
    "texte": "Affiche l’ensemble des scans en mémoire.",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "tout décocher",
+   "texte": "Décocher tous les instruments d’un coup",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
