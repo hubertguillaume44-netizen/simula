@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sivula</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -1920,6 +1921,19 @@
         </div>
       </div>
 
+      <!--
+        L'autorisation de prévenir, demandée AU LANCEMENT d'un scan long et avec sa
+        raison. Au chargement de la page elle arrive sans contexte et se fait refuser une
+        fois pour toutes — et un refus de notification est définitif.
+      -->
+      <sc-if value="{{ aNotifDemande }}" hint-placeholder-val="{{ false }}">
+        <div class="blueprint" style="padding:11px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-color:var(--color-accent)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="font-size:13px;line-height:1.5;flex:1;min-width:34ch">{{ notifDemandeTxt }}</span>
+          <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ accepterNotif }}">Me prévenir</button>
+          <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px" onClick="{{ refuserNotif }}">Non merci</button>
+        </div>
+      </sc-if>
       <sc-if value="{{ aAttentes }}" hint-placeholder-val="{{ false }}">
         <div class="blueprint" style="padding:11px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-color:var(--color-accent)">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -2042,6 +2056,7 @@
         </div>
         </sc-if>
             <span style="font-size:10px;line-height:1.45" class="text-muted">{{ coeursTxt }}</span>
+            <label class="radio" style="font-size:11px"><input type="checkbox" checked="{{ sonScan }}" onChange="{{ toggleSonScan }}"><span class="dot"></span>Un son court à la fin du scan<span class="aide" title="Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.">?</span></label>
             <sc-if value="{{ aChoixCoeurs }}" hint-placeholder-val="{{ true }}">
               <button type="button" class="{{ regimeCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px;align-self:flex-start" onClick="{{ basculerRegime }}" title="{{ regimeAide }}">{{ regimeNom }}</button>
             </sc-if>
@@ -3997,7 +4012,7 @@ class Component extends DCLogic {
       compte4: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte5: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 } },
     commDev: { fxpro: { forex: 'EUR', metal: 'EUR', actionUS: 'USD', actionAutre: 'PCT' } }, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
-    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '', panScan: '', pfMesures: false,
+    ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '', panScan: '', pfMesures: false, sonScan: false,
     manqCoches: [], manqMsg: null, grpTout: [],
     ctrlEnCours: false, ctrlMsg: null, ctrlOk: null,
     robuste: null, ailleurs: null, correl: null, calculEnCours: null, recalcul: null,
@@ -5747,6 +5762,7 @@ GROUPES = {
     // l'inventaire d'abord : c'est lui qui pose le total détenu que la jauge affiche
     this.inventaireStockage(true).then(() => this.mesurerPlace());
     this.reclamerPersistance();
+    this.suivreRetourOnglet();
     this.baremesChanges();
     this.forceUpdate();
   }
@@ -8158,7 +8174,7 @@ GROUPES = {
       'filtreBougies', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
-      'vue', 'derniereVue', 'modeTable', 'ouvLot', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
+      'vue', 'derniereVue', 'modeTable', 'ouvLot', 'sonScan', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
       'coupureRegime', 'pleinRegime', 'gEntrees', 'gLignes', 'gFiltres', 'gSens', 'gLectures', 'gSecus', 'gTemps', 'gDurees', 'gTrailing', 'gEchelles', 'gPeriodeMa', 'gLigneMtf', 'gPeriodeMtf',
       'gLignePente', 'gPenteRecul', 'triCumul', 'tTradesMin', 'tSegMin', 'tDdMax', 'tWinMin', 'tOosMin', 'tWfMin', 'tDureeMax', 'sPrudent',
       'capital', 'pfActif', 'comm', 'commDev', 'nuitsSaisi',
@@ -9820,6 +9836,20 @@ GROUPES = {
     } catch (e) {}
     return 1200;
   }
+  // Le devis en secondes, tel que le bandeau de la page Scan l'annonce. Sert ici à
+  // décider s'il vaut la peine de demander l'autorisation de prévenir.
+  devisScanSec() {
+    const s = this.state;
+    const combis = (s.univers.length || 1) * this.conditionsBalayees(s).length
+      * ((s.gEntrees || []).length || 1) * ((s.gLignes || []).length || 1)
+      * this.nombres(s.gPeriodes, [26]).length * this.nombres(s.gSls, [1]).length
+      * this.nombres(s.gRrs, [2.5]).length;
+    let v = null;
+    try { v = JSON.parse(localStorage.getItem('simula.vitesse.v1')); } catch (e) {}
+    const aCharger = s.univers.filter((x) => !(this.dfs || {})[x]).length;
+    return combis / ((v && v.combisParSec) || 1200)
+      + aCharger * ((v && v.secParInstrument) ? Math.min(3, v.secParInstrument) : 1.2);
+  }
   async lancerScan(force) {
     if (!this.M) return;
     const s = this.state;
@@ -9833,6 +9863,17 @@ GROUPES = {
         return;
       }
     }
+    // L'AUTORISATION DE PRÉVENIR, demandée ICI et nulle part ailleurs : au lancement d'un
+    // scan dont le devis dépasse cinq minutes, avec la raison à côté du bouton. Demandée
+    // au chargement de la page, elle arrive sans contexte et se fait refuser une fois
+    // pour toutes — un refus est définitif, on ne peut plus la redemander.
+    try {
+      const sec = this.devisScanSec();
+      if (sec > 300 && typeof Notification !== 'undefined'
+          && Notification.permission === 'default' && !this.state.notifRefus) {
+        this.setState({ notifDemande: { sec } });
+      }
+    } catch (e) {}
     this.setState({ confirmScan: null });
     // les scans déjà archivés restent visibles pendant que le nouveau se remplit
     this._scanPrec = [...(this.lignesScan || [])];
@@ -9941,6 +9982,7 @@ GROUPES = {
         // sur la durée de l'instant où l'instrument a démarré
         fait++;
         this.setState({ scanFait: fait - 1, scanNbSym: univers.length, scanSymCourant: sym, progression: null });
+        this.majTitreScan(Math.round((fait - 1) / Math.max(1, univers.length) * 100));
       }
       repere = out.length;
       let df = null;
@@ -10141,6 +10183,12 @@ GROUPES = {
     const symsScan = new Set(miennes.map((r) => r.sym));
     const ENTREES = ENTREES_TXT, LIGNES = LIGNES_TXT;
     const fmt = (v) => v.map((x) => String(x).replace('.', ',')).join(', ');
+    // Le rappel de fin porte le RÉSULTAT — instruments, combinaisons, durée, et combien
+    // passent les seuils : c'est ce qu'on veut savoir en revenant, pas « c'est fini ».
+    this.prevenirFinScan(this.pl(symsScan.size, 'instrument', 'instruments')
+      + ' · ' + (this.state.scanTestes || 0).toLocaleString('fr-FR') + ' combinaisons en '
+      + this.duree((Date.now() - t0) / 1000)
+      + ' · ' + this.pl(miennes.length, 'configuration passe vos seuils', 'configurations passent vos seuils'));
     this.poserScan(total, courant, {
       scanArret: false, scanEnCours: false, progression: null,
       scanDuree: Date.now() - t0,
@@ -11353,6 +11401,81 @@ GROUPES = {
   // L'API manque sur certains navigateurs : on la teste, et on n'affiche rien plutôt
   // qu'une erreur. Une promesse de protection qu'on ne peut pas tenir vaut moins que le
   // silence.
+  // ————— LE SCAN QUI PRÉVIENT —————
+  //
+  // Quarante-sept minutes de calcul veulent dire que l'onglet est ailleurs. Trois
+  // rappels, par coût croissant, et AUCUN ne tourne pendant le calcul : le titre est
+  // réécrit au plus une fois par seconde, la notification part à la fin, le son aussi.
+  // Rien de tout cela ne s'exécute dans le testeur.
+  //
+  // Le titre d'abord : c'est le plus utile et il ne demande aucune autorisation. Un
+  // onglet qui affiche « 45 % · Sivula » se lit sans être ouvert.
+  titreScan(txt) {
+    try {
+      if (!this._titre0) this._titre0 = document.title || 'Sivula';
+      const voulu = txt ? txt + ' · ' + this._titre0 : this._titre0;
+      if (document.title !== voulu) document.title = voulu;
+    } catch (e) {}
+  }
+  // au plus une écriture par seconde : appelée à chaque combinaison, l'affectation du
+  // titre coûterait plus cher que ce qu'elle annonce
+  majTitreScan(pct) {
+    const t = Date.now();
+    if (this._titreT && t - this._titreT < 1000) return;
+    this._titreT = t;
+    this.titreScan(pct + ' %');
+  }
+  // Le retour sur l'onglet efface la marque : la garder après lecture ferait d'un rappel
+  // utile un décor permanent, et le prochain ne serait plus vu.
+  suivreRetourOnglet() {
+    try {
+      // une autorisation déjà accordée lors d'une visite précédente vaut pour celle-ci :
+      // sans cette relecture, le rappel resterait muet jusqu'à une nouvelle demande —
+      // demande que le navigateur n'affiche même plus, la réponse étant déjà connue.
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted'
+          && !this.state.notifOk) this.setState({ notifOk: true });
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !this.state.scanEnCours) this.titreScan('');
+      });
+    } catch (e) {}
+  }
+  // La notification dit un RÉSULTAT, pas « c'est fini » : ce qu'on veut savoir en
+  // revenant, c'est s'il faut regarder.
+  prevenirFinScan(txt) {
+    this.titreScan('✓ Scan terminé');
+    try {
+      if (this.state.notifOk && typeof Notification !== 'undefined'
+          && Notification.permission === 'granted') {
+        new Notification('Sivula — scan terminé', { body: txt, tag: 'sivula-scan' });
+      }
+    } catch (e) {}
+    if (!this.state.sonScan) return;
+    // Un son court, synthétisé : pas de fichier à charger, pas de dépendance. Coupé par
+    // défaut — un bip inattendu dans un bureau est pire que pas de rappel du tout.
+    try {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return;
+      const ctx = new A();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = 880; o.type = 'sine';
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime + 0.36);
+      setTimeout(() => { try { ctx.close(); } catch (e) {} }, 600);
+    } catch (e) {}
+  }
+  // L'autorisation ne se demande QU'AU LANCEMENT d'un scan long, avec la raison à côté
+  // du bouton. Demandée au chargement de la page, elle arrive sans contexte et se fait
+  // refuser une fois pour toutes — un refus est définitif, on ne peut plus redemander.
+  async demanderNotif() {
+    try {
+      if (typeof Notification === 'undefined') { this.setState({ notifDemande: null }); return; }
+      const r = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+      this.setState({ notifOk: r === 'granted', notifDemande: null });
+    } catch (e) { this.setState({ notifDemande: null }); }
+  }
   async reclamerPersistance(force) {
     try {
       if (!navigator.storage || !navigator.storage.persisted) return;
@@ -13426,6 +13549,20 @@ GROUPES = {
       etatMemoire: this.etatMemoire(),
       fermerSauv: () => this.setState({ sauvEtat: null, sauvKo: false }),
       scanActif: !!s.scanEnCours,
+      // ————— LE RAPPEL DE FIN DE SCAN —————
+      ...(() => {
+        const d = s.notifDemande;
+        return {
+          aNotifDemande: !!d,
+          notifDemandeTxt: d
+            ? 'Ce scan durera environ ' + this.duree(d.sec)
+              + '. Voulez-vous être prévenu quand il finit, même si vous changez d’onglet ?' : '',
+          accepterNotif: () => this.demanderNotif(),
+          refuserNotif: () => this.setState({ notifDemande: null, notifRefus: true }),
+          sonScan: !!s.sonScan,
+          toggleSonScan: () => this.setState({ sonScan: !s.sonScan }),
+        };
+      })(),
       scanPct: (s.scanNbSym ? Math.round(((s.scanFait || 0) / s.scanNbSym) * 100) : 0) + '%',
       // Un seul calcul pour les deux affichages : le bandeau se recalculait à chaque
       // rendu tandis que la ligne du bas gardait le texte figé au début de l'instrument,
@@ -13454,7 +13591,8 @@ GROUPES = {
           + s.scanEchecs.join(' \u00b7 ') + '. Le reste du scan est complet.'
         : '',
       scanFiniTxt: s.scanDuree
-        ? (s.scanNbSym || 0) + ' instruments \u00b7 ' + (s.scanTestes || 0) + ' combinaisons test\u00e9es en '
+        ? this.pl(s.scanNbSym || 0, 'instrument', 'instruments') + ' \u00b7 '
+          + this.pl(s.scanTestes || 0, 'combinaison test\u00e9e', 'combinaisons test\u00e9es') + ' en '
           + this.duree(s.scanDuree / 1000) + ' \u00b7 r\u00e9sultats dans le TOP et dans l\u2019historique du scanner'
         : '',
       fermerBandeau: () => this.setState({ bandeauFerme: true }),
