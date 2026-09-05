@@ -3027,7 +3027,16 @@
                   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
                     <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                       <strong style="font-size:15px;line-height:1.2">{{ tr2.nom }}</strong>
-                      <span style="font-size:10px" class="text-muted" title="Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} au coût · {{ tr2.nCombis }} mesurées</span>
+                      <!--
+                        LE TEXTE EST LE LIEN. « 9 config. mesurées » nommait les huit autres
+                        configurations de l'instrument sans donner aucun chemin pour les
+                        atteindre. Aucun bouton n'est ajouté : c'est le texte qui devient
+                        actionnable, avec un chevron qui se retourne à l'ouverture.
+                      -->
+                      <span style="display:flex;align-items:baseline;gap:4px;font-size:10px;flex-wrap:wrap">
+                        <span class="text-muted" title="Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} au coût ·</span>
+                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;color:{{ tr2.autresCouleur }};text-decoration:underline;text-underline-offset:2px" title="{{ tr2.autresAide }}" onClick="{{ tr2.basculer }}">{{ tr2.autresTxt }}</button>
+                      </span>
                     </div>
                     <span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;text-align:right;max-width:15ch;line-height:1.3;flex:none" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span>
                   </div>
@@ -3040,7 +3049,7 @@
                     </svg>
                   </sc-if>
 
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
                     <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                       <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">R net</span>
                       <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.total }}</strong>
@@ -3052,6 +3061,17 @@
                     <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                       <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Creux</span>
                       <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.dd }}</strong>
+                    </div>
+                    <!--
+                      PIC OU PLATEAU, SANS DÉPLIER. Combien des configurations mesurées
+                      rendent au moins la moitié du R net de la meilleure ET sont ses
+                      voisines dans la grille. Un « 1 / 9 » ici dit que le chiffre au-dessus
+                      tient à un réglage unique — c'est l'information que la fiche ne
+                      donnait nulle part.
+                    -->
+                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0" title="{{ tr2.voisAide }}">
+                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ tr2.voisTitre }}</span>
+                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.voisTxt }}</span>
                     </div>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
@@ -3108,42 +3128,75 @@
                     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Ouvrir la fiche détaillée de cet instrument, sous la grille" onClick="{{ tr2.ouvrir }}">La fiche</button>
                   </div>
 
-                  <!--
-                    LE DÉPLIAGE NE SE CACHE PAS. Il était dans le rang `.agir`, que la
-                    feuille de style masque tant que la carte n'est pas survolée : la
-                    seule porte vers les huit autres configurations n'existait donc pas
-                    au clavier, ni sur un écran tactile. Il vit désormais dans la carte.
-                  -->
-                  <button type="button" class="btn btn-ghost" style="min-height:1.7rem;font-size:11px;padding-inline:9px;align-self:flex-start" title="{{ tr2.autresAide }}" onClick="{{ tr2.basculer }}">{{ tr2.autresTxt }}</button>
-
-                  <!--
-                    LES AUTRES CONFIGURATIONS DE L'INSTRUMENT.
-
-                    La carte annonçait « 9 config. mesurées » et n'offrait aucun moyen de
-                    les voir : le pliage existait dans les données — `combis`, `basculer`,
-                    `toutAfficher` — et aucune de ces trois n'était branchée au gabarit.
-                    On ne voyait donc que la meilleure de chaque instrument, et les huit
-                    autres restaient hors d'atteinte.
-                  -->
-                  <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
-                    <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider);padding-top:7px">
-                      <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="4">
-                        <div style="display:grid;grid-template-columns:16px 1fr auto auto;gap:7px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--color-divider)">
-                          <span style="font-size:10px" class="text-muted">{{ cb.rang }}</span>
-                          <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                            <span style="font-size:11px;line-height:1.3">{{ cb.reglages }}</span>
-                            <span style="font-size:9px;line-height:1.35" class="text-muted">{{ cb.variante }} · {{ cb.n }} trades · {{ cb.segs }} époques · {{ cb.hasardPhrase }}</span>
-                          </span>
-                          <span style="font-family:var(--font-heading);font-size:13px;white-space:nowrap">{{ cb.total }}</span>
-                          <button type="button" class="{{ cb.agirCls }}" style="min-height:1.5rem;font-size:10px;padding-inline:8px;white-space:nowrap" disabled="{{ cb.agirBloque }}" title="{{ cb.agirAide }}" onClick="{{ cb.agir }}">{{ cb.agirTxt }}</button>
-                        </div>
-                      </sc-for>
-                      <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
-                        <button type="button" class="btn btn-ghost" style="min-height:1.7rem;font-size:11px;align-self:flex-start;padding-inline:9px;margin-top:6px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
-                      </sc-if>
-                    </div>
-                  </sc-if>
                 </div>
+
+                <!--
+                  LES AUTRES CONFIGURATIONS DE L'INSTRUMENT, SUR TOUTE LA LARGEUR.
+
+                  Le dépli est un FRÈRE de la fiche dans la grille, pas un bloc à
+                  l'intérieur d'elle : `sc-for` rend ses enfants dans un fragment, donc
+                  les deux éléments sont bien deux enfants de la grille, et `grid-column:
+                  1/-1` fait traverser le second. Une fiche fait 330 px ; six colonnes de
+                  mesures n'y tiennent pas, et une colonne étroite aurait rendu le tableau
+                  illisible au moment précis où il sert à comparer.
+
+                  Une seule fiche dépliée à la fois — c'est `symOuvert` qui le garantit.
+                -->
+                <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
+                  <section class="blueprint" style="grid-column:1/-1;padding:13px 15px;display:flex;flex-direction:column;gap:9px">
+                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                      <span style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;min-width:0">
+                        <span style="font-size:11px;letter-spacing:.05em;text-transform:uppercase">{{ tr2.titreDepli }}</span>
+                        <span style="font-size:11px" class="text-muted">{{ tr2.sousTitreDepli }}</span>
+                      </span>
+                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.basculer }}">Replier</button>
+                    </div>
+                    <div style="overflow-x:auto">
+                      <table class="table" style="font-size:12px;width:100%">
+                        <thead><tr>
+                          <th>Réglages</th>
+                          <th style="text-align:right;width:1%">R net</th>
+                          <th style="text-align:right;width:1%">Creux</th>
+                          <th style="text-align:right;width:1%">Trades</th>
+                          <th style="width:1%">Hasard</th>
+                          <th style="width:1%"></th>
+                        </tr></thead>
+                        <tbody>
+                          <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="6">
+                            <tr style="background:{{ cb.fond }}">
+                              <td>
+                                <strong style="font-size:12px;line-height:1.3">{{ cb.reglages }}</strong>
+                                <span style="display:block;font-size:10px;line-height:1.4" class="text-muted">{{ cb.souLigne }}</span>
+                              </td>
+                              <td style="text-align:right;width:1%;white-space:nowrap"><strong style="font-family:var(--font-heading)">{{ cb.total }}</strong></td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.dd }}</td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.n }}</td>
+                              <td style="width:1%;white-space:nowrap"><span style="font-size:11px;color:{{ cb.hasCouleur }}" title="{{ cb.hasTousAide }}">{{ cb.hasChiffre }}</span></td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">
+                                <sc-if value="{{ cb.estAffichee }}" hint-placeholder-val="{{ true }}">
+                                  <span style="font-size:10px" class="text-muted" title="{{ cb.voirAide }}">affichée</span>
+                                </sc-if>
+                                <sc-if value="{{ cb.aVoir }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" class="btn btn-ghost" style="min-height:1.5rem;font-size:10px;padding-inline:9px" title="{{ cb.voirAide }}" onClick="{{ cb.voir }}">Voir</button>
+                                </sc-if>
+                              </td>
+                            </tr>
+                          </sc-for>
+                        </tbody>
+                      </table>
+                    </div>
+                    <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
+                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;align-self:flex-start;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
+                    </sc-if>
+                    <!--
+                      LA PHRASE QUI DONNE LE SENS DU DÉPLI. Sans elle, le tableau est une
+                      liste de chiffres ; avec elle, il répond à la question qui compte —
+                      la meilleure est-elle un pic dans le bruit, ou le sommet d'un plateau.
+                    -->
+                    <p class="card-body" style="margin:0;font-size:12px;line-height:1.6;max-width:96ch">{{ tr2.voisPhrase }}</p>
+                  </section>
+                </sc-if>
               </sc-for>
             </div>
 
@@ -19727,6 +19780,71 @@ GROUPES = {
           oos: (a, b) => (vt(b, 'oos') ?? -1e9) - (vt(a, 'oos') ?? -1e9),
           wfMin: (a, b) => (vt(b, 'wfMin') ?? -1e9) - (vt(a, 'wfMin') ?? -1e9),
         }[s.triCumul || 'total'] || ((a, b) => vt(b, 'total') - vt(a, 'total'));
+        // ————— PIC DANS LE BRUIT, OU PLATEAU —————
+        //
+        // Une configuration excellente entourée de voisines qui échouent est un accident ;
+        // entourée de voisines qui tiennent, c'est un réglage robuste. La fiche annonçait
+        // « 9 config. mesurées » sans permettre de faire la différence entre les deux.
+        //
+        // Rien n'est remesuré : le voisinage se LIT sur les axes que le scan a balayés —
+        // même famille de ligne, longueur, stop et objectif adjacents dans la grille. Les
+        // axes sont pris sur les configurations de CET instrument, donc la mesure suit le
+        // pas réel du scan, quel qu'il soit.
+        const voisinage = (combis) => {
+          const tot = (r) => Number(vt(r, 'total')) || 0;
+          const n = combis.length;
+          const rien = { aVois: false, voisTitre: 'Voisines', voisTxt: '—',
+            voisAide: 'Aucune configuration mesurée sur cet instrument.', voisPhrase: '' };
+          if (!n) return rien;
+          const tries = [...combis].sort((a, b) => tot(b) - tot(a));
+          const best = tries[0];
+          const haut = tot(best);
+          if (n === 1) {
+            return { aVois: true, voisTitre: 'Voisines', voisTxt: '1 / 1',
+              voisAide: 'Une seule configuration mesurée sur cet instrument : il n\u2019y a pas de voisinage à lire.',
+              voisPhrase: 'Une seule configuration mesurée : rien ne dit si ce chiffre tient sur les réglages proches.' };
+          }
+          if (haut <= 0) {
+            return { aVois: true, voisTitre: 'Voisines', voisTxt: '0 / ' + n,
+              voisAide: 'Aucune des ' + n + ' configurations mesurées ne rend un R net positif.',
+              voisPhrase: 'Aucune des ' + n + ' configurations mesurées ne rend un R net positif : il n\u2019y a ni pic ni plateau, seulement une perte.' };
+          }
+          const seuil = haut / 2;
+          const seuilTxt = this.sgR(seuil);
+          const au = tries.filter((r) => tot(r) >= seuil);
+          // les axes de la grille, tels qu'ils ont été balayés sur CET instrument
+          const axe = (champ) => [...new Set(combis.map((r) => Number(r[champ]))
+            .filter(Number.isFinite))].sort((a, b) => a - b);
+          const axes = { periode: axe('periode'), sl: axe('sl'), rr: axe('rr') };
+          const proche = (r) => (r.ligne || '') === (best.ligne || '')
+            && (r.entree || '') === (best.entree || '')
+            && ['periode', 'sl', 'rr'].every((c) => {
+              const l = axes[c];
+              const i = l.indexOf(Number(r[c])), j = l.indexOf(Number(best[c]));
+              // un axe non balayé (une seule valeur) ne peut pas éloigner deux réglages
+              return i < 0 || j < 0 || Math.abs(i - j) <= 1;
+            });
+          const vois = au.filter(proche);
+          const bas = vois.length ? tot(vois[vois.length - 1]) : 0;
+          const phrase = au.length === 1
+            ? 'La meilleure est seule au-dessus de ' + seuilTxt + ' : la suivante rend '
+              + this.sgR(tot(tries[1])) + '. C\u2019est un pic dans le bruit, pas un plateau.'
+            : vois.length >= 2
+              ? 'Les ' + vois.length + ' premières sont voisines les unes des autres — même entrée, '
+                + 'même ligne, longueur, stop et objectif adjacents dans la grille — et rendent toutes entre '
+                + this.sgR(bas) + ' et ' + this.sgR(haut) + ' : c\u2019est un plateau, pas un pic.'
+              : au.length + ' des ' + n + ' configurations tiennent au-dessus de ' + seuilTxt
+                + ', mais aucune n\u2019est voisine de la meilleure dans la grille : celle-ci reste isolée. '
+                + 'Un plateau se serait vu sur les réglages immédiatement proches.';
+          return { aVois: true,
+            voisTitre: 'Voisines \u2265 ' + Math.round(seuil) + ' R',
+            voisTxt: vois.length + ' / ' + n,
+            voisAide: vois.length + ' des ' + n + ' configurations mesurées rendent au moins ' + seuilTxt
+              + ' — la moitié du R net de la meilleure — ET sont ses voisines dans la grille du scan '
+              + '(même entrée, même ligne, longueur, stop et objectif adjacents). '
+              + 'Un chiffre élevé dit que le résultat ne tient pas à un réglage unique.',
+            voisPhrase: phrase };
+        };
         this._ciblesHasard = [];
         const vues = new Set();
         const viser = (r) => {
@@ -19818,8 +19936,17 @@ GROUPES = {
             // troisième config validée d'un instrument n'était jamais testée
             for (const r of g.combis) if (clesValidees.has(this.cleConfig(r))) viser(r);
             const ouvert = s.symOuvert === g.sym;
+            // LA CONFIGURATION QUE LA FICHE MONTRE. Par défaut la meilleure ; « Voir »,
+            // dans le dépli, la remplace par une autre sans refermer le dépli — et les
+            // actions de la fiche (ranger, Backtest, la fiche détaillée) portent alors
+            // sur celle-là. Sans ce choix, le dépli n'était qu'une liste à lire.
+            const cleVue = (s.symVu || {})[g.sym];
+            const tete = (cleVue && g.combis.find((r) => this.cleConfig(r) === cleVue)) || g.meilleur;
+            if (tete) viser(tete);
+            // six lignes d'abord : le dépli sert à comparer les proches, pas à relire
+            // les deux cents combinaisons du scan
             const visibles = ouvert
-              ? (s.symTout === g.sym ? g.combis.slice(0, 500) : g.combis.slice(0, 10))
+              ? (s.symTout === g.sym ? g.combis.slice(0, 500) : g.combis.slice(0, 6))
               : [];
             for (const r of visibles) viser(r);
             if (!g.meilleur) {
@@ -19859,13 +19986,32 @@ GROUPES = {
                 hasardPhrase: 'aucune mesure', aAlerte: false, alerteTxt: '',
                 variante: '', ouvrir: () => {},
                 motif: 'aucune configuration mesurée', motifAide: 'Cet instrument n\u2019a produit aucune configuration au-dessus du nombre de trades minimum.',
-                basculer: () => {}, combis: [], aReste: false, resteTxt: '', toutAfficher: () => {} };
+                basculer: () => {}, combis: [], aReste: false, resteTxt: '', toutAfficher: () => {},
+                autresTxt: 'aucune config. mesurée', autresCouleur: 'var(--color-neutral-500)',
+                titreDepli: '', sousTitreDepli: '',
+                aVois: false, voisTitre: 'Voisines', voisTxt: '—', voisAide: '', voisPhrase: '' };
             }
             const cc = courtierDe(g.sym);
             // les configurations d'un groupe fermé ne sont pas construites :
             // sinon chaque rendu fabriquait dix lignes par instrument pour rien
             const combis = ouvert
-              ? visibles.map((r, j) => ({ rang: j + 1, ...ligne(r) }))
+              ? visibles.map((r, j) => {
+                const affichee = tete && this.cleConfig(r) === this.cleConfig(tete);
+                const l = ligne(r);
+                return { rang: j + 1, ...l,
+                  // une seule sous-ligne : sans le filtre, le séparateur restait seul en
+                  // bout de ligne — « Sans filtre · lecture basse · »
+                  souLigne: [l.variante, l.filtres].filter(Boolean).join(' \u00b7 '),
+                  // la ligne montrée dans la fiche se reconnaît : sinon, après un « Voir »,
+                  // on ne sait plus laquelle des neuf on est en train de regarder
+                  estAffichee: affichee, aVoir: !affichee,
+                  fond: affichee ? 'var(--color-accent-100)' : 'transparent',
+                  voir: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+                    this.setState({ symVu: { ...(this.state.symVu || {}), [g.sym]: this.cleConfig(r) } }); },
+                  voirAide: affichee ? 'C\u2019est la configuration que la fiche montre.'
+                    : 'Montre cette configuration dans la fiche — courbe, chiffres et réglages — '
+                      + 'sans refermer le dépli. Les actions de la fiche porteront sur elle.' };
+              })
               : [];
             return {
               rang: i + 1, sym: g.sym, nom: this.nomComplet(g.sym), ouvert,
@@ -19876,20 +20022,28 @@ GROUPES = {
               chevron: ouvert ? '▾' : '▸',
               ancre: 'histo-' + g.sym.replace(/[^A-Za-z0-9]/g, '_'),
               nCombis: g.combis.length + ' config.',
-              ...ligne(g.meilleur),
+              ...ligne(tete),
+              ...voisinage(g.combis),
+              // LE TEXTE EST LE LIEN. « n° 5 au coût · 9 config. mesurées » nommait les
+              // huit autres sans donner aucun chemin pour les atteindre ; il devient
+              // cliquable, avec un chevron qui se retourne. Aucun bouton n'est ajouté.
               basculer: () => this.setState({ symOuvert: ouvert ? null : g.sym, symTout: null }),
-              autresTxt: ouvert ? '\u25be Replier'
-                : (g.combis.length > 1
-                  ? '\u25b8 Les ' + g.combis.length + ' configurations'
-                  : '\u25b8 La seule configuration'),
+              autresTxt: g.combis.length + (g.combis.length > 1 ? ' config. mesurées ' : ' config. mesurée ')
+                + (ouvert ? '\u25be' : '\u25b8'),
               autresAide: g.combis.length > 1
-                ? 'La carte ne montre que la meilleure des ' + g.combis.length
-                  + ' configurations mesurées sur cet instrument. Les autres se déplient ici, '
-                  + 'avec leur propre contrôle du hasard et leur propre bouton de rangement.'
+                ? 'La fiche ne montre qu\u2019une des ' + g.combis.length
+                  + ' configurations mesurées sur cet instrument. Cliquez pour ouvrir les autres : '
+                  + 'chacune avec son R net, son creux, son contrôle du hasard, et le moyen de '
+                  + 'la faire passer dans la fiche.'
                 : 'Une seule configuration mesurée sur cet instrument.',
+              autresCouleur: g.combis.length > 1 ? 'var(--color-accent-700)' : 'var(--color-neutral-500)',
+              titreDepli: 'Les ' + g.combis.length + (g.combis.length > 1
+                ? ' configurations mesurées sur ' : ' configuration mesurée sur ') + this.nomComplet(g.sym),
+              sousTitreDepli: 'rangées comme le reste de la page \u00b7 la ligne en accent est celle de la fiche',
               combis,
-              aReste: ouvert && g.combis.length > 10 && s.symTout !== g.sym,
-              resteTxt: 'Afficher les autres configurations',
+              aReste: ouvert && g.combis.length > 6 && s.symTout !== g.sym,
+              resteTxt: (g.combis.length - 6) + (g.combis.length - 6 > 1 ? ' lignes de plus' : ' ligne de plus')
+                + ' \u00b7 tout afficher',
               toutAfficher: () => this.setState({ symTout: g.sym }),
             };
           });
