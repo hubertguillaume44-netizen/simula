@@ -341,6 +341,13 @@
         <span style="font-size:11px;line-height:1.5;color:{{ sauvCouleur }}">{{ sauvQuand }}</span>
 
         <!--
+          L'inventaire des instruments sans bougies n'a rien à faire à côté du capital :
+          c'est un fichier qu'on produit une fois, pour savoir ce qui manque. Il rejoint
+          les deux autres exports.
+        -->
+        <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.">{{ exporterManquantsTxt }}</button>
+
+        <!--
           L'IMPORT NE REMPLACE JAMAIS EN SILENCE. C'est le bouton le plus dangereux de
           l'application : le contenu d'un espace est le travail de plusieurs semaines, et
           rien ne le rend. On montre ce que le fichier porte, ce que l'espace porte, puis
@@ -1152,7 +1159,7 @@
           <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
           <span style="font-size:11px" class="text-muted">une seule fois</span>
           <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
-          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.">{{ listeMt5Txt }}</button>
+          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="{{ listeMt5Aide }}">{{ listeMt5Txt }}</button>
         </div>
         <!--
           L'ORDRE DU PARCOURS, ET PAS UN AUTRE.
@@ -1242,7 +1249,6 @@
             Déposer un relevé
             <input type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
           </label>
-          <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments sans bougies, un par ligne.">{{ exporterManquantsTxt }}</button>
         </div>
       </div>
 
@@ -1298,6 +1304,21 @@
               <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
               <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
             </div>
+            <!--
+              CHERCHER PAR FAMILLE. Deux mille instruments classés par coût, sans autre
+              entrée que la recherche par nom : trouver « les indices » ou « les actions
+              françaises » supposait de savoir comment le courtier les nomme. Les familles
+              sortent du relevé — elles suivent donc le compte ouvert, et se traduisent
+              (« Stocks · United States » devient « Actions US »).
+            -->
+            <sc-if value="{{ aFamilles }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:4px;flex-wrap:wrap;max-height:96px;overflow:auto">
+                <button type="button" class="{{ familleToutCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="Toutes les familles" onClick="{{ familleTout }}">Toutes</button>
+                <sc-for list="{{ familles }}" as="fa" hint-placeholder-count="8">
+                  <button type="button" class="{{ fa.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ fa.aide }}" onClick="{{ fa.choisir }}">{{ fa.nom }} · {{ fa.n }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
             <div style="display:flex;gap:8px;align-items:center">
               <span style="font-size:11px" class="text-muted">Classer par</span>
               <div class="seg">
@@ -1313,16 +1334,39 @@
             la case à cocher sont partis dans la fiche ou en pied de colonne. Une seule
             colonne défile, donc plus de débordement horizontal ni de pagination.
           -->
+          <!--
+            LA SÉLECTION SE FAIT ICI, donc la case à cocher est ici. C'est elle que
+            « Liste pour MT5 » écrit dans symboles.txt, et c'est ce fichier qui décide
+            de ce que le terminal exporte. La case avait été retirée pour alléger la
+            colonne : la marche à suivre disait alors « cochez les instruments voulus »
+            devant une liste où rien n'était cochable.
+
+            Deux boutons par ligne, pas un : cocher n'est pas ouvrir. Un seul bouton
+            aurait forcé à choisir entre les deux gestes, et une case dans un bouton
+            n'est ni du HTML valide ni cliquable de façon distincte.
+          -->
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 13px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
+            <sc-if value="{{ aCoches }}" hint-placeholder-val="{{ false }}">
+              <strong style="font-size:11px;color:var(--color-accent-700)">{{ cochesTxt }}</strong>
+              <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700)" onClick="{{ decocherTout }}">tout décocher</button>
+            </sc-if>
+            <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;margin-inline-start:auto;color:var(--color-accent-700)" title="Coche tous les instruments que le filtre et la recherche laissent voir." onClick="{{ cocherVus }}">{{ cocherVusTxt }}</button>
+          </div>
           <div style="overflow:auto;max-height:60vh">
             <sc-for list="{{ instrRows }}" as="ir" hint-placeholder-count="14">
-              <button type="button" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;background:{{ ir.fond }};border:0;border-inline-start:3px solid {{ ir.marque }};border-bottom:1px solid var(--color-divider);padding:9px 13px;display:flex;gap:9px;align-items:center;opacity:{{ ir.opacite }}" title="{{ ir.aide }}" onClick="{{ ir.choisir }}">
-                <span style="font-family:var(--font-heading);font-size:12px;min-width:2.6ch" class="text-muted">{{ ir.rangCout }}</span>
-                <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
-                  <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ir.nom }}</strong>
-                  <span style="display:block;height:3px;background:{{ ir.barre }}"></span>
-                </span>
-                <span style="font-size:12px;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</span>
-              </button>
+              <div style="display:flex;align-items:stretch;background:{{ ir.fond }};border-inline-start:3px solid {{ ir.marque }};border-bottom:1px solid var(--color-divider);opacity:{{ ir.opacite }}">
+                <button type="button" style="cursor:pointer;border:0;background:none;padding:0 5px 0 10px;display:flex;align-items:center;flex:none" title="{{ ir.cocheAide }}" onClick="{{ ir.cocher }}">
+                  <span style="width:13px;height:13px;border:1px solid {{ ir.cocheBord }};background:{{ ir.cocheFond }};color:var(--color-bg);font-size:10px;line-height:13px;text-align:center">{{ ir.cocheMarque }}</span>
+                </button>
+                <button type="button" style="flex:1;min-width:0;text-align:left;cursor:pointer;font:inherit;color:inherit;background:none;border:0;padding:9px 13px 9px 4px;display:flex;gap:9px;align-items:center" title="{{ ir.aide }}" onClick="{{ ir.choisir }}">
+                  <span style="font-family:var(--font-heading);font-size:12px;min-width:2.6ch" class="text-muted">{{ ir.rangCout }}</span>
+                  <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+                    <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ir.nom }}</strong>
+                    <span style="display:block;height:3px;background:{{ ir.barre }}"></span>
+                  </span>
+                  <span style="font-size:12px;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</span>
+                </button>
+              </div>
             </sc-for>
           </div>
         </aside>
@@ -6342,6 +6386,31 @@ GROUPES = {
     if (!String(chemin || '').trim()) return this.familleSymbole(sym);
     return this.familleCheminSeule(chemin);
   }
+  // « Stocks · United States » se cherche sous « Actions US ». Le relevé parle la langue
+  // du courtier ; la liste où l'on choisit doit parler celle de l'utilisateur.
+  FAMILLE_MOTS = {
+    'Stocks': 'Actions', 'ETFs': 'ETF', 'Futures': 'Futures', 'Spot': 'Spot',
+    'United States': 'US', 'United Kingdom': 'UK', 'Germany': 'Allemagne',
+    'France': 'France', 'Switzerland': 'Suisse', 'Netherlands': 'Pays-Bas',
+    'Belgium': 'Belgique', 'Portugal': 'Portugal', 'Spain': 'Espagne', 'Italy': 'Italie',
+    'Major': 'majeures', 'Minor': 'mineures', 'Exotic': 'exotiques',
+    'Indices': 'indices', 'Equity': 'actions', 'Bonds': 'obligations',
+    'Commodity': 'matières', 'Real Estate': 'immobilier', 'Currency': 'devises',
+    'Volatility': 'volatilité', 'Energy': 'énergie',
+    'Agricultural Commodities': 'agricoles',
+  };
+  familleLisible(f) {
+    if (f === 'Spot · Indices') return 'Indices';
+    if (f === 'Futures · Indices') return 'Indices à terme';
+    const m = this.FAMILLE_MOTS;
+    return String(f || '').split(' \u00b7 ').map((x) => m[x] || x).join(' ');
+  }
+  // la famille d'un instrument, telle que le relevé du compte actif la range
+  familleDe(sym) {
+    const cle = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+    const l = this.ligneCourtier(cle, sym);
+    return this.familleChemin(l ? l.chemin : '', sym);
+  }
   familleCheminSeule(chemin) {
     const seg = String(chemin || '').split('\\').filter(Boolean);
     const t0 = seg[0] || '';
@@ -7500,6 +7569,12 @@ GROUPES = {
       }
       for (const k of Object.keys(tb)) {
         if (k.startsWith('__') || vus.has(k) || dejaAtteintes.has(k)) continue;
+        // Les symboles techniques du relevé — ZZTEST, et les « utility symbol » rangés
+        // sous Calculation qui servent à convertir des pence — sont déjà écartés du
+        // catalogue par `GROUPES_ACTIFS`, mais rentraient par ici. Ils apparaissaient
+        // dans la liste où l'on coche quoi scanner, et le filtre par famille les a
+        // rendus visibles : treize familles à un instrument, une par paire GBX.
+        if (this.symTechnique(k, tb[k]) && !this.symUtilise(k)) continue;
         vus.add(k);
         sup.push(k);
       }
@@ -9717,7 +9792,7 @@ GROUPES = {
   get champsSession() {
     return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvSymb', 'ouvTele', 'ouvMarc',
       'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'triCout', 'tab', 'vueLecture',
-      'filtreBougies', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
+      'filtreBougies', 'familleFiltre', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
       'vue', 'derniereVue', 'modeTable', 'ouvLot', 'sonScan', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
@@ -15418,18 +15493,31 @@ GROUPES = {
           const b = (this.dfs || {})[sym] || (this.dfs || {})[this.fluxDe(sym).base];
           return !!b;
         };
-        // La sélection courante ; à défaut, les instruments SANS bougies — c'est le cas
-        // d'usage réel : on télécharge ce qui manque, pas ce qu'on a déjà.
-        const choisis = (s.univers && s.univers.length)
-          ? s.univers : this.SYMBOLES.filter((x) => !dispo(x));
-        const noms = [...new Set(choisis.map(nomCourtier))];
+        // ————— symboles.txt PORTE CE QU'ON A COCHÉ, ET RIEN D'AUTRE —————
+        //
+        // Le repli « à défaut, tous les instruments sans bougies » lisait `this.SYMBOLES`,
+        // c'est-à-dire les instruments dont ce compte a DÉJÀ les bougies — donc, sur un
+        // compte neuf, le catalogue statique de secours. Le bouton annonçait « 185 sans
+        // bougies » à côté d'un « Exporter la liste des 2 093 sans bougies » : deux
+        // comptes pour la même idée, et le fichier écrit aurait demandé au terminal
+        // 185 noms venus d'une liste interne, sans rapport avec les 2 093 du relevé.
+        //
+        // Le fichier ne se produit donc plus sans sélection. C'est sa raison d'être :
+        // n'exporter que ce qu'on a demandé.
+        const noms = [...new Set((s.univers || []).map(nomCourtier))];
         return {
           nListeMt5: noms.length,
           listeMt5Txt: noms.length
-            ? ((s.univers && s.univers.length) ? 'Liste pour MT5 · ' + noms.length + ' sélectionnés'
-              : 'Liste pour MT5 · ' + noms.length + ' sans bougies')
-            : 'Liste pour MT5 · rien à demander',
+            ? 'Liste pour MT5 · ' + noms.length + (noms.length > 1 ? ' sélectionnés' : ' sélectionné')
+            : 'Liste pour MT5 · cochez des instruments',
           sansListeMt5: noms.length === 0,
+          listeMt5Aide: noms.length
+            ? 'Écrit symboles.txt : ' + noms.length + ' instrument' + (noms.length > 1 ? 's' : '')
+              + ', un par ligne, dans l\u2019orthographe de votre courtier. À placer dans '
+              + 'MQL5\\Files\\Sivula\\ — les deux scripts le lisent, et il n\u2019y a rien à recompiler '
+              + 'quand la sélection change.'
+            : 'Cochez d\u2019abord les instruments voulus dans la liste de gauche : c\u2019est cette '
+              + 'sélection que symboles.txt porte, et elle seule décide de ce que le terminal exporte.',
           telechargerListe: () => {
             const entete = '# symboles.txt — écrit par Sivula le '
               + new Date().toLocaleString('fr-FR') + '\n'
@@ -18870,7 +18958,10 @@ GROUPES = {
       // ————— LA LISTE : de quoi choisir, rien de plus —————
       ...(() => {
         if (s.vue !== 'courtiers') {
-          return { instrRows: [], aFiche: false, fNom: '', fMeta: '', fCoutLignes: [],
+          return { instrRows: [], aCoches: false, cochesTxt: '', cocherVus: () => {},
+            cocherVusTxt: '', decocherTout: () => {},
+            familles: [], aFamilles: false, familleToutCls: 'tag tag-accent', familleTout: () => {},
+            aFiche: false, fNom: '', fMeta: '', fCoutLignes: [],
             fSegments: [], fAnnees: [], fbTousTxt: 'Tous', fbAvecTxt: 'Téléchargés',
             fbSansTxt: 'Non téléchargés', exporterManquantsTxt: '', sansManquants: true,
             exporterManquants: () => {}, aFCouv: false, aFCout: false, aFBougies: false };
@@ -18906,13 +18997,31 @@ GROUPES = {
         const nAvec = tous.filter(aLa).length;
         const manquants = tous.filter((x) => !aLa(x));
         const fb = s.filtreBougies || 'tous';
+        // ————— CHERCHER PAR FAMILLE —————
+        // Deux mille instruments classés par coût, sans autre entrée que la recherche
+        // par nom : trouver « les indices » ou « les actions françaises » demandait de
+        // savoir comment le courtier les nomme. Les familles viennent du relevé, pas
+        // d'une liste écrite ici — elles suivent donc le compte ouvert.
+        const famDe = new Map(tous.map((sym) => [sym, this.familleDe(sym)]));
+        const nParFam = new Map();
+        for (const f of famDe.values()) nParFam.set(f, (nParFam.get(f) || 0) + 1);
+        const fam = s.familleFiltre || '';
         const visibles = triee.filter((sym) => {
           if (q && !(sym.toLowerCase().includes(q)
             || this.nomComplet(sym).toLowerCase().includes(q))) return false;
+          if (fam && famDe.get(sym) !== fam) return false;
           if (fb === 'avec') return aLa(sym);
           if (fb === 'sans') return !aLa(sym);
           return true;
         });
+        const familles = [...nParFam.entries()]
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .map(([nom, n]) => ({ nom: this.familleLisible(nom), n,
+            cls: 'tag ' + (fam === nom ? 'tag-accent' : 'tag-outline'),
+            aide: n + (n > 1 ? ' instruments' : ' instrument') + ' rangés sous « ' + nom
+              + ' » dans le relevé de votre courtier.',
+            choisir: () => this.setState({ familleFiltre: fam === nom ? '' : nom, coutLimite: 60 },
+              () => this.ecrireSession()) }));
         // LA BARRE DE COUVERTURE, en un dégradé : la part présente en accent, chaque trou
         // en neutre, à sa place réelle dans la période couverte. Trois pixels suffisent à
         // distinguer une série entière d'une série en morceaux.
@@ -18938,6 +19047,7 @@ GROUPES = {
           const v = rang.get(sym);
           return Number.isFinite(v) ? fr(v * 100, 2) + ' %' : null;
         };
+        const coches = new Set(s.univers || []);
         const instrRows = visibles.slice(0, 400).map((sym) => {
           const la = aLa(sym), p = partR(sym), cv = couvDe(sym);
           return {
@@ -18958,10 +19068,44 @@ GROUPES = {
                 : 'bougies présentes, couverture non relevée')
               : 'aucune bougie'),
             choisir: () => this.setState({ symFiche: sym }),
+            // ————— LA CASE À COCHER REVIENT DANS LA LISTE —————
+            //
+            // Elle en avait été retirée pour alléger la colonne, mais c'est ICI qu'on
+            // choisit les instruments, et c'est cette sélection que `symboles.txt` porte
+            // pour n'exporter de MT5 que ce qu'on a demandé. Sans elle, la marche à
+            // suivre disait « cochez les instruments voulus » devant une liste où rien
+            // n'était cochable, et le seul recours était d'exporter les 2 093.
+            coche: coches.has(sym),
+            cocheFond: coches.has(sym) ? 'var(--color-accent)' : 'var(--color-bg)',
+            cocheBord: coches.has(sym) ? 'var(--color-accent)' : 'var(--color-neutral-500)',
+            cocheMarque: coches.has(sym) ? '\u2713' : '',
+            cocheAide: coches.has(sym)
+              ? this.nomComplet(sym) + ' est dans la liste à demander à MT5 — cliquez pour l\u2019en retirer.'
+              : 'Ajouter ' + this.nomComplet(sym) + ' à la liste à demander à MT5.',
+            cocher: (e) => { if (e && e.stopPropagation) e.stopPropagation();
+              this.setState((q) => ({ univers: (q.univers || []).includes(sym)
+                ? (q.univers || []).filter((x) => x !== sym)
+                : [...(q.univers || []), sym] }), () => this.ecrireSession()); },
           };
         });
         return {
           instrRows,
+          familles,
+          aFamilles: familles.length > 1,
+          familleToutCls: 'tag ' + (fam ? 'tag-outline' : 'tag-accent'),
+          familleTout: () => this.setState({ familleFiltre: '', coutLimite: 60 },
+            () => this.ecrireSession()),
+          // ————— L'ÉTAT DE LA SÉLECTION, AU-DESSUS DE LA LISTE —————
+          // C'est cette sélection que « Liste pour MT5 » écrit dans symboles.txt : sans
+          // compteur, on ne sait pas ce qu'on s'apprête à demander au terminal.
+          aCoches: coches.size > 0,
+          cochesTxt: coches.size + (coches.size > 1 ? ' sélectionnés' : ' sélectionné'),
+          decocherTout: () => this.setState({ univers: [] }, () => this.ecrireSession()),
+          cocherVusTxt: visibles.length > 400
+            ? 'Cocher les 400 affichés' : 'Cocher les ' + visibles.length + ' affichés',
+          cocherVus: () => this.setState((q) => ({
+            univers: [...new Set([...(q.univers || []), ...visibles.slice(0, 400)])] }),
+            () => this.ecrireSession()),
           fbTousTxt: 'Tous · ' + tous.length,
           fbAvecTxt: 'Téléchargés · ' + nAvec,
           fbSansTxt: 'Non téléchargés · ' + manquants.length,

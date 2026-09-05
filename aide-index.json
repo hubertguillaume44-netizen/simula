@@ -57,13 +57,6 @@
    ]
   },
   {
-   "terme": "bougies H1 Déposer un relevé",
-   "texte": "Enregistre les noms des instruments sans bougies, un par ligne.",
-   "vues": [
-    "Mes instruments"
-   ]
-  },
-  {
    "terme": "Capital alloué au court terme",
    "texte": "La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».",
    "vues": [
@@ -296,13 +289,6 @@
    ]
   },
   {
-   "terme": "fois Les deux scripts MT5",
-   "texte": "Un instrument par ligne, dans l’orthographe de votre courtier. C’est ce fichier que les deux scripts lisent : la liste n’est jamais écrite dans le .mq5, donc rien à recompiler quand elle change.",
-   "vues": [
-    "Mes instruments"
-   ]
-  },
-  {
    "terme": "grille Lancer quand même SIVULA",
    "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
    "vues": [
@@ -354,6 +340,13 @@
   {
    "terme": "Lisez le classement et retenez ce qui tient",
    "texte": "Une configuration validée rejoint votre portefeuille.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "mes données Importer un fichier",
+   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
    "vues": [
     "Toutes les pages"
    ]
@@ -588,6 +581,13 @@
    "texte": "Affiche l’ensemble des scans en mémoire.",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "tout décocher",
+   "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
+   "vues": [
+    "Mes instruments"
    ]
   },
   {
