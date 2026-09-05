@@ -411,6 +411,35 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
 
       <div style="height:1px;background:var(--color-divider)"></div>
 
+        <!--
+          LE CONTENU RÉEL DU STOCKAGE, ÉCRIT. Devant un compte vide, rien ne permettait
+          de distinguer « le navigateur a tout effacé » de « l'application lit au mauvais
+          endroit ». Et la présence de la base IndexedDB ne répond pas à la question :
+          elle est créée vide au démarrage. On lit donc les clés brutes.
+        -->
+        <sc-if value="{{ aStockDiag }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid color-mix(in srgb,var(--color-text) 10%,transparent);padding-top:9px">
+            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Contenu réel du stockage</span>
+            <strong style="font-family:var(--font-heading);font-size:15px">{{ stockResume }}</strong>
+            <span style="font-size:11px;line-height:1.55" class="text-muted">{{ stockVerdict }}</span>
+            <sc-for list="{{ stockLignes }}" as="sd" hint-placeholder-count="3">
+              <div style="display:flex;gap:10px;align-items:baseline;font-size:11px;border-top:1px solid var(--color-divider);padding-top:4px">
+                <code style="flex:1;min-width:0;word-break:break-all">{{ sd.nom }}</code>
+                <span style="white-space:nowrap" class="text-muted">{{ sd.n }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!--
+          LE CONTENU DE LA MÉMOIRE NE DÉPEND PAS DE LA MESURE DU QUOTA. Ce bouton — le
+          seul chemin vers « Adopter », qui rend des bougies restées dans le stockage —
+          vivait à l'intérieur de la section « Mémoire », elle-même conditionnée à
+          `aPlace` : vraie seulement quand `navigator.storage.estimate()` répond avec un
+          quota. Quand le navigateur ne répond pas, la seule porte de secours de
+          l'application n'existait tout simplement pas à l'écran.
+        -->
+        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
 
       <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ false }}">
         <div style="height:1px;background:var(--color-divider)"></div>
@@ -434,7 +463,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
               </sc-if>
             </div>
           </sc-if>
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
           <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
             <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ libLibereTxt }}</p>
           </sc-if>
@@ -13237,6 +13265,35 @@ GROUPES = {
     // format verbeux : ~8 octets par valeur stockée en clone structuré
     return (b.n || 0) * 6 * 8 + 200;
   }
+  // ————— CE QUE LE STOCKAGE CONTIENT VRAIMENT —————
+  //
+  // Aucun écran ne le disait. Devant un compte vide, il n'existait aucun moyen de savoir
+  // si le navigateur avait tout effacé ou si l'application lisait au mauvais endroit — et
+  // la présence de la base `simula.auto` ne répond pas à la question : `idb()` la CRÉE au
+  // démarrage, vide, avec ses deux magasins. Elle existe donc toujours, y compris quand
+  // il n'y a rien dedans.
+  //
+  // On lit donc les clés brutes, sans passer par un index ni par la clé du compte actif :
+  // c'est la seule source de vérité, et elle tient en deux lignes.
+  async diagnosticStockage() {
+    let blocs = [];
+    try { blocs = (await this.clesGros()).map(String); } catch (e) { blocs = []; }
+    let ls = [];
+    try { ls = Object.keys(localStorage).filter((k) => k.startsWith('simula')); } catch (e) { ls = []; }
+    // regroupement par espace : « simula.series.v1.client.fxpro » sans le symbole
+    const espaces = new Map();
+    for (const k of blocs) {
+      const i = k.indexOf('|');
+      const pre = i < 0 ? k : k.slice(0, i);
+      espaces.set(pre, (espaces.get(pre) || 0) + 1);
+    }
+    this.setState({ stockDiag: {
+      blocs: blocs.length,
+      cles: ls.length,
+      espaces: [...espaces.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12),
+      exemples: blocs.slice(0, 6),
+    } });
+  }
   async inventaireStockage(silencieux) {
     const cles = await this.clesGros();
     // regroupement par préfixe : « <clé d'espace>|<symbole> » pour une série,
@@ -14790,7 +14847,24 @@ GROUPES = {
       // quatre bandeaux permanents au-dessus du contenu de travail.
       aBoutonTiroir: tab !== 'accueil',
       tiroirOuvert: !!s.tiroir,
-      ouvrirTiroir: () => this.setState({ tiroir: true }),
+      ouvrirTiroir: () => { this.setState({ tiroir: true }); this.diagnosticStockage(); },
+      ...(() => {
+        const d = s.stockDiag;
+        if (!d) return { aStockDiag: false, stockLignes: [], stockResume: '', stockVerdict: '' };
+        return { aStockDiag: true,
+          stockResume: d.blocs + (d.blocs > 1 ? ' blocs' : ' bloc') + ' dans IndexedDB \u00b7 '
+            + d.cles + (d.cles > 1 ? ' clés' : ' clé') + ' localStorage',
+          stockVerdict: d.blocs === 0 && d.cles === 0
+            ? 'Le stockage de cette adresse est entièrement vide : le navigateur l\u2019a effacé. '
+              + 'Rien n\u2019est récupérable ici — seul un fichier exporté peut rendre vos données.'
+            : d.blocs === 0
+              ? 'Aucune bougie ni aucun scan en mémoire. Les clés restantes ne portent que des réglages.'
+              : 'Chaque espace ci-dessous est un compte. Si l\u2019un porte des blocs sans que ses '
+                + 'instruments apparaissent, c\u2019est son index qui manque — le bandeau de '
+                + 'récupération le propose alors en tête de page.',
+          stockLignes: (d.espaces || []).map(([nom, n]) => ({ nom, n: n + (n > 1 ? ' blocs' : ' bloc') })),
+        };
+      })(),
       fermerTiroir: () => this.setState({ tiroir: false, inventaire: null }),
       // ————— DES BOUGIES RETROUVÉES NE DOIVENT PAS ATTENDRE QU'ON LES CHERCHE —————
       //
