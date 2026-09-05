@@ -108,6 +108,9 @@ const preambule = `<script>
 // Le journal des livraisons voyage avec le fichier unique : servi en voisin, il serait
 // absent d'une page ouverte en « file:// », et la page des nouveautés resterait vide.
 window.__sivNouv = ${JSON.stringify(JSON.parse(lire("nouveautes.json")))};
+// Les explications extraites à la construction voyagent de même : sans elles le panneau
+// d'aide serait vide dans le fichier unique.
+window.__sivAide = ${JSON.stringify(JSON.parse(lire("aide-index.json")))};
 </script>
 `;
 html = remplacer(html, "<head>", "<head>\n" + preambule, "Sivula.dc.html");

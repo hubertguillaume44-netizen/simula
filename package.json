@@ -21,7 +21,8 @@
     "format": "prettier --write .",
     "app:solo": "node scripts/app/solo.mjs",
     "app": "npx --yes serve .",
-    "app:verifier": "node scripts/app/ouvrir.mjs"
+    "app:verifier": "node scripts/app/ouvrir.mjs",
+    "app:aide": "node scripts/app/aide.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
