@@ -2168,25 +2168,66 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
               <span style="font-family:var(--font-heading);font-size:15px;opacity:.5;flex:none">1</span>
               <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
                 <span style="font-size:14px;font-weight:{{ e1Gras }}">Sur quoi</span>
-                <span style="font-size:11px;line-height:1.4" class="text-muted">{{ e1Resume }}</span>
+                <span style="font-size:11px;line-height:1.4;color:{{ e1ResumeCouleur }}">{{ e1Resume }}</span>
               </span>
               <span style="font-size:11px;opacity:.55;flex:none">{{ e1Chevron }}</span>
             </button>
             <sc-if value="{{ e1Ouvert }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:11px;padding:0 14px 13px">
 
+                <!--
+                  CE QUI EST COCHÉ, NOMMÉ. L'étape affichait « 0 / 148 » et neuf pastilles
+                  de groupe : rien ne disait LESQUELS étaient cochés — il fallait ouvrir la
+                  liste des 148 et y chercher les cases. La sélection est la première chose
+                  que l'étape doit dire, avec le coût en calcul de chaque ligne.
+                -->
+                <sc-if value="{{ aChoisis }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                      <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase" class="text-muted">Choisis</span>
+                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700)" title="Décocher tous les instruments d’un coup" onClick="{{ toutDecocher }}">tout décocher</button>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                      <sc-for list="{{ choisisListe }}" as="ch" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--color-divider)">
+                          <strong style="font-size:12px;line-height:1.3;flex:1;min-width:0">{{ ch.nom }}</strong>
+                          <span style="font-size:10px;white-space:nowrap" class="text-muted">{{ ch.cout }}</span>
+                          <button type="button" style="cursor:pointer;border:none;background:none;padding:0 2px;font:inherit;font-size:12px;line-height:1;color:var(--color-neutral-500)" title="{{ ch.retirerAide }}" onClick="{{ ch.retirer }}">×</button>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
                 <div style="display:flex;flex-direction:column;gap:6px">
-                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-                    <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase" class="text-muted">Quoi scanner</span>
-                    <strong style="font-family:var(--font-heading);font-size:17px">{{ nbUnivers }} / {{ nbTotal }}</strong>
-                  </div>
-                  <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Nom ou ticker… (ex. aapl, .FR, USD)">
-                  <div style="display:flex;gap:5px;flex-wrap:wrap">
-                    <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="6">
-                      <button type="button" class="{{ gr.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="Cocher ou décocher tout le groupe" onClick="{{ gr.basculerGroupe }}">{{ gr.nom }} · {{ gr.choisis }} / {{ gr.n }}</button>
+                  <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Ajouter — nom ou ticker…">
+                  <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;text-align:left;color:var(--color-accent-700);align-self:flex-start" onClick="{{ ouvrirInstruments }}">Ouvrir la liste des {{ nbTotal }} →</button>
+                  <!--
+                    LES NEUF PASTILLES DEVIENNENT UNE LISTE. « Stocks · United States-0/55 » :
+                    le tiret du nom se collait au décompte, et le décompte devenait illisible.
+                    Le nom à gauche, « 2 / 15 » à droite, « + tout » explicite — au lieu d'une
+                    pastille entière qui bascule au moindre clic sans dire ce qu'elle fait.
+                  -->
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="4">
+                      <sc-if value="{{ gr.montre }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--color-divider)">
+                          <span style="font-size:12px;line-height:1.3;flex:1;min-width:0">{{ gr.nom }}</span>
+                          <span style="font-size:11px;white-space:nowrap;font-weight:{{ gr.choisisGras }};color:{{ gr.choisisCouleur }}">{{ gr.choisisTxt }}</span>
+                          <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;white-space:nowrap;color:var(--color-accent-700)" title="{{ gr.toutAide }}" onClick="{{ gr.basculerGroupe }}">{{ gr.toutTxt }}</button>
+                        </div>
+                      </sc-if>
                     </sc-for>
+                    <sc-if value="{{ aGroupesCaches }}" hint-placeholder-val="{{ true }}">
+                      <button type="button" style="cursor:pointer;border:none;background:none;text-align:left;padding:5px 0;font:inherit;font-size:12px;border-bottom:1px solid var(--color-divider);display:flex;align-items:baseline;gap:8px" title="{{ groupesCachesAide }}" onClick="{{ deployerGroupes }}">
+                        <span style="flex:1;min-width:0" class="text-muted">{{ groupesCachesTxt }}</span>
+                        <span style="font-size:11px;opacity:.55">▸</span>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ aGroupesReplier }}" hint-placeholder-val="{{ false }}">
+                      <button type="button" style="cursor:pointer;border:none;background:none;text-align:left;padding:5px 0;font:inherit;font-size:11px;color:var(--color-accent-700);align-self:flex-start" onClick="{{ replierGroupes }}">▾ replier les groupes vides</button>
+                    </sc-if>
                   </div>
-                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirInstruments }}">Ouvrir la liste des {{ nbTotal }} →</button>
                   <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ prixInstrument }}</span>
                 </div>
 
@@ -2197,14 +2238,18 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
                   garde n'est pas supprimé — il s'affiche au moment où une réduction est
                   choisie, là où il sert à changer d'avis.
                 -->
+                <!--
+                  UNE LIGNE, PAS UN BLOC. « Tout l'historique · 6,7 ans » et le lien qui
+                  ouvre le choix : le détail des dates, les quatre périodes et les deux
+                  champs ne servent qu'au moment où l'on réduit vraiment.
+                -->
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
-                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-                    <span style="font-size:12px">{{ fenLigne }}</span>
-                    <strong style="font-family:var(--font-heading);font-size:17px">{{ fenDuree }}</strong>
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span style="font-size:12px;flex:1;min-width:0">{{ fenLigne }} · <strong>{{ fenDuree }}</strong></span>
+                    <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;white-space:nowrap;color:var(--color-accent-700)" title="{{ fenLienAide }}" onClick="{{ basculerFenDetail }}">{{ fenLienTxt }}</button>
                   </div>
-                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fenDates }}</span>
-                  <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;text-align:left;color:var(--color-accent-700);align-self:flex-start" onClick="{{ basculerFenDetail }}">{{ fenLienTxt }}</button>
                   <sc-if value="{{ fenDetail }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fenDates }}</span>
                     <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px">
                       <div style="display:flex;flex-direction:column;gap:3px">
                         <sc-for list="{{ fenChoix }}" as="fx" hint-placeholder-count="4">
@@ -2239,13 +2284,31 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
                   </sc-if>
                 </div>
 
-                <div style="display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--color-divider);padding-top:10px">
-                  <span style="font-size:11px" class="text-muted">Unité de temps — la matière, pas la variation</span>
-                  <div style="display:flex;gap:0">
-                    <sc-for list="{{ choixUts }}" as="cu2" hint-placeholder-count="3">
-                      <button type="button" class="{{ cu2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:12px;padding:5px 2px" title="{{ cu2.aide }}" onClick="{{ cu2.choisir }}">{{ cu2.nom }}</button>
-                    </sc-for>
+                <!--
+                  L'UNITÉ DE TEMPS SE REPLIE, ET LES PIÈGES SE NOMMENT. Trois boutons au même
+                  rang laissaient croire à trois choix équivalents : Sivula RECONSTRUIT H4 et
+                  Daily à partir des bougies horaires, et un fichier déjà en Daily fausse les
+                  filtres multi-unités. H1 tient sur une ligne ; les deux autres restent
+                  atteignables derrière « changer », avec l'avertissement au moment du choix.
+                -->
+                <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span style="font-size:12px;flex:1;min-width:0">{{ utLigne }} · <strong>{{ utVal }}</strong></span>
+                    <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;white-space:nowrap;color:var(--color-accent-700)" title="Choisir la taille des bougies balayées" onClick="{{ basculerUtDetail }}">{{ utLienTxt }}</button>
                   </div>
+                  <sc-if value="{{ utDetail }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:5px">
+                      <div style="display:flex;gap:0">
+                        <sc-for list="{{ choixUts }}" as="cu2" hint-placeholder-count="3">
+                          <button type="button" class="{{ cu2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:12px;padding:5px 2px" title="{{ cu2.aide }}" onClick="{{ cu2.choisir }}">{{ cu2.nom }}</button>
+                        </sc-for>
+                      </div>
+                      <span style="font-size:10px;line-height:1.5" class="text-muted">H4 et Daily sont reconstruits à partir de vos bougies horaires : rien n’est perdu à rester en H1.</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ aUtAvertir }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;line-height:1.5;color:var(--color-accent-700)">{{ utAvertirTxt }}</span>
+                  </sc-if>
                 </div>
 
               </div>
@@ -2448,12 +2511,22 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             place du sujet. Un seul bandeau, au même corps que la durée, avec la
             décomposition qui dit d'où vient le chiffre — c'est elle qui supprime le doublon.
           -->
-          <div style="background:var(--color-accent-900);color:var(--color-bg);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;flex-direction:column;gap:2px">
-              <span style="font-size:12px;line-height:1.35"><strong>{{ combiTxt }} combinaisons</strong> · {{ dureeCourte }}</span>
-              <span style="font-size:11px;line-height:1.4;opacity:.8" title="{{ calculCombinaisons }}">{{ decompoTxt }}</span>
-            </div>
-            <button id="lancerScan" type="button" style="cursor:pointer;border:none;width:100%;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:13px;padding:9px 10px;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
+          <div style="background:{{ devisFond }};color:{{ devisEncre }};padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+            <!--
+              Zéro instrument coché n'est pas un devis : le bandeau annonçait « 1 512
+              combinaisons · ≈ 1 s », qui est le coût PAR INSTRUMENT. Sur fond neutre, il
+              dit ce qui manque plutôt que de chiffrer un scan qui ne partira pas.
+            -->
+            <sc-if value="{{ sansDevis }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12px;line-height:1.35"><strong>{{ devisVideTxt }}</strong></span>
+            </sc-if>
+            <sc-if value="{{ aDevis }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:12px;line-height:1.35"><strong>{{ combiTxt }} combinaisons</strong> · {{ dureeCourte }}</span>
+                <span style="font-size:11px;line-height:1.4;opacity:.8" title="{{ calculCombinaisons }}">{{ decompoTxt }}</span>
+              </div>
+            </sc-if>
+            <button id="lancerScan" type="button" style="cursor:pointer;border:none;width:100%;background:var(--color-bg);color:{{ devisBoutonEncre }};font-family:var(--font-body);font-size:13px;padding:9px 10px;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
             <sc-if value="{{ scanEnCours }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:6px">
                 <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:5px 9px;flex:1" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
@@ -4691,7 +4764,11 @@ class Component extends DCLogic {
     gPeriodeMa: '50 100 200', gLigneMtf: ['mediane'], gPeriodeMtf: '9 26',
     gLignePente: ['mediane'], gPenteRecul: '3 5 8 10 15 20',
     fResist: false, utResist: 'D1', resistLookback: 20, resistMarge: 1,
-    _grilleV2: 1, _penteV3: 1, _trailV4: 1, _echV3: 1, ut: 'D1', gPeriodes: '5 6 7 8 9 10 15 20 26',
+    // L'UNITÉ PAR DÉFAUT EST H1, la matière que vous déposez. Elle était à D1 : le
+    // piège était coché d'origine, alors que la page explique par ailleurs qu'un fichier
+    // déjà en Daily fausse les filtres multi-unités, et que Sivula reconstruit elle-même
+    // H4 et Daily à partir des bougies horaires.
+    _grilleV2: 1, _penteV3: 1, _trailV4: 1, _echV3: 1, ut: 'H1', gPeriodes: '5 6 7 8 9 10 15 20 26',
     // Sans session enregistrée (première visite), gEchelles restait undefined : les
     // défauts de DEFAUTS_MULTI ne sont posés que si une session existe. Or la variante
     // « Paliers progressifs » s'étend sur ce champ — vide, elle ne produit AUCUNE
@@ -6244,6 +6321,27 @@ GROUPES = {
   get SYMBOLES() { return [...new Set(Object.values(this.GROUPES_ACTIFS).flat())]; }
   // les fichiers déposés SONT le catalogue : plus de groupe séparé qui les répète
   get GROUPES_AFFICHES() { return this.GROUPES_ACTIFS; }
+  // ————— QUELS GROUPES L'ÉTAPE « SUR QUOI » MONTRE —————
+  //
+  // Neuf lignes, dont six à « 0 / N », repoussaient la période et l'unité de temps hors de
+  // l'écran. Les groupes entamés restent visibles ; les autres tiennent sur une ligne
+  // dépliable. Une recherche en cours montre tout : sinon elle cacherait ce qu'elle vient
+  // de trouver. Trois lignes minimum, pour que le bloc ne se réduise pas à rien.
+  groupesEtape(s) {
+    const q = (s.recherche || '').trim().toLowerCase();
+    const tous = Object.entries(this.GROUPES_AFFICHES).map(([nom, t]) => {
+      const liste = q ? t.filter((x) => x.toLowerCase().includes(q)) : t;
+      return { nom, n: liste.length, choisis: liste.filter((x) => (s.univers || []).includes(x)).length };
+    }).filter((g) => g.n > 0);
+    const ouverts = !!s.groupesTous || !!q;
+    const vifs = tous.filter((g) => g.choisis > 0);
+    const mornes = tous.filter((g) => g.choisis === 0).sort((a, b) => b.n - a.n);
+    const place = Math.max(0, 3 - vifs.length);
+    const caches = ouverts ? [] : mornes.slice(place);
+    const nomsCaches = new Set(caches.map((g) => g.nom));
+    return { tous, caches, ouverts, qActive: !!q,
+      montre: (nom) => !nomsCaches.has(nom) };
+  }
   // seul `demo/` est publié : `data/` n'est plus lu (voir chargerSerie)
   dossier() { return 'demo/'; }
   // toutes les séries chargées qui partagent le même sous-jacent
@@ -14980,7 +15078,7 @@ GROUPES = {
         : 'Six étapes, à faire une seule fois par instrument.',
       basculerGuide: () => this.setState((p) => ({ guideDepot: !p.guideDepot })),
       nbDeposes: (s.deposes || []).length,
-      groupes: Object.entries(this.GROUPES_AFFICHES).map(([nom, tous]) => {
+      groupes: ((vus) => Object.entries(this.GROUPES_AFFICHES).map(([nom, tous]) => {
         const q = (s.recherche || '').trim().toLowerCase();
         const liste = q ? tous.filter((x) => x.toLowerCase().includes(q)) : tous;
         return {
@@ -15003,8 +15101,38 @@ GROUPES = {
           basculer: () => this.setState((p) => ({ univers: p.univers.includes(x) ? p.univers.filter((y) => y !== x) : [...p.univers, x] })),
           voir: (e) => { e.stopPropagation(); this.ouvrirFiche(x); },
         })),
+        // ————— UNE LISTE, PAS UNE PASTILLE —————
+        // « Stocks · United States-0/55 » : le tiret se collait au décompte, et le
+        // décompte devenait illisible. Le nom à gauche, le compte à droite, gras
+        // seulement quand il compte pour quelque chose.
+        choisisTxt: liste.filter((x) => s.univers.includes(x)).length + ' / ' + liste.length,
+        choisisGras: liste.some((x) => s.univers.includes(x)) ? '600' : '400',
+        choisisCouleur: liste.some((x) => s.univers.includes(x))
+          ? 'var(--color-text)' : 'var(--color-neutral-500)',
+        toutTxt: liste.every((x) => s.univers.includes(x)) ? '\u2212 aucun' : '+ tout',
+        toutAide: liste.every((x) => s.univers.includes(x))
+          ? 'Décocher les ' + liste.length + ' instruments de ce groupe'
+          : 'Cocher les ' + liste.length + ' instruments de ce groupe',
+        montre: vus.montre(nom),
         vide: liste.length === 0,
-      }; }).filter((g) => !g.vide),
+      }; }).filter((g) => !g.vide))(this.groupesEtape(s)),
+      // ————— LES GROUPES VIDES SE REPLIENT —————
+      // Neuf lignes dont six à « 0 / N » repoussent la période et l'unité hors de l'écran.
+      // Les groupes entamés restent visibles, les autres tiennent sur une ligne — et une
+      // recherche en cours montre tout, sinon elle cacherait ce qu'elle vient de trouver.
+      ...(() => {
+        const { tous, caches, ouverts, qActive } = this.groupesEtape(s);
+        return {
+          aGroupesCaches: caches.length > 0,
+          groupesCachesTxt: caches.length + (caches.length > 1 ? ' autres groupes \u00b7 ' : ' autre groupe \u00b7 ')
+            + '0 / ' + caches.reduce((a, g) => a + g.n, 0),
+          groupesCachesAide: 'Groupes dont aucun instrument n\u2019est coché : '
+            + caches.map((g) => g.nom).join(', ') + '. Cliquez pour les déployer.',
+          aGroupesReplier: ouverts && !qActive && tous.length > 3,
+          replierGroupes: () => this.setState({ groupesTous: false }),
+          deployerGroupes: () => this.setState({ groupesTous: true }),
+        };
+      })(),
       nbUnivers: this.universDuCompte(s.univers).length,
       scanImpossible: this.universDuCompte(s.univers).length ? undefined : true,
       scanImpossibleAide: this.universDuCompte(s.univers).length
@@ -15738,7 +15866,7 @@ GROUPES = {
       aCtrlMsg: !!s.ctrlMsg,
       ctrlMsg: s.ctrlMsg || '',
       ctrlCouleur: s.ctrlMsg && s.ctrlOk === false ? 'var(--color-accent-900)' : 'inherit',
-      grilleStandard: () => this.maj({ ut: 'D1', gPeriodes: '5 6 7 8 9 10 15 20 26',
+      grilleStandard: () => this.maj({ ut: 'H1', gPeriodes: '5 6 7 8 9 10 15 20 26',
         gSls: '0,5 0,6 0,7 0,8 0,9 1,0 1,1 1,2 1,3 1,4 1,5 2,0 2,5 3,0',
         gRrs: '1,5 2,0 2,5 3,0 3,5 4,0' }),
       chipsPeriodes: this.chips('gPeriodes', [26], ''),
@@ -15888,21 +16016,25 @@ GROUPES = {
           carteSous: 'meilleur R net de chaque case · ' + agg.n.toLocaleString('fr-FR')
             + ' configurations mesurées' };
       })(),
-      combinaisonsVives: (s.univers.length || 1) * this.conditionsBalayees(s).length * ((s.gEntrees || []).length || 1) * ((s.gLignes || []).length || 1)
-        * this.nombres(s.gPeriodes, [26]).length * this.nombres(s.gSls, [1]).length * this.nombres(s.gRrs, [2.5]).length,
-      calculCombinaisons: (s.univers.length || 1) + ' instruments × ' + (((s.gEntrees || []).length || 1) * ((s.gLignes || []).length || 1))
+      calculCombinaisons: this.universDuCompte(s.univers).length + ' instruments × ' + (((s.gEntrees || []).length || 1) * ((s.gLignes || []).length || 1))
         + ' entrées×lignes × ' + this.nombres(s.gPeriodes, [26]).length
         + ' longueurs × ' + this.nombres(s.gSls, [1]).length + ' stops × ' + this.nombres(s.gRrs, [2.5]).length
         + ' objectifs à tester — le classement final se lit sur les segments positifs, pas sur le R brut.',
       // ————— LE DEVIS, ET LE PRIX DE CHAQUE BLOC —————
       // Rien n'est calculé de neuf ici : `combinaisonsVives` et `dureeEstimee` existaient
       // déjà. Ils étaient affichés au bas de trois cadres, loin du bouton qui les engage.
-      combiTxt: ((s.univers.length || 1) * this.conditionsBalayees(s).length
-        * ((s.gEntrees || []).length || 1) * ((s.gLignes || []).length || 1)
-        * this.nombres(s.gPeriodes, [26]).length * this.nombres(s.gSls, [1]).length
-        * this.nombres(s.gRrs, [2.5]).length).toLocaleString('fr-FR'),
       ...(() => {
-        const n = s.univers.length || 1;
+        // ————— LE DEVIS DIT LA VÉRITÉ —————
+        //
+        // Avec zéro instrument coché, le bandeau annonçait « 1 512 combinaisons · ≈ 1 s ».
+        // Ce n'était pas un total mais le coût PAR INSTRUMENT, affiché comme un devis :
+        // zéro fois mille cinq cent douze fait zéro. Le `|| 1` qui produisait ce chiffre
+        // servait à ne pas montrer un zéro ; il montrait un mensonge à la place.
+        //
+        // Le compte est celui du COMPTE ACTIF — `universDuCompte` —, le même que celui qui
+        // décide si « Lancer le scan » est cliquable : sinon le bandeau chiffrerait des
+        // instruments que le scan ne prendra pas.
+        const nU = this.universDuCompte(s.univers).length;
         const parInstr = this.conditionsBalayees(s).length * ((s.gEntrees || []).length || 1)
           * ((s.gLignes || []).length || 1) * this.nombres(s.gPeriodes, [26]).length
           * this.nombres(s.gSls, [1]).length * this.nombres(s.gRrs, [2.5]).length;
@@ -15910,14 +16042,36 @@ GROUPES = {
         try { v = JSON.parse(localStorage.getItem('simula.vitesse.v1')); } catch (e) {}
         const cps = (v && v.combisParSec) || 1200;
         const aCharger = s.univers.filter((x) => !(this.dfs || {})[x]).length;
-        const sec = (n * parInstr) / cps
+        const sec = (nU * parInstr) / cps
           + aCharger * ((v && v.secParInstrument) ? Math.min(3, v.secParInstrument) : 1.2);
+        const coutUn = parInstr.toLocaleString('fr-FR') + ' comb. \u00b7 ' + this.duree(parInstr / cps);
         return {
-          dureeCourte: '≈ ' + this.duree(sec),
+          combiTxt: (nU * parInstr).toLocaleString('fr-FR'),
+          dureeCourte: '\u2248 ' + this.duree(sec),
+          // Fond neutre quand il n'y a rien à chiffrer : un bandeau en accent est un devis,
+          // et un devis à zéro n'en est pas un.
+          aDevis: nU > 0,
+          sansDevis: nU === 0,
+          devisFond: nU ? 'var(--color-accent-900)' : 'var(--color-neutral-300)',
+          devisEncre: nU ? 'var(--color-bg)' : 'var(--color-text)',
+          devisBoutonEncre: nU ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
+          devisVideTxt: '0 combinaison \u2014 choisissez au moins un instrument',
           // LE PRIX D'UNE CASE COCHÉE, en clair. C'est ce qui manquait : une case peut
           // tripler une heure de calcul sans que rien ne l'annonce.
           prixInstrument: 'Chaque instrument coché ajoute ' + parInstr.toLocaleString('fr-FR')
             + ' combinaisons, soit ' + this.duree(parInstr / cps) + ' de calcul.',
+          // ————— CE QUI EST COCHÉ, NOMMÉ —————
+          //
+          // L'étape affichait « 0 / 148 » et neuf pastilles de groupe : pour savoir
+          // LESQUELS étaient cochés il fallait ouvrir la liste des 148 et y chercher les
+          // cases. La sélection est la première chose que l'étape doit dire.
+          choisisListe: this.universDuCompte(s.univers).map((sym) => ({
+            sym, nom: this.nomComplet(sym), cout: coutUn,
+            retirerAide: 'Retirer ' + this.nomComplet(sym) + ' de la sélection',
+            retirer: () => this.setState((p) => ({ univers: (p.univers || []).filter((x) => x !== sym) })),
+          })),
+          aChoisis: nU > 0,
+          toutDecocher: () => this.setState({ univers: [] }),
         };
       })(),
       // le bandeau collant du haut a disparu — la colonne remonte sous le fil
@@ -15931,11 +16085,39 @@ GROUPES = {
         : 'Sans filtre seul : tous les signaux sont pris.'),
       multSecu: '×' + (((s.gSecus || []).length || 1) * ((s.gLectures || []).length || 1)
         * ((s.gTemps || []).length || 1)),
-      choixUts: [['H1', 'H1'], ['H4', 'H4'], ['D1', 'D1 (Daily)']].map(([v, nom]) => ({
-        v, nom, aide: 'Taille des bougies balayées : ' + nom,
+      // ————— L'UNITÉ DE TEMPS SE REPLIE, ET LES PIÈGES SE NOMMENT —————
+      //
+      // Trois boutons au même rang laissaient croire à trois choix équivalents. Ils ne le
+      // sont pas : Sivula RECONSTRUIT H4 et Daily à partir des bougies horaires, et un
+      // fichier déjà en Daily fausse les filtres multi-unités — la page le dit ailleurs,
+      // pas ici, à l'endroit du choix. H1 est replié par défaut ; les deux autres restent
+      // atteignables derrière « changer », avec l'avertissement au moment où il sert.
+      choixUts: [
+        ['H1', 'H1', 'La matière de Sivula : les bougies horaires que vous déposez. '
+          + 'H4 et Daily en sont reconstruits, donc rien n\u2019est perdu à rester ici.'],
+        ['H4', 'H4', 'Balaye des bougies de quatre heures. Elles sont RECONSTRUITES à partir '
+          + 'de vos bougies horaires : le résultat est bon, mais quatre fois moins de signaux '
+          + 'sont possibles, et les filtres multi-unités perdent leur unité de référence.'],
+        ['D1', 'D1 (Daily)', 'Balaye des bougies quotidiennes, reconstruites elles aussi. '
+          + 'Attention : si le fichier déposé est DÉJÀ en Daily, les filtres multi-unités '
+          + 'comparent une unité à elle-même et ne filtrent plus rien.'],
+      ].map(([v, nom, aide]) => ({
+        v, nom, aide,
+        avertir: v !== 'H1',
         cls: 'tag ' + (s.ut === v ? 'tag-accent' : 'tag-outline'),
         choisir: () => this.maj({ ut: v }),
       })),
+      utLigne: 'Unité de temps',
+      utVal: s.ut || 'H1',
+      utDetail: !!s.utDetail || (s.ut || 'H1') !== 'H1',
+      basculerUtDetail: () => this.setState({ utDetail: !(s.utDetail || (s.ut || 'H1') !== 'H1') }),
+      utLienTxt: (s.utDetail || (s.ut || 'H1') !== 'H1') ? 'replier' : 'changer',
+      aUtAvertir: (s.ut || 'H1') !== 'H1',
+      utAvertirTxt: (s.ut || 'H1') === 'H4'
+        ? 'H4 est reconstruit à partir de vos bougies horaires : quatre fois moins de signaux possibles, '
+          + 'et les filtres multi-unités perdent leur unité de référence.'
+        : 'Daily est reconstruit à partir de vos bougies horaires. Si le fichier déposé est déjà en Daily, '
+          + 'les filtres multi-unités comparent une unité à elle-même et ne filtrent plus rien.',
       // Les seuils ne changent RIEN au calcul : ils filtrent l'affichage. Le bouton en dit
       // le nombre pour qu'on sache qu'ils sont là, sans laisser croire qu'on scanne moins.
       nSeuilsActifs: (() => {
@@ -16999,8 +17181,15 @@ GROUPES = {
           e2Ouvert: e2.ouvert, e2Fond: e2.fond, e2Trait: e2.trait, e2Chevron: e2.chevron, e2Gras: e2.gras,
           e3Ouvert: e3.ouvert, e3Fond: e3.fond, e3Trait: e3.trait, e3Chevron: e3.chevron, e3Gras: e3.gras,
           ouvrirEtape1: poser(1), ouvrirEtape2: poser(2), ouvrirEtape3: poser(3),
-          e1Resume: this.pl(s.univers.length || 0, 'instrument', 'instruments')
-            + ' \u00b7 ' + dispo + ' \u00b7 ' + (s.ut || 'H1'),
+          // Une étape repliée qui annonce « 0 instrument » sans le signaler laisse
+          // chercher longtemps pourquoi le scan ne part pas.
+          ...(() => {
+            const nU = this.universDuCompte(s.univers).length;
+            return { e1Resume: nU
+                ? this.pl(nU, 'instrument', 'instruments') + ' \u00b7 ' + dispo + ' \u00b7 ' + (s.ut || 'H1')
+                : 'aucun instrument choisi',
+              e1ResumeCouleur: nU ? 'var(--color-neutral-500)' : 'var(--color-accent-700)' };
+          })(),
           e2Resume: parInstr.toLocaleString('fr-FR') + ' réglages par instrument',
           e3Resume: (s.btFrais ? 'frais réels' : 'sans frais') + ' \u00b7 sécurisation \u00b7 seuils',
           // La sécurisation multiplie elle aussi : le dire ici est ce qui empêche la
@@ -17008,7 +17197,7 @@ GROUPES = {
           aSecuHors: nSecu > 1,
           secuHorsTxt: 'Sécurisation, lecture et durée multiplient aussi (\u00d7' + nSecu
             + ') : elles se règlent à l\u2019étape 3, parce qu\u2019elles décrivent comment on mesure.',
-          decompoTxt: this.pl(s.univers.length || 1, 'instrument', 'instruments')
+          decompoTxt: this.pl(this.universDuCompte(s.univers).length, 'instrument', 'instruments')
             + ' \u00d7 ' + parInstr.toLocaleString('fr-FR') + ' réglages \u00b7 '
             + this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
           lancerOpacite: this.universDuCompte(s.univers).length ? '1' : '.5',
@@ -17076,9 +17265,10 @@ GROUPES = {
             : 'du ' + jj(d) + ' au ' + jj(f) + ' \u00b7 ' + this.dureeEcart(tot - dedans) + ' écartés',
           fenDetail: !!s.fenDetail || !fen.complete,
           basculerFenDetail: () => this.setState({ fenDetail: !(s.fenDetail || !fen.complete) }),
-          fenLienTxt: (s.fenDetail || !fen.complete)
-            ? 'replier le choix de la période'
-            : 'mesurer sur une partie seulement\u2026',
+          fenLienTxt: (s.fenDetail || !fen.complete) ? 'replier' : 'réduire',
+          fenLienAide: (s.fenDetail || !fen.complete)
+            ? 'Replier le choix de la période'
+            : 'Mesurer sur une partie seulement de l\u2019historique disponible',
           // L'avertissement n'est pas supprimé, il est déplacé : il s'affiche au moment où
           // une réduction est réellement choisie, là où il sert à changer d'avis.
           aFenAvertir: !fen.complete,
