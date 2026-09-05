@@ -9006,13 +9006,41 @@ GROUPES = {
   // stockage synchrone avant de partir.
   quitter = (e) => {
     try { this.ecrireSession(); } catch (err) {}
-    if (!this.state.scanEnCours) return undefined;
-    try { localStorage.setItem(this.cle('simula.scan.depart'), String(Date.now())); } catch (err) {}
-    const msg = 'Un scan est en cours : quitter cette page l\u2019interrompt.';
-    e.preventDefault();
-    e.returnValue = msg;
-    return msg;
+    if (this.state.scanEnCours) {
+      try { localStorage.setItem(this.cle('simula.scan.depart'), String(Date.now())); } catch (err) {}
+      const msg = 'Un scan est en cours : quitter cette page l\u2019interrompt.';
+      e.preventDefault();
+      e.returnValue = msg;
+      return msg;
+    }
+    // ————— LE DERNIER FILET —————
+    //
+    // Le stockage d'un navigateur peut être vidé entre deux séances, et l'application ne
+    // le sait qu'après coup. Le seul moment où l'avertissement sert encore, c'est AVANT
+    // de fermer — quand un export est encore possible. On ne le pose que si du travail
+    // n'existe nulle part ailleurs : ni fichier de sauvegarde automatique, ni export.
+    if (this.avertirSansSauvegarde()) {
+      const msg = 'Rien de ce travail n\u2019existe hors de ce navigateur. Exportez avant de fermer.';
+      e.preventDefault();
+      e.returnValue = msg;
+      return msg;
+    }
+    return undefined;
   };
+  // vrai quand il y a quelque chose à perdre et que rien ne le protège
+  avertirSansSauvegarde() {
+    if (this.essai || this.compteActif === 'demo') return false;
+    if (this.handleAuto && !this.state.autoAttente) return false;
+    const aPerdre = (this.lignesScan || []).length > 0
+      || ((this.state.deposes || []).length > 0)
+      || ((this.state.valides || []).length > 0);
+    if (!aPerdre) return false;
+    // un export du jour vaut protection : inutile d'agacer à chaque fermeture
+    let t = 0;
+    try { t = Number(localStorage.getItem(this.cleGlobale(this.CLE_SAUV))) || 0; } catch (e) {}
+    if (this.state.sauvDate) t = Math.max(t, this.state.sauvDate);
+    return !(t && Date.now() - t < 86400000);
+  }
   // hauteurs réelles des barres collantes : chaque étage se cale sous le précédent quelle
   // que soit la largeur de la fenêtre, y compris quand une barre passe sur deux lignes.
   // Le bandeau de verdict du backtest est un troisième étage : mesurer le fil n'était pas
