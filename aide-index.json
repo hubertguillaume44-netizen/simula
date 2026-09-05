@@ -570,13 +570,6 @@
    ]
   },
   {
-   "terme": "tirages au hasard",
-   "texte": "Combien d’entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n’est mesurable. Montez-le et une fiche déjà contrôlée propose de pousser plus loin.",
-   "vues": [
-    "Historique"
-   ]
-  },
-  {
    "terme": "Tolérance",
    "texte": "Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.",
    "vues": [

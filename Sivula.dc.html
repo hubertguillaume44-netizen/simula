@@ -1613,7 +1613,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ validesVersPf }}" disabled="{{ sansARanger }}" title="Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.">Tout ranger dans {{ pfNom }}</button>
             <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ viderValides }}" disabled="{{ sansARanger }}" title="Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.">Écarter</button>
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}"></label>
           </div>
         </div>
         <sc-if value="{{ aARanger }}" hint-placeholder-val="{{ true }}">
@@ -1672,7 +1672,7 @@
                 <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.exporterRobots }}" title="Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.">{{ ps.robotsTxt }}</button>
                 <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:20ch" value="{{ ps.nom }}" onChange="{{ ps.renommer }}" title="Renommer ce portefeuille">
                 <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ ps.supprimer }}" title="{{ ps.supprAide }}">{{ ps.supprTxt }}</button>
-                <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}"></label>
               </div>
             </div>
             <!--
@@ -3025,8 +3025,15 @@
               <sc-for list="{{ ongletsCumul }}" as="oc" hint-placeholder-count="7">
                 <button type="button" class="{{ oc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="{{ oc.aide }}" onClick="{{ oc.choisir }}">{{ oc.nom }}</button>
               </sc-for>
-              <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-inline-start:auto" class="text-muted" title="Combien d’entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien de plus fin que 0,5 % n’est mesurable. Montez-le et une fiche déjà contrôlée propose de pousser plus loin.">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:8ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}"></label>
+              <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ lancerLot }}" disabled="{{ lotBloque }}" title="{{ boutonLotAide }}">{{ boutonLot }}</button>
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px" class="text-muted" title="{{ aideTirages }}">tirages au hasard<input class="input" type="number" min="200" max="20000" step="100" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}"></label>
             </div>
+            <!--
+              LA RÈGLE, écrite. C'est elle qui explique pourquoi un bouton disparaît quand
+              le contrôle est déjà fait au nombre demandé : sans elle, l'interface a l'air
+              bloquée alors qu'elle dit « c'est déjà mesuré ».
+            -->
+            <span style="font-size:11px;line-height:1.5;margin-top:-6px" class="text-muted">Le nombre de tirages vaut pour toute la page. Montez-le et les fiches déjà contrôlées proposent de pousser plus loin.</span>
 
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px">
               <sc-for list="{{ toutesRows }}" as="tr2" hint-placeholder-count="9">
@@ -3139,7 +3146,7 @@
             </label>
             <div class="field" style="width:150px">
               <label>Tirages par configuration<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.">?</span></label>
-              <input class="input" type="number" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" min="200" max="20000" step="100" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}">
+              <input class="input" type="number" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" min="200" max="20000" step="100" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}">
             </div>
             <span style="font-size:12px;max-width:60ch;line-height:1.5" class="text-muted">{{ hasardPorte }} {{ tiragesPortee }}</span>
           </div>
@@ -4955,10 +4962,16 @@ class Component extends DCLogic {
   }
   // Contrôle des lignes AFFICHÉES, aux deux nombres de tirages des colonnes. Les lignes
   // déjà contrôlées sont sautées : la série n'est même pas chargée.
-  async controlerAffichees() {
+  // `tirages` donné : on contrôle À CE NOMBRE-LÀ, celui du champ de la barre, qui vaut
+  // pour toute la page. Sans argument, on retombe sur les deux colonnes du tableau des
+  // mesures, qui comparent deux nombres pour la même configuration.
+  async controlerAffichees(tirages) {
     if (!this.M || this.state.hasardEnCours) return;
     const nA = Math.max(50, Number(this.state.hasardA) || 500);
     const nB = Math.max(50, Number(this.state.hasardB) || 1000);
+    const nombres = tirages
+      ? [Math.max(200, Number(tirages) || 200)]
+      : [...new Set([nA, nB])];
     // Toutes les configurations AFFICHÉES, y compris celles dépliées sous un groupe :
     // le contrôle ne couvrait que les lignes de tête, donc les cellules des sous-lignes
     // restaient vides sans que rien ne l'explique.
@@ -4970,15 +4983,22 @@ class Component extends DCLogic {
       vues.add(k); lignes.push(r);
     };
     for (const r of this._ciblesHasard || []) ajouter(r);
-    for (const l of (this._retenuesParSym || new Map()).values()) for (const r of l) ajouter(r);
+    // Appelé depuis la barre, le bouton annonce un nombre de fiches VISIBLES : y ajouter
+    // toutes les configurations repliées de chaque groupe ferait mentir son libellé —
+    // mesuré, il promettait 4 contrôles et en lançait 675. Le mode à deux colonnes, lui,
+    // porte bien sur tout ce que le tableau des mesures affiche.
+    if (!tirages) {
+      for (const l of (this._retenuesParSym || new Map()).values()) for (const r of l) ajouter(r);
+    }
     const taches = [];
     for (const r of lignes) {
-      for (const t of [...new Set([nA, nB])]) {
+      for (const t of nombres) {
         if (!this.hasardFait(this.cleHasardFait(r, t))) taches.push([r, t]);
       }
     }
     if (!taches.length) {
-      this.setState({ hasardMsg: 'Toutes les lignes affichées sont déjà contrôlées à ' + nA + ' et ' + nB + ' tirages.' });
+      this.setState({ hasardMsg: 'Toutes les lignes affichées sont déjà contrôlées à '
+        + nombres.join(' et ') + ' tirages.' });
       return;
     }
     this.setState({ hasardEnCours: true, hasardMsg: null, hasardFait: 0, hasardTotal: taches.length });
@@ -15175,6 +15195,15 @@ GROUPES = {
       // Plancher à 200 : un contrôle plus grossier ne peut pas distinguer une
       // configuration, et la décision l'ignorerait — le champ mentirait sur son effet.
       // La borne ne s'applique qu'à la sortie du champ, sinon il est intapable.
+      // Le même réglage à quatre endroits : une seule explication, et elle est posée sur
+      // le CHAMP, pas seulement sur son étiquette — survoler le champ qu'on est en train
+      // de corriger est le geste naturel.
+      aideTirages: 'Combien d\u2019entrées au hasard sont rejouées pour juger une configuration. '
+        + 'Le test ne peut pas descendre sous « une chance sur ce nombre » : à 200 tirages, rien '
+        + 'de plus fin que 0,5 % n\u2019est mesurable. Montez-le pour trancher les cas serrés — le '
+        + 'calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. '
+        + 'C\u2019est le même nombre partout dans la page, et les fiches déjà contrôlées à ce '
+        + 'nombre-là proposent alors de pousser plus loin.',
       ...(() => { const c = this.champNombre('nTirages', 200, 20000, 50);
         return { nTiragesVal: c.val, setNTirages: c.saisir, finNTirages: c.poser }; })(),
       // ce que le nombre de tirages permet de conclure, en clair
@@ -19659,6 +19688,40 @@ GROUPES = {
               toutAfficher: () => this.setState({ symTout: g.sym }),
             };
           });
+      })(),
+      // ————— LE CONTRÔLE EN LOT, DANS LA BARRE —————
+      //
+      // Chaque fiche se contrôlait une par une, au clic sur son propre bouton : avec neuf
+      // fiches à l'écran, neuf clics et neuf attentes pour comparer — et rien ne disait
+      // qu'on pouvait relancer les autres. La méthode existait, elle n'était appelée par
+      // aucun bouton de cette vue.
+      //
+      // Placé APRÈS `toutesRows` dans cet objet, à dessein : c'est ce rendu-là qui
+      // remplit `_ciblesHasard`, et le décompte doit porter sur les fiches réellement
+      // affichées, pas sur celles du rendu précédent.
+      ...(() => {
+        const t = Math.max(200, Number(s.nTirages) || 200);
+        const cibles = (this._ciblesHasard || []).filter((r) => r && !r.sansDonnees
+          && (r.n || 0) >= 5 && !this.hasardFait(this.cleHasardFait(r, t)));
+        const enCours = !!s.hasardEnCours;
+        return {
+          lotTirages: t,
+          lotBloque: enCours || !cibles.length,
+          lancerLot: () => this.controlerAffichees(t),
+          boutonLot: enCours
+            ? 'Contrôle en cours \u00b7 ' + (s.hasardFait || 0) + ' / ' + (s.hasardTotal || 0)
+            : cibles.length
+              ? (cibles.length === 1 ? 'Contrôler la fiche affichée'
+                : 'Contrôler les ' + cibles.length + ' affichées')
+              : 'Fiches affichées déjà contrôlées',
+          boutonLotAide: cibles.length
+            ? 'Rejoue au hasard ' + (cibles.length === 1 ? 'la configuration affichée'
+              : 'les ' + cibles.length + ' configurations affichées')
+              + ' qui ne l\u2019ont pas encore été à ' + t.toLocaleString('fr-FR')
+              + ' tirages. Celles déjà contrôlées à ce nombre-là sont sautées : leur série n\u2019est pas rechargée.'
+            : 'Toutes les fiches affichées sont déjà contrôlées à ' + t.toLocaleString('fr-FR')
+              + ' tirages. Montez le nombre pour aller plus fin.',
+        };
       })(),
       sansConfig: (s.fiche && s.fiche.symboles ? s.fiche.symboles.split(' · ').filter(Boolean) : [])
         .filter((x) => !parSym.has(x)).join(' · '),
