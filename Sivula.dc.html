@@ -3107,8 +3107,11 @@
                         actionnable, avec un chevron qui se retourne à l'ouverture.
                       -->
                       <span style="display:flex;align-items:baseline;gap:4px;font-size:10px;flex-wrap:wrap">
-                        <span class="text-muted" title="Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} au coût ·</span>
-                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;color:{{ tr2.autresCouleur }};text-decoration:underline;text-underline-offset:2px" title="{{ tr2.autresAide }}" onClick="{{ tr2.basculer }}">{{ tr2.autresTxt }}</button>
+                        <span class="text-muted" title="Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)">n° {{ tr2.rangCout }} au coût</span>
+                        <!-- Le séparateur voyage AVEC le lien : porté par le libellé de
+                             gauche, il restait seul en bout de ligne dès que le lien passait
+                             à la ligne suivante — « n° 4 au coût · » puis rien. -->
+                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;color:{{ tr2.autresCouleur }};text-decoration:underline;text-underline-offset:2px" title="{{ tr2.autresAide }}" onClick="{{ tr2.basculer }}">· {{ tr2.autresTxt }}</button>
                       </span>
                     </div>
                     <span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;text-align:right;max-width:15ch;line-height:1.3;flex:none" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span>
@@ -7185,7 +7188,9 @@ GROUPES = {
         // liste d'instruments remise à zéro à chaque ouverture de compte
         univers: [],
         chargeDuree: Date.now() - tCharge,
-      }, () => this.lancerTest());
+        // le recadrage de l'instrument se fait dans le rappel : ici le catalogue du
+        // compte peut encore être celui d'avant
+      }, () => { if (!this.recadrerBtSym()) this.lancerTest(); });
       } catch (e) {
         this.setState({ sauvMsg: 'Le compte n\u2019a pas pu être ouvert en entier ('
           + ((e && e.name) || 'erreur') + '). Ses scans et ses bougies peuvent être incomplets à l\u2019écran ; '
@@ -8180,7 +8185,10 @@ GROUPES = {
       await this.poserBareme('demo', table);
     }
     try { localStorage.setItem(this.cle('simula.semis.v'), String(this.SEMIS_V)); } catch (e) {}
-    this.setState({ deposes: [...this.SYM_DEMO], seriesRev: (this.state.seriesRev || 0) + 1 });
+    this.setState({ deposes: [...this.SYM_DEMO], seriesRev: (this.state.seriesRev || 0) + 1 },
+      // le catalogue du compte de découverte n'existe qu'ici : c'est le premier moment
+      // où l'instrument du Backtest peut être recadré sur lui
+      () => this.recadrerBtSym());
   }
   // ————— L'AIDE —————
   //
@@ -9052,9 +9060,13 @@ GROUPES = {
     }
     const regimesSauves = this.lireRegimes();
     if (regimesSauves) this.setState({ regimes: regimesSauves });
-    if (!this.state.btSym) {
+    // Même règle au premier montage : « AAPL.US » était écrit en dur, alors que rien ne
+    // garantit qu'il soit dans le catalogue du compte ouvert.
+    if (!this.state.btSym || !this.SYMBOLES.includes(this.state.btSym)) {
+      const cat = this.SYMBOLES;
       this.setState({
-        btSym: this.essai ? this.DEMO[0] : 'AAPL.US',
+        btSym: this.essai ? this.DEMO[0]
+          : (cat.find((x) => this.aSerieChargee(x)) || cat[0] || 'AAPL.US'),
         univers: this.state.univers,
       });
     }
@@ -9483,7 +9495,35 @@ GROUPES = {
     }
   }
 
+  // ————— L'INSTRUMENT DU BACKTEST APPARTIENT AU COMPTE OUVERT —————
+  //
+  // Il ne suivait pas le changement de compte. En ouvrant le compte de démonstration,
+  // `btSym` restait sur un instrument du catalogue précédent — USNDAQ100, AAPL.US. Le
+  // menu déroulant ne propose QUE le catalogue du compte actif : sans option
+  // correspondante, le navigateur affiche sa PREMIÈRE option, DEMO-AUTO, pendant que la
+  // page mesure USNDAQ100, titre « Nasdaq 100 » et annonce « Données insuffisantes pour
+  // USNDAQ100 ». Le menu montrait un instrument, la page en mesurait un autre, et
+  // « Relancer le test » n'y changeait rien.
+  //
+  // Le recadrage ne peut pas se faire au moment du changement de compte : le semis du
+  // compte de découverte est lancé sans être attendu, et le catalogue est encore celui
+  // d'avant. Il est donc appelé aux trois moments où il peut enfin trancher — après
+  // l'ouverture du compte, à la fin du semis, et avant toute mesure.
+  recadrerBtSym() {
+    const cat = this.SYMBOLES;
+    if (!cat.length) return false;
+    const cur = this.state.btSym;
+    if (cur && cat.includes(cur)) return false;
+    // un instrument dont la série est chargée, sinon le compte s'ouvre sur un backtest
+    // qui ne peut rien mesurer
+    const neuf = cat.find((x) => this.aSerieChargee(x)) || cat[0];
+    if (!neuf || neuf === cur) return false;
+    this.setState({ btSym: neuf, venuDeHisto: null, erreur: null }, () => this.lancerTest());
+    return true;
+  }
   async testerUneFois() {
+    // l'instrument doit exister dans le compte ouvert avant qu'on mesure quoi que ce soit
+    if (this.recadrerBtSym()) return;
     // rien n'a changé depuis le dernier calcul : ne pas recharger les séries,
     // ne pas recalculer, ne pas réécrire la session.
     if (this.state.res && this.state.signature === this.sigCourante()) return;
@@ -16657,7 +16697,10 @@ GROUPES = {
       aJour: !!res && !this.perime(),
       btTotal: res ? sg(res.total, 1) + ' R' : '—',
       btN: res ? res.n : '—',
-      btAnnees: res ? fr(res.annees, 1) + ' ans' : '—',
+      // La durée mesurée s'écrit PARTOUT avec la même règle : « 1,3 an », « 8 mois »,
+      // « 6,6 ans ». Ce seul endroit ajoutait « ans » à un nombre brut, et la même page
+      // pouvait donc afficher « 1,3 ans » ici et « 1,4 an » deux blocs plus haut.
+      btAnnees: res ? this.ansTxt((Number(res.annees) || 0) * this.AN_MS) : '—',
       btRAn: res ? sg(res.rAn, 1) + ' R' : '—',
       btWin: res ? (res.nGains === undefined ? fr(res.winRate, 0) + ' %' : res.nGains + ' / ' + res.nPertes + ' / ' + (res.neutres || 0)) : '—',
       btWinDetail: res
@@ -16795,7 +16838,9 @@ GROUPES = {
       ...(() => {
         const l = this.ligneBt();
         if (!l) {
-          return { btRangerTxt: 'Ranger au portefeuille', btRangerOff: true,
+          // Le libellé dit le motif du refus, comme sur les fiches : un bouton nommé
+          // « Ranger au portefeuille » mais désactivé ne se distingue pas d'une panne.
+          return { btRangerTxt: 'Lancez d\u2019abord le test', btRangerOff: true,
             btRangerAide: 'Lancez d\u2019abord le test : il n\u2019y a rien à ranger.',
             btRangerFond: 'transparent', btRangerEncre: 'currentColor', btRangerVoile: '.5',
             btRanger: () => {} };
