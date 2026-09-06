@@ -54,6 +54,12 @@ input int      InpMaxBarres = 200000;         // Bougies maximum par fichier
 // Sept ans de M1 = plusieurs millions de barres : sur un VPS à ligne lente le
 // téléchargement prend des minutes. Augmentez si le script rend la main trop tôt.
 input int      InpAttenteSec = 1800;          // Attente max du téléchargement, par unité (s)
+// LE MÊME SCRIPT, RÉGLÉ SUR M1. Les fichiers _M1.csv ne servent qu'à départager
+// Sivula et le robot MT5 quand ils divergent — savoir si le stop ou l'objectif a
+// été touché d'abord dans l'heure. Le scan et le backtest n'en ont pas besoin :
+// ils travaillent en H1. Comptez soixante fois le volume du H1 : n'exportez en M1
+// que les instruments que vous comparez.
+input bool     InpM1       = false;           // Exporter la M1 (départage robot) au lieu du H1
 
 //+------------------------------------------------------------------+
 //| Force le téléchargement d'un historique et attend qu'il arrive.   |
@@ -223,6 +229,7 @@ bool Exporter(string sym)
 
    PrintFormat("%s : demande de l'historique depuis %s.", sym, TimeToString(InpDu, TIME_DATE));
    AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec);
+   if(InpM1) return ExporterM1(sym);
    AttendreHistorique(sym, PERIOD_H1, "H1", InpDu, InpAttenteSec);
 
    MqlRates r[];
@@ -437,6 +444,59 @@ bool Exporter(string sym)
 //+------------------------------------------------------------------+
 //| La liste, lue dans un fichier plutôt que saisie.                  |
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//| Export M1 — le départage, pas la mesure.                          |
+//|                                                                   |
+//| Sivula range ces fichiers dans un espace à part : ils ne servent  |
+//| qu'à savoir, quand Sivula et le robot divergent, ce que le prix a |
+//| réellement fait DANS l'heure. Ils n'entrent jamais dans le moteur |
+//| de scan ni de backtest, qui exige du H1 confirmé. Pas de plafond  |
+//| InpMaxBarres ici : tronquer un départage le rendrait muet sur la  |
+//| période justement disputée.                                       |
+//+------------------------------------------------------------------+
+bool ExporterM1(string sym)
+{
+   MqlRates m1[];
+   ArraySetAsSeries(m1, false);
+   int n = CopyRates(sym, PERIOD_M1, InpDu, TimeCurrent(), m1);
+   if(n <= 0)
+   {
+      PrintFormat("%s : aucune bougie M1 depuis %s. Si « historique incomplet » est "
+                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(InpDu, TIME_DATE));
+      Rate(sym, "historique M1 vide depuis " + TimeToString(InpDu, TIME_DATE));
+      return false;
+   }
+   string propre = sym;
+   StringReplace(propre, "#", "");
+   string nom = propre + "_M1.csv";
+   int f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
+   if(f == INVALID_HANDLE)
+   {
+      PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
+      Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
+      return false;
+   }
+   int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+   FileWriteString(f, "date,open,high,low,close,volume,spread
+");
+   for(int i = 0; i < n; i++)
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d
+",
+         TimeToString(m1[i].time, TIME_DATE | TIME_MINUTES),
+         DoubleToString(m1[i].open,  dec),
+         DoubleToString(m1[i].high,  dec),
+         DoubleToString(m1[i].low,   dec),
+         DoubleToString(m1[i].close, dec),
+         m1[i].tick_volume,
+         m1[i].spread));
+   FileClose(f);
+   PrintFormat("%s : %d bougies M1 écrites dans MQL5/Files/%s — de %s à %s",
+               sym, n, nom,
+               TimeToString(m1[0].time, TIME_DATE),
+               TimeToString(m1[n - 1].time, TIME_DATE));
+   return true;
+}
+
 int LireListeFichier(string chemin, string &out[])
 {
    if(StringLen(chemin) == 0 || !FileIsExist(chemin)) return 0;

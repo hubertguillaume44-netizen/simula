@@ -795,49 +795,10 @@
         largeurs inégales. Quatre éléments à `flex:1 1 210px` se partagent la rangée à
         égalité, quel que soit son nombre.
       -->
-      <div style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:11px;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
-        <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
-          <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
-          <span style="font-size:11px" class="text-muted">une seule fois</span>
-          <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px;margin-inline-start:auto" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
-          <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="{{ listeMt5Aide }}">{{ listeMt5Txt }}</button>
-        </div>
-        <!--
-          L'ORDRE DU PARCOURS, ET PAS UN AUTRE.
-
-          La notice numérotait « placez symboles.txt » en 2, avant même que le relevé
-          existe — or c'est le relevé qui fait apparaître les instruments, donc la
-          sélection, donc la liste. On demandait un fichier qu'il était impossible de
-          produire à ce moment-là.
-
-          Vérifié dans les sources des deux scripts : sans `symboles.txt`,
-          `Sivula_Releve` relève TOUTE l'Observation du marché — il n'a besoin d'aucune
-          liste. `Export_H1_Sivula`, lui, la lit et n'exporte que ce qu'elle nomme.
-          D'où trois temps : on compile, on relève, puis on choisit et on télécharge.
-        -->
-        <div style="display:flex;flex-wrap:wrap;gap:14px 22px;font-size:11px;line-height:1.5">
-        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
-          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">Une seule fois</span><span style="font-size:10px" class="text-muted">à l’installation</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">1</span><span>Bouton <strong>Les deux scripts MT5</strong> ci-dessus. Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7).</span></span>
-        </div>
-        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
-          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">D’abord le relevé</span><span style="font-size:10px" class="text-muted">il ne demande aucune liste</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">2</span><span>Dans MT5, glissez <code>Sivula_Releve</code> sur n’importe quel graphique. Sans liste, il relève <strong>toute votre Observation du marché</strong>.</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">3</span><span>Déposez le <code>releve.csv</code> produit ici, par <strong>Déposer un relevé</strong>. Vos instruments apparaissent alors avec leur coût — spread, portage, minimum de stop.</span></span>
-        </div>
-        <div style="flex:1 1 270px;min-width:0;display:flex;flex-direction:column;gap:7px">
-          <span style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-size:10px;letter-spacing:.07em;text-transform:uppercase">Ensuite les bougies</span><span style="font-size:10px" class="text-muted">seulement celles que vous demandez</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">4</span><span>Cochez les instruments voulus dans la liste de gauche, puis cliquez <strong>Liste pour MT5</strong> : <code>symboles.txt</code> se télécharge, orthographié comme votre courtier les nomme.</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">5</span><span>Posez <code>symboles.txt</code> dans <code>MQL5\Files\Sivula\</code>, puis glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls.</span></span>
-          <span style="display:grid;grid-template-columns:15px 1fr;gap:8px;align-items:baseline"><span style="font-family:var(--font-heading);font-size:12px" class="text-muted">6</span><span>Déposez ces CSV ici, par <strong>Déposer des bougies H1</strong>. Le scan devient possible.</span></span>
-        </div>
-        </div>
-        <span style="font-size:10px;line-height:1.5" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — les boutons de gauche ne sont là que si vous préférez cliquer.</span>
-        <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
-          <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5">{{ mt5Copie }}</span>
-        </sc-if>
-      </div>
-
+      <!--
+        LE CAPITAL D'ABORD : il définit ce que vaut 1 R partout dans l'application,
+        et il change deux fois par an — ce n'est pas une étape d'installation MT5.
+      -->
       <div style="background:var(--color-accent-100);padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-width:0">
         <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap">
           <strong style="font-family:var(--font-heading);font-size:34px;line-height:1;letter-spacing:-.01em">{{ teteEuroR }}</strong>
@@ -877,20 +838,81 @@
           </sc-if>
           en nuits.
         </div>
+      </div>
 
-        <!--
-          TROIS ACTIONS DE POIDS DIFFÉRENTS, DONC TROIS NIVEAUX, en pied de colonne.
-        -->
-        <div id="zoneDepot" style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:4px">
-          <label class="btn btn-primary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
-            Déposer des bougies H1
-            <input id="champBougies" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-          </label>
-          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
+      <!--
+        CHAQUE BOUTON À CÔTÉ DE L'ÉTAPE QU'IL EXÉCUTE.
+
+        Les boutons étaient dispersés — les scripts en haut à droite, les deux dépôts
+        en bas du cadre du capital, la liste en gris pâle à côté du titre — et le texte
+        devait donner des directions : « ci-dessus », « en bas ». Cinq lignes
+        numérotées, chaque bouton sur sa ligne, dans l'ordre où on les fait. Les trois
+        colonnes imposaient une lecture en zigzag ; cinq lignes se lisent de haut en
+        bas. `min-width:26ch` sur la colonne de texte : sur écran étroit, le bouton
+        passe SOUS le texte au lieu de l'écraser.
+      -->
+      <div id="zoneDepot" style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:0;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
+        <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;padding-bottom:11px">
+          <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
+          <span style="font-size:11px" class="text-muted">l’installation une seule fois, le reste à chaque mise à jour</span>
+        </div>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">1</span>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+            <strong style="font-size:13px;line-height:1.4">Installer les deux scripts</strong>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois</strong>, à l’installation.</span>
+          </div>
+          <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
+        </div>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">2</span>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+            <strong style="font-size:13px;line-height:1.4">Déposer le relevé de symboles</strong>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Dans MT5, glissez <code>Sivula_Releve</code> sur n’importe quel graphique : sans liste, il relève <strong>toute votre Observation du marché</strong>. Déposez ici le <code>releve.csv</code> produit — vos instruments apparaissent alors avec leur coût réel : spread, portage, minimum de stop.</span>
+          </div>
+          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
             Déposer un relevé
             <input id="champReleve" type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
           </label>
         </div>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">3</span>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+            <strong style="font-size:13px;line-height:1.4">Cocher les instruments souhaités</strong>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Cochez-les dans la liste de gauche, puis téléchargez <code>symboles.txt</code> — orthographié comme votre courtier les nomme. Posez-le dans <code>MQL5\Files\Sivula\</code>.</span>
+          </div>
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="{{ listeMt5Aide }}">{{ listeMt5Txt }}</button>
+        </div>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">4</span>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+            <strong style="font-size:13px;line-height:1.4">Déposer les bougies H1</strong>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls, dans <code>MQL5\Files</code>. Déposez-les ici — le scan devient possible.</span>
+          </div>
+          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
+            Déposer des bougies H1
+            <input id="champBougies" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+        </div>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">5</span>
+          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+              <strong style="font-size:13px;line-height:1.4">Déposer les bougies M1</strong>
+              <span class="tag tag-outline" style="font-size:10px">facultatif</span>
+            </div>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Même script, réglé sur M1 (<code>InpM1</code>). Le scan et le backtest n’en ont pas besoin : ils travaillent en H1. Le M1 sert à une seule chose, <strong>départager Sivula et le robot MT5 quand ils divergent</strong> — savoir si le stop ou l’objectif a été touché d’abord dans l’heure. Comptez soixante fois le volume du H1 : n’en déposez que pour les instruments que vous comparez.</span>
+          </div>
+          <label class="btn btn-ghost" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
+            Déposer des bougies M1
+            <input id="champBougiesM1" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoixM1 }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
+        </div>
+
+        <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — ces cinq boutons ne sont là que si vous préférez cliquer.</span>
+        <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5;padding-top:8px">{{ mt5Copie }}</span>
+        </sc-if>
       </div>
 
       </div>
@@ -6017,7 +6039,7 @@ GROUPES = {
   // lit un CSV déposé par l'utilisateur : rien n'est envoyé, tout reste dans le navigateur
   async accepterFichiers(liste) {
     if (!this.M || !liste || !liste.length) return;
-    const ajoutes = [], refuses = [], nonGardes = [];
+    const ajoutes = [], refuses = [], nonGardes = [], infosM1 = [];
     // lecture + validation : plusieurs secondes par fichier sur un gros historique.
     // Sans indicateur, l'utilisateur ne sait pas si son dépôt a été pris.
     const nTot = liste.length;
@@ -6054,6 +6076,16 @@ GROUPES = {
       }
       // un export dans la mauvaise unité de temps est l'erreur nº 1 des premiers dépôts
       const utNom = f.name.match(/_(M\d+|H4|D1|W1|MN1)\b/i);
+      // le M1, lui, a sa place — À PART : il ne doit jamais entrer dans le moteur
+      if (utNom && utNom[1].toUpperCase() === 'M1') {
+        const symM = f.name.replace(/\.csv$/i, '').replace(/_M1$/i, '').replace(/^#/, '');
+        try {
+          const r2 = await this.garderM1(symM, await f.text());
+          if (r2.ok) infosM1.push(symM);
+          else refuses.push(f.name + ' (' + r2.motif + ')');
+        } catch (e) { refuses.push(f.name + ' (illisible)'); }
+        continue;
+      }
       if (utNom) { refuses.push(f.name + ' (unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste)'); continue; }
       const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
       try {
@@ -6080,7 +6112,9 @@ GROUPES = {
       ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
       messageDepot: (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) : '
           + ajoutes.map((x) => { const f = this.fluxDe(x); return f.label ? x + ' (flux ' + f.label + ', frais ' + f.label + ')' : x; }).join(', ') : '')
-        + (refuses.length ? (ajoutes.length ? ' — ' : '') + 'Ignoré(s) : ' + refuses.join(', ') : '')
+        + (infosM1.length ? ((ajoutes.length) ? ' — ' : '') + 'M1 rangé à part pour ' + infosM1.join(', ')
+          + ' (départage robot : jamais dans le scan ni le backtest)' : '')
+        + (refuses.length ? (ajoutes.length || infosM1.length ? ' — ' : '') + 'Ignoré(s) : ' + refuses.join(', ') : '')
         + (nonGardes.length ? ' — ATTENTION : ' + nonGardes.length + ' série(s) n\u2019ont pas pu être enregistrées '
           + '(mémoire du navigateur pleine). Elles fonctionnent jusqu\u2019à la fermeture de l\u2019onglet, puis seront perdues. '
           + 'Supprimez des bougies dont vous n\u2019avez plus besoin (colonne Bougies de l\u2019onglet Symboles dispos), puis redéposez celles-ci : '
@@ -12991,6 +13025,16 @@ GROUPES = {
           prefixe, n: dedans, octets: Math.round(dedans * moyen) });
         if (hors.length) postes.push({ type: 'horsIndex', compte: connu ? seg : null,
           prefixe, cles: hors, n: hors.length, octets: Math.round(hors.length * moyen) });
+      } else if (prefixe.startsWith(this.CLE_M1)) {
+        // le M1 pèse lourd (soixante fois le H1) : il doit se voir, et se libérer
+        let octets = 0;
+        for (const k of liste) {
+          const bloc = await this.grosGet(k);
+          if (bloc && bloc.texte) octets += bloc.texte.length;
+        }
+        const seg = prefixe.split('.').pop();
+        const connu = this.COURTIERS.some(([c]) => c === seg);
+        postes.push({ type: 'm1', compte: connu ? seg : null, prefixe, n: liste.length, octets });
       } else if (prefixe.startsWith(this.CLE_HASARD)) {
         // sans ce poste, la place prise par les contrôles n'était ni visible ni libérable
         const bloc = await this.grosGet(prefixe);
@@ -13154,6 +13198,51 @@ GROUPES = {
       ...(b.eh && b.eb ? { eh: ar(b.eh), eb: ar(b.eb) } : {}),
       ...(b.ah && b.ab ? { ah: ar(b.ah), ab: ar(b.ab) } : {}),
       ordreConnu: b.ordreConnu, retourConnu: b.retourConnu, sessRenseigne: b.sessRenseigne };
+  }
+  // ————— LES BOUGIES M1 : un espace à part, jamais dans le moteur —————
+  //
+  // Le M1 ne sert qu'à départager Sivula et le robot MT5 quand ils divergent —
+  // savoir ce que le prix a réellement fait DANS l'heure. Le moteur de scan et de
+  // backtest exige du H1 confirmé : une série M1 chargée comme série de mesure
+  // ferait tomber tous ses invariants. D'où un stockage distinct, et une cadence
+  // VÉRIFIÉE au dépôt — le nom du fichier ne suffit pas.
+  CLE_M1 = 'simula.m1.v1';
+  async garderM1(sym, txt) {
+    const tete = (() => {
+      try { return this.M.texteVersDf(txt.split(/\r?\n/).slice(0, 400).join('\n')); }
+      catch (e) { return null; }
+    })();
+    if (!tete || !tete.n || tete.n < 10) return { ok: false, motif: 'aucune bougie lisible' };
+    const d = [];
+    for (let i = 1; i < Math.min(60, tete.n); i++) d.push(tete.t[i] - tete.t[i - 1]);
+    d.sort((a, b) => a - b);
+    const med = d[d.length >> 1] || 0;
+    if (med > 120000) return { ok: false,
+      motif: 'cadence ' + Math.round(med / 60000) + ' min : ce n\u2019est pas du M1 — déposez-le par « Déposer des bougies H1 »' };
+    const ok = await this.grosSet(this.cle(this.CLE_M1) + '|' + sym,
+      { sym, texte: txt, date: Date.now() });
+    if (!ok) return { ok: false, motif: 'mémoire du navigateur pleine' };
+    try {
+      const idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_M1)) || '[]');
+      if (!idx.includes(sym)) localStorage.setItem(this.cle(this.CLE_M1), JSON.stringify([...idx, sym]));
+    } catch (e) {}
+    return { ok: true };
+  }
+  async deposerBougiesM1(liste) {
+    if (!this.M || !liste || !liste.length) return;
+    const pris = [], refus = [];
+    for (const f of liste) {
+      if (!/\.csv$/i.test(f.name)) { refus.push(f.name + ' (pas un CSV)'); continue; }
+      const sym = f.name.replace(/\.csv$/i, '').replace(/_M1$/i, '').replace(/^#/, '');
+      try {
+        const r2 = await this.garderM1(sym, await f.text());
+        if (r2.ok) pris.push(sym); else refus.push(f.name + ' (' + r2.motif + ')');
+      } catch (e) { refus.push(f.name + ' (illisible)'); }
+    }
+    this.setState({ messageDepot:
+      (pris.length ? 'Bougies M1 enregistrées pour ' + pris.join(', ')
+        + ' — elles ne servent qu\u2019à départager Sivula et le robot MT5 : elles n\u2019entrent jamais dans le scan ni le backtest.' : '')
+      + (refus.length ? (pris.length ? ' — ' : '') + 'Ignoré(s) : ' + refus.join(', ') : '') });
   }
   async garderSerie(sym, brut) {
     this._serieSet = null;
@@ -14813,6 +14902,7 @@ GROUPES = {
         this.accepterFichiers([...(e.dataTransfer.files || [])]);
       },
       surChoix: (e) => this.accepterFichiers([...(e.target.files || [])]),
+      surChoixM1: (e) => this.deposerBougiesM1([...(e.target.files || [])]),
       survol: s.survol,
       // La zone de dépôt n'occupe plus le haut de la page : le glisser-déposer couvre
       // toute la vue, et son cadre ne se dessine qu'au survol d'un fichier.
@@ -14959,6 +15049,7 @@ GROUPES = {
           inventaire: inv.map((p) => ({
             nom: p.type === 'horsIndex' ? 'Bougies enregistrées mais non listées'
               : p.type === 'orphelines' ? 'Bougies abandonnées (ancien espace)'
+              : p.type === 'm1' ? 'Bougies M1 (départage robot)' + (p.compte ? ' — ' + this.nomCourtier(p.compte) : '')
               : p.type === 'series' ? 'Bougies H1 — ' + this.nomCourtier(p.compte)
               : p.type === 'hasard' ? 'Contrôles du hasard' + (p.compte ? ' — ' + this.nomCourtier(p.compte) : '')
               : 'Historique des scans' + (p.compte ? ' — ' + this.nomCourtier(p.compte) : ' (ancien espace)')
@@ -14968,6 +15059,8 @@ GROUPES = {
                 + 'Adoptez-les pour les rendre utilisables, ou supprimez-les pour récupérer la place.'
               : p.type === 'orphelines'
               ? p.n + ' séries d\u2019un espace qui n\u2019existe plus : aucun compte ne les lit, elles ne servent plus à rien. À supprimer en premier.'
+              : p.type === 'm1'
+                ? p.n + ' série(s) M1, rangées à part : elles ne servent qu\u2019à départager Sivula et le robot MT5, jamais au scan. Les supprimer ne touche à rien d\u2019autre.'
               : p.type === 'hasard'
                 ? p.n.toLocaleString('fr-FR') + ' contrôles du hasard mémorisés. Les supprimer ne touche ni aux bougies ni aux scans : il faudra seulement relancer les contrôles.'
               : p.type === 'series'

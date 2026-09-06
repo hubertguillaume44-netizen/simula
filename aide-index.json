@@ -374,7 +374,7 @@
   },
   {
    "terme": "Les deux scripts MT5",
-   "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.",
+   "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
    "vues": [
     "Mes instruments"
    ]
