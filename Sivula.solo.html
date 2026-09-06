@@ -16993,11 +16993,9 @@ GROUPES = {
       topEtatAide: (dernierScan && dernierScan.reprise)
         ? 'Ces lignes viennent d\u2019une sauvegarde : le dernier scan n\u2019y est pas identifiable séparément.'
         : 'Ce scan vit dans ce navigateur. Il y est réenregistré automatiquement chaque minute ; pour en garder une copie hors du navigateur, utilisez « Exporter mes données » dans le tiroir.',
-      titreTop: (dernierScan && dernierScan.reprise)
-        ? 'TOP des configurations validées — historique repris'
-        // « scan en cours » désigne ailleurs un calcul qui tourne : ici il s'agit du
-        // scan présent en mémoire et pas encore sauvegardé
-        : 'TOP des configurations validées — scan non sauvegardé',
+      // l'état (« historique repris », « non sauvegardé ») est porté par la pastille
+      // voisine : le titre le répétait en rallonge, et l'écran l'affichait DEUX fois
+      titreTop: 'TOP des configurations validées',
       scanResume: this.aScanData
         ? (retenues.length
             ? (() => {
