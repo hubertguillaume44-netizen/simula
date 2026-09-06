@@ -87,7 +87,7 @@
 </style>
 </helmet>
 
-<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:72px">
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:{{ sansSauvPad }}">
 
   <div id="om-sticky" style="position:sticky;top:0;z-index:45">
   <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
@@ -125,14 +125,6 @@
     <span style="font-size:12px;flex:1;min-width:260px;line-height:1.5;opacity:.92">{{ retrouveTxt }}</span>
     <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ retrouver }}">{{ retrouveBouton }}</button>
     <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:4px 10px" onClick="{{ masquerRetrouve }}">Plus tard</button>
-  </div>
-  </sc-if>
-  <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
-  <div style="background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-    <strong style="font-size:12px;white-space:nowrap">Aucune sauvegarde hors de ce navigateur</strong>
-    <span style="font-size:12px;flex:1;min-width:260px;line-height:1.5;opacity:.9">{{ sansSauvTxt }}</span>
-    <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ sansSauvAgir }}">{{ sansSauvBouton }}</button>
-    <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:4px 10px" onClick="{{ masquerSansSauv }}">Plus tard</button>
   </div>
   </sc-if>
   <sc-if value="{{ aConfirmScan }}" hint-placeholder-val="{{ false }}">
@@ -4392,6 +4384,30 @@
         </div>
       </div>
     </div>
+  </sc-if>
+  <!--
+    LE PIED DE SAUVEGARDE. Il quitte le haut de page pour cesser de l'occuper, pas
+    pour disparaître : collé au bas de l'ÉCRAN, jamais en fin de flux — un
+    avertissement placé après 43 pages de contenu ne serait jamais rencontré. Tant
+    que rien n'a été exporté, il prévient ; après un export, il DATE — l'horodatage
+    et le contenu de l'export sont ce qui a manqué quand des données ont été perdues
+    malgré une sauvegarde. Pas de « Plus tard » : la barre réduite est ce qui rend
+    l'avertissement supportable, pas sa fermeture.
+  -->
+  <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
+  <div style="position:sticky;bottom:0;z-index:60;background:var(--color-accent-900);color:var(--color-bg);border-top:2px solid var(--color-accent-500);padding:{{ sansSauvPadIn }} 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <sc-if value="{{ sansSauvPlein }}" hint-placeholder-val="{{ false }}">
+      <strong style="font-size:13px;line-height:1.35;max-width:24ch;flex:none">Aucune sauvegarde hors de ce navigateur</strong>
+      <span style="font-size:11.5px;flex:1;min-width:38ch;line-height:1.5;opacity:.9">{{ sansSauvTxt }}</span>
+    </sc-if>
+    <sc-if value="{{ sansSauvReduit }}" hint-placeholder-val="{{ false }}">
+      <span style="font-size:12px;flex:1;min-width:38ch;line-height:1.4"><strong>{{ sauvExpTxt }}{{ sauvExpQuand }}</strong>{{ sauvExpSuite }}</span>
+    </sc-if>
+    <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ sansSauvAgir }}">{{ sansSauvBouton }}</button>
+    <sc-if value="{{ aSauvBtn2 }}" hint-placeholder-val="{{ false }}">
+      <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ sauvBtn2Agir }}">{{ sauvBtn2Txt }}</button>
+    </sc-if>
+  </div>
   </sc-if>
 </div></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;essai&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;codeAcces&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2580&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;montantDefaut&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5000,&quot;tsType&quot;:&quot;number&quot;,&quot;unit&quot;:&quot;€&quot;,&quot;min&quot;:500,&quot;max&quot;:50000,&quot;step&quot;:500,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;horizonAns&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:3,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot; ans&quot;,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;vueParDefaut&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;compacte&quot;,&quot;options&quot;:[&quot;compacte&quot;,&quot;deroulee&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mise en page&quot;}}">
@@ -8728,8 +8744,7 @@ GROUPES = {
       || ((this.state.valides || []).length > 0);
     if (!aPerdre) return false;
     // un export du jour vaut protection : inutile d'agacer à chaque fermeture
-    let t = 0;
-    try { t = Number(localStorage.getItem(this.cleGlobale(this.CLE_SAUV))) || 0; } catch (e) {}
+    let t = this.lireSauvInfo().t;
     if (this.state.sauvDate) t = Math.max(t, this.state.sauvDate);
     return !(t && Date.now() - t < 86400000);
   }
@@ -13603,7 +13618,8 @@ GROUPES = {
     URL.revokeObjectURL(a.href);
     // La DATE de la dernière sauvegarde. Un bouton d'export que personne ne clique ne
     // sauve rien : c'est la date qui pousse à cliquer, et elle n'existait nulle part.
-    try { localStorage.setItem(this.cleGlobale(this.CLE_SAUV), String(Date.now())); } catch (e) {}
+    try { localStorage.setItem(this.cleGlobale(this.CLE_SAUV), JSON.stringify({
+      t: Date.now(), nC: (this.lignesScan || []).length, nS: (this.state.deposes || []).length })); } catch (e) {}
     this.setState({ sauvMsg: Object.keys(dump).length + ' blocs exportés.',
       sauvDate: Date.now() });
   }
@@ -13649,6 +13665,21 @@ GROUPES = {
     }, () => this.lancerTest());
   }
   CLE_SAUV = 'simula.derniereSauvegarde.v1';
+  // La trace du dernier export : QUAND, et CE QU'IL CONTENAIT. C'est précisément ce
+  // qui a manqué quand des données ont été perdues malgré une sauvegarde — rien ne
+  // disait de quand elle datait ni ce qu'elle couvrait. L'ancien format (un
+  // horodatage nu) reste lisible.
+  lireSauvInfo() {
+    try {
+      const brut = localStorage.getItem(this.cleGlobale(this.CLE_SAUV));
+      if (!brut) return { t: 0, nC: null, nS: null };
+      if (brut[0] === '{') {
+        const v = JSON.parse(brut);
+        return { t: Number(v.t) || 0, nC: (v.nC === undefined ? null : v.nC), nS: (v.nS === undefined ? null : v.nS) };
+      }
+      return { t: Number(brut) || 0, nC: null, nS: null };
+    } catch (e) { return { t: 0, nC: null, nS: null }; }
+  }
   // ————— CE QUE LE FICHIER CONTIENT, AVANT DE TOUCHER À QUOI QUE CE SOIT —————
   //
   // Un import qui écrase sans demander est le bouton le plus dangereux de
@@ -14701,11 +14732,36 @@ GROUPES = {
         const aPerdre = (this.lignesScan || []).length > 0
           || ((s.deposes || []).length > 0)
           || ((s.valides || []).length > 0);
-        const montrer = !auto && aPerdre && !s.risqueMasque
-          && !this.essai && this.compteActif !== 'demo';
+        const montrer = !auto && aPerdre && !this.essai && this.compteActif !== 'demo';
         const integre = this.dansIframe();
+        const info = this.lireSauvInfo();
+        const t = Math.max(info.t, s.sauvDate || 0);
+        // APRÈS UN EXPORT, LA BARRE NE PRÉVIENT PLUS : ELLE DATE. L'horodatage et le
+        // contenu de l'export sont l'apport réel — c'est ce qui a manqué quand des
+        // données ont été perdues malgré une sauvegarde. Et le « depuis » est VRAI :
+        // le compte actuel est comparé à celui de l'export.
+        const reduit = montrer && t > 0;
+        const hh = (d2) => String(d2.getHours()).padStart(2, '0') + ':' + String(d2.getMinutes()).padStart(2, '0');
+        const dexp = new Date(t);
+        const jours = Math.floor((Date.now() - new Date(dexp).setHours(0, 0, 0, 0)) / 86400000);
+        const quand = jours === 0 ? 'aujourd\u2019hui ' + hh(dexp)
+          : jours === 1 ? 'hier ' + hh(dexp)
+          : 'le ' + String(dexp.getDate()).padStart(2, '0') + '/' + String(dexp.getMonth() + 1).padStart(2, '0') + ' à ' + hh(dexp);
+        const nb = (n, un, pl) => Number(n).toLocaleString('fr-FR') + ' ' + (n > 1 ? pl : un);
+        const delta = info.nC === null ? null : Math.max(0, (this.lignesScan || []).length - info.nC);
+        const depuis = info.nC === null
+          ? 'Tout ce qui a été mesuré depuis n\u2019existe que dans ce navigateur.'
+          : delta > 0
+            ? nb(delta, 'configuration mesurée', 'configurations mesurées') + ' depuis n\u2019'
+              + (delta > 1 ? 'existent' : 'existe') + ' que dans ce navigateur.'
+            : 'Aucune configuration mesurée depuis.';
+        const ouvrirOnglet = () => { try { window.open(window.location.href, '_blank'); } catch (e) {} };
         return {
           aSansSauv: montrer,
+          sansSauvPlein: montrer && !reduit,
+          sansSauvReduit: reduit,
+          sansSauvPadIn: reduit ? '5px' : '8px',
+          sansSauvPad: !montrer ? '72px' : reduit ? '116px' : '150px',
           sansSauvTxt: integre
             ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
               + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
@@ -14716,9 +14772,20 @@ GROUPES = {
               + 'Un navigateur qui vide son espace emporte les scans, les portefeuilles et les bougies. '
               + 'Choisissez un fichier de sauvegarde automatique : il s\u2019écrit sur votre disque à '
               + 'chaque modification, sans clic.',
-          sansSauvBouton: integre ? 'Exporter mes données' : 'Choisir le fichier de sauvegarde',
-          sansSauvAgir: integre ? () => this.exporterTout() : () => this.choisirFichierAuto(),
-          masquerSansSauv: () => this.setState({ risqueMasque: true }),
+          sauvExpTxt: !reduit ? '' : 'Dernier export : ',
+          sauvExpQuand: !reduit ? '' : quand,
+          sauvExpSuite: !reduit ? '' : ' — '
+            + (info.nC === null ? 'contenu non détaillé (export antérieur)' : nb(info.nC, 'configuration', 'configurations') + ', ' + nb(info.nS || 0, 'série', 'séries'))
+            + '. ' + depuis,
+          sansSauvBouton: reduit ? 'Exporter à nouveau'
+            : integre ? 'Exporter mes données' : 'Choisir le fichier de sauvegarde',
+          sansSauvAgir: (reduit || integre) ? () => this.exporterTout() : () => this.choisirFichierAuto(),
+          // « Plus tard » a disparu : un bouton qui referme un avertissement de perte de
+          // données est un bouton pour perdre ses données. À sa place, l'action que la
+          // dernière phrase du texte réclame sans donner le moyen de la faire.
+          aSauvBtn2: integre || !reduit,
+          sauvBtn2Txt: integre ? 'Ouvrir dans un onglet' : 'Exporter mes données',
+          sauvBtn2Agir: integre ? ouvrirOnglet : () => this.exporterTout(),
         };
       })(),
       ...(() => {
@@ -14918,8 +14985,7 @@ GROUPES = {
       })(),
       // ————— LA SAUVEGARDE, ET SA DATE —————
       ...(() => {
-        let t = 0;
-        try { t = Number(localStorage.getItem(this.cleGlobale(this.CLE_SAUV))) || 0; } catch (e) {}
+        let t = this.lireSauvInfo().t;
         if (s.sauvDate) t = Math.max(t, s.sauvDate);
         const j = t ? Math.floor((Date.now() - t) / 86400000) : null;
         const d = s.dlgImport;
