@@ -43,6 +43,10 @@
   .pg.vide { background: var(--color-neutral-100); }
   .pg.vide .nom { color: var(--color-neutral-700); }
   .lg:hover { background: var(--color-accent-100); }
+  .rep { cursor: pointer; font: inherit; color: inherit; text-align: left; background: none;
+         border: 0; border-top: 1px solid var(--color-divider); padding: 8px 0;
+         display: flex; align-items: baseline; gap: 8px; width: 100%; }
+  .rep:hover { color: var(--color-accent-700); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
   .fl { cursor: pointer; font: inherit; text-align: left; display: flex; flex-direction: column;
         gap: 1px; padding: 4px 7px; background: none; border: 1px solid var(--color-divider);
@@ -319,36 +323,41 @@
 
       <sc-if value="{{ tOngDonnees }}" hint-placeholder-val="{{ true }}">
 
+      <!--
+        LE RISQUE EN TÊTE. « Demander la protection » était un lien de corps 11 en
+        dernière ligne, deux écrans plus bas — le seul bouton du panneau qui empêche
+        le navigateur de vider les données, celui qui aurait évité les deux pertes.
+        La persistance s'accorde une fois et ne se redemande jamais : elle se demande
+        AVANT d'avoir 487 configurations en jeu. La jauge remonte à côté de l'état de
+        protection : les deux disent la même chose. Retraits en neutral-700 pleine
+        encre, jamais en opacity : sur du text-muted les deux alphas se multiplient.
+      -->
+      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:{{ tirRisqueFond }}">
+        <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+          <strong style="font-size:13px">{{ tirRisqueTitre }}</strong>
+          <span style="font-size:11px;margin-inline-start:auto;color:var(--color-neutral-700)">{{ tirJauge }}</span>
+        </div>
+        <span style="font-size:12px;line-height:1.55">{{ tirRisquePhrase }}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-if value="{{ aRedemander }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ redemanderPersist }}">Demander la protection</button>
+          </sc-if>
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterTout }}">Exporter mes données</button>
+        </div>
+        <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ tirExportTxt }}</span>
+      </div>
+
+      <!-- la promesse reste dépliée : une promesse repliée ne rassure personne -->
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
         <p style="margin:0;font-size:12px;line-height:1.55"><strong>Rien ne quitte votre navigateur.</strong> <span class="text-muted">Aucun fichier n'est envoyé : tout est lu et calculé sur votre machine, et enregistré sur cet appareil seulement. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
-        <!--
-          Un export sans import n'est pas une sauvegarde : le fichier produit ne pouvait
-          pas être relu. Et la DATE sous les deux boutons est ce qui pousse à cliquer —
-          un bouton d'export que personne ne clique ne sauve rien.
-        -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px" onClick="{{ exporterTout }}">Exporter mes données</button>
           <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
             Importer un fichier
             <input type="file" accept="application/json,.json" onChange="{{ choisirImport }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
           </label>
-        </div>
-        <span style="font-size:11px;line-height:1.5;color:{{ sauvCouleur }}">{{ sauvQuand }}</span>
-
-        <!--
-          L'inventaire des instruments sans bougies n'a rien à faire à côté du capital :
-          c'est un fichier qu'on produit une fois, pour savoir ce qui manque. Il rejoint
-          les deux autres exports.
-        -->
         <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.">{{ exporterManquantsTxt }}</button>
-
-        <!--
-          L'IMPORT NE REMPLACE JAMAIS EN SILENCE. C'est le bouton le plus dangereux de
-          l'application : le contenu d'un espace est le travail de plusieurs semaines, et
-          rien ne le rend. On montre ce que le fichier porte, ce que l'espace porte, puis
-          on laisse choisir.
-        -->
+        </div>
         <sc-if value="{{ aDlgImport }}" hint-placeholder-val="{{ false }}">
           <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-color:var(--color-accent)">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -364,8 +373,19 @@
             <span style="font-size:10px;line-height:1.5" class="text-muted">Fusionner n’écrit que ce qui manque ici. Remplacer écrase l’espace actuel : ce qu’il porte et qui n’est pas dans le fichier est perdu.</span>
           </div>
         </sc-if>
+      </div>
+
+      <!--
+        LES TROIS AUTRES SUJETS SE REPLIENT en lignes-titres portant leur état : on
+        sait sans ouvrir. Tout le texte est conservé à l'ouverture ; les noms de blocs
+        internes ne s'affichent plus par défaut mais ne disparaissent pas — c'est ce
+        qui permet de comprendre un espace orphelin.
+      -->
+      <div style="display:flex;flex-direction:column">
         <sc-if value="{{ aCommChamps }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:7px;padding-top:9px;border-top:1px solid var(--color-divider)">
+          <button type="button" class="rep" onClick="{{ tirBasculeComm }}"><span style="font-size:12px;flex:1"><strong>Commissions du courtier</strong> <span style="color:var(--color-neutral-700)">— {{ tirCommEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevComm }}</span></button>
+          <sc-if value="{{ tirRepComm }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:7px;padding:2px 0 10px">
             <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Commissions — {{ nomCompteTiroir }}</span>
             <p style="margin:0;font-size:12px;line-height:1.5" class="text-muted">Ce que votre courtier prend en plus du spread, par lot et pour un seul côté. Seules les familles présentes dans vos portefeuilles sont listées.</p>
             <sc-for list="{{ commChamps }}" as="cm" hint-placeholder-count="1">
@@ -379,27 +399,23 @@
                 </select>
               </div>
             </sc-for>
-          </div>
+            </div>
+          </sc-if>
         </sc-if>
-        <div style="display:flex;flex-direction:column;gap:6px;padding-top:9px;border-top:1px solid var(--color-divider)">
-          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Actualités &amp; agenda</span>
+        <button type="button" class="rep" onClick="{{ tirBasculeNews }}"><span style="font-size:12px;flex:1"><strong>Actualités &amp; agenda</strong> <span style="color:var(--color-neutral-700)">— {{ tirNewsEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevNews }}</span></button>
+        <sc-if value="{{ tirRepNews }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:2px 0 10px">
           <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">Seule exception à ce qui précède, et elle est facultative : avec une clé, Sivula demande à Finnhub les résultats trimestriels et les titres de presse de vos symboles. <strong>Seuls les tickers sortent</strong> — jamais vos historiques, vos scans ni vos réglages. Sans clé, aucun appel n'est fait.</p>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input class="input" type="password" style="min-height:2rem;height:2rem;font-size:12px;width:24ch" value="{{ cleNews }}" placeholder="clé Finnhub (facultative)" onChange="{{ majCleNews }}">
             <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:11px" onClick="{{ oublierCleNews }}" disabled="{{ sansCleNews }}">Oublier</button>
           </div>
           <span style="font-size:11px" class="text-muted">{{ etatCleNews }}</span>
-        </div>
-      </div>
-
-      <div style="height:1px;background:var(--color-divider)"></div>
-
-        <!--
-          LE CONTENU RÉEL DU STOCKAGE, ÉCRIT. Devant un compte vide, rien ne permettait
-          de distinguer « le navigateur a tout effacé » de « l'application lit au mauvais
-          endroit ». Et la présence de la base IndexedDB ne répond pas à la question :
-          elle est créée vide au démarrage. On lit donc les clés brutes.
-        -->
+          </div>
+        </sc-if>
+        <button type="button" class="rep" onClick="{{ tirBasculeStock }}"><span style="font-size:12px;flex:1"><strong>Contenu du stockage</strong> <span style="color:var(--color-neutral-700)">— {{ tirStockEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevStock }}</span></button>
+        <sc-if value="{{ tirRepStock }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px;padding:2px 0 10px">
         <sc-if value="{{ aStockDiag }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid color-mix(in srgb,var(--color-text) 10%,transparent);padding-top:9px">
             <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Contenu réel du stockage</span>
@@ -413,17 +429,7 @@
             </sc-for>
           </div>
         </sc-if>
-
-        <!--
-          LE CONTENU DE LA MÉMOIRE NE DÉPEND PAS DE LA MESURE DU QUOTA. Ce bouton — le
-          seul chemin vers « Adopter », qui rend des bougies restées dans le stockage —
-          vivait à l'intérieur de la section « Mémoire », elle-même conditionnée à
-          `aPlace` : vraie seulement quand `navigator.storage.estimate()` répond avec un
-          quota. Quand le navigateur ne répond pas, la seule porte de secours de
-          l'application n'existait tout simplement pas à l'écran.
-        -->
         <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
-
       <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ false }}">
         <div style="height:1px;background:var(--color-divider)"></div>
         <div style="display:flex;flex-direction:column;gap:9px">
@@ -451,7 +457,6 @@
           </sc-if>
         </div>
       </sc-if>
-
       <sc-if value="{{ aInventaire }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:8px">
           <strong style="font-family:var(--font-heading);font-size:15px">Ce qui occupe la mémoire</strong>
@@ -470,6 +475,12 @@
           <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ inventaireNote }}</p>
         </div>
       </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ aRevoirPresentation }}" hint-placeholder-val="{{ false }}">
+          <button type="button" class="rep" style="border-bottom:1px solid var(--color-divider)" onClick="{{ revoirPresentation }}"><span style="font-size:12px;flex:1"><strong>Revoir la présentation</strong></span><span style="font-size:11px" class="text-muted">▸</span></button>
+        </sc-if>
+      </div>
 
       <sc-if value="{{ aRevenues }}" hint-placeholder-val="{{ false }}">
         <div style="border:1px solid var(--color-accent);padding:11px 13px;display:flex;flex-direction:column;gap:7px">
@@ -480,10 +491,6 @@
             <button class="btn btn-ghost" type="button" style="min-height:1.9rem;font-size:11px" onClick="{{ garderRevenues }}">Les garder</button>
           </div>
         </div>
-      </sc-if>
-
-      <sc-if value="{{ aRevoirPresentation }}" hint-placeholder-val="{{ false }}">
-        <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ revoirPresentation }}">Revoir la présentation</button>
       </sc-if>
       </sc-if>
     </aside>
@@ -14840,6 +14847,19 @@ GROUPES = {
           // « Plus tard » a disparu : un bouton qui referme un avertissement de perte de
           // données est un bouton pour perdre ses données. À sa place, l'action que la
           // dernière phrase du texte réclame sans donner le moyen de la faire.
+          // la même trace, pour le tiroir Intendance — lisible même quand le pied ne
+          // s'affiche pas (compte démo, autosauvegarde active)
+          tirExportTxt: t > 0
+            ? 'Dernier export : ' + quand + ' — '
+              + (info.nC === null ? 'contenu non détaillé (export antérieur)'
+                : nb(info.nS || 0, 'série', 'séries') + ', ' + nb(info.nC, 'configuration', 'configurations'))
+              + '. '
+              + (info.nC === null ? 'Tout ce qui a été mesuré depuis n\u2019existe qu\u2019ici.'
+                : delta > 0
+                  ? nb(delta, 'configuration mesurée', 'configurations mesurées') + ' depuis n\u2019'
+                    + (delta > 1 ? 'existent' : 'existe') + ' qu\u2019ici.'
+                  : 'Rien de mesuré depuis.')
+            : 'Jamais exporté — rien de ce qui est ici n\u2019existe ailleurs que dans ce navigateur.',
           aSauvBtn2: integre || !reduit,
           sauvBtn2Txt: integre ? 'Ouvrir dans un onglet' : 'Exporter mes données',
           sauvBtn2Agir: integre ? ouvrirOnglet : () => this.exporterTout(),
@@ -15077,8 +15097,37 @@ GROUPES = {
         };
       })(),
       ...(() => {
+        // l'état des trois sections repliées : lisible sans les ouvrir
+        const rep = s.tirRep || '';
+        const bascule = (k) => () => this.setState({ tirRep: this.state.tirRep === k ? '' : k });
+        const t2 = (s.comm || {})[this.compteActif];
+        let commEtat = 'aucune saisie';
+        if (typeof t2 === 'number') commEtat = String(t2).replace('.', ',') + ' € par lot';
+        else if (t2 && typeof t2 === 'object') {
+          const es = Object.entries(t2).filter(([, v2]) => v2 !== '' && v2 !== null && v2 !== undefined);
+          if (es.length) commEtat = es.slice(0, 2).map(([k2, v2]) => {
+            const c3 = ((this.CLASSES || []).find(([kk]) => kk === k2) || [])[1] || k2;
+            return String(c3).toLowerCase() + ' ' + String(v2).replace('.', ',') + ' €';
+          }).join(' · ');
+        }
+        const d2 = s.stockDiag;
+        return {
+          tirRepComm: rep === 'comm', tirBasculeComm: bascule('comm'),
+          tirRepNews: rep === 'news', tirBasculeNews: bascule('news'),
+          tirRepStock: rep === 'stock', tirBasculeStock: bascule('stock'),
+          tirCommEtat: commEtat,
+          tirNewsEtat: this.lireCleNews() ? 'clé enregistrée' : 'sans clé, aucun appel',
+          tirStockEtat: d2
+            ? d2.blocs + (d2.blocs > 1 ? ' blocs' : ' bloc') + ', ' + d2.cles + (d2.cles > 1 ? ' clés' : ' clé')
+            : 'se mesure à l\u2019ouverture',
+          tirChevComm: rep === 'comm' ? '▾' : '▸',
+          tirChevNews: rep === 'news' ? '▾' : '▸',
+          tirChevStock: rep === 'stock' ? '▾' : '▸',
+        };
+      })(),
+      ...(() => {
         const p = s.place;
-        if (!p) return { aPlace: false, placePart: '0%', placeTxt: '', placeCouleur: 'var(--color-accent)' };
+        if (!p) return { aPlace: false, placePart: '0%', placeTxt: '', placeCouleur: 'var(--color-accent)', tirJauge: '' };
         const mo = (o) => Math.round(o / 1048576);
         const pc = Math.round(p.part * 100);
         // Le navigateur peut rapporter un usage SUPÉRIEUR au quota : le quota se
@@ -15092,6 +15141,13 @@ GROUPES = {
           placeCouleur: sature ? 'var(--color-accent-900)' : 'var(--color-accent)',
           // L'ÉCHELLE, sans quoi la barre ne dit rien : « 101 Mo » ne se juge pas, « 101 Mo
           // sur 2,1 Go » se juge d'un coup d'œil.
+          // la jauge remonte à côté de l'état de protection : les deux disent la même
+          // chose — c'est ce que le navigateur effacera d'abord
+          tirJauge: p.aNous !== undefined && p.quota
+            ? mo(p.aNous) + ' Mo sur ' + (p.quota >= 1073741824
+              ? (p.quota / 1073741824).toFixed(1).replace('.', ',') + ' Go'
+              : mo(p.quota) + ' Mo')
+            : '',
           placeTxt: (p.aNous !== undefined ? mo(p.aNous) + ' Mo utilisés' : 'mesure en cours…')
             + (p.quota ? ' sur ' + (p.quota >= 1073741824
               ? (p.quota / 1073741824).toFixed(1).replace('.', ',') + ' Go'
@@ -15109,6 +15165,19 @@ GROUPES = {
             : 'le navigateur peut vider ces données quand le disque se remplit, sans prévenir. Exportez régulièrement.',
           aRedemander: !s.persistant,
           redemanderPersist: () => this.reclamerPersistance(true),
+          // ————— LE RISQUE EN TÊTE DU TIROIR, et trois sections repliées —————
+          // « Demander la protection » était un lien de corps 11 en dernière ligne,
+          // deux écrans plus bas — le seul bouton qui aurait évité les deux pertes.
+          // La persistance s'accorde une fois et ne se redemande jamais : autant la
+          // demander avant d'avoir 487 configurations en jeu.
+          tirProtege: !!s.persistant,
+          tirRisqueTitre: s.persistant
+            ? 'Stockage protégé — le navigateur ne peut plus vider ces données'
+            : 'Stockage non protégé',
+          tirRisquePhrase: s.persistant
+            ? 'La protection est accordée pour cette adresse. Gardez tout de même un export : elle ne couvre ni un vidage manuel ni un changement d\u2019ordinateur.'
+            : 'Le navigateur peut vider ces données quand le disque se remplit, sans prévenir. Une demande de protection suffit à le lui interdire — elle est accordée en un clic et ne se redemande pas.',
+          tirRisqueFond: s.persistant ? 'var(--color-neutral-100)' : 'var(--color-accent-100)',
           // après une suppression, ce chiffre reste figé un moment : le navigateur
           // récupère la place quand il veut, et rien dans la page ne peut l'y forcer
           aLibLibere: !!s.libLibere,

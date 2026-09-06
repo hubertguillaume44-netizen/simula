@@ -366,6 +366,13 @@
    ]
   },
   {
+   "terme": "Importer un fichier",
+   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Instruments sur Fenêtre Unité",
    "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
    "vues": [
@@ -412,13 +419,6 @@
    "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "mes données Importer un fichier",
-   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
-   "vues": [
-    "Toutes les pages"
    ]
   },
   {
