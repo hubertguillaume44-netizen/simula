@@ -770,19 +770,6 @@ window.__sivAide = {"entrees":[{"terme":"—","texte":"La période mesurée. Ré
         </div>
       </sc-if>
 
-      <sc-if value="{{ aRepriseAuto }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:16px 18px;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-color:var(--color-accent)">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:4px;max-width:78ch">
-            <strong style="font-family:var(--font-heading);font-size:22px;line-height:1.15">Un scan a été interrompu</strong>
-            <span style="font-size:13px;line-height:1.55">{{ repriseAutoTxt }}</span>
-          </div>
-          <div style="display:flex;gap:9px;flex-wrap:wrap">
-            <button class="btn btn-primary" type="button" style="min-height:2.4rem;padding-inline:20px" onClick="{{ repriseAutoGo }}">{{ repriseAutoBouton }}</button>
-            <button class="btn btn-ghost" type="button" style="min-height:2.4rem;padding-inline:14px;font-size:12px" onClick="{{ repriseAutoIgnorer }}">Plus tard</button>
-          </div>
-        </div>
-      </sc-if>
 
 
     <sc-if value="{{ vueCourtiers }}" hint-placeholder-val="{{ false }}">
