@@ -910,10 +910,13 @@ window.__sivAide = {"entrees":[{"terme":"—","texte":"La période mesurée. Ré
         passe SOUS le texte au lieu de l'écraser.
       -->
       <div id="zoneDepot" style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:0;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
-        <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;padding-bottom:11px">
+        <button type="button" onClick="{{ basculerMt5 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:0 0 11px;display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;width:100%" title="Les cinq étapes — scripts, relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.">
           <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
           <span style="font-size:11px" class="text-muted">l’installation une seule fois, le reste à chaque mise à jour</span>
-        </div>
+          <span style="font-size:11px;margin-inline-start:auto;color:var(--color-accent-700)">{{ chevronMt5 }}</span>
+        </button>
+        <sc-if value="{{ ouvMt5V }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:0">
         <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
           <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">1</span>
           <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
@@ -968,6 +971,8 @@ window.__sivAide = {"entrees":[{"terme":"—","texte":"La période mesurée. Ré
         </div>
 
         <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — ces cinq boutons ne sont là que si vous préférez cliquer.</span>
+        </div>
+        </sc-if>
         <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
           <span style="font-size:12px;color:var(--color-accent-700);line-height:1.5;padding-top:8px">{{ mt5Copie }}</span>
         </sc-if>
@@ -9504,7 +9509,7 @@ GROUPES = {
   CLE_SCAN = 'simula.scan.v1';
   CLE_HASARD = 'simula.hasard.v1';
   get champsSession() {
-    return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvSymb', 'ouvTele', 'ouvMarc',
+    return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvMt5', 'ouvSymb', 'ouvTele', 'ouvMarc',
       'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'triCout', 'tab', 'vueLecture',
       'filtreBougies', 'familleFiltre', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
@@ -14597,7 +14602,7 @@ GROUPES = {
         // qui convient — celui du relevé ou celui des bougies, selon ce qui manque. Le
         // clic sur le champ est tenté après le défilement ; s'il est refusé, le bloc est
         // sous les yeux et ses deux boutons sont à portée.
-        const deposer = (champ) => () => this.setState({ vue: 'courtiers' }, () => {
+        const deposer = (champ) => () => this.setState({ vue: 'courtiers', ouvMt5: true }, () => {
           this.ecrireSession();
           setTimeout(() => {
             const el = document.getElementById('zoneDepot');
@@ -15485,6 +15490,13 @@ GROUPES = {
           // injectée, donc rien à regénérer et rien qui puisse diverger de ce qui est
           // versionné. Un ZIP « stocké » — sans compression — évite d'embarquer une
           // bibliothèque pour deux fichiers texte.
+          // La notice se replie — repliée de base : cinq étapes qu'on lit une fois à
+          // l'installation, puis qu'on rouvre à chaque mise à jour. Le glisser-déposer
+          // marche cadre replié, et le bouton « Déposer » de la barre de tâches le
+          // déplie avant de cliquer son champ.
+          ouvMt5V: !!s.ouvMt5,
+          basculerMt5: () => this.setState({ ouvMt5: !this.state.ouvMt5 }, () => this.ecrireSession()),
+          chevronMt5: s.ouvMt5 ? '▾ replier' : '▸ déplier',
           telechargerScripts: async () => {
             const noms2 = ['Sivula_Releve.mq5', 'Export_H1_Sivula.mq5'];
             const fichiers = [];
