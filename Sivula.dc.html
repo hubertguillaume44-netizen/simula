@@ -343,7 +343,13 @@
             <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ redemanderPersist }}">Demander la protection</button>
           </sc-if>
           <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterTout }}">Exporter mes données</button>
+          <sc-if value="{{ aTirOnglet }}" hint-placeholder-val="{{ false }}">
+            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ tirOuvrirOnglet }}" title="Dans une vue intégrée, le navigateur n’accorde pas la protection du stockage : elle se demande depuis un onglet à lui.">Ouvrir dans un onglet</button>
+          </sc-if>
         </div>
+        <sc-if value="{{ aPersistMsg }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ persistMsg }}</span>
+        </sc-if>
         <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ tirExportTxt }}</span>
       </div>
 
@@ -12974,8 +12980,15 @@ GROUPES = {
     } catch (e) { this.setState({ notifDemande: null }); }
   }
   async reclamerPersistance(force) {
+    // `force` : le clic de l'utilisateur. Un refus silencieux faisait un bouton mort —
+    // le navigateur répond false sans dialogue (toujours, ou presque, dans une vue
+    // intégrée : la persistance ne s'accorde pas au stockage partitionné d'une iframe),
+    // et rien à l'écran ne disait ce qui venait de se passer.
     try {
-      if (!navigator.storage || !navigator.storage.persisted) return;
+      if (!navigator.storage || !navigator.storage.persisted) {
+        if (force) this.setState({ persistMsg: 'Ce navigateur ne propose pas la protection du stockage. L\u2019export reste la seule protection.' });
+        return;
+      }
       let ok = await navigator.storage.persisted();
       if (!ok && navigator.storage.persist) {
         // Chrome accorde sans rien demander quand le site est installé ou visité
@@ -12983,8 +12996,15 @@ GROUPES = {
         // au chargement suffit — insister à chaque rendu ferait un dialogue par visite.
         ok = await navigator.storage.persist();
       }
-      this.setState({ persistant: !!ok, persistanceConnue: true });
-    } catch (e) { /* API absente ou refusée : on n'affiche rien */ }
+      this.setState({ persistant: !!ok, persistanceConnue: true,
+        ...(force ? { persistMsg: ok
+          ? 'Protection accordée : le navigateur ne peut plus vider ces données de lui-même.'
+          : this.dansIframe()
+            ? 'Le navigateur a refusé — il n\u2019accorde pas la protection à une vue intégrée. Ouvrez Sivula dans un onglet à lui et redemandez-la là ; en attendant, l\u2019export est la seule protection.'
+            : 'Le navigateur a refusé pour l\u2019instant : il accorde la protection aux sites visités régulièrement ou installés. Réessayez plus tard — l\u2019export reste la protection sûre.' } : {}) });
+    } catch (e) {
+      if (force) this.setState({ persistMsg: 'Le navigateur a refusé la demande. L\u2019export reste la seule protection.' });
+    }
   }
   async mesurerPlace() {
     try {
@@ -15164,6 +15184,12 @@ GROUPES = {
             : 'le navigateur peut vider ces données quand le disque se remplit, sans prévenir. Exportez régulièrement.',
           aRedemander: !s.persistant,
           redemanderPersist: () => this.reclamerPersistance(true),
+          aPersistMsg: !!s.persistMsg,
+          persistMsg: s.persistMsg || '',
+          // en vue intégrée, le chemin qui MARCHE est l'onglet propre : le proposer ici,
+          // à côté de la demande qui sera refusée
+          aTirOnglet: this.dansIframe(),
+          tirOuvrirOnglet: () => { try { window.open(window.location.href, '_blank'); } catch (e) {} },
           // ————— LE RISQUE EN TÊTE DU TIROIR, et trois sections repliées —————
           // « Demander la protection » était un lien de corps 11 en dernière ligne,
           // deux écrans plus bas — le seul bouton qui aurait évité les deux pertes.

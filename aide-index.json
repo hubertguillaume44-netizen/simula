@@ -464,6 +464,13 @@
    ]
   },
   {
+   "terme": "Ouvrir dans un onglet",
+   "texte": "Dans une vue intégrée, le navigateur n’accorde pas la protection du stockage : elle se demande depuis un onglet à lui.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Par an",
    "texte": "Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.",
    "vues": [
