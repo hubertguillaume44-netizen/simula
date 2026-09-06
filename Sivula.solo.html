@@ -34,7 +34,7 @@
 window.__sivNouv = {"_lisez_moi":"Journal des livraisons de Sivula, lu par la page (tiroir « Nouveautés »). Une entrée par livraison, la plus récente en premier. `portee` vaut « mesure » (les chiffres bougent, il faut relancer), « interface » (rien à refaire, les mesures sont inchangées) ou « correctif ». Sur une entrée « mesure », la page compte les scans en mémoire antérieurs à sa date et propose de les relancer.","entrees":[{"id":"260905-cfgvar","date":"2026-09-05","portee":"mesure","titre":"Une fiche rejoue la configuration qui a été mesurée","texte":"Une ligne de scan porte sa variante : filtre, sécurisation, lecture haute ou basse, durée. En rouvrir une la reconstruisait avec les réglages de la page au lieu de rejouer ce qui avait été mesuré. Et la clé sous laquelle chaque configuration mesurée est gardée ne portait ni le type d’entrée ni la moyenne : une grille qui balaie deux entrées et deux lignes en écrasait trois sur quatre. Mesuré : une ligne affichée à 776 trades et + 49,0 R se rouvrait à 634 trades et + 3,6 R.","refaire":"Les chiffres du TOP et de l’historique n’ont pas bougé — ils viennent du scan lui-même. Ce sont les fiches, les contrôles du hasard et les robots exportés depuis une fiche qui pouvaient décrire une autre configuration. Un scan relancé garde des clés complètes et se rejoue à l’identique."},{"id":"260905-semis","date":"2026-09-05","portee":"correctif","titre":"Les séries de démonstration ne dérivent plus","texte":"Le générateur perdait ses bits de poids faible : le produit d’un entier de 31 bits par 1 103 515 245 dépasse les 53 bits exacts d’un nombre flottant. La série « énergie » partait de 78 pour finir à 5,6 millions, avec une dérive annoncée négative, et l’exemple affichait + 2 800 R sur un instrument fictif. La même série finit maintenant à 131.","refaire":"Ne concerne que le compte de découverte. Ses séries sont refaites à la prochaine ouverture ; aucune bougie que vous avez déposée n’est touchée."},{"id":"260905-demarrage","date":"2026-09-05","portee":"interface","titre":"Les deux premières minutes","texte":"Tant qu’aucune série n’est chargée, un cadre en tête propose « Voir un exemple complet » : quatre instruments fictifs, un vrai balayage de 24 192 combinaisons, puis la meilleure configuration ouverte trade par trade. Un bandeau reste visible tant que la démonstration est active et rend la main sur votre compte.","refaire":"Rien à refaire : aucune mesure n’est changée."},{"id":"260905-rappel","date":"2026-09-05","portee":"interface","titre":"Le scan prévient quand il a fini","texte":"Le titre de l’onglet porte la progression puis « ✓ Scan terminé », effacé au retour sur l’onglet. Une notification système annonce le résultat — instruments, combinaisons, durée, configurations retenues — et un son court, coupé par défaut, se règle dans le panneau du scanner. L’autorisation n’est demandée qu’au lancement d’un balayage de plus de cinq minutes.","refaire":"Rien à refaire : aucune mesure n’est changée."},{"id":"260905-sauvegarde","date":"2026-09-05","portee":"interface","titre":"La sauvegarde se relit, et le stockage est protégé","texte":"« Importer un fichier » complète l’export : le contenu du fichier et celui de l’espace actuel sont affichés avant tout écrasement, avec Fusionner, Remplacer ou Annuler. La date de la dernière sauvegarde est rappelée sous les deux boutons. Le stockage réclame la persistance au navigateur — sans elle, vos bougies et vos scans peuvent être vidés sans avertissement quand le disque se remplit.","refaire":"Rien à refaire : aucune mesure n’est changée."}]};
 // Les explications extraites à la construction voyagent de même : sans elles le panneau
 // d'aide serait vide dans le fichier unique.
-window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l’application, cherchables","vues":["Toutes les pages"]},{"terme":"×","texte":"Cliquez pour retirer cette valeur","vues":["Nouveau scan"]},{"terme":"×","texte":"Un escalier = un trade, avec ses paliers dans l'ordre. Cliquez pour le retirer.","vues":["Nouveau scan"]},{"terme":"À ranger","texte":"Remet la configuration validée et sa place dans les portefeuilles telles qu'elles étaient avant le dernier retrait.","vues":["Portefeuille"]},{"terme":"Adopter","texte":"Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement","vues":["Toutes les pages"]},{"terme":"Amorce trop courte","texte":"Choisir la taille des bougies balayées","vues":["Nouveau scan"]},{"terme":"Backtest","texte":"Charger cette configuration dans le Backtest et la relancer","vues":["Historique"]},{"terme":"BE","texte":"Sorties sur stop déplacé ; entre parenthèses les stops sautés par un écart de cotation","vues":["Toutes les pages"]},{"terme":"Capital alloué au court terme","texte":"La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».","vues":["Journal"]},{"terme":"Capital immobilisé","texte":"Part du temps où le capital est réellement en position. Le reste du temps, il est disponible pour autre chose.","vues":["Portefeuille"]},{"terme":"Ce qu'il fallait encaisser","texte":"La pire perte qu'il fallait traverser sans abandonner. Pour la stratégie, elle est déduite de sa plus longue série de pertes d'affilée — pas d'une courbe d'équité datée, que le scan ne conserve pas : le vrai creux est donc un peu plus profond. La détention, elle, n'a ni stop ni objectif : elle subit le creux du marché en entier.","vues":["Portefeuille"]},{"terme":"Ce que ça rend en tout","texte":"Ce que le capital devient sur toute la période, gains réinvestis.","vues":["Portefeuille"]},{"terme":"Cible de Tout ranger","texte":"Destination du bouton « Tout ranger dans… ».","vues":["Portefeuille"]},{"terme":"Classer par","texte":"Classer les lignes par ce critère","vues":["Historique"]},{"terme":"combinaisons Lancer le scan","texte":"Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Nouveau scan"]},{"terme":"Condition de la ligne NON restaurée","texte":"La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.","vues":["Backtest"]},{"terme":"Conditions comparées","texte":"Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.","vues":["Nouveau scan"]},{"terme":"configs validées Tirages par configuration","texte":"Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.","vues":["Historique"]},{"terme":"Contrôle du hasard","texte":"On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.","vues":["Historique"]},{"terme":"Contrôler","texte":"Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.","vues":["Historique"]},{"terme":"court la fin du scan","texte":"Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.","vues":["Nouveau scan"]},{"terme":"Coût réel","texte":"Spread, commission et portage tels que votre relevé les chiffre, ramenés à la part de risque qu'ils emportent.","vues":["Portefeuille"]},{"terme":"Creux","texte":"Pire creux de l'année, en R","vues":["Toutes les pages"]},{"terme":"Creux redouté","texte":"Creux à partir duquel vous considérez avoir perdu le contrôle. La dernière case donne la fréquence à laquelle un tirage le dépasse.","vues":["Portefeuille"]},{"terme":"de de capital, stop posé","texte":"Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.","vues":["Mes instruments"]},{"terme":"de la ligne NON restaurée","texte":"Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.","vues":["Backtest"]},{"terme":"de votre patrimoine patrimoine total","texte":"Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.","vues":["Journal"]},{"terme":"Déposez le relevé de symboles de votre courtier","texte":"Un fichier CSV, lu dans votre navigateur.","vues":["Toutes les pages"]},{"terme":"Déposez les bougies H1 de vos instruments","texte":"Vous pouvez en déposer plusieurs à la fois.","vues":["Toutes les pages"]},{"terme":"Distance du stop","texte":"À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.","vues":["Nouveau scan"]},{"terme":"Distance du stop suiveur, en % sous le plus haut ?","texte":"Sous l'amplitude médiane d'une bougie, la sortie dépend du chemin parcouru À L'INTÉRIEUR de la bougie, que vos données ne contiennent pas. Ordres de grandeur sur une paire de devises : H1 plancher 0,15 %, zone crédible 0,4 à 0,6 % · H4 plancher 0,3 %, zone 0,8 à 1,2 % · Daily plancher 0,6 %, zone 1,2 à 2 %. Un indice, l'or ou une action bougent deux à trois fois plus. Ne descendez pas sous la moitié de votre stop de départ.","vues":["Backtest"]},{"terme":"Durée de tenue comparée","texte":"Un trade qui n'atteint ni son stop ni son objectif reste ouvert indéfiniment et paie le portage. Comparez « sans limite » à une fermeture après N bougies.","vues":["Nouveau scan"]},{"terme":"écartée est inexploitable, pas décevante","texte":"Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.","vues":["Toutes les pages"]},{"terme":"Écarter","texte":"Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.","vues":["Portefeuille"]},{"terme":"Effacer les séries gardées","texte":"Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.","vues":["Journal"]},{"terme":"En euros","texte":"La stratégie est chiffrée à mise fixe : 1 R vaut toujours le même montant, jamais réévalué. Composer la mise sur un capital qui grossit donnerait un total spectaculaire mais inatteignable — les lots devraient grossir dans la même proportion. La détention, elle, est par nature composée : c'est le même prix qui monte.","vues":["Portefeuille"]},{"terme":"Entrée Ligne balayée","texte":"La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.","vues":["Backtest"]},{"terme":"Essayer sans rien fournir","texte":"Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.","vues":["Toutes les pages"]},{"terme":"Et si j'avais simplement détenu ?","texte":"Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.","vues":["Portefeuille"]},{"terme":"États-Unis Europe Asie Mettre jour","texte":"Replier ou déplier cette section","vues":["Marché","Toutes les pages"]},{"terme":"Exporter en CSV","texte":"Enregistre la liste complète en CSV, ouvrable dans un tableur","vues":["Toutes les pages"]},{"terme":"Filtres","texte":"Nombre de conditions qui doivent être remplies pour autoriser l'entrée","vues":["Backtest"]},{"terme":"grille Lancer quand même SIVULA","texte":"Bougies, tarifs, scans et réglages sont propres au compte choisi.","vues":["Toutes les pages"]},{"terme":"Grilles enregistrées Sauver celle-ci","texte":"Recharger cette grille dans les réglages ci-dessus","vues":["Nouveau scan"]},{"terme":"groupe Périodes de la ligne","texte":"Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.","vues":["Nouveau scan"]},{"terme":"hasard qui font aussi bien","texte":"On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.","vues":["Historique"]},{"terme":"La fiche","texte":"Ouvrir la fiche détaillée de cet instrument, sous la grille","vues":["Historique"]},{"terme":"Lancez un premier balayage","texte":"Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.","vues":["Toutes les pages"]},{"terme":"Les deux scripts MT5","texte":"Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.","vues":["Mes instruments"]},{"terme":"Lisez le classement et retenez ce qui tient","texte":"Une configuration validée rejoint votre portefeuille.","vues":["Toutes les pages"]},{"terme":"mes données Importer un fichier","texte":"Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.","vues":["Toutes les pages"]},{"terme":"Mesurer une config par régime","texte":"Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.","vues":["Marché"]},{"terme":"n° au coût","texte":"Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)","vues":["Historique"]},{"terme":"n° au coût","texte":"Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.","vues":["Historique"]},{"terme":"Objectif","texte":"Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.","vues":["Backtest"]},{"terme":"Objectifs visés","texte":"Combien de fois votre risque vous cherchez à gagner. 2 = risquer 100 € pour tenter d'en gagner 200. Le scan essaie chaque valeur cochée.","vues":["Nouveau scan"]},{"terme":"Par an","texte":"Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.","vues":["Portefeuille"]},{"terme":"Part détenue","texte":"Part du capital simplement détenue dans la colonne « Les deux ». Le reste est travaillé par la stratégie.","vues":["Portefeuille"]},{"terme":"Période","texte":"Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.","vues":["Backtest"]},{"terme":"Période mesurée","texte":"Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.","vues":["Portefeuille"]},{"terme":"Poids du meilleur","texte":"Part du meilleur trade dans le gain de l'année : au-delà de 25 %, l'année tient sur un coup","vues":["Toutes les pages"]},{"terme":"portage calculé sur la détention","texte":"Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.","vues":["Mes instruments"]},{"terme":"Poser la question à l’assistant","texte":"Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.","vues":["Toutes les pages"]},{"terme":"que vaut 1 R partout","texte":"Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.","vues":["Mes instruments"]},{"terme":"Rendement par unité de creux","texte":"Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.","vues":["Portefeuille"]},{"terme":"Risque","texte":"Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.","vues":["Backtest","Journal"]},{"terme":"Risque par trade","texte":"C'est ce réglage qui convertit les R en pourcentages : à mise fixe, 1 R vaut ce pourcentage du capital de départ, sur chaque trade et sans jamais être réévalué.","vues":["Portefeuille"]},{"terme":"Sans risque","texte":"Le rendement d'un placement sans risque sur la même durée — le plancher que tout le reste doit battre.","vues":["Portefeuille"]},{"terme":"Sauver celle-ci","texte":"Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.","vues":["Nouveau scan"]},{"terme":"Scan en cours","texte":"Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Toutes les pages"]},{"terme":"Scanner","texte":"Ouvre le scanner avec cet instrument seul dans l’univers.","vues":["Mes instruments"]},{"terme":"Sécurisation comparée","texte":"Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.","vues":["Nouveau scan"]},{"terme":"Seuils ·","texte":"Les seuils qui décident quelles configurations s’affichent. Ils ne changent rien au calcul du scan : ce sont ceux de l’entonnoir de l’Historique, et il n’en existe qu’un jeu.","vues":["Nouveau scan"]},{"terme":"Simple détention Reste faire","texte":"Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.","vues":["Portefeuille"]},{"terme":"Simple détention Reste faire","texte":"Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.","vues":["Portefeuille"]},{"terme":"Sortie risque Stop","texte":"À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.","vues":["Backtest"]},{"terme":"Stop suiveur sous","texte":"Replier ou déplier ce cadre","vues":["Historique"]},{"terme":"sur Tout sélectionner Tout désélectionner","texte":"Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\\Files\\Sivula\\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.","vues":["Nouveau scan"]},{"terme":"Tirages","texte":"Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.","vues":["Toutes les pages"]},{"terme":"tirages au hasard","texte":"Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.","vues":["Portefeuille"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.","vues":["Toutes les pages"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.","vues":["Backtest"]},{"terme":"Tous","texte":"Moyenne équipondérée des instruments du portefeuille","vues":["Toutes les pages"]},{"terme":"Tous les scans","texte":"Affiche l’ensemble des scans en mémoire.","vues":["Toutes les pages"]},{"terme":"tout décocher","texte":"Coche tous les instruments que le filtre et la recherche laissent voir.","vues":["Mes instruments"]},{"terme":"tout décocher","texte":"Décocher tous les instruments d’un coup","vues":["Nouveau scan"]},{"terme":"Tout ranger dans","texte":"Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.","vues":["Portefeuille"]},{"terme":"TP","texte":"Sorties sur objectif atteint","vues":["Toutes les pages"]},{"terme":"vaut 1 R partout de","texte":"Le capital sur lequel le pourcentage de risque s’applique.","vues":["Mes instruments"]},{"terme":"Verdict","texte":"Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.","vues":["Historique"]},{"terme":"Votre stratégie Acheter et garder","texte":"Le même achat conservé chez votre courtier : spread, commission et portage de chaque nuit déduits.","vues":["Portefeuille"]}]};
+window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l’application, cherchables","vues":["Toutes les pages"]},{"terme":"×","texte":"Cliquez pour retirer cette valeur","vues":["Nouveau scan"]},{"terme":"×","texte":"Un escalier = un trade, avec ses paliers dans l'ordre. Cliquez pour le retirer.","vues":["Nouveau scan"]},{"terme":"À ranger","texte":"Remet la configuration validée et sa place dans les portefeuilles telles qu'elles étaient avant le dernier retrait.","vues":["Portefeuille"]},{"terme":"Adopter","texte":"Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement","vues":["Toutes les pages"]},{"terme":"Amorce trop courte","texte":"Choisir la taille des bougies balayées","vues":["Nouveau scan"]},{"terme":"Backtest","texte":"Charger cette configuration dans le Backtest et la relancer","vues":["Historique"]},{"terme":"BE","texte":"Sorties sur stop déplacé ; entre parenthèses les stops sautés par un écart de cotation","vues":["Toutes les pages"]},{"terme":"Capital alloué au court terme","texte":"La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».","vues":["Journal"]},{"terme":"Capital immobilisé","texte":"Part du temps où le capital est réellement en position. Le reste du temps, il est disponible pour autre chose.","vues":["Portefeuille"]},{"terme":"Ce qu'il fallait encaisser","texte":"La pire perte qu'il fallait traverser sans abandonner. Pour la stratégie, elle est déduite de sa plus longue série de pertes d'affilée — pas d'une courbe d'équité datée, que le scan ne conserve pas : le vrai creux est donc un peu plus profond. La détention, elle, n'a ni stop ni objectif : elle subit le creux du marché en entier.","vues":["Portefeuille"]},{"terme":"Ce que ça rend en tout","texte":"Ce que le capital devient sur toute la période, gains réinvestis.","vues":["Portefeuille"]},{"terme":"Cible de Tout ranger","texte":"Destination du bouton « Tout ranger dans… ».","vues":["Portefeuille"]},{"terme":"Classer par","texte":"Classer les lignes par ce critère","vues":["Historique"]},{"terme":"combinaisons Lancer le scan","texte":"Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Nouveau scan"]},{"terme":"Condition de la ligne NON restaurée","texte":"La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.","vues":["Backtest"]},{"terme":"Conditions comparées","texte":"Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.","vues":["Nouveau scan"]},{"terme":"configs validées Tirages par configuration","texte":"Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.","vues":["Historique"]},{"terme":"Contrôle du hasard","texte":"On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.","vues":["Historique"]},{"terme":"Contrôler","texte":"Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.","vues":["Historique"]},{"terme":"court la fin du scan","texte":"Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.","vues":["Nouveau scan"]},{"terme":"Coût réel","texte":"Spread, commission et portage tels que votre relevé les chiffre, ramenés à la part de risque qu'ils emportent.","vues":["Portefeuille"]},{"terme":"Creux","texte":"Pire creux de l'année, en R","vues":["Toutes les pages"]},{"terme":"Creux redouté","texte":"Creux à partir duquel vous considérez avoir perdu le contrôle. La dernière case donne la fréquence à laquelle un tirage le dépasse.","vues":["Portefeuille"]},{"terme":"de de capital, stop posé","texte":"Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.","vues":["Mes instruments"]},{"terme":"de la ligne NON restaurée","texte":"Le total affiché est celui d'UNE lecture. L'autre existe toujours, et le testeur MT5 tombe quelque part entre les deux. Une bande nulle est une promesse tenable ; une bande large ne l'est pas — il n'y a alors pas de chiffre unique à annoncer.","vues":["Backtest"]},{"terme":"de votre patrimoine patrimoine total","texte":"Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.","vues":["Journal"]},{"terme":"Déposez le relevé de symboles de votre courtier","texte":"Un fichier CSV, lu dans votre navigateur.","vues":["Toutes les pages"]},{"terme":"Déposez les bougies H1 de vos instruments","texte":"Vous pouvez en déposer plusieurs à la fois.","vues":["Toutes les pages"]},{"terme":"Distance du stop","texte":"À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.","vues":["Nouveau scan"]},{"terme":"Distance du stop suiveur, en % sous le plus haut ?","texte":"Sous l'amplitude médiane d'une bougie, la sortie dépend du chemin parcouru À L'INTÉRIEUR de la bougie, que vos données ne contiennent pas. Ordres de grandeur sur une paire de devises : H1 plancher 0,15 %, zone crédible 0,4 à 0,6 % · H4 plancher 0,3 %, zone 0,8 à 1,2 % · Daily plancher 0,6 %, zone 1,2 à 2 %. Un indice, l'or ou une action bougent deux à trois fois plus. Ne descendez pas sous la moitié de votre stop de départ.","vues":["Backtest"]},{"terme":"Durée de tenue comparée","texte":"Un trade qui n'atteint ni son stop ni son objectif reste ouvert indéfiniment et paie le portage. Comparez « sans limite » à une fermeture après N bougies.","vues":["Nouveau scan"]},{"terme":"écartée est inexploitable, pas décevante","texte":"Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.","vues":["Toutes les pages"]},{"terme":"Écarter","texte":"Retire les configurations non rangées. Le contenu des portefeuilles n'est pas touché.","vues":["Portefeuille"]},{"terme":"Effacer les séries gardées","texte":"Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.","vues":["Journal"]},{"terme":"en cours… Verdict du tirage","texte":"Le cumul en R, année par année, gradué et daté. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.","vues":["Historique"]},{"terme":"En euros","texte":"La stratégie est chiffrée à mise fixe : 1 R vaut toujours le même montant, jamais réévalué. Composer la mise sur un capital qui grossit donnerait un total spectaculaire mais inatteignable — les lots devraient grossir dans la même proportion. La détention, elle, est par nature composée : c'est le même prix qui monte.","vues":["Portefeuille"]},{"terme":"Entrée Ligne balayée","texte":"La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.","vues":["Backtest"]},{"terme":"Essayer sans rien fournir","texte":"Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.","vues":["Toutes les pages"]},{"terme":"Et si j'avais simplement détenu ?","texte":"Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.","vues":["Portefeuille"]},{"terme":"États-Unis Europe Asie Mettre jour","texte":"Replier ou déplier cette section","vues":["Marché","Toutes les pages"]},{"terme":"Exporter en CSV","texte":"Enregistre la liste complète en CSV, ouvrable dans un tableur","vues":["Toutes les pages"]},{"terme":"Filtres","texte":"Nombre de conditions qui doivent être remplies pour autoriser l'entrée","vues":["Backtest"]},{"terme":"Frais","texte":"Ce que le courtier prend sur chaque trade, en pourcentage du risque unitaire — le coût moyen de l’instrument rapporté à votre stop.","vues":["Historique"]},{"terme":"grille Lancer quand même SIVULA","texte":"Bougies, tarifs, scans et réglages sont propres au compte choisi.","vues":["Toutes les pages"]},{"terme":"Grilles enregistrées Sauver celle-ci","texte":"Recharger cette grille dans les réglages ci-dessus","vues":["Nouveau scan"]},{"terme":"groupe Périodes de la ligne","texte":"Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.","vues":["Nouveau scan"]},{"terme":"hasard qui font aussi bien","texte":"On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.","vues":["Historique"]},{"terme":"La fiche","texte":"Ouvrir la fiche détaillée de cet instrument, sous la grille","vues":["Historique"]},{"terme":"Lancez un premier balayage","texte":"Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.","vues":["Toutes les pages"]},{"terme":"Les deux scripts MT5","texte":"Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies). Servis tels quels, sans rien d’injecté : à compiler une fois.","vues":["Mes instruments"]},{"terme":"Lisez le classement et retenez ce qui tient","texte":"Une configuration validée rejoint votre portefeuille.","vues":["Toutes les pages"]},{"terme":"mes données Importer un fichier","texte":"Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.","vues":["Toutes les pages"]},{"terme":"Mesurer une config par régime","texte":"Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.","vues":["Marché"]},{"terme":"n° au coût","texte":"Le n° est la place de l’instrument au classement des coûts (onglet Symboles dispos)","vues":["Historique"]},{"terme":"Objectif","texte":"Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.","vues":["Backtest"]},{"terme":"Objectifs visés","texte":"Combien de fois votre risque vous cherchez à gagner. 2 = risquer 100 € pour tenter d'en gagner 200. Le scan essaie chaque valeur cochée.","vues":["Nouveau scan"]},{"terme":"Par an","texte":"Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.","vues":["Portefeuille"]},{"terme":"Part détenue","texte":"Part du capital simplement détenue dans la colonne « Les deux ». Le reste est travaillé par la stratégie.","vues":["Portefeuille"]},{"terme":"Période","texte":"Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.","vues":["Backtest"]},{"terme":"Période mesurée","texte":"Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.","vues":["Portefeuille"]},{"terme":"Poids du meilleur","texte":"Part du meilleur trade dans le gain de l'année : au-delà de 25 %, l'année tient sur un coup","vues":["Toutes les pages"]},{"terme":"portage calculé sur la détention","texte":"Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.","vues":["Mes instruments"]},{"terme":"Poser la question à l’assistant","texte":"Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.","vues":["Toutes les pages"]},{"terme":"que vaut 1 R partout","texte":"Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.","vues":["Mes instruments"]},{"terme":"Rendement par unité de creux","texte":"Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.","vues":["Portefeuille"]},{"terme":"résultats fragiles de mesurées gardées","texte":"La lecture des bougies ambiguës ne retire aucune ligne : elle décide laquelle des deux jumelles porte le chiffre. La lecture basse tranche contre vous ce que la donnée ne dit pas — c’est la seule exigence sans contrepartie.","vues":["Historique"]},{"terme":"résultats fragiles de mesurées gardées","texte":"Remet à zéro les curseurs ci-dessous : plus aucun résultat n’est écarté de l’affichage. Vos scans ne sont pas touchés.","vues":["Historique"]},{"terme":"résultats fragiles de mesurées gardées","texte":"Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.","vues":["Historique"]},{"terme":"Risque","texte":"Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.","vues":["Backtest","Journal"]},{"terme":"Risque par trade","texte":"C'est ce réglage qui convertit les R en pourcentages : à mise fixe, 1 R vaut ce pourcentage du capital de départ, sur chaque trade et sans jamais être réévalué.","vues":["Portefeuille"]},{"terme":"Sans risque","texte":"Le rendement d'un placement sans risque sur la même durée — le plancher que tout le reste doit battre.","vues":["Portefeuille"]},{"terme":"Sauver celle-ci","texte":"Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.","vues":["Nouveau scan"]},{"terme":"Scan en cours","texte":"Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés","vues":["Toutes les pages"]},{"terme":"Scanner","texte":"Ouvre le scanner avec cet instrument seul dans l’univers.","vues":["Mes instruments"]},{"terme":"Sécurisation comparée","texte":"Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.","vues":["Nouveau scan"]},{"terme":"Seuils ·","texte":"Les seuils qui décident quelles configurations s’affichent. Ils ne changent rien au calcul du scan : ce sont ceux de l’entonnoir de l’Historique, et il n’en existe qu’un jeu.","vues":["Nouveau scan"]},{"terme":"Simple détention Reste faire","texte":"Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.","vues":["Portefeuille"]},{"terme":"Simple détention Reste faire","texte":"Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.","vues":["Portefeuille"]},{"terme":"Sortie risque Stop","texte":"À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.","vues":["Backtest"]},{"terme":"Stop suiveur sous","texte":"Replier ou déplier ce cadre","vues":["Historique"]},{"terme":"sur Tout sélectionner Tout désélectionner","texte":"Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\\Files\\Sivula\\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.","vues":["Nouveau scan"]},{"terme":"Tirages","texte":"Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.","vues":["Toutes les pages"]},{"terme":"tirages au hasard","texte":"Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.","vues":["Portefeuille"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.","vues":["Toutes les pages"]},{"terme":"Tolérance","texte":"Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Le serveur du courtier passe à l'heure d'été : 2 h est le bon réglage par défaut.","vues":["Backtest"]},{"terme":"Tous","texte":"Moyenne équipondérée des instruments du portefeuille","vues":["Toutes les pages"]},{"terme":"Tous les scans","texte":"Affiche l’ensemble des scans en mémoire.","vues":["Toutes les pages"]},{"terme":"tout décocher","texte":"Coche tous les instruments que le filtre et la recherche laissent voir.","vues":["Mes instruments"]},{"terme":"tout décocher","texte":"Décocher tous les instruments d’un coup","vues":["Nouveau scan"]},{"terme":"Tout ranger dans","texte":"Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.","vues":["Portefeuille"]},{"terme":"TP","texte":"Sorties sur objectif atteint","vues":["Toutes les pages"]},{"terme":"vaut 1 R partout de","texte":"Le capital sur lequel le pourcentage de risque s’applique.","vues":["Mes instruments"]},{"terme":"Verdict","texte":"Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.","vues":["Historique"]},{"terme":"Votre stratégie Acheter et garder","texte":"Le même achat conservé chez votre courtier : spread, commission et portage de chaque nuit déduits.","vues":["Portefeuille"]}]};
 </script>
 
 <meta charset="utf-8">
@@ -67,6 +67,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
   body { margin: 0; background: var(--color-bg); }
   a { color: var(--color-accent-700); }
   a:hover { color: var(--color-accent); }
+  input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
   .table th[style*="text-align:right"], .table td[style*="text-align:right"],
   .table th[style*="text-align: right"], .table td[style*="text-align: right"] { white-space: nowrap; }
   .aide {
@@ -2804,64 +2805,43 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         </div>
         </sc-if>
         <!--
-          L'ENTONNOIR À GAUCHE, LES RÉSULTATS À DROITE.
+          L'ENTONNOIR EN BANDEAU, AU-DESSUS DES FICHES.
 
-          Le cadre « Écarter les résultats fragiles » vivait au-dessus du tableau : on
-          réglait en haut, on jugeait en bas, jamais les deux à la fois. Ses curseurs
-          n'ont pas changé — ils ont changé de place, et chacun dit désormais POURQUOI son
-          seuil existe et ce qu'il a coûté. Un seuil qu'on ne sait pas justifier est un
-          seuil qu'on met au hasard.
-
-          Le tableau de vingt colonnes devient une grille de fiches : il débordait
-          horizontalement et sa dernière colonne — celle qui portait l'action — devenait
-          inatteignable. La hiérarchie de taille remplace l'alignement : trois chiffres en
-          corps 21 décident, trois en corps 15 renseignent.
+          La colonne de gauche prenait 400 px à chaque rangée pour sept curseurs
+          qu'on ne touche qu'au début d'une session. En bandeau, les mêmes
+          réglages tiennent sur quatre colonnes, le POURQUOI de chaque seuil passe
+          en infobulle sur son libellé, et la place rendue va à ce qu'on regarde
+          vraiment : les fiches. Le bandeau reste collant — on juge en bas, on
+          règle en haut, sans jamais remonter. Aucun seuil, aucun calcul ne change.
         -->
-        <div style="display:grid;grid-template-columns:400px 1fr;gap:14px;align-items:start">
-
-          <aside class="blueprint" style="position:sticky;top:{{ btTopAside }};padding:14px 16px;display:flex;flex-direction:column;gap:0">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:10px">
-              <span style="font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">{{ entonnoirTitre }}</span>
-              <span style="font-size:11px" class="text-muted">{{ entonnoirSous }}</span>
+        <div class="blueprint" style="position:sticky;top:{{ btTopAside }};z-index:5;background:var(--color-bg);padding:11px 15px;display:flex;flex-direction:column;gap:9px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <span style="font-family:var(--font-heading);font-size:19px">Écarter les résultats fragiles</span>
+            <span style="font-size:12px" class="text-muted">de {{ entoTotalTxt }} mesurées à <strong style="font-family:var(--font-heading);font-size:16px;color:var(--color-text)">{{ entoGardeesTxt }}</strong> gardées</span>
+            <div style="display:flex;gap:0;margin-inline-start:auto" title="La lecture des bougies ambiguës ne retire aucune ligne : elle décide laquelle des deux jumelles porte le chiffre. La lecture basse tranche contre vous ce que la donnée ne dit pas — c’est la seule exigence sans contrepartie.">
+              <sc-for list="{{ choixVueLecture }}" as="vl2" hint-placeholder-count="3">
+                <button type="button" class="{{ vl2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:4px 9px" title="{{ vl2.aide }}" onClick="{{ vl2.choisir }}">{{ vl2.nom }}</button>
+              </sc-for>
             </div>
+            <button class="btn btn-ghost" type="button" style="min-height:1.7rem;font-size:11px;padding-inline:9px" onClick="{{ basculerFiltre }}" title="Remet à zéro les curseurs ci-dessous : plus aucun résultat n’est écarté de l’affichage. Vos scans ne sont pas touchés.">{{ basculerFiltreTxt }}</button>
+            <button class="btn btn-ghost" type="button" style="min-height:1.7rem;font-size:11px;padding-inline:9px" onClick="{{ basculerLot }}" title="Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.">{{ lotTxt }}</button>
+          </div>
 
-            <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding:10px 0">
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-                <span style="font-size:12px">Lecture des bougies ambiguës</span>
-                <strong style="font-family:var(--font-heading);font-size:19px">{{ lectureRestant }}</strong>
-              </div>
-              <div style="display:flex;gap:0">
-                <sc-for list="{{ choixVueLecture }}" as="vl2" hint-placeholder-count="3">
-                  <button type="button" class="{{ vl2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);flex:1;font-size:11px;padding:4px 2px" title="{{ vl2.aide }}" onClick="{{ vl2.choisir }}">{{ vl2.nom }}</button>
-                </sc-for>
-              </div>
-              <span style="font-size:10px;line-height:1.45" class="text-muted">La lecture basse tranche contre vous ce que la donnée ne dit pas. C’est la seule exigence sans contrepartie : elle ne coûte rien qu’on puisse regretter.</span>
-            </div>
-
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 20px">
             <sc-for list="{{ filtresVifs }}" as="fv" hint-placeholder-count="7">
-              <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding:10px 0">
-                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-                  <span style="font-size:12px">{{ fv.nom }} <strong style="font-family:var(--font-heading);font-size:14px">{{ fv.valTxt }}</strong></span>
-                  <strong style="font-family:var(--font-heading);font-size:19px">{{ fv.restant }}</strong>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="display:flex;align-items:baseline;gap:7px;min-height:2.5em">
+                  <span style="font-size:11px;line-height:1.25;flex:1" title="{{ fv.ecartees }} · {{ fv.pourquoi }}">{{ fv.nom }} <strong style="font-family:var(--font-heading);font-size:13px">{{ fv.valTxt }}</strong></span>
+                  <strong style="font-family:var(--font-heading);font-size:15px">{{ fv.restant }}</strong>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <button type="button" class="btn btn-secondary" style="min-height:1.5rem;min-width:1.5rem;padding:0;font-size:13px;line-height:1" onClick="{{ fv.moins }}">−</button>
-                  <input type="range" min="{{ fv.min }}" max="{{ fv.max }}" step="{{ fv.step }}" value="{{ fv.val }}" onChange="{{ fv.maj }}" style="flex:1;accent-color:var(--color-accent);cursor:pointer">
-                  <button type="button" class="btn btn-secondary" style="min-height:1.5rem;min-width:1.5rem;padding:0;font-size:13px;line-height:1" onClick="{{ fv.plus }}">+</button>
-                </div>
-                <span style="font-size:10px;line-height:1.45" class="text-muted">{{ fv.ecartees }} · {{ fv.pourquoi }}</span>
+                <input type="range" min="{{ fv.min }}" max="{{ fv.max }}" step="{{ fv.step }}" value="{{ fv.val }}" onChange="{{ fv.maj }}" style="width:100%">
               </div>
             </sc-for>
+          </div>
 
-            <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
-              <span style="font-size:12px;line-height:1.5">{{ entonnoirPied }}</span>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ basculerFiltre }}" title="Remet à zéro les curseurs ci-dessus : plus aucun résultat n’est écarté de l’affichage. Vos scans ne sont pas touchés.">{{ basculerFiltreTxt }}</button>
-                <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ basculerLot }}" title="Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.">{{ lotTxt }}</button>
-              </div>
-            </div>
-          </aside>
+          <span style="font-size:11px;line-height:1.5" class="text-muted">{{ entoLecture }} <sc-if value="{{ aSeuilCher }}" hint-placeholder-val="{{ false }}">{{ seuilCherTxt }} </sc-if>{{ entonnoirPied }} · {{ entonnoirSous }}</span>
+        </div>
 
           <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -2879,7 +2859,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             -->
             <span style="font-size:11px;line-height:1.5;margin-top:-6px" class="text-muted">Le nombre de tirages vaut pour toute la page. Montez-le et les fiches déjà contrôlées proposent de pousser plus loin.</span>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:12px">
               <sc-for list="{{ toutesRows }}" as="tr2" hint-placeholder-count="9">
                 <div class="fiche blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:9px;opacity:{{ tr2.opacite }}">
                   <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -2903,73 +2883,114 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
                     <span class="{{ tr2.decCls }}" style="font-size:9px;letter-spacing:.03em;white-space:normal;text-align:right;max-width:15ch;line-height:1.3;flex:none" title="{{ tr2.decAide }}">{{ tr2.decTxt }}</span>
                   </div>
 
-                  <sc-if value="{{ tr2.aCourbe }}" hint-placeholder-val="{{ true }}">
-                    <svg viewBox="0 0 300 70" style="width:100%;height:auto;display:block" title="Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.">
-                      <path d="{{ tr2.aire }}" fill="var(--color-accent)" fill-opacity="0.12" stroke="none"></path>
-                      <line x1="0" y1="{{ tr2.zero }}" x2="300" y2="{{ tr2.zero }}" stroke="var(--color-divider)"></line>
-                      <path d="{{ tr2.trace }}" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></path>
-                    </svg>
-                  </sc-if>
-
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">R net</span>
-                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.total }}</strong>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain / perte</span>
-                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.pf }}</strong>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Creux</span>
-                      <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.dd }}</strong>
-                    </div>
-                    <!--
-                      PIC OU PLATEAU, SANS DÉPLIER. Combien des configurations mesurées
-                      rendent au moins la moitié du R net de la meilleure ET sont ses
-                      voisines dans la grille. Un « 1 / 9 » ici dit que le chiffre au-dessus
-                      tient à un réglage unique — c'est l'information que la fiche ne
-                      donnait nulle part.
-                    -->
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0" title="{{ tr2.voisAide }}">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ tr2.voisTitre }}</span>
-                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.voisTxt }}</span>
-                    </div>
-                  </div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée moy.</span>
-                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.duree }}</span>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hors éch.</span>
-                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.oos }}</span>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Avant / après</span>
-                      <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.regCouleur }}">{{ tr2.regAvantTxt }} / {{ tr2.regApresTxt }}</span>
-                    </div>
-                  </div>
-
                   <!--
-                    LE HASARD EST UNE MESURE, PAS UNE INCISE. Il était en fin d'une ligne
-                    grise de six éléments : le seul chiffre qui dise si la configuration
-                    vaut mieux qu'entrer au hasard se lisait après le reste, ou pas du tout.
+                    LA FICHE EN DEUX MOITIÉS : les chiffres à gauche, la courbe à droite.
+
+                    À 330 px, la courbe faisait 300 × 70 sans un seul repère — ni combien,
+                    ni quand. En moitié droite d'une fiche de 520 px, elle est datée et
+                    graduée en R, ligne du zéro à l'échelle. La moitié gauche porte les
+                    chiffres que la fiche n'avait pas la place de donner : gagnants,
+                    R par an, frais, pire année. « Avant / après » rejoint la légende de
+                    la courbe — c'est d'elle qu'il parle.
                   -->
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hasard</span>
-                      <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasTousAide }}">{{ tr2.hasChiffre }}</strong>
-                      <sc-if value="{{ tr2.hasardAFaire }}" hint-placeholder-val="{{ false }}">
-                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;text-align:left;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" disabled="{{ tr2.hasardOccupe }}" title="{{ tr2.hasPousserAide }}" onClick="{{ tr2.lancerHasard }}">{{ tr2.hasPousserTxt }}</button>
-                      </sc-if>
-                      <sc-if value="{{ tr2.hasardIci }}" hint-placeholder-val="{{ false }}">
-                        <span style="font-size:10px" class="text-muted">contrôle en cours…</span>
-                      </sc-if>
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch;padding-top:8px;border-top:1px solid var(--color-divider)">
+
+                    <div style="display:flex;flex-direction:column;gap:0">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">R net</span>
+                          <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.total }}</strong>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain / perte</span>
+                          <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.pf }}</strong>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Creux</span>
+                          <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.dd }}</strong>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">R par an</span>
+                          <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.rAnR }}</strong>
+                        </div>
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;margin-top:8px;border-top:1px solid var(--color-divider)">
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gagnants</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.gagnantsTxt }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Trades</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.n }}</span>
+                        </div>
+                        <!--
+                          PIC OU PLATEAU, SANS DÉPLIER. Combien des configurations mesurées
+                          rendent au moins la moitié du R net de la meilleure ET sont ses
+                          voisines dans la grille. Un « 1 / 9 » ici dit que le chiffre
+                          d'à côté tient à un réglage unique.
+                        -->
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0" title="{{ tr2.voisAide }}">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ tr2.voisTitre }}</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.voisTxt }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée moy.</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.duree }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hors éch.</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.oos }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0" title="Ce que le courtier prend sur chaque trade, en pourcentage du risque unitaire — le coût moyen de l’instrument rapporté à votre stop.">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Frais</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.fraisRTxt }}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0" title="{{ tr2.pireAnAide }}">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Pire année</span>
+                          <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.pireAnTxt }}</span>
+                        </div>
+                        <!--
+                          LE HASARD EST UNE MESURE, PAS UNE INCISE : le seul chiffre qui
+                          dise si la configuration vaut mieux qu'entrer au hasard garde
+                          sa case et son lien « pousser à N tirages ».
+                        -->
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hasard</span>
+                          <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasTousAide }}">{{ tr2.hasChiffre }}</strong>
+                          <sc-if value="{{ tr2.hasardAFaire }}" hint-placeholder-val="{{ false }}">
+                            <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;text-align:left;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" disabled="{{ tr2.hasardOccupe }}" title="{{ tr2.hasPousserAide }}" onClick="{{ tr2.lancerHasard }}">{{ tr2.hasPousserTxt }}</button>
+                          </sc-if>
+                          <sc-if value="{{ tr2.hasardIci }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-size:10px" class="text-muted">contrôle en cours…</span>
+                          </sc-if>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict du tirage</span>
+                          <span style="font-size:11px;line-height:1.35;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasardPhrase }}">{{ tr2.hasMot }}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
-                      <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict du tirage</span>
-                      <span style="font-size:11px;line-height:1.35;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasardPhrase }}">{{ tr2.hasMot }}</span>
+
+                    <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                      <sc-if value="{{ tr2.aCourbe }}" hint-placeholder-val="{{ true }}">
+                        <svg viewBox="0 0 270 160" style="width:100%;height:auto;display:block" title="Le cumul en R, année par année, gradué et daté. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.">
+                          <line x1="24" y1="8" x2="266" y2="8" stroke="var(--color-divider)"></line>
+                          <line x1="24" y1="70" x2="266" y2="70" stroke="var(--color-divider)"></line>
+                          <text x="20" y="11" text-anchor="end" font-size="8" fill="currentColor" opacity="0.55">{{ tr2.gyTopTxt }}</text>
+                          <text x="20" y="73" text-anchor="end" font-size="8" fill="currentColor" opacity="0.55">{{ tr2.gyMidTxt }}</text>
+                          <text x="20" y="{{ tr2.zeroLblY }}" text-anchor="end" font-size="8" fill="currentColor" opacity="0.55">0</text>
+                          <path d="{{ tr2.aire }}" fill="var(--color-accent)" fill-opacity="0.12" stroke="none"></path>
+                          <line x1="24" y1="{{ tr2.zero }}" x2="266" y2="{{ tr2.zero }}" stroke="var(--color-text)" opacity="0.45"></line>
+                          <path d="{{ tr2.trace }}" fill="none" stroke="var(--color-accent)" stroke-width="1.6"></path>
+                          <circle cx="{{ tr2.finCx }}" cy="{{ tr2.finCy }}" r="2.6" fill="var(--color-accent)"></circle>
+                          <sc-for list="{{ tr2.axeXs }}" as="ax" hint-placeholder-count="3">
+                            <text x="{{ ax.x }}" y="145" font-size="8" fill="currentColor" opacity="0.55">{{ ax.txt }}</text>
+                          </sc-for>
+                          <text x="266" y="145" text-anchor="end" font-size="8" fill="currentColor" opacity="0.55">{{ tr2.finMoisTxt }}</text>
+                          <text x="266" y="157" text-anchor="end" font-size="8" fill="var(--color-accent-700)">{{ tr2.finValTxt }}</text>
+                        </svg>
+                      </sc-if>
+                      <span style="font-size:9px;line-height:1.4" class="text-muted">{{ tr2.courbeLegende }} Avant / après la charnière : <span style="color:{{ tr2.regCouleur }}">{{ tr2.regAvantTxt }} / {{ tr2.regApresTxt }}</span>.</span>
                     </div>
                   </div>
                   <div style="font-size:10px;line-height:1.5" class="text-muted">{{ tr2.reglages }} · {{ tr2.variante }} · {{ tr2.n }} trades · {{ tr2.segs }} époques</div>
@@ -3072,7 +3093,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
               <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
             </sc-if>
             <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
-          </div>
         </div>
 
         <sc-if value="{{ aPanneauHasard }}" hint-placeholder-val="{{ false }}">
@@ -14068,6 +14088,9 @@ GROUPES = {
       return { cle, nom, val: v, min, max, step, valTxt: fmtv(v),
         pourquoi: POURQUOI[cle] || '',
         restant: reste.toLocaleString('fr-FR'),
+        // le coût en NOMBRE, pas seulement en texte : c'est lui qui permet de nommer
+        // le seuil le plus coûteux dans la ligne de lecture de l'entonnoir
+        ecartN: Math.max(0, avant - reste),
         ecartees: avant - reste ? '− ' + (avant - reste).toLocaleString('fr-FR') : 'rien écarté',
         part: (idx.N ? Math.round((reste / idx.N) * 100) : 0) + '%'
           + (s.scanVu ? ' du scan choisi' : ' de l\u2019historique'),
@@ -19658,18 +19681,70 @@ GROUPES = {
                 // instruments au même R net n'ont pas la même allure, et c'est justement
                 // ce qu'une colonne de tableau ne pouvait pas montrer.
                 ...(() => {
+                  // LA COURBE, DATÉE ET GRADUÉE. À 300 × 70 elle était un tracé sans
+                  // repère : ni combien, ni quand. À 270 × 160 dans la moitié droite de
+                  // la fiche, elle porte un axe des R (maximum, milieu, zéro), les années
+                  // en abscisse et la valeur finale datée. La ligne du zéro reste À
+                  // L'ÉCHELLE : un plancher collé au bas du cadre serait une autre
+                  // affirmation sur les données.
                   const pa = r.pa || [];
-                  const eqs = [];
+                  const eqs = [], ans = [];
                   let eq = 0;
-                  for (let i = 0; i + 1 < pa.length; i += 3) { eq += Number(pa[i + 1]) || 0; eqs.push(eq); }
-                  if (eqs.length < 2) return { aCourbe: false, trace: '', aire: '', zero: 35 };
+                  for (let i = 0; i + 1 < pa.length; i += 3) { eq += Number(pa[i + 1]) || 0; eqs.push(eq); ans.push(pa[i]); }
+                  const jj = (t) => (t ? new Date(t).toLocaleDateString('fr-FR') : '');
+                  const legende = 'Cumul en R depuis le ' + (r.t0 ? jj(r.t0) : 'début de la série')
+                    + ', ligne du zéro à l\u2019échelle.';
+                  if (eqs.length < 2) return { aCourbe: false, trace: '', aire: '', zero: '132',
+                    gyTopTxt: '', gyMidTxt: '', axeXs: [], finMoisTxt: '', finValTxt: '',
+                    finCx: '266', finCy: '132', zeroLblY: '135',
+                    courbeLegende: legende };
                   const lo = Math.min(0, ...eqs), hi = Math.max(0, ...eqs);
-                  const y = (v) => 64 - (v - lo) / ((hi - lo) || 1) * 58;
-                  const x = (i) => 2 + (i / (eqs.length - 1)) * 296;
+                  const y = (v) => 132 - (v - lo) / ((hi - lo) || 1) * 124;
+                  const x = (i) => 24 + (i / (eqs.length - 1)) * 242;
                   const d = eqs.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
                   const z = y(0);
-                  return { aCourbe: true, trace: d, zero: z.toFixed(1),
-                    aire: d + ' L298.0,' + z.toFixed(1) + ' L2.0,' + z.toFixed(1) + ' Z' };
+                  const gr = (v) => (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10)
+                    .toLocaleString('fr-FR');
+                  // années en abscisse : une sur deux tant qu'il reste de la place, la
+                  // dernière cédant toujours au mois de la dernière bougie
+                  const axeXs = [];
+                  for (let i = 0; i < ans.length; i++) {
+                    const px = x(i);
+                    if ((ans[i] - ans[0]) % 2 === 0 && px < 226) axeXs.push({ x: px.toFixed(0), txt: String(ans[i]) });
+                  }
+                  const fin = r.t1 ? new Date(r.t1) : null;
+                  const finMois = fin ? String(fin.getMonth() + 1).padStart(2, '0') + '/' + fin.getFullYear() : '';
+                  return { aCourbe: true, trace: d, zero: z.toFixed(1), zeroLblY: (z + 3).toFixed(1),
+                    aire: d + ' L266.0,' + z.toFixed(1) + ' L24.0,' + z.toFixed(1) + ' Z',
+                    gyTopTxt: gr(hi) + ' R', gyMidTxt: gr((hi + lo) / 2) + ' R',
+                    axeXs, finMoisTxt: finMois,
+                    finCx: x(eqs.length - 1).toFixed(1), finCy: y(eqs[eqs.length - 1]).toFixed(1),
+                    finValTxt: sg(eqs[eqs.length - 1], 1) + ' R' + (fin ? ' au ' + jj(r.t1) : ''),
+                    courbeLegende: legende };
+                })(),
+                // ————— LES CHIFFRES QUE LA MOITIÉ GAUCHE PEUT ENFIN PORTER —————
+                rAnR: r.rAn === undefined ? '—' : sg(r.rAn, 1) + ' R',
+                gagnantsTxt: (r.winRate === undefined || r.winRate === null) ? '—'
+                  : fr(r.winRate, 1) + ' %',
+                ...(() => {
+                  const cc2 = this.coutsCourtiers(r.sym);
+                  const fpct = cc2.principal ? cc2.principal.moyen : null;
+                  return { fraisRTxt: (fpct !== null && r.sl)
+                    ? Math.round(fpct / r.sl * 100) + ' % du R'
+                    : '—' };
+                })(),
+                ...(() => {
+                  // le pire exercice ANNUEL — le mois n'est pas conservé sur une ligne de
+                  // scan, et l'inventer serait pire que de donner l'année
+                  const pa = r.pa || [];
+                  let w = null;
+                  for (let i = 0; i + 1 < pa.length; i += 3) {
+                    const d2 = Number(pa[i + 1]);
+                    if (Number.isFinite(d2) && (w === null || d2 < w)) w = d2;
+                  }
+                  return { pireAnTxt: w === null ? '—' : sg(w, 1) + ' R',
+                    pireAnAide: w === null ? ''
+                      : 'La plus mauvaise année civile de la mesure. Le détail par mois n\u2019est pas conservé sur une ligne de scan.' };
                 })(),
                 // CE QUE LA FICHE PROPOSE DE FAIRE, et une seule chose : l'étape suivante
                 // de CETTE fiche. Un bouton « valider » offert sur une ligne dont le
@@ -20473,13 +20548,33 @@ GROUPES = {
       // ligne par ligne, dans sa colonne. Il reste, sous le même mot que les colonnes
       // détaillées, pour contrôler tout un tableau d'un coup et régler le nombre de tirages.
       aPanneauHasard: !!(this.aScanData && this.state.ouvLot),
-      basculerFiltreTxt: 'Remettre les curseurs à zéro',
+      basculerFiltreTxt: 'Ne rien écarter',
       filtresVifs,
       ...this.classementConditions(histoTout),
       aEffetFiltres: this.aScanData,
       scanTotalTxt: histoTout.length + ' combinaisons en mémoire',
       // L'ENTONNOIR : d'où l'on part, ce que chaque exigence coûte, ce qu'il reste.
       entonnoirTitre: histoTout.length.toLocaleString('fr-FR') + ' mesurées',
+      // ————— LE BANDEAU DE L'ENTONNOIR —————
+      // Quand 14 208 configurations tombent à 487, rien ne disait QUEL curseur remonter.
+      // La phrase se déduit des restants déjà calculés : aucun calcul nouveau, une
+      // comparaison sur sept nombres.
+      ...(() => {
+        const cher = (filtresVifs || []).reduce((a, f) => (f.ecartN > (a ? a.ecartN : 0) ? f : a), null);
+        return {
+          entoTotalTxt: histoTout.length.toLocaleString('fr-FR'),
+          entoGardeesTxt: nBaseToutes.toLocaleString('fr-FR'),
+          entoLecture: 'Le chiffre à droite de chaque curseur est ce qui reste quand on '
+            + 'l\u2019applique après les précédents — les sept s\u2019enchaînent, de '
+            + histoTout.length.toLocaleString('fr-FR') + ' à ' + nBaseToutes.toLocaleString('fr-FR') + '.',
+          aSeuilCher: !!(cher && cher.ecartN > 0),
+          seuilCherTxt: cher && cher.ecartN > 0
+            ? 'Le seuil le plus coûteux est « ' + cher.nom.toLowerCase() + ' à ' + cher.valTxt
+              + ' » : il écarte ' + cher.ecartN.toLocaleString('fr-FR')
+              + (cher.ecartN > 1 ? ' lignes' : ' ligne') + ' à lui seul.'
+            : '',
+        };
+      })(),
       entonnoirSous: this.pl((s.archives || []).length, 'scan en mémoire', 'scans en mémoire')
         + ' · ' + this.pl((s.deposes || []).length, 'série', 'séries'),
       // le premier étage de l'entonnoir : la lecture ne retire aucune ligne, elle décide

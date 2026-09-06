@@ -246,6 +246,13 @@
    ]
   },
   {
+   "terme": "en cours… Verdict du tirage",
+   "texte": "Le cumul en R, année par année, gradué et daté. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.",
+   "vues": [
+    "Historique"
+   ]
+  },
+  {
    "terme": "En euros",
    "texte": "La stratégie est chiffrée à mise fixe : 1 R vaut toujours le même montant, jamais réévalué. Composer la mise sur un capital qui grossit donnerait un total spectaculaire mais inatteignable — les lots devraient grossir dans la même proportion. La détention, elle, est par nature composée : c'est le même prix qui monte.",
    "vues": [
@@ -293,6 +300,13 @@
    "texte": "Nombre de conditions qui doivent être remplies pour autoriser l'entrée",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "Frais",
+   "texte": "Ce que le courtier prend sur chaque trade, en pourcentage du risque unitaire — le coût moyen de l’instrument rapporté à votre stop.",
+   "vues": [
+    "Historique"
    ]
   },
   {
@@ -373,13 +387,6 @@
    ]
   },
   {
-   "terme": "n° au coût",
-   "texte": "Le cumul en R, année par année. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.",
-   "vues": [
-    "Historique"
-   ]
-  },
-  {
    "terme": "Objectif",
    "texte": "Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.",
    "vues": [
@@ -454,6 +461,27 @@
    "texte": "Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.",
    "vues": [
     "Portefeuille"
+   ]
+  },
+  {
+   "terme": "résultats fragiles de mesurées gardées",
+   "texte": "La lecture des bougies ambiguës ne retire aucune ligne : elle décide laquelle des deux jumelles porte le chiffre. La lecture basse tranche contre vous ce que la donnée ne dit pas — c’est la seule exigence sans contrepartie.",
+   "vues": [
+    "Historique"
+   ]
+  },
+  {
+   "terme": "résultats fragiles de mesurées gardées",
+   "texte": "Remet à zéro les curseurs ci-dessous : plus aucun résultat n’est écarté de l’affichage. Vos scans ne sont pas touchés.",
+   "vues": [
+    "Historique"
+   ]
+  },
+  {
+   "terme": "résultats fragiles de mesurées gardées",
+   "texte": "Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.",
+   "vues": [
+    "Historique"
    ]
   },
   {
