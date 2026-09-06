@@ -204,6 +204,13 @@
    ]
   },
   {
+   "terme": "Depuis Unité Déclencheur Ligne période",
+   "texte": "La ligne de référence que le prix doit franchir ou toucher pour déclencher l'entrée, et sur combien de bougies elle est calculée. Plus la période est petite, plus elle réagit vite.",
+   "vues": [
+    "Backtest"
+   ]
+  },
+  {
    "terme": "Distance du stop",
    "texte": "À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.",
    "vues": [
@@ -260,13 +267,6 @@
    ]
   },
   {
-   "terme": "Entrée Ligne balayée",
-   "texte": "La ligne de référence que le prix doit franchir ou toucher pour déclencher l'achat.",
-   "vues": [
-    "Backtest"
-   ]
-  },
-  {
    "terme": "Essayer sans rien fournir",
    "texte": "Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.",
    "vues": [
@@ -293,13 +293,6 @@
    "texte": "Enregistre la liste complète en CSV, ouvrable dans un tableur",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "Filtres",
-   "texte": "Nombre de conditions qui doivent être remplies pour autoriser l'entrée",
-   "vues": [
-    "Backtest"
    ]
   },
   {
@@ -373,6 +366,13 @@
    ]
   },
   {
+   "terme": "Mesurer trades par an",
+   "texte": "Les entrées candidates sont les bougies où le déclencheur a marqué un signal hors position ; les filtres actifs en ont écarté ce nombre.",
+   "vues": [
+    "Backtest"
+   ]
+  },
+  {
    "terme": "Mesurer une config par régime",
    "texte": "Le Backtest rejoue une configuration sur la fenêtre de mesure que vous choisissez : avant ou après une charnière, ou une période que vous fixez.",
    "vues": [
@@ -415,13 +415,6 @@
    ]
   },
   {
-   "terme": "Période",
-   "texte": "Sur combien de bougies la ligne est calculée. Plus le nombre est petit, plus elle réagit vite.",
-   "vues": [
-    "Backtest"
-   ]
-  },
-  {
    "terme": "Période mesurée",
    "texte": "Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.",
    "vues": [
@@ -454,6 +447,13 @@
    "texte": "Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.",
    "vues": [
     "Mes instruments"
+   ]
+  },
+  {
+   "terme": "régler finement…",
+   "texte": "Le tableau complet : unité de temps, période et seuil de chaque filtre.",
+   "vues": [
+    "Backtest"
    ]
   },
   {
@@ -556,7 +556,7 @@
    ]
   },
   {
-   "terme": "Sortie risque Stop",
+   "terme": "Stop",
    "texte": "À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.",
    "vues": [
     "Backtest"
@@ -630,6 +630,13 @@
    "texte": "Décocher tous les instruments d’un coup",
    "vues": [
     "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "tout désactiver",
+   "texte": "Éteint les dix filtres d'un coup : toutes les entrées candidates sont prises.",
+   "vues": [
+    "Backtest"
    ]
   },
   {

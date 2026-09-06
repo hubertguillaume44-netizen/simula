@@ -1181,6 +1181,11 @@ export function backtester(df, cfg) {
   const stopMini = Number(cfg.stop_mini) || 0;
 
   const trades = [];
+  // Le compte des entrées candidates et de ce que les filtres en retirent. Sans lui,
+  // « + 4,2 R » ne dit pas si un filtre a affiné la stratégie ou l'a vidée — un
+  // + 4,2 R sur 74 trades et un + 4,2 R sur 12 trades ne se décident pas pareil.
+  // C'est un compteur sur la boucle existante, pas un second passage.
+  let nEntCand = 0, nEntFiltrees = 0;
   let enPos = false, px = 0, sl0 = 0, sl = 0, tp = 0, iEnt = -1, derniere = -1e9, be = 0, plusHaut = 0;
   // Niveaux de palier précalculés pour le trade en cours, seuils croissants.
   //
@@ -1569,9 +1574,13 @@ export function backtester(df, cfg) {
       if (candidats[pCand] > i) { i = candidats[pCand] - 1; continue; }
     }
     if (df.t[i] >= finEntrees) continue;
-    if (!signal[i] || (autorise && !autorise[i])) continue;
+    if (!signal[i]) continue;
+    // une bougie marquée par le signal est une entrée candidate ; celles que `autorise`
+    // ou le délai écartent sont le coût, en trades, des filtres actifs
+    if (autorise && !autorise[i]) { nEntCand++; nEntFiltrees++; continue; }
     if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
-    if (delai && (i - derniere) < delai) continue;
+    nEntCand++;
+    if (delai && (i - derniere) < delai) { nEntFiltrees++; continue; }
 
     px = auTick(df.o[i] * (1 + d * spreadDe(i)));
     sl0 = auTick(px * (1 - d * slPct));
@@ -1716,6 +1725,7 @@ export function backtester(df, cfg) {
     }
     tr.R_net = tr.R - comm - swap;
   }
+  trades.compteEntrees = { candidates: nEntCand, filtrees: nEntFiltrees };
   return trades;
 }
 
