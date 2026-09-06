@@ -2960,6 +2960,12 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
                     <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                       <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Hasard</span>
                       <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.15;color:{{ tr2.hasCouleur }}" title="{{ tr2.hasTousAide }}">{{ tr2.hasChiffre }}</strong>
+                      <sc-if value="{{ tr2.hasardAFaire }}" hint-placeholder-val="{{ false }}">
+                        <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:10px;text-align:left;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" disabled="{{ tr2.hasardOccupe }}" title="{{ tr2.hasPousserAide }}" onClick="{{ tr2.lancerHasard }}">{{ tr2.hasPousserTxt }}</button>
+                      </sc-if>
+                      <sc-if value="{{ tr2.hasardIci }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:10px" class="text-muted">contrôle en cours…</span>
+                      </sc-if>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                       <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Verdict du tirage</span>
@@ -19637,6 +19643,16 @@ GROUPES = {
                 hasardOccupe: !!s.hasardEnCours,
                 lancerHasard: (e) => { if (e && e.stopPropagation) e.stopPropagation();
                   this.controlerUne(r); },
+                // Le bouton de relance vit SOUS LE CHIFFRE du hasard, pas dans le rang
+                // d'action : dès que le verdict est vert, l'action devient « Ranger au
+                // portefeuille » et il n'existait plus AUCUN moyen, sur la fiche, de
+                // rejouer le tirage à un autre nombre — la seule offre était de ranger.
+                hasPousserTxt: (plusFin ? 'pousser à ' : 'refaire à ')
+                  + tDem.toLocaleString('fr-FR') + ' tirages',
+                hasPousserAide: 'Rejoue le contrôle du hasard à ' + tDem.toLocaleString('fr-FR')
+                  + ' tirages. Le résultat s\u2019AJOUTE aux contrôles déjà faits — deux tailles '
+                  + 'de tirage qui donnent le même pourcentage disent que ce pourcentage tient. '
+                  + 'Le nombre se règle dans le champ « tirages au hasard », en haut de la page.',
                 // LA COURBE DE LA FICHE. Elle vient de `pa`, le cumul année par année que
                 // le scan enregistre déjà sur chaque ligne : rien n'est recalculé. Deux
                 // instruments au même R net n'ont pas la même allure, et c'est justement
@@ -20275,7 +20291,7 @@ GROUPES = {
                 aVersBasse: false, versBasse: () => {}, versBasseAide: '',
                 hasardIci: false, hasardAFaire: false, hasardVu: true, hasardOccupe: false,
                 aValider: false, valider: () => {}, valideTxt: '',
-                lancerHasard: () => {},
+                lancerHasard: () => {}, hasPousserTxt: '', hasPousserAide: '',
                 aCourbe: false, trace: '', aire: '', zero: 35,
                 aAgir: false, agirTxt: '', agirCls: 'btn btn-ghost', agirAide: '',
                 agirBloque: true, agir: () => {}, opacite: '.62',
