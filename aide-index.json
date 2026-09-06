@@ -29,6 +29,13 @@
    ]
   },
   {
+   "terme": "1 R",
+   "texte": "Ce que vaut 1 R — capital × risque. Cette colonne divise par ce montant : cliquez pour le régler.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "À ranger",
    "texte": "Remet la configuration validée et sa place dans les portefeuilles telles qu'elles étaient avant le dernier retrait.",
    "vues": [
@@ -75,6 +82,13 @@
    "texte": "La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».",
    "vues": [
     "Journal"
+   ]
+  },
+  {
+   "terme": "Capital du compte",
+   "texte": "Le capital sur lequel le pourcentage de risque s’applique.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -180,13 +194,6 @@
    "texte": "Creux à partir duquel vous considérez avoir perdu le contrôle. La dernière case donne la fréquence à laquelle un tirage le dépasse.",
    "vues": [
     "Portefeuille"
-   ]
-  },
-  {
-   "terme": "de de capital, stop posé",
-   "texte": "Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {
@@ -478,10 +485,10 @@
    ]
   },
   {
-   "terme": "portage calculé sur la détention",
+   "terme": "Portage sur la détention",
    "texte": "Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.",
    "vues": [
-    "Mes instruments"
+    "Toutes les pages"
    ]
   },
   {
@@ -489,13 +496,6 @@
    "texte": "Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "que vaut 1 R partout",
-   "texte": "Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {
@@ -546,6 +546,13 @@
    "vues": [
     "Backtest",
     "Journal"
+   ]
+  },
+  {
+   "terme": "Risque par trade",
+   "texte": "Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -623,6 +630,13 @@
    "texte": "À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "Stop sous le prix d’entrée",
+   "texte": "Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -749,13 +763,6 @@
    "texte": "Les distances de stop balayées, en pourcent.",
    "vues": [
     "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "vaut 1 R partout de",
-   "texte": "Le capital sur lequel le pourcentage de risque s’applique.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {

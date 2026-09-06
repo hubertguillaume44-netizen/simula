@@ -31,6 +31,9 @@
   body { margin: 0; background: var(--color-bg); }
   a { color: var(--color-accent-700); }
   a:hover { color: var(--color-accent); }
+  .lien { cursor: pointer; border: none; background: none; padding: 0; font: inherit;
+          color: inherit; border-bottom: 1px dotted var(--color-neutral-400); }
+  .lien:hover { color: var(--color-accent-700); border-bottom-color: var(--color-accent); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
   .fl { cursor: pointer; font: inherit; text-align: left; display: flex; flex-direction: column;
         gap: 1px; padding: 4px 7px; background: none; border: 1px solid var(--color-divider);
@@ -700,12 +703,62 @@
           </sc-for>
         </div>
       </sc-if>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-inline-start:auto">
-        <span style="font-size:12px;white-space:nowrap" class="text-muted">{{ barreEtat }}</span>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-inline-start:auto;position:relative">
+        <!--
+          LE 1 R, EN MENTION GRISE : capital, risque et stop rebarèment tous les euros
+          de l'application — ils ne décrivent pas les instruments. Ils quittent donc
+          leur cadre de 106 px pour une mention en fin de ligne d'état : zéro pixel de
+          hauteur ajoutée, zéro contraste ajouté. Le pointillé est la convention
+          discrète pour « on peut ouvrir ça ».
+        -->
+        <span style="font-size:12px;white-space:nowrap" class="text-muted">{{ barreEtat }} · <button type="button" class="lien" style="font-size:11px" title="Capital, risque et stop — c’est ce que vaut 1 R partout dans l’application. Cliquez pour régler." onClick="{{ ouvrir1R }}">1 R = {{ teteEuroR }}</button></span>
         <sc-if value="{{ aBarreTache }}" hint-placeholder-val="{{ false }}">
           <span style="width:1px;height:18px;background:var(--color-divider);flex:none"></span>
           <span style="font-size:12px;line-height:1.4;color:var(--color-text)">{{ barreTacheTxt }}</span>
           <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:14px" onClick="{{ barreTache }}">{{ barreTacheBouton }}</button>
+        </sc-if>
+        <!--
+          LE PANNEAU ANCRÉ : 430 px sous la mention, pas un bandeau, pas une modale.
+          Quatre lignes libellé-champ — pas la phrase coulante : dans 430 px elle se
+          casse mal, un % orphelin en début de ligne, « nuits. » seule à la fin. Les
+          champs sont un BROUILLON : « Appliquer partout » écrit dans l'état réel et
+          tout ce qui affiche des euros se recalcule ; Annuler ou le clic dehors jette.
+        -->
+        <sc-if value="{{ aPan1R }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset:0;z-index:69" onClick="{{ fermer1R }}"></div>
+          <div class="blueprint" style="position:absolute;top:calc(100% + 6px);right:0;z-index:70;width:min(430px,92vw);padding:13px 15px;display:flex;flex-direction:column;gap:9px;background:var(--color-bg);box-shadow:var(--shadow-md)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;align-items:baseline;gap:9px">
+              <strong style="font-family:var(--font-heading);font-size:15px">Ce que vaut 1 R</strong>
+              <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:14px;opacity:.5;margin-inline-start:auto;color:inherit" onClick="{{ fermer1R }}" title="Fermer sans rien changer">×</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:12px;flex:1;min-width:0" title="Le capital sur lequel le pourcentage de risque s’applique.">Capital du compte</span>
+                <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="1000" value="{{ p1Capital }}" onChange="{{ setP1Capital }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">€</span></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:12px;flex:1;min-width:0" title="Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.">Risque par trade</span>
+                <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="0.1" min="0.1" value="{{ p1Risque }}" onChange="{{ setP1Risque }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">%</span></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:12px;flex:1;min-width:0" title="Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.">Stop sous le prix d’entrée</span>
+                <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="0.1" min="0.1" value="{{ p1Sl }}" onChange="{{ setP1Sl }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">%</span></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:12px;flex:1;min-width:0" title="Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.">Portage sur la détention</span>
+                <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="0.5" min="0" placeholder="mesurée" value="{{ p1Nuits }}" onChange="{{ setP1Nuits }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">nuits</span></span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:9px;padding-top:8px;border-top:1px solid var(--color-divider)">
+              <strong style="font-family:var(--font-heading);font-size:26px;line-height:1">{{ p1Euro }}</strong>
+              <span style="font-size:12px">en jeu à chaque trade</span>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-primary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ appliquer1R }}">Appliquer partout</button>
+              <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fermer1R }}">Annuler</button>
+            </div>
+          </div>
         </sc-if>
       </div>
     </div>
@@ -787,51 +840,6 @@
         largeurs inégales. Quatre éléments à `flex:1 1 210px` se partagent la rangée à
         égalité, quel que soit son nombre.
       -->
-      <!--
-        LE CAPITAL D'ABORD : il définit ce que vaut 1 R partout dans l'application,
-        et il change deux fois par an — ce n'est pas une étape d'installation MT5.
-      -->
-      <div style="background:var(--color-accent-100);padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-width:0">
-        <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap">
-          <strong style="font-family:var(--font-heading);font-size:34px;line-height:1;letter-spacing:-.01em">{{ teteEuroR }}</strong>
-          <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
-            <span style="font-size:12px;line-height:1.35">en jeu à chaque trade</span>
-            <span style="font-size:12px;line-height:1.35" class="text-muted">c’est ce que vaut 1 R partout</span>
-          </span>
-        </div>
-
-        <div style="font-size:13px;line-height:2">
-          <sc-if value="{{ vuRisque }}" hint-placeholder-val="{{ false }}">
-            <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:13px;font-family:var(--font-heading);padding:0 5px;width:6ch;text-align:center;vertical-align:baseline" type="number" step="0.1" min="0.1" value="{{ risqueTete }}" onChange="{{ setRisqueTete }}" onBlur="{{ fermerChampTete }}">
-          </sc-if>
-          <sc-if value="{{ luRisque }}" hint-placeholder-val="{{ true }}">
-            <button type="button" onClick="{{ ouvrirRisque }}" style="cursor:pointer;border:none;border-bottom:2px solid var(--color-accent);background:var(--color-bg);font-family:var(--font-heading);font-size:13px;padding:1px 6px;color:inherit" title="Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.">{{ risqueTxt }}</button>
-          </sc-if>
-          de
-          <sc-if value="{{ vuCapital }}" hint-placeholder-val="{{ false }}">
-            <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:13px;font-family:var(--font-heading);padding:0 5px;width:10ch;text-align:center;vertical-align:baseline" type="number" step="1000" value="{{ capitalTete }}" onChange="{{ setCapitalTete }}" onBlur="{{ fermerChampTete }}">
-          </sc-if>
-          <sc-if value="{{ luCapital }}" hint-placeholder-val="{{ true }}">
-            <button type="button" onClick="{{ ouvrirCapital }}" style="cursor:pointer;border:none;border-bottom:2px solid var(--color-accent);background:var(--color-bg);font-family:var(--font-heading);font-size:13px;padding:1px 6px;color:inherit" title="Le capital sur lequel le pourcentage de risque s’applique.">{{ capitalTxt }}</button>
-          </sc-if>
-          de capital, stop posé
-          <sc-if value="{{ vuStop }}" hint-placeholder-val="{{ false }}">
-            <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:13px;font-family:var(--font-heading);padding:0 5px;width:6ch;text-align:center;vertical-align:baseline" type="number" step="0.1" min="0.1" value="{{ slTete }}" onChange="{{ setSlTete }}" onBlur="{{ fermerChampTete }}">
-          </sc-if>
-          <sc-if value="{{ luStop }}" hint-placeholder-val="{{ true }}">
-            <button type="button" onClick="{{ ouvrirStop }}" style="cursor:pointer;border:none;border-bottom:2px solid var(--color-accent);background:var(--color-bg);font-family:var(--font-heading);font-size:13px;padding:1px 6px;color:inherit" title="Distance de prix sous l’entrée, en pourcent. Rien à voir avec la part de capital risquée, malgré la même unité.">{{ slTxt }}</button>
-          </sc-if>
-          sous mon prix d’entrée, portage calculé sur la détention
-          <sc-if value="{{ vuNuits }}" hint-placeholder-val="{{ false }}">
-            <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:13px;padding:0 5px;width:8ch;text-align:center;vertical-align:baseline" type="number" step="0.5" min="0" placeholder="mesurée" value="{{ nuitsTete }}" onChange="{{ setNuitsTete }}" onBlur="{{ fermerChampTete }}">
-          </sc-if>
-          <sc-if value="{{ luNuits }}" hint-placeholder-val="{{ true }}">
-            <button type="button" onClick="{{ ouvrirNuits }}" style="cursor:pointer;border:none;border-bottom:2px solid var(--color-accent);background:var(--color-bg);font-family:var(--font-heading);font-size:13px;padding:1px 6px;color:inherit" title="Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.">{{ nuitsTxt }}</button>
-          </sc-if>
-          en nuits.
-        </div>
-      </div>
-
       <!--
         CHAQUE BOUTON À CÔTÉ DE L'ÉTAPE QU'IL EXÉCUTE.
 
@@ -1092,7 +1100,7 @@
                     <th style="text-align:right">Portage</th>
                     <th style="text-align:right">Commission</th>
                     <th style="text-align:right">Total</th>
-                    <th style="text-align:right">Part de votre 1 R</th>
+                    <th style="text-align:right">Part de votre <button type="button" class="lien" style="font-size:inherit" title="Ce que vaut 1 R — capital × risque. Cette colonne divise par ce montant : cliquez pour le régler." onClick="{{ ouvrir1R }}">1 R</button></th>
                   </tr></thead>
                   <tbody>
                     <sc-for list="{{ fCoutLignes }}" as="fc" hint-placeholder-count="3">
@@ -1102,7 +1110,7 @@
                         <td style="text-align:right">{{ fc.portage }}</td>
                         <td style="text-align:right">{{ fc.comm }}</td>
                         <td style="text-align:right;font-weight:{{ fc.poids }}">{{ fc.total }}</td>
-                        <td style="text-align:right;font-weight:{{ fc.poids }}">{{ fc.partR }}</td>
+                        <td style="text-align:right;font-weight:{{ fc.poids }}">{{ fc.partR }}<span style="display:block;font-size:11px;font-weight:400" class="text-muted">{{ fc.partEuros }}</span></td>
                       </tr>
                     </sc-for>
                   </tbody>
@@ -4231,7 +4239,7 @@
     Rien ne bouge tout seul : pas de bulle animée, pas de badge rouge, pas d'ouverture
     automatique. Sur un outil de mesure, un élément qui s'agite décrédibilise le reste.
   -->
-  <div style="position:fixed;right:18px;bottom:18px;z-index:70;display:flex;gap:8px">
+  <div style="position:fixed;right:18px;bottom:{{ aideBas }};z-index:70;display:flex;gap:8px">
     <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:12px" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
     <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:14px" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
   </div>
@@ -14772,6 +14780,9 @@ GROUPES = {
           sansSauvReduit: reduit,
           sansSauvPadIn: reduit ? '5px' : '8px',
           sansSauvPad: !montrer ? '72px' : reduit ? '116px' : '150px',
+          // les boutons flottants « ? Aide / Donner mon avis » vivent au même coin :
+          // sans ce décalage, « Donner mon avis » recouvrait « Ouvrir dans un onglet »
+          aideBas: !montrer ? '18px' : reduit ? '52px' : '86px',
           sansSauvTxt: integre
             ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
               + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
@@ -18681,6 +18692,38 @@ GROUPES = {
       // le plus important de l'application — la traduction en euros de tout ce qu'elle
       // affiche en R.
       teteEuroR: EUR.format((Number(s.capital) || 0) * (Number(s.risquePct) || 0) / 100),
+      // ————— LE PANNEAU DU 1 R, ancré à la mention de la ligne d'état —————
+      // Les champs sont un brouillon (p1R) : rien ne bouge tant qu'on n'a pas cliqué
+      // « Appliquer partout » — qui écrit dans le même état que l'ancien cadre, donc
+      // toutes les pages qui affichent des euros se recalculent sans rechargement.
+      ...(() => {
+        const p = s.p1R;
+        const num = (v2, def) => {
+          const x = Number(String(v2).replace(',', '.').replace(/\s/g, ''));
+          return Number.isFinite(x) && x > 0 ? x : def;
+        };
+        const majP = (k) => (e) => this.setState({ p1R: { ...this.state.p1R, [k]: e.target.value } });
+        return {
+          aPan1R: !!p,
+          ouvrir1R: () => this.setState({ p1R: { capital: s.capital, risque: s.risquePct, sl: s.btSL,
+            nuits: (s.nuitsSaisi === null || s.nuitsSaisi === undefined) ? '' : s.nuitsSaisi } }),
+          fermer1R: () => this.setState({ p1R: null }),
+          p1Capital: p ? p.capital : '', setP1Capital: majP('capital'),
+          p1Risque: p ? p.risque : '', setP1Risque: majP('risque'),
+          p1Sl: p ? p.sl : '', setP1Sl: majP('sl'),
+          p1Nuits: p ? p.nuits : '', setP1Nuits: majP('nuits'),
+          p1Euro: EUR.format(p ? num(p.capital, 0) * num(p.risque, 0) / 100 : 0),
+          appliquer1R: () => {
+            const q = this.state.p1R;
+            if (!q) return;
+            this.maj({ capital: num(q.capital, s.capital), risquePct: num(q.risque, s.risquePct),
+              btSL: num(q.sl, s.btSL),
+              nuitsSaisi: String(q.nuits).trim() === '' ? null
+                : Math.max(0, Number(String(q.nuits).replace(',', '.')) || 0) });
+            this.setState({ p1R: null });
+          },
+        };
+      })(),
       vueCourtiers: this.state.vue === 'courtiers',
       setVueCourtiers: () => this.setState({ vue: 'courtiers' }),
       _newsAuto: this.newsAuto(),
@@ -19177,7 +19220,11 @@ GROUPES = {
                   portage: o.portageInconnu ? '— non relevé' : pc((o.portL + o.portS) / 2),
                   comm: o.comm ? pc(o.comm * 2) : '—',
                   total: pc(o.moyen),
-                  partR: r ? fr((r.achatR + r.venteR) / 2 * 100, 2) + ' %' : '—' };
+                  partR: r ? fr((r.achatR + r.venteR) / 2 * 100, 2) + ' %' : '—',
+                  // cette colonne divise littéralement par la valeur de 1 R : sans le
+                  // rappel en euros, le pourcentage n'a pas de référent
+                  partEuros: r ? ((r.achatR + r.venteR) / 2 * euroR).toFixed(2).replace('.', ',')
+                    + ' € sur ' + EUR.format(euroR) : '' };
               }),
               fCoutLecture: (() => {
                 const connus = c.liste.filter((o) => o.connu).sort((a, b) => a.moyen - b.moyen);
