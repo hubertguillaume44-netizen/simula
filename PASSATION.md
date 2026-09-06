@@ -228,10 +228,13 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
 
 ## Contraintes de produit à respecter
 
-- **`Sivula.dc.html` est le seul fichier d'application côté prototype.** Un fichier, deux
-  états : cadenas fermé = version d'essai (séries de démonstration), cadenas ouvert avec le
-  code d'accès = données personnelles. Ne jamais créer de fichier « Essai » ou
-  « Présentation » en double.
+- **`Sivula.dc.html` est la SOURCE, et le seul fichier d'application côté prototype.**
+  Ne jamais créer de fichier « Essai » ou « Présentation » en double. `Sivula.solo.html`
+  n'est pas un double : c'est l'artefact que `scripts/app/solo.mjs` régénère depuis la
+  source à chaque changement — ne jamais l'éditer à la main, ne jamais supprimer la
+  source sous prétexte que « tout passe par le solo ». Supprimer `Sivula.dc.html`
+  jetterait le code pour garder le binaire : le build, `app:aide` et les tests headless
+  (`ouvrir.mjs`) lisent tous la source.
 - **Aucun chiffre personnel écrit en dur.** Tout va dans `localStorage`, dans des espaces
   étanches (`.perso` / `.client` / `.essai`). Le fichier publié ne contient que l'exemple —
   le partage vers GitHub est sans risque par construction.
