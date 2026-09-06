@@ -71,7 +71,63 @@ export function journalUtilisable(conf) {
  * `portage` (taille de contrat) sert à chiffrer les frais du robot en R ; sans lui, les
  * blocs de frais et de bande sont simplement absents du résultat.
  */
-export function confronter({ M, df, cfg, conf, debut, portage }) {
+export function confronter({ M, df, cfg, conf, debut, portage, m1 }) {
+  // ————— LE DÉPARTAGE M1 —————
+  //
+  // Une divergence de sortie est presque toujours une question d'ordre : dans l'heure
+  // disputée, le prix a-t-il touché d'abord le niveau que le robot annonce, ou celui
+  // que le moteur retient ? La bougie H1 ne le dit pas ; la M1 le dit, minute par
+  // minute. La série M1 est fournie par l'appelant (espace de stockage à part —
+  // elle n'entre jamais dans le moteur de mesure) et reste optionnelle.
+  const heuresM1 = (() => {
+    if (!m1 || !m1.n) return null;
+    const m = new Map();
+    for (let i = 0; i < m1.n; i++) {
+      const h = bougie(m1.t[i]);
+      let l = m.get(h);
+      if (!l) { l = []; m.set(h, l); }
+      l.push(i);
+    }
+    return m;
+  })();
+  const dep = { arbitres: 0, robot: 0, moteur: 0, indecis: 0, muets: 0 };
+  const hm = (ms) => iso(ms).slice(11, 16);
+  // rend le texte à accoler à l'exemple, et compte le verdict
+  const arbitrerSortie = (r, m) => {
+    if (!heuresM1) return '';
+    const hR = bougie(r.t), hM = bougie(m.sortie_t);
+    const premier = Math.min(hR, hM);
+    const barres = heuresM1.get(premier);
+    dep.arbitres++;
+    if (!barres || !barres.length) { dep.muets++; return ' · M1 : absente sur cette heure'; }
+    // à quelle minute un niveau de prix est-il touché dans l'heure du premier sorti ?
+    const touche = (niveau) => {
+      if (!Number.isFinite(niveau)) return null;
+      for (const i of barres) if (m1.l[i] <= niveau && niveau <= m1.h[i]) return m1.t[i];
+      return null;
+    };
+    const tR = touche(r.prix), tM = touche(m.sortie);
+    if (hR !== hM) {
+      // celui qui sort le premier affirme que SON niveau a été traité dans cette
+      // heure-là ; la M1 confirme ou contredit cette affirmation
+      const tot = hR < hM;
+      const tPremier = tot ? tR : tM;
+      if (tPremier !== null) { tot ? dep.robot++ : dep.moteur++;
+        return ' · M1 : ' + (tot ? r.prix + ' traité à ' + hm(tPremier) + ' — robot confirmé'
+          : m.sortie + ' traité à ' + hm(tPremier) + ' — moteur confirmé'); }
+      tot ? dep.moteur++ : dep.robot++;
+      return ' · M1 : ' + (tot ? r.prix : m.sortie) + ' jamais traité dans l\u2019heure — '
+        + (tot ? 'robot contredit' : 'moteur contredit');
+    }
+    // même bougie, deux prix : le premier niveau traité, minute par minute, a raison
+    if (tR === null && tM === null) { dep.indecis++; return ' · M1 : aucun des deux niveaux traité dans l\u2019heure — indécidable'; }
+    if (tM === null || (tR !== null && tR < tM)) { dep.robot++;
+      return ' · M1 : ' + r.prix + ' traité d\u2019abord (' + hm(tR) + ') — robot confirmé'; }
+    if (tR === null || tM < tR) { dep.moteur++;
+      return ' · M1 : ' + m.sortie + ' traité d\u2019abord (' + hm(tM) + ') — moteur confirmé'; }
+    dep.indecis++;
+    return ' · M1 : les deux niveaux dans la même minute (' + hm(tR) + ') — indécidable';
+  };
   const sup = M.resampler(df, 'D1');
   const signal = M.signalDe(sup, cfg);
   const autorise = M.autorisePar(sup, cfg.filtres);
@@ -151,14 +207,14 @@ export function confronter({ M, df, cfg, conf, debut, portage }) {
       const d = iso(j * 86400000).slice(0, 10);
       if (!r || !m) { noter(r ? 'sortie chez le robot seul' : 'sortie chez le moteur seul', d); continue; }
       if (bougie(r.t) !== bougie(m.sortie_t)) {
-        noter('bougie de sortie différente', `${d} — moteur ${iso(m.sortie_t)} (${m.motif}), robot ${iso(r.t)} (${r.motif})`);
+        noter('bougie de sortie différente', `${d} — moteur ${iso(m.sortie_t)} (${m.motif}), robot ${iso(r.t)} (${r.motif})` + arbitrerSortie(r, m));
         continue;
       }
       const risque = Math.abs(m.entree - m.sl_initial);
       const ec = risque > 0 ? Math.abs(r.prix - m.sortie) / risque : 0;
       if (ec > 0.02) {
         noter('prix de sortie différent',
-          `${d} ${iso(m.sortie_t)} — moteur ${m.sortie} (${m.motif}), robot ${r.prix} (${r.motif}) : ${(ec * 100).toFixed(1)} % du risque`);
+          `${d} ${iso(m.sortie_t)} — moteur ${m.sortie} (${m.motif}), robot ${r.prix} (${r.motif}) : ${(ec * 100).toFixed(1)} % du risque` + arbitrerSortie(r, m));
       }
     }
     // sur TOUTES les sorties, pas sur la Map par jour
@@ -236,6 +292,8 @@ export function confronter({ M, df, cfg, conf, debut, portage }) {
     communs, nJoursRobot: conf.D.size, nJoursMoteur: decision.size,
     nEntreesRobot: conf.E.size, nEntreesMoteur: trades.length, nSortiesRobot: conf.S.size,
     fraisRobot, bilan, trades,
+    // null quand aucune M1 n'a été fournie — l'appelant sait alors proposer l'étape 5
+    departageM1: heuresM1 ? dep : null,
     divergences: [...cat.entries()].sort((a, b) => b[1] - a[1])
       .map(([nom, n]) => ({ nom, n, exemples: exemples.get(nom) })),
   };

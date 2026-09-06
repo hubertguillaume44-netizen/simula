@@ -3941,6 +3941,9 @@
             </div>
           </div>
           <div style="font-size:13px;line-height:1.6">{{ confDetail }}</div>
+          <sc-if value="{{ aConfM1 }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;line-height:1.6;color:var(--color-accent-700)">{{ confM1Txt }}</div>
+          </sc-if>
           <sc-if value="{{ aConfDiv }}" hint-placeholder-val="{{ false }}">
             <div style="font-size:12px;line-height:1.6" class="text-muted">
               <div style="font-weight:600;margin-bottom:4px">Divergences, par nature</div>
@@ -8216,7 +8219,14 @@ GROUPES = {
         debut,
         lire_reconstituees: true,
       };
-      const res = noyau.confronter({ M: this.M, df, cfg, conf, debut,
+      // la M1 rangée à part (étape 5 de Mes instruments) sert ICI, et seulement ici :
+      // départager minute par minute les divergences de sortie
+      let m1 = null;
+      try {
+        const bloc = await this.grosGet(this.cle(this.CLE_M1) + '|' + sym);
+        if (bloc && bloc.texte) m1 = this.M.texteVersDf(bloc.texte);
+      } catch (e) {}
+      const res = noyau.confronter({ M: this.M, df, cfg, conf, debut, m1,
         portage: this.portageDe(this.ligneCourtier(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif, sym)) });
       this.setState({ conf: { ...res, sym, trades: undefined }, confMsg: '' });
     } catch (e) {
@@ -16789,6 +16799,30 @@ GROUPES = {
           + ' — ' + b.nRobot + ' trades robot contre ' + b.nMoteur + ' moteur, dont '
           + b.ambigus + ' (' + Math.round(100 * b.ambigus / (b.nLecture || 1))
           + ' %) dont l\u2019issue dépend de l\u2019ordre des mouvements dans une bougie.';
+      })(),
+      ...(() => {
+        const c = s.conf;
+        if (!c) return { aConfM1: false, confM1Txt: '' };
+        const d = c.departageM1;
+        const nSorties = (c.divergences || [])
+          .filter((x) => /sortie/.test(x.nom)).reduce((a, x) => a + x.n, 0);
+        if (d) {
+          if (!d.arbitres) return { aConfM1: nSorties === 0,
+            confM1Txt: 'Départage M1 : aucune divergence de sortie à arbitrer.' };
+          return { aConfM1: true,
+            confM1Txt: 'Départage M1 (' + c.sym + '_M1.csv) : ' + d.arbitres
+              + ' divergence' + (d.arbitres > 1 ? 's' : '') + ' de sortie examinée'
+              + (d.arbitres > 1 ? 's' : '') + ' minute par minute — robot confirmé '
+              + d.robot + ' fois, moteur ' + d.moteur + ' fois'
+              + (d.indecis ? ', ' + d.indecis + ' indécidable' + (d.indecis > 1 ? 's' : '') + ' (même minute)' : '')
+              + (d.muets ? ', ' + d.muets + ' sans M1 sur l\u2019heure' : '') + '.' };
+        }
+        // pas de M1 déposée : le proposer seulement quand elle servirait à quelque chose
+        if (nSorties > 0) return { aConfM1: true,
+          confM1Txt: 'Déposez les bougies M1 de ' + c.sym + ' (étape 5 de « Produire ces fichiers depuis MT5 », '
+            + 'onglet Mes instruments) pour arbitrer minute par minute les ' + nSorties
+            + ' divergence' + (nSorties > 1 ? 's' : '') + ' de sortie : la H1 ne dit pas ce que le prix a touché d\u2019abord.' };
+        return { aConfM1: false, confM1Txt: '' };
       })(),
       aConfDiv: !!(s.conf && s.conf.divergences && s.conf.divergences.length),
       confDivergences: ((s.conf && s.conf.divergences) || []).slice(0, 8)
