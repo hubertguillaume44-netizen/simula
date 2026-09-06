@@ -4292,10 +4292,15 @@
     Rien ne bouge tout seul : pas de bulle animée, pas de badge rouge, pas d'ouverture
     automatique. Sur un outil de mesure, un élément qui s'agite décrédibilise le reste.
   -->
-  <div style="position:fixed;right:18px;bottom:{{ aideBas }};z-index:70;display:flex;gap:8px">
-    <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:12px" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
+  <!-- Flottants seulement quand il n'y a pas de pied de sauvegarde : dès que le pied
+       est là, ces deux boutons y prennent place — deux blocs au même coin finissaient
+       toujours par se recouvrir ou recouvrir le tableau. -->
+  <sc-if value="{{ aideFlotte }}" hint-placeholder-val="{{ true }}">
+  <div style="position:fixed;right:18px;bottom:18px;z-index:70;display:flex;gap:8px">
+    <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:12px;background:var(--color-bg)" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
     <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:14px" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
   </div>
+  </sc-if>
 
   <sc-if value="{{ avisOuvert }}" hint-placeholder-val="{{ false }}">
     <div style="position:fixed;inset:0;z-index:80;display:flex;justify-content:flex-end;pointer-events:none">
@@ -4471,6 +4476,9 @@
     <sc-if value="{{ aSauvBtn2 }}" hint-placeholder-val="{{ false }}">
       <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ sauvBtn2Agir }}">{{ sauvBtn2Txt }}</button>
     </sc-if>
+    <span style="width:1px;align-self:stretch;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
+    <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
+    <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
   </div>
   </sc-if>
 </div></x-dc>
@@ -14859,9 +14867,9 @@ GROUPES = {
           sansSauvReduit: reduit,
           sansSauvPadIn: reduit ? '5px' : '8px',
           sansSauvPad: !montrer ? '72px' : reduit ? '116px' : '150px',
-          // les boutons flottants « ? Aide / Donner mon avis » vivent au même coin :
-          // sans ce décalage, « Donner mon avis » recouvrait « Ouvrir dans un onglet »
-          aideBas: !montrer ? '18px' : reduit ? '52px' : '86px',
+          // « ? Aide / Donner mon avis » vivent DANS le pied dès qu'il est là : deux
+          // blocs empilés au même coin finissaient toujours par se recouvrir.
+          aideFlotte: !montrer,
           sansSauvTxt: integre
             ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
               + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
