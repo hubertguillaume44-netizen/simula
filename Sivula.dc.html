@@ -34,6 +34,15 @@
   .lien { cursor: pointer; border: none; background: none; padding: 0; font: inherit;
           color: inherit; border-bottom: 1px dotted var(--color-neutral-400); }
   .lien:hover { color: var(--color-accent-700); border-bottom-color: var(--color-accent); }
+  .pg { cursor: pointer; font: inherit; text-align: left; background: none; padding: 4px 8px;
+        border: 1px solid var(--color-divider); color: var(--color-text); display: flex;
+        align-items: baseline; gap: 6px; }
+  .pg:hover { border-color: var(--color-accent); background: var(--color-accent-100); }
+  .pg.act { background: var(--color-accent-100); border-color: var(--color-accent);
+            border-inline-start: 3px solid var(--color-accent); }
+  .pg.vide { background: var(--color-neutral-100); }
+  .pg.vide .nom { color: var(--color-neutral-700); }
+  .lg:hover { background: var(--color-accent-100); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
   .fl { cursor: pointer; font: inherit; text-align: left; display: flex; flex-direction: column;
         gap: 1px; padding: 4px 7px; background: none; border: 1px solid var(--color-divider);
@@ -952,95 +961,101 @@
         <span class="tag tag-accent" style="font-size:11px">{{ baremeMsg }}</span>
       </sc-if>
 
-      <div style="display:grid;grid-template-columns:360px 1fr;gap:14px;align-items:start">
+      <!--
+        LES FILTRES EN BANDEAU, LE TABLEAU EN PLEINE LARGEUR, LA FICHE EN PIED.
 
-        <aside class="blueprint" style="position:sticky;top:{{ scanTopAside }};padding:0;display:flex;flex-direction:column">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="padding:13px 15px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--color-divider)">
-            <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px">
-            <div class="seg" style="width:100%">
-              <!-- L'ordre suit ce qu'on cherche : ce qui est déjà là, ce qui manque, puis
-                   la liste entière. « Prêt » et « à faire » nommaient un jugement ; ce que
-                   la case dit vraiment, c'est si les bougies sont téléchargées. -->
-              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">{{ fbAvecTxt }}</label>
-              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
-              <label class="seg-opt" style="flex:1"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
-            </div>
-            <!--
-              CHERCHER PAR FAMILLE. Deux mille instruments classés par coût, sans autre
-              entrée que la recherche par nom : trouver « les indices » ou « les actions
-              françaises » supposait de savoir comment le courtier les nomme. Les familles
-              sortent du relevé — elles suivent donc le compte ouvert, et se traduisent
-              (« Stocks · United States » devient « Actions US »).
-            -->
-            <sc-if value="{{ aFamilles }}" hint-placeholder-val="{{ true }}">
-              <div style="display:flex;gap:4px;flex-wrap:wrap;max-height:96px;overflow:auto">
-                <button type="button" class="{{ familleToutCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="Toutes les familles" onClick="{{ familleTout }}">Toutes</button>
-                <sc-for list="{{ familles }}" as="fa" hint-placeholder-count="8">
-                  <button type="button" class="{{ fa.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ fa.aide }}" onClick="{{ fa.choisir }}">{{ fa.nom }} · {{ fa.n }}</button>
-                </sc-for>
-              </div>
-            </sc-if>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span style="font-size:11px" class="text-muted">Classer par</span>
-              <div class="seg">
-                <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
-                <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triCher }}" onChange="{{ setTriCher }}">Plus cher</label>
-              </div>
-            </div>
+        La colonne de 330 px comprimait les filtres : le sélecteur se cassait en deux
+        lignes et les quatorze pastilles formaient un mur tranché au milieu d'une
+        rangée. Ce n'était pas un défaut de dessin mais de largeur. En bandeau, tout
+        tient ; le tableau gagne une colonne « Groupe » (on filtrait par groupe sans
+        jamais voir celui d'une ligne) et une couverture RÉELLE des bougies ; la fiche
+        descend en bandeau collant de pied — on voit en même temps la ligne comparée à
+        ses voisines et son détail, et « Fiche complète » déplie le reste au-dessus.
+      -->
+      <div style="position:sticky;top:{{ scanTopAside }};z-index:20;padding:10px 16px 11px;display:flex;flex-direction:column;gap:8px;background:var(--color-neutral-100);border:1px solid var(--color-divider)">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px;width:210px">
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">{{ fbAvecTxt }}</label>
+            <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
+            <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
           </div>
-
-          <!--
-            LA LISTE NE PORTE QUE DE QUOI CHOISIR : le rang de coût, le nom, la couverture
-            des bougies et la part du 1 R. Les nuits, le détail par courtier, le favori et
-            la case à cocher sont partis dans la fiche ou en pied de colonne. Une seule
-            colonne défile, donc plus de débordement horizontal ni de pagination.
-          -->
-          <!--
-            LA SÉLECTION SE FAIT ICI, donc la case à cocher est ici. C'est elle que
-            « Liste pour MT5 » écrit dans symboles.txt, et c'est ce fichier qui décide
-            de ce que le terminal exporte. La case avait été retirée pour alléger la
-            colonne : la marche à suivre disait alors « cochez les instruments voulus »
-            devant une liste où rien n'était cochable.
-
-            Deux boutons par ligne, pas un : cocher n'est pas ouvrir. Un seul bouton
-            aurait forcé à choisir entre les deux gestes, et une case dans un bouton
-            n'est ni du HTML valide ni cliquable de façon distincte.
-          -->
-          <div style="display:flex;align-items:center;gap:9px;padding:7px 13px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
+          <div class="seg">
+            <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
+            <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triCher }}" onChange="{{ setTriCher }}">Plus cher</label>
+          </div>
+          <div style="display:flex;gap:9px;align-items:center;margin-inline-start:auto;flex-wrap:wrap">
             <sc-if value="{{ aCoches }}" hint-placeholder-val="{{ false }}">
               <strong style="font-size:11px;color:var(--color-accent-700)">{{ cochesTxt }}</strong>
               <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700)" onClick="{{ decocherTout }}">tout décocher</button>
             </sc-if>
-            <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;margin-inline-start:auto;color:var(--color-accent-700)" title="Coche tous les instruments que le filtre et la recherche laissent voir." onClick="{{ cocherVus }}">{{ cocherVusTxt }}</button>
+            <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700)" title="Coche tous les instruments que le filtre et la recherche laissent voir." onClick="{{ cocherVus }}">{{ cocherVusTxt }}</button>
           </div>
-          <div style="overflow:auto;max-height:60vh">
-            <sc-for list="{{ instrRows }}" as="ir" hint-placeholder-count="14">
-              <div style="display:flex;align-items:stretch;background:{{ ir.fond }};border-inline-start:3px solid {{ ir.marque }};border-bottom:1px solid var(--color-divider);opacity:{{ ir.opacite }}">
-                <button type="button" style="cursor:pointer;border:0;background:none;padding:0 5px 0 10px;display:flex;align-items:center;flex:none" title="{{ ir.cocheAide }}" onClick="{{ ir.cocher }}">
-                  <span style="width:13px;height:13px;border:1px solid {{ ir.cocheBord }};background:{{ ir.cocheFond }};color:var(--color-bg);font-size:10px;line-height:13px;text-align:center">{{ ir.cocheMarque }}</span>
-                </button>
-                <button type="button" style="flex:1;min-width:0;text-align:left;cursor:pointer;font:inherit;color:inherit;background:none;border:0;padding:9px 13px 9px 4px;display:flex;gap:9px;align-items:center" title="{{ ir.aide }}" onClick="{{ ir.choisir }}">
-                  <span style="font-family:var(--font-heading);font-size:12px;min-width:2.6ch" class="text-muted">{{ ir.rangCout }}</span>
-                  <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
-                    <strong style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ir.nom }}</strong>
-                    <span style="display:block;height:3px;background:{{ ir.barre }}"></span>
-                  </span>
-                  <span style="font-size:12px;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</span>
-                </button>
-              </div>
+        </div>
+        <sc-if value="{{ aFamilles }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="{{ familleToutCls }}" title="Toutes les familles" onClick="{{ familleTout }}"><span class="nom" style="font-size:10px;font-weight:600">Tous</span><span style="font-size:10px">{{ famToutN2 }}</span></button>
+            <sc-for list="{{ familles }}" as="fa" hint-placeholder-count="8">
+              <button type="button" class="{{ fa.cls }}" title="{{ fa.aide }}" onClick="{{ fa.choisir }}"><span class="nom" style="font-size:10px;font-weight:600">{{ fa.nom }}</span><span style="font-size:10px">{{ fa.n2 }} / {{ fa.n }}</span></button>
             </sc-for>
           </div>
-        </aside>
+        </sc-if>
+      </div>
 
-        <main style="min-width:0;display:flex;flex-direction:column;gap:13px">
-          <sc-if value="{{ aFiche }}" hint-placeholder-val="{{ true }}">
+      <div style="overflow-x:auto;padding-bottom:{{ instrPadBas }}">
+        <table class="table" style="font-size:12px;width:100%">
+          <thead><tr>
+            <th style="width:1%"></th>
+            <th style="width:1%">#</th>
+            <th>Instrument</th>
+            <th>Groupe</th>
+            <th style="text-align:right;width:1%;white-space:nowrap">Part de votre <button type="button" class="lien" style="font-size:inherit" title="Ce que vaut 1 R — capital × risque. Cette colonne divise par ce montant : cliquez pour le régler." onClick="{{ ouvrir1R }}">1 R</button></th>
+            <th style="min-width:18ch">Bougies présentes</th>
+            <th style="text-align:right;width:1%;white-space:nowrap">Meilleur au scan</th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ instrRows }}" as="ir" hint-placeholder-count="14">
+              <tr class="lg" style="cursor:pointer;background:{{ ir.fond }};opacity:{{ ir.opacite }}" title="{{ ir.aide }}" onClick="{{ ir.choisir }}">
+                <td style="width:1%">
+                  <button type="button" style="cursor:pointer;border:0;background:none;padding:2px;display:flex;align-items:center" title="{{ ir.cocheAide }}" onClick="{{ ir.cocher }}">
+                    <span style="width:13px;height:13px;border:1px solid {{ ir.cocheBord }};background:{{ ir.cocheFond }};color:var(--color-bg);font-size:10px;line-height:13px;text-align:center">{{ ir.cocheMarque }}</span>
+                  </button>
+                </td>
+                <td class="text-muted" style="width:1%;font-family:var(--font-heading)">{{ ir.rangCout }}</td>
+                <td><strong style="font-size:13px">{{ ir.nom }}</strong></td>
+                <td class="text-muted">{{ ir.grp }}</td>
+                <td style="text-align:right;white-space:nowrap;font-weight:{{ ir.poids }};color:{{ ir.couleur }}">{{ ir.part }}</td>
+                <td style="min-width:18ch">
+                  <span style="display:block;height:5px;background:{{ ir.barre }}"></span>
+                  <span style="display:block;font-size:10px;margin-top:2px;color:{{ ir.couvCoul }}">{{ ir.couvLbl }}</span>
+                </td>
+                <td style="text-align:right;white-space:nowrap;color:{{ ir.meilleurCoul }}">{{ ir.meilleur }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+          <sc-if value="{{ aSansReleve }}" hint-placeholder-val="{{ false }}">
+            <div class="blueprint" style="padding:14px 16px;align-self:flex-start;max-width:96ch">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <span style="font-size:13px">{{ sansReleveTxt }}</span>
+            </div>
+          </sc-if>
+          <p style="margin:0;font-size:12px;max-width:96ch" class="text-muted">Coût d’un aller-retour en % du notionnel : spread relevé + portage sur la durée de détention + commission. Le minimum par ordre n’est pas modélisé.</p>
+      </div>
+
+      <!-- la fiche complète, dépliée AU-DESSUS du bandeau : sans ce dépli, le tableau
+           des trois courtiers, la barre de couverture et les quatre chiffres seraient
+           perdus — trois colonnes de 280 px ne peuvent pas les porter -->
+      <sc-if value="{{ aFicheDepliee }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:13px">
+
             <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
               <span style="font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">{{ fNom }}</span>
               <span style="font-size:12px" class="text-muted">{{ fMeta }}</span>
               <div style="display:flex;gap:6px;margin-inline-start:auto">
                 <button type="button" class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fBasculerFav }}" title="{{ fFavAide }}">{{ fFavTxt }}</button>
                 <button type="button" class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fScanner }}" title="Ouvre le scanner avec cet instrument seul dans l’univers.">Scanner</button>
+                <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ basculerFicheC }}" title="Replie le détail : le bandeau du bas continue de résumer l’instrument sélectionné.">Replier la fiche</button>
               </div>
             </div>
 
@@ -1130,17 +1145,37 @@
               <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Meilleure au scan</span><strong style="font-family:var(--font-heading);font-size:20px;color:{{ fMeilleurCouleur }}">{{ fMeilleur }}</strong></div>
               <div class="blueprint" style="padding:11px 13px;display:flex;flex-direction:column;gap:2px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Bougies ambiguës</span><strong style="font-family:var(--font-heading);font-size:20px">{{ fAmbigus }}</strong></div>
             </div>
-          </sc-if>
+        </div>
+      </sc-if>
 
-          <sc-if value="{{ aSansReleve }}" hint-placeholder-val="{{ false }}">
-            <div class="blueprint" style="padding:14px 16px;align-self:flex-start;max-width:96ch">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <span style="font-size:13px">{{ sansReleveTxt }}</span>
+      <sc-if value="{{ aFiche }}" hint-placeholder-val="{{ true }}">
+        <div style="position:sticky;bottom:{{ ficheBasPied }};z-index:40;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;background:var(--color-accent-100);border-top:2px solid var(--color-accent)">
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+              <strong style="font-family:var(--font-heading);font-size:18px">{{ fNom }}</strong>
+              <span class="{{ fEtatCls }}" style="font-size:10px">{{ fEtat }}</span>
             </div>
-          </sc-if>
-          <p style="margin:0;font-size:12px;max-width:96ch" class="text-muted">Coût d’un aller-retour en % du notionnel : spread relevé + portage sur la durée de détention + commission. Le minimum par ordre n’est pas modélisé.</p>
-        </main>
-      </div>
+            <span style="font-size:11px;line-height:1.5" class="text-muted">{{ fGroupe }} · {{ fMeta }}</span>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;padding-top:3px;align-items:center">
+              <button type="button" class="btn btn-secondary" style="min-height:1.8rem;font-size:11px;padding-inline:10px" onClick="{{ fBasculerFav }}" title="{{ fFavAide }}">{{ fFavTxt }}</button>
+              <button type="button" class="btn btn-primary" style="min-height:1.8rem;font-size:11px;padding-inline:10px" onClick="{{ fCocher }}" title="{{ fCocheAide }}">{{ fCocheTxt }}</button>
+              <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" onClick="{{ fScanner }}" title="Ouvre le scanner avec cet instrument seul dans l’univers.">Scanner</button>
+              <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ basculerFicheC }}" title="Le détail complet — les trois courtiers, la barre de couverture avec ses trous, les quatre chiffres — se déplie au-dessus de ce bandeau.">{{ ficheDeplieeTxt }}</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Bougies</span>
+            <span style="font-size:12px;line-height:1.5;color:{{ fBndBougiesCoul }}">{{ fBndBougies }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ fBndCoutTitre }}</span>
+            <span style="font-size:12px;line-height:1.5">{{ fBndCout1 }}<strong>{{ fBndCoutFort }}</strong>{{ fBndCout2 }}</span>
+            <sc-if value="{{ aBndPlancher }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ fBndPlancher }}</span>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
     </div>
     </sc-if>
 
@@ -14783,6 +14818,7 @@ GROUPES = {
           // les boutons flottants « ? Aide / Donner mon avis » vivent au même coin :
           // sans ce décalage, « Donner mon avis » recouvrait « Ouvrir dans un onglet »
           aideBas: !montrer ? '18px' : reduit ? '52px' : '86px',
+          ficheBasPied: !montrer ? '0px' : reduit ? '37px' : '53px',
           sansSauvTxt: integre
             ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
               + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
@@ -18988,12 +19024,14 @@ GROUPES = {
         const rang = new Map(tous.map((sym) => [sym, coutDe(sym)]));
         const triee = [...tous].sort((a, b) => {
           const ra = rang.get(a), rb = rang.get(b);
-          const ia = !Number.isFinite(ra), ib = !Number.isFinite(rb);
+          // Un coût de 0,00 % n'est pas un instrument gratuit : c'est un relevé
+          // incomplet. Le classer en tête présentait un fantôme comme le meilleur.
+          const ia = !Number.isFinite(ra) || ra <= 0, ib = !Number.isFinite(rb) || rb <= 0;
           if (ia !== ib) return ia ? 1 : -1;
           if (ia) return a.localeCompare(b);
           return (ra - rb) * sens;
         });
-        const ordinal = new Map(triee.map((sym, k) => [sym, Number.isFinite(rang.get(sym)) ? k + 1 : null]));
+        const ordinal = new Map(triee.map((sym, k) => [sym, Number.isFinite(rang.get(sym)) && rang.get(sym) > 0 ? k + 1 : null]));
         const nAvec = tous.filter(aLa).length;
         const manquants = tous.filter((x) => !aLa(x));
         const fb = s.filtreBougies || 'tous';
@@ -19014,11 +19052,22 @@ GROUPES = {
           if (fb === 'sans') return !aLa(sym);
           return true;
         });
+        // LE SECOND NOMBRE est l'apport : le compteur unique comptait tout ce que le
+        // courtier expose, presque tout inutilisable — on cliquait sur un groupe de
+        // 1 135 symboles pour tomber sur une liste vide. « 2 / 1135 » dit les deux, et
+        // fait voir d'un coup quels groupes sont vides.
+        const nPretsFam = new Map();
+        for (const sym of tous) if (aLa(sym)) {
+          const f2 = famDe.get(sym);
+          nPretsFam.set(f2, (nPretsFam.get(f2) || 0) + 1);
+        }
         const familles = [...nParFam.entries()]
           .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
           .map(([nom, n]) => ({ nom: this.familleLisible(nom), n,
-            cls: 'tag ' + (fam === nom ? 'tag-accent' : 'tag-outline'),
-            aide: n + (n > 1 ? ' instruments' : ' instrument') + ' rangés sous « ' + nom
+            n2: nPretsFam.get(nom) || 0,
+            cls: 'pg' + (fam === nom ? ' act' : '') + ((nPretsFam.get(nom) || 0) === 0 ? ' vide' : ''),
+            aide: (nPretsFam.get(nom) || 0) + ' avec bougies sur ' + n
+              + (n > 1 ? ' instruments' : ' instrument') + ' rangés sous « ' + nom
               + ' » dans le relevé de votre courtier.',
             choisir: () => this.setState({ familleFiltre: fam === nom ? '' : nom, coutLimite: 60 },
               () => this.ecrireSession()) }));
@@ -19028,18 +19077,18 @@ GROUPES = {
         const barreDe = (sym) => {
           const cv = couvDe(sym);
           if (!aLa(sym)) return 'var(--color-neutral-200)';
-          if (!cv || !cv.trous || !cv.trous.length) return 'var(--color-accent)';
+          if (!cv || !cv.trous || !cv.trous.length) return 'var(--color-accent-400)';
           const span = Math.max(1, cv.t1 - cv.t0);
           const bouts = [];
           let pos = 0;
           for (const [a, b] of cv.trous) {
             const d = Math.max(0, Math.min(100, (a - cv.t0) / span * 100));
             const f = Math.max(d, Math.min(100, (b - cv.t0) / span * 100));
-            bouts.push('var(--color-accent) ' + pos.toFixed(1) + '% ' + d.toFixed(1) + '%');
-            bouts.push('var(--color-neutral-200) ' + d.toFixed(1) + '% ' + f.toFixed(1) + '%');
+            bouts.push('var(--color-accent-400) ' + pos.toFixed(1) + '% ' + d.toFixed(1) + '%');
+            bouts.push('var(--color-neutral-300) ' + d.toFixed(1) + '% ' + f.toFixed(1) + '%');
             pos = f;
           }
-          bouts.push('var(--color-accent) ' + pos.toFixed(1) + '% 100%');
+          bouts.push('var(--color-accent-400) ' + pos.toFixed(1) + '% 100%');
           return 'linear-gradient(to right,' + bouts.join(',') + ')';
         };
         const sel = s.symFiche && visibles.includes(s.symFiche) ? s.symFiche : (visibles[0] || null);
@@ -19048,15 +19097,45 @@ GROUPES = {
           return Number.isFinite(v) ? fr(v * 100, 2) + ' %' : null;
         };
         const coches = new Set(s.univers || []);
+        // le libellé sous la barre : quand ça commence, quand ça s'arrête, et si c'est
+        // troué — en encre pleine (neutral-700), pas en text-muted : à 10 px, 3,6:1 ne
+        // suffit pas
+        const couvLblDe = (sym) => {
+          const la2 = aLa(sym), cv2 = couvDe(sym);
+          if (!la2) return { txt: 'aucune bougie', coul: 'var(--color-neutral-700)' };
+          if (!cv2) return { txt: 'couverture non relevée', coul: 'var(--color-neutral-700)' };
+          const a0 = new Date(cv2.t0).getUTCFullYear();
+          const recent = Date.now() - cv2.t1 < 8 * 86400000;
+          const nT = (cv2.trous || []).length;
+          if (!recent) {
+            const d2 = new Date(cv2.t1);
+            return { txt: 's\u2019arrête en ' + String(d2.getUTCMonth() + 1).padStart(2, '0') + '/' + d2.getUTCFullYear(),
+              coul: 'var(--color-accent-700)' };
+          }
+          if (nT) return { txt: a0 + ' \u2192 hier · ' + nT + (nT > 1 ? ' trous' : ' trou'), coul: 'var(--color-accent-700)' };
+          return { txt: a0 + ' \u2192 hier · complet', coul: 'var(--color-neutral-700)' };
+        };
+        const meilleurDe = (sym) => {
+          const ps = this._parSym || new Map();
+          const e2 = ps.get(sym) || ps.get(this.fluxDe(sym).base);
+          return e2 && e2.best ? e2.best : null;
+        };
         const instrRows = visibles.slice(0, 400).map((sym) => {
           const la = aLa(sym), p = partR(sym), cv = couvDe(sym);
+          const incomplet = Number.isFinite(rang.get(sym)) && rang.get(sym) <= 0;
+          const lbl = couvLblDe(sym);
+          const best2 = meilleurDe(sym);
           return {
             sym, nom: this.nomComplet(sym),
+            grp: this.familleLisible(famDe.get(sym) || '') || '—',
+            couvLbl: lbl.txt, couvCoul: lbl.coul,
+            meilleur: best2 ? sg(best2.total, 0) + ' R' : (la ? 'non scanné' : '—'),
+            meilleurCoul: best2 ? 'var(--color-text)' : 'var(--color-neutral-500)',
             rangCout: ordinal.get(sym) === null ? '—' : String(ordinal.get(sym)),
             barre: barreDe(sym),
-            part: p === null ? (la ? 'sans relevé' : 'sans bougies') : p,
-            poids: p === null ? '400' : '600',
-            couleur: p === null ? 'var(--color-neutral-500)'
+            part: incomplet ? 'relevé incomplet' : p === null ? (la ? 'sans relevé' : 'sans bougies') : p,
+            poids: (p === null || incomplet) ? '400' : '600',
+            couleur: (p === null || incomplet) ? 'var(--color-neutral-500)'
               : (rang.get(sym) > 0.003 ? 'var(--color-accent-700)' : 'var(--color-text)'),
             opacite: la ? '1' : '.6',
             fond: sym === sel ? 'var(--color-accent-100)' : 'transparent',
@@ -19092,7 +19171,7 @@ GROUPES = {
           instrRows,
           familles,
           aFamilles: familles.length > 1,
-          familleToutCls: 'tag ' + (fam ? 'tag-outline' : 'tag-accent'),
+          familleToutCls: 'pg' + (fam ? '' : ' act'),
           familleTout: () => this.setState({ familleFiltre: '', coutLimite: 60 },
             () => this.ecrireSession()),
           // ————— L'ÉTAT DE LA SÉLECTION, AU-DESSUS DE LA LISTE —————
@@ -19106,9 +19185,15 @@ GROUPES = {
           cocherVus: () => this.setState((q) => ({
             univers: [...new Set([...(q.univers || []), ...visibles.slice(0, 400)])] }),
             () => this.ecrireSession()),
+          // des libellés d'une seule ligne : « Non téléchargés 2071 » se cassait en deux
           fbTousTxt: 'Tous · ' + tous.length,
-          fbAvecTxt: 'Téléchargés · ' + nAvec,
-          fbSansTxt: 'Non téléchargés · ' + manquants.length,
+          fbAvecTxt: nAvec + (nAvec > 1 ? ' prêts' : ' prêt'),
+          fbSansTxt: manquants.length + ' à faire',
+          famToutN2: nAvec + ' / ' + tous.length,
+          aFicheDepliee: !!s.ficheDepliee && !!sel,
+          basculerFicheC: () => this.setState({ ficheDepliee: !this.state.ficheDepliee }),
+          ficheDeplieeTxt: s.ficheDepliee ? 'Replier la fiche' : 'Fiche complète',
+          instrPadBas: sel ? '150px' : '12px',
           // « les 1 944 manquants » annonçait un nombre inquiétant sans dire de quoi il
           // parlait : ce sont des instruments du relevé de courtier dont les bougies ne
           // sont pas encore là, pas des données perdues.
@@ -19241,6 +19326,44 @@ GROUPES = {
                   + (petit
                     ? 'est plus petit que la variation du spread d’une séance à l’autre : il ne justifie pas de changer.'
                     : 'est réel : à volume égal, il se voit sur l’année.') + fin;
+              })(),
+              // ————— LE BANDEAU DE PIED : un résumé, la fiche complète au lien —————
+              // Trois colonnes de 280 px ne portent pas la fiche entière ; le bandeau
+              // résume, « Fiche complète » déplie le détail au-dessus.
+              fGroupe: this.familleLisible(this.familleDe(sel) || '') || '',
+              fCocheTxt: (s.univers || []).includes(sel) ? 'Retirer de la liste' : 'Ajouter à la liste',
+              fCocheAide: (s.univers || []).includes(sel)
+                ? sel + ' est dans la liste à demander à MT5 — cliquez pour l\u2019en retirer.'
+                : 'Ajouter ' + sel + ' à la liste à demander à MT5 (symboles.txt).',
+              fCocher: () => this.setState((q) => ({ univers: (q.univers || []).includes(sel)
+                ? (q.univers || []).filter((x) => x !== sel)
+                : [...(q.univers || []), sel] }), () => this.ecrireSession()),
+              fBndBougies: !la
+                ? 'Aucune série dans ce navigateur. Cochez-le, téléchargez la liste pour MT5, puis lancez Export_H1_Sivula.'
+                : cv
+                  ? 'H1 · ' + cv.n.toLocaleString('fr-FR') + ' bougies · du ' + jour(cv.t0) + ' au ' + jour(cv.t1)
+                    + (nTrous ? ' · ' + this.pl(nTrous, 'trou', 'trous') : (vieux ? '' : ' · complet'))
+                    + (vieux ? ' — la série s\u2019arrête là' : '')
+                  : 'Bougies présentes — la couverture se relève au prochain chargement de la série.',
+              fBndBougiesCoul: (!la || nTrous || vieux) ? 'var(--color-accent-900)' : 'var(--color-text)',
+              ...(() => {
+                const lp = c.liste.find((o) => o.cle === this.COURTIERS[0][0] && o.connu)
+                  || c.liste.find((o) => o.connu) || null;
+                if (!lp) return { fBndCoutTitre: 'Coût', fBndCout1: 'aucun relevé de frais pour cet instrument',
+                  fBndCoutFort: '', fBndCout2: '', aBndPlancher: false, fBndPlancher: '' };
+                const r2 = this.coutEnR(sel, this.stopDe(sel), lp.cle);
+                const pct2 = r2 ? (r2.achatR + r2.venteR) / 2 : null;
+                return {
+                  fBndCoutTitre: 'Coût · ' + lp.courtier,
+                  fBndCout1: 'spread ' + pc(lp.spread) + ' · portage '
+                    + (lp.portageInconnu ? 'non relevé' : pc((lp.portL + lp.portS) / 2)) + ' · ',
+                  fBndCoutFort: pct2 !== null ? fr(pct2 * 100, 2) + ' % de votre 1 R' : 'part du 1 R non chiffrable',
+                  fBndCout2: pct2 !== null ? ' soit ' + (pct2 * euroR).toFixed(2).replace('.', ',') + ' €' : '',
+                  // un portage absent n'est pas un portage nul : le dire évite de lire
+                  // un plancher comme un total
+                  aBndPlancher: !!lp.portageInconnu,
+                  fBndPlancher: 'Le portage n\u2019est pas relevé : le coût affiché est un plancher, pas un total.',
+                };
               })(),
               fNuits: fr(c.nuits, 1) + ' nuits',
               fNConfigs: e ? String(e.n) : '0',

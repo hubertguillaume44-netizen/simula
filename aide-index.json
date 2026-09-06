@@ -113,6 +113,13 @@
    ]
   },
   {
+   "terme": "cher Plus cher tout décocher",
+   "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "Cible de Tout ranger",
    "texte": "Destination du bouton « Tout ranger dans… ».",
    "vues": [
@@ -520,6 +527,13 @@
    ]
   },
   {
+   "terme": "Replier la fiche",
+   "texte": "Replie le détail : le bandeau du bas continue de résumer l’instrument sélectionné.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "résultats fragiles de mesurées gardées",
    "texte": "La lecture des bougies ambiguës ne retire aucune ligne : elle décide laquelle des deux jumelles porte le chiffre. La lecture basse tranche contre vous ce que la donnée ne dit pas — c’est la seule exigence sans contrepartie.",
    "vues": [
@@ -586,6 +600,13 @@
   {
    "terme": "Scanner",
    "texte": "Ouvre le scanner avec cet instrument seul dans l’univers.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
+   "terme": "Scanner",
+   "texte": "Le détail complet — les trois courtiers, la barre de couverture avec ses trous, les quatre chiffres — se déplie au-dessus de ce bandeau.",
    "vues": [
     "Mes instruments"
    ]
@@ -714,13 +735,6 @@
    "texte": "Affiche l’ensemble des scans en mémoire.",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "tout décocher",
-   "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {
