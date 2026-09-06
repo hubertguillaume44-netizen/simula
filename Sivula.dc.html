@@ -350,6 +350,9 @@
         <sc-if value="{{ aPersistMsg }}" hint-placeholder-val="{{ false }}">
           <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ persistMsg }}</span>
         </sc-if>
+        <sc-if value="{{ aOngletMsg }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ ongletMsg }}</span>
+        </sc-if>
         <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ tirExportTxt }}</span>
       </div>
 
@@ -4479,6 +4482,9 @@
     <span style="width:1px;align-self:stretch;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
     <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
     <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
+    <sc-if value="{{ aOngletMsg }}" hint-placeholder-val="{{ false }}">
+      <span style="flex-basis:100%;font-size:11px;line-height:1.5;opacity:.92">{{ ongletMsg }}</span>
+    </sc-if>
   </div>
   </sc-if>
 </div></x-dc>
@@ -8887,6 +8893,7 @@ GROUPES = {
   async componentDidMount() {
     window.addEventListener('beforeunload', this.quitter);
     this.suivreHauteurEntete();
+    this.sonderOnglet();
     // L'estimation « reste ~ » est calculée au rendu, et le scan ne déclenche un rendu
     // qu'à chaque changement d'instrument. Sans ce battement, l'affichage restait figé sur
     // la valeur du dernier passage : vingt minutes à annoncer « reste 5 min ».
@@ -13025,7 +13032,9 @@ GROUPES = {
         ...(force ? { persistMsg: ok
           ? 'Protection accordée : le navigateur ne peut plus vider ces données de lui-même.'
           : this.dansIframe()
-            ? 'Le navigateur a refusé — il n\u2019accorde pas la protection à une vue intégrée. Ouvrez Sivula dans un onglet à lui et redemandez-la là ; en attendant, l\u2019export est la seule protection.'
+            ? this.state.ongletKO
+              ? 'Le navigateur a refusé — il n\u2019accorde pas la protection à une vue intégrée, et celle-ci ne peut pas s\u2019ouvrir en onglet (jeton d\u2019aperçu à usage unique). Ouvrez votre fichier Sivula.solo.html directement dans le navigateur et redemandez-la là ; en attendant, l\u2019export est la seule protection.'
+              : 'Le navigateur a refusé — il n\u2019accorde pas la protection à une vue intégrée. Ouvrez Sivula dans un onglet à lui et redemandez-la là ; en attendant, l\u2019export est la seule protection.'
             : 'Le navigateur a refusé pour l\u2019instant : il accorde la protection aux sites visités régulièrement ou installés. Réessayez plus tard — l\u2019export reste la protection sûre.' } : {}) });
     } catch (e) {
       if (force) this.setState({ persistMsg: 'Le navigateur a refusé la demande. L\u2019export reste la seule protection.' });
@@ -13584,6 +13593,27 @@ GROUPES = {
   // exact où le travail ne tient qu'au stockage du navigateur.
   dansIframe() {
     try { return window.self !== window.top; } catch (e) { return true; }
+  }
+  // L'adresse d'une vue intégrée n'est pas toujours ouvrable : le viewer de claude.ai
+  // sert la page sous un jeton d'aperçu à usage unique, et un nouvel onglet sur la
+  // même adresse répond « preview token required ». Vérifié une fois au chargement,
+  // pour que le bouton explique le chemin qui marche au lieu d'ouvrir un onglet mort.
+  async sonderOnglet() {
+    if (!this.dansIframe()) return;
+    let ok = false;
+    try {
+      const r = await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' });
+      // 405 = HEAD refusé sans rien dire de GET : dans le doute, ne pas condamner l'onglet
+      ok = r.ok || r.status === 405;
+    } catch (e) {}
+    this.setState({ ongletKO: !ok });
+  }
+  ouvrirEnOnglet() {
+    if (this.state.ongletKO) {
+      this.setState({ ongletMsg: 'Cette vue intégrée ne peut pas s’ouvrir en onglet : le viewer sert la page sous un jeton à usage unique, et l’onglet répondrait « preview token required ». Le chemin qui marche : exportez vos données ici, ouvrez votre fichier Sivula.solo.html directement dans le navigateur — glissé dans un onglet vide — puis « Réimporter » l’export (Mes décisions, ou le tiroir Intendance). Là, la protection du stockage et la sauvegarde automatique fonctionnent.' });
+      return;
+    }
+    try { window.open(window.location.href, '_blank'); } catch (e) {}
   }
   // Le navigateur évince le stockage « au mieux » sans avertir : on demande la
   // permanence, puis on prévient si un scan a disparu depuis la dernière séance.
@@ -14860,7 +14890,7 @@ GROUPES = {
             ? nb(delta, 'configuration mesurée', 'configurations mesurées') + ' depuis n\u2019'
               + (delta > 1 ? 'existent' : 'existe') + ' que dans ce navigateur.'
             : 'Aucune configuration mesurée depuis.';
-        const ouvrirOnglet = () => { try { window.open(window.location.href, '_blank'); } catch (e) {} };
+        const ouvrirOnglet = () => this.ouvrirEnOnglet();
         return {
           aSansSauv: montrer,
           sansSauvPlein: montrer && !reduit,
@@ -14875,7 +14905,9 @@ GROUPES = {
               + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
               + 'machine. Dans une vue intégrée comme celle-ci, le navigateur interdit l\u2019écriture '
               + 'directe dans un fichier : la sauvegarde automatique ne peut pas être activée. '
-              + 'Exportez maintenant, et rouvrez Sivula dans un onglet à lui pour l\u2019activer.'
+              + (this.state.ongletKO
+                ? 'Exportez maintenant ; pour l\u2019activer, ouvrez votre fichier Sivula.solo.html directement dans le navigateur.'
+                : 'Exportez maintenant, et rouvrez Sivula dans un onglet à lui pour l\u2019activer.')
             : 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur. '
               + 'Un navigateur qui vide son espace emporte les scans, les portefeuilles et les bougies. '
               + 'Choisissez un fichier de sauvegarde automatique : il s\u2019écrit sur votre disque à '
@@ -15214,7 +15246,9 @@ GROUPES = {
           // en vue intégrée, le chemin qui MARCHE est l'onglet propre : le proposer ici,
           // à côté de la demande qui sera refusée
           aTirOnglet: this.dansIframe(),
-          tirOuvrirOnglet: () => { try { window.open(window.location.href, '_blank'); } catch (e) {} },
+          tirOuvrirOnglet: () => this.ouvrirEnOnglet(),
+          aOngletMsg: !!s.ongletMsg,
+          ongletMsg: s.ongletMsg || '',
           // ————— LE RISQUE EN TÊTE DU TIROIR, et trois sections repliées —————
           // « Demander la protection » était un lien de corps 11 en dernière ligne,
           // deux écrans plus bas — le seul bouton qui aurait évité les deux pertes.
