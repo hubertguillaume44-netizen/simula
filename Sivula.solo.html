@@ -1980,7 +1980,7 @@ window.__sivAide = {"entrees":[{"terme":"—","texte":"La période mesurée. Ré
         sous le bandeau, sans quitter la page. Aucun calcul, aucun seuil, aucune
         grille ne change.
       -->
-      <div style="position:sticky;top:{{ scanTopAside }};z-index:20;border:1px solid var(--color-divider);background:var(--color-bg);display:flex;flex-direction:column">
+      <div style="border:1px solid var(--color-divider);background:var(--color-bg);display:flex;flex-direction:column">
 
         <div style="padding:10px 15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px 16px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider)">
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Instruments</span>
@@ -16467,8 +16467,6 @@ GROUPES = {
           toutDecocher: () => this.setState({ univers: [] }),
         };
       })(),
-      // le bandeau collant du haut a disparu — la colonne remonte sous le fil
-      scanTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 8) + 'px',
       // le bandeau des instruments se colle AU RAS du fil : le moindre interstice
       // laisse transparaître les rangées qui défilent, et le cadre semble flotter
       instrTop: ((s.hEntete || 46) + (s.hFil || 38)) + 'px',
