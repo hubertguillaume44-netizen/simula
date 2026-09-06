@@ -442,9 +442,6 @@ bool Exporter(string sym)
 }
 
 //+------------------------------------------------------------------+
-//| La liste, lue dans un fichier plutôt que saisie.                  |
-//+------------------------------------------------------------------+
-//+------------------------------------------------------------------+
 //| Export M1 — le départage, pas la mesure.                          |
 //|                                                                   |
 //| Sivula range ces fichiers dans un espace à part : ils ne servent  |
@@ -477,11 +474,9 @@ bool ExporterM1(string sym)
       return false;
    }
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread
-");
+   FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
    for(int i = 0; i < n; i++)
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d
-",
+      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d\r\n",
          TimeToString(m1[i].time, TIME_DATE | TIME_MINUTES),
          DoubleToString(m1[i].open,  dec),
          DoubleToString(m1[i].high,  dec),
@@ -497,6 +492,9 @@ bool ExporterM1(string sym)
    return true;
 }
 
+//+------------------------------------------------------------------+
+//| La liste, lue dans un fichier plutôt que saisie.                  |
+//+------------------------------------------------------------------+
 int LireListeFichier(string chemin, string &out[])
 {
    if(StringLen(chemin) == 0 || !FileIsExist(chemin)) return 0;
