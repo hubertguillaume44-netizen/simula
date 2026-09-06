@@ -990,7 +990,7 @@
         descend en bandeau de pied, dans le flux — collant, il mangeait 90 px d'écran
         en permanence — et « Fiche complète » déplie le reste au-dessus.
       -->
-      <div style="position:sticky;top:{{ scanTopAside }};z-index:20;padding:10px 16px 11px;display:flex;flex-direction:column;gap:8px;background:var(--color-neutral-100);border:1px solid var(--color-divider)">
+      <div style="position:sticky;top:{{ instrTop }};z-index:20;padding:10px 16px 11px;display:flex;flex-direction:column;gap:8px;background:var(--color-neutral-100);border:1px solid var(--color-divider);box-shadow:0 1px 0 var(--color-bg)">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input class="input" type="text" value="{{ rechCourtier }}" placeholder="Apple, CAC, or…" onChange="{{ setRechCourtier }}" onInput="{{ setRechCourtier }}" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px;width:210px">
           <div class="seg">
@@ -8825,9 +8825,11 @@ GROUPES = {
   // nécessaire tant qu'il était le dernier.
   suivreHauteurEntete() {
     this._roEntete = [];
+    this._elSuivis = {};
     const suivre = (id, cle) => {
       const el = document.getElementById(id);
       if (!el) return;
+      this._elSuivis[id] = el;
       const lire = () => {
         const h = Math.round(el.getBoundingClientRect().height);
         if (h && h !== this.state[cle]) this.setState({ [cle]: h });
@@ -8843,6 +8845,16 @@ GROUPES = {
     suivre('om-fil', 'hFil');
   }
   componentDidUpdate() {
+    // Les barres sont RECRÉÉES quand la vue change : l'observateur de hauteurs suivait
+    // alors un nœud détaché, et hEntete/hFil restaient figés sur la mesure du premier
+    // rendu — le bandeau collant des instruments s'épinglait trop haut ou trop bas,
+    // laissant défiler une bande de rangées au-dessus de lui.
+    const suivis = this._elSuivis || {};
+    if (document.getElementById('om-fil') !== suivis['om-fil']
+        || document.getElementById('om-sticky') !== suivis['om-sticky']) {
+      try { for (const ro of this._roEntete || []) ro.disconnect(); } catch (e) {}
+      this.suivreHauteurEntete();
+    }
     // La carte des configurations retenues est remplie PLUS BAS dans le même rendu que
     // le menu qui la lit : au premier passage elle est vide. Un seul rendu de plus suffit
     // à la publier, sans quoi le menu retombait sur tout le scan.
@@ -16421,6 +16433,9 @@ GROUPES = {
       })(),
       // le bandeau collant du haut a disparu — la colonne remonte sous le fil
       scanTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 8) + 'px',
+      // le bandeau des instruments se colle AU RAS du fil : le moindre interstice
+      // laisse transparaître les rangées qui défilent, et le cadre semble flotter
+      instrTop: ((s.hEntete || 46) + (s.hFil || 38)) + 'px',
       // Les multiplicateurs dispersés dans onze groupes ont été remplacés par les cinq
       // facteurs classés de `facteursScan` : un ×N qu'on ne peut comparer à aucun autre
       // ne répond à aucune question. Seul celui de la sécurisation subsiste, à l'étape 3.
