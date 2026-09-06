@@ -2824,7 +2824,7 @@
             -->
             <span style="font-size:11px;line-height:1.5;margin-top:-6px" class="text-muted">Le nombre de tirages vaut pour toute la page. Montez-le et les fiches déjà contrôlées proposent de pousser plus loin.</span>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(470px,1fr));gap:12px">
               <sc-for list="{{ toutesRows }}" as="tr2" hint-placeholder-count="9">
                 <div class="fiche blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:9px;opacity:{{ tr2.opacite }}">
                   <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -2879,7 +2879,7 @@
                           <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.1">{{ tr2.rAnR }}</strong>
                         </div>
                       </div>
-                      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding-top:8px;margin-top:8px;border-top:1px solid var(--color-divider)">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:8px;margin-top:8px;border-top:1px solid var(--color-divider)">
                         <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
                           <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gagnants</span>
                           <span style="font-family:var(--font-heading);font-size:15px;line-height:1.15">{{ tr2.gagnantsTxt }}</span>

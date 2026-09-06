@@ -548,7 +548,7 @@
     });
   }
   function walk(node, host) {
-    if (node.nodeType === Node.TEXT_NODE) return walkText(node);
+    if (node.nodeType === Node.TEXT_NODE) return walkText(node, host);
     if (node.nodeType !== Node.ELEMENT_NODE) return null;
     const el = node;
     const tag = el.tagName.toLowerCase();
@@ -566,12 +566,13 @@
     warnedHoles.add(key);
     console.warn("[dc-runtime] " + (ctx?.__name || "template") + ": " + what);
   }
-  function walkText(node) {
+  function walkText(node, host) {
     const txt = node.nodeValue ?? "";
     if (!txt.includes("{{")) {
       if (!txt.trim() && !txt.includes(" ")) return null;
       return () => txt;
     }
+    const wrapTag = host && host.__svg ? "tspan" : "span";
     const parts = txt.split(/\{\{([\s\S]+?)\}\}/g);
     return (vals, ctx, key) => h(
       getReact().Fragment,
@@ -583,7 +584,7 @@
           if (!ctx?.__streamingNow) {
             if (document.body?.hasAttribute("data-dc-editor-on")) {
               return h(
-                "span",
+                wrapTag,
                 { key: i, className: "sc-interp sc-unresolved" },
                 "{{ " + p.trim() + " }}"
               );
@@ -595,7 +596,7 @@
             return null;
           }
           return h(
-            "span",
+            wrapTag,
             { key: i, className: "sc-interp sc-missing" },
             p.trim()
           );
@@ -604,7 +605,7 @@
           return h(getReact().Fragment, { key: i }, v);
         }
         if (v === null || typeof v === "boolean") return null;
-        return h("span", { key: i, className: "sc-interp" }, String(v));
+        return h(wrapTag, { key: i, className: "sc-interp" }, String(v));
       })
     );
   }
@@ -790,6 +791,8 @@
     const inlineOnly = el.childNodes.length > 0 && !NEVER_CONTENT_KEYED.has(realTag) && el.querySelector(NOT_INLINE_SELECTOR) === null;
     const keySuffix = inlineOnly ? "|" + contentKey(el) : "";
     const { propGetters, pseudoClasses } = collectProps(el, "dom", host);
+    if (realTag === "svg") host = { ...host, __svg: true };
+    else if (realTag === "foreignObject") host = { ...host, __svg: false };
     const deckKeyed = isDeckMountTag(el) ? walkDeckChildren(el, host) : null;
     const kids = deckKeyed ? deckKeyed.kids : walkChildren(el, host);
     const kidKeys = deckKeyed?.keys ?? null;
