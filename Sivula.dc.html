@@ -647,9 +647,29 @@
         </div>
       </div>
 
+      <div class="blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:1060px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <strong style="font-family:var(--font-heading);font-size:17px">J'ai déjà un code</strong>
+        <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:13px;line-height:1.55">{{ licEtatTxt }}</span>
+          <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">retirer ce code de cet ordinateur</button>
+        </sc-if>
+        <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
+          <span style="font-size:12px;line-height:1.55;color:var(--color-neutral-700)">L'e-mail utilisé à l'achat, puis le code reçu par mail. La vérification se fait dans votre navigateur, avec la clé publique embarquée dans cette page : rien n'est envoyé nulle part.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;width:240px" type="email" value="{{ licEmail }}" onChange="{{ setLicEmail }}" placeholder="e-mail d'achat">
+            <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;flex:1;min-width:260px;font-variant-numeric:tabular-nums" type="text" value="{{ licCode }}" onChange="{{ setLicCode }}" placeholder="SIV1.…">
+            <button class="btn btn-primary" type="button" style="min-height:2.1rem;padding-inline:16px" onClick="{{ licVerifier }}">Vérifier</button>
+          </div>
+          <sc-if value="{{ aLicMsg }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12px;line-height:1.55;color:{{ licMsgEncre }}">{{ licMsg }}</span>
+          </sc-if>
+        </sc-if>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Sivula ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement et TVA gérés par Lemon Squeezy ; le code arrive par courriel.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation, et il vaut aussi pour la formule à vie.</p>
       </div>
     </section>
@@ -4906,6 +4926,87 @@ class Component extends DCLogic {
   CLE_FAV = 'simula.favoris.v1';
   CLE_VERROU = 'simula.acces.perso.v1';
 
+  // ————— LA LICENCE SIGNÉE — vérifiée HORS LIGNE, rien ne quitte le navigateur —————
+  // Le code n'est pas une entrée dans une base : c'est un jeton signé (Ed25519) qui
+  // porte l'empreinte de l'e-mail d'achat, le plan et la date de fin. La page
+  // n'embarque que la clé PUBLIQUE : elle permet de vérifier, jamais de fabriquer.
+  // Le pendant serveur vit dans netlify/functions/licence.mjs, et les deux formats
+  // sont verrouillés l'un sur l'autre par scripts/licence/licence.test.mjs.
+  // Clé de DÉMONSTRATION — scripts/licence/generer-cles.mjs la remplace avant la vente :
+  CLE_PUB_LICENCE = '1_IjxqvEGBChRuzlCzNKWt1rFTIHHHpQaor6wYHMtg0';
+  // volontairement GLOBALE (pas d'espace, pas de compte) : la licence ouvre
+  // l'application entière, elle n'appartient pas à un espace de travail
+  CLE_LICENCE = 'simula.licence.v1';
+  lireLicence() {
+    try { return JSON.parse(localStorage.getItem(this.CLE_LICENCE) || 'null'); }
+    catch (e) { return null; }
+  }
+  garderLicence(l) {
+    try {
+      if (l) localStorage.setItem(this.CLE_LICENCE, JSON.stringify(l));
+      else localStorage.removeItem(this.CLE_LICENCE);
+    } catch (e) {}
+  }
+  // Miroir WebCrypto de verifierCode (scripts/licence/licence-noyau.mjs) : même
+  // format, mêmes motifs. Retour { ok, plan, fin } ou { ok:false, motif } avec
+  // motif ∈ forme (mal recopié), signature (altéré ou forgé), email (destiné à un
+  // autre e-mail), expire (avec plan et date), navigateur (WebCrypto sans Ed25519).
+  async verifierLicence(code, email) {
+    const brut = String(code || '').replace(/\s+/g, '');
+    const m = /^SIV1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/.exec(brut);
+    if (!m) return { ok: false, motif: 'forme' };
+    const deB64u = (t) => {
+      const b = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - t.length % 4) % 4));
+      const u = new Uint8Array(b.length);
+      for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+      return u;
+    };
+    let payload, sig, jeton;
+    try {
+      payload = deB64u(m[1]);
+      sig = deB64u(m[2]);
+      jeton = JSON.parse(new TextDecoder().decode(payload));
+    } catch (e) { return { ok: false, motif: 'forme' }; }
+    if (sig.length !== 64 || !jeton || jeton.v !== 1) return { ok: false, motif: 'forme' };
+    let valide = false;
+    try {
+      const cle = await crypto.subtle.importKey('raw', deB64u(this.CLE_PUB_LICENCE),
+        { name: 'Ed25519' }, false, ['verify']);
+      valide = await crypto.subtle.verify({ name: 'Ed25519' }, cle, sig, payload);
+    } catch (e) { return { ok: false, motif: 'navigateur' }; }
+    if (!valide) return { ok: false, motif: 'signature' };
+    const norme = String(email || '').trim().toLowerCase();
+    const h = new Uint8Array(await crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(norme))).slice(0, 16);
+    let b = '';
+    for (const x of h) b += String.fromCharCode(x);
+    const empreinte = btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    if (jeton.e !== empreinte) return { ok: false, motif: 'email' };
+    if (jeton.p !== 'vie') {
+      const finMs = Date.parse(jeton.f + 'T23:59:59Z');
+      if (!Number.isFinite(finMs)) return { ok: false, motif: 'forme' };
+      if (Date.now() > finMs) return { ok: false, motif: 'expire', plan: jeton.p, fin: jeton.f };
+    }
+    return { ok: true, plan: jeton.p, fin: jeton.p === 'vie' ? null : jeton.f };
+  }
+  // Un code invalide dit POURQUOI — un simple refus enverrait chaque faute de
+  // frappe au support.
+  licenceMotifTexte(r) {
+    const jj = (f) => (f ? f.split('-').reverse().join('/') : '');
+    return {
+      forme: 'Code mal recopié : il commence par SIV1. et se colle d\u2019un bloc, sans espace. Recopiez-le depuis le mail.',
+      signature: 'Ce code n\u2019est pas un code Sivula valide — un caractère a probablement changé en route. Recopiez-le depuis le mail.',
+      email: 'Ce code est destiné à un autre e-mail : saisissez exactement l\u2019adresse utilisée à l\u2019achat.',
+      expire: 'Code expiré' + (r && r.fin ? ' depuis le ' + jj(r.fin) : '')
+        + '. Vos mesures restent en place ; reprenez un abonnement pour continuer sur vos données.',
+      navigateur: 'Ce navigateur ne sait pas vérifier la signature (Ed25519 absent de WebCrypto) : mettez-le à jour.',
+    }[r && r.motif] || 'Code refusé.';
+  }
+  get licenceActive() { return !!(this.state.lic && this.state.lic.ok); }
+  // le palier gratuit : trois instruments personnels — la licence ou le verrou
+  // propriétaire l'ouvrent. Le compte démo n'est jamais compté ni limité.
+  PALIER_GRATUIT = 3;
+
   // Trois espaces de stockage étanches : essai (démo), client (visiteur), perso (moi).
   // Les chiffres personnels ne sont jamais écrasés par un passage côté client.
   // portefeuilles, journal, réglages et scans sont propres au compte choisi : un
@@ -6544,6 +6645,26 @@ GROUPES = {
       }
       if (utNom) { refuses.push(f.name + ' (unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste)'); continue; }
       const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
+      // ————— LE PALIER GRATUIT : trois instruments personnels —————
+      // La licence signée (ou le verrou propriétaire) l'ouvre. À l'expiration d'un
+      // code, on retombe exactement ici : rien n'est effacé — mesures, portefeuilles
+      // et journaux restent en place — seule la mesure sur de NOUVELLES données
+      // personnelles se ferme. La démo n'est jamais comptée.
+      if (!this.state.deverrouille && !this.licenceActive) {
+        const persos = new Set([...(this.state.deposes || []), ...ajoutes]
+          .filter((x) => !this.SYM_DEMO.includes(x)));
+        if (!this.SYM_DEMO.includes(sym) && !persos.has(sym) && persos.size >= this.PALIER_GRATUIT) {
+          const lm = this.state.lic;
+          refuses.push(f.name + ' (palier gratuit : ' + this.PALIER_GRATUIT
+            + ' instruments personnels — '
+            + (lm && lm.motif === 'expire'
+              ? 'votre code a expiré' + (lm.fin ? ' le ' + lm.fin.split('-').reverse().join('/') : '')
+                + ', vos mesures restent en place ; reprenez un abonnement'
+              : 'un code d\u2019accès l\u2019ouvre sans limite, page d\u2019accueil')
+            + ')');
+          continue;
+        }
+      }
       try {
         const txt = await f.text();
         // ————— LA MESURE DES MOMENTS D'EXÉCUTION (moments.csv) —————
@@ -9294,6 +9415,15 @@ GROUPES = {
     try {
       if (localStorage.getItem(this.CLE_VERROU) === '1') this.setState({ deverrouille: true });
     } catch (e) {}
+    // la licence mémorisée est REvérifiée à chaque démarrage : la date de fin
+    // s'apprécie maintenant, pas au jour de la saisie — c'est ainsi qu'un
+    // abonnement résilié s'éteint tout seul, sans révocation à gérer
+    (async () => {
+      const lm = this.lireLicence();
+      if (!lm || !lm.code) return;
+      const r = await this.verifierLicence(lm.code, lm.email);
+      this.setState({ lic: { ...r, email: lm.email, code: lm.code } });
+    })();
     const M = await import('./moteur.js');
     this.M = M;
     this.N = await import('./scan-noyau.js');
@@ -15334,8 +15464,10 @@ GROUPES = {
         };
       })(),
       isAccueil: tab === 'accueil',
-      // liens de paiement Lemon Squeezy, à coller ici une fois les produits créés.
-      // Tant qu'ils sont vides, le bouton l'annonce au lieu d'ouvrir une page morte.
+      // liens de paiement REVOLUT, à coller ici une fois les trois produits créés
+      // (mensuel, annuel, à vie). Tant qu'ils sont vides, le bouton l'annonce au
+      // lieu d'ouvrir une page morte — la vente peut ouvrir avec délivrance
+      // manuelle : scripts/licence/signer.mjs signe un code à la main.
       ...(() => {
         const LIENS = { mois: '', an: '', vie: '' };
         const NOMS = { mois: 'l\u2019abonnement mensuel', an: 'la formule annuelle', vie: 'la licence à vie' };
@@ -15344,7 +15476,47 @@ GROUPES = {
           // on reste sur la page de vente : le visiteur venait payer, pas naviguer
           this.setState({ achatMsg: NOMS[k] });
         };
+        const lic = s.lic;
+        const jjL = (f) => (f ? f.split('-').reverse().join('/') : '');
+        const NOMS_PLAN = { mensuel: 'abonnement mensuel', annuel: 'formule annuelle', vie: 'licence à vie' };
         return { acheterMois: aller('mois'), acheterAn: aller('an'), acheterVie: aller('vie'),
+          // ————— LE CODE D'ACCÈS : plan et date EN CLAIR, motif en clair au refus —————
+          licValide: !!(lic && lic.ok),
+          licSaisie: !(lic && lic.ok),
+          licEtatTxt: lic && lic.ok
+            ? 'Code reconnu : ' + (NOMS_PLAN[lic.plan] || lic.plan)
+              + (lic.fin ? ', valable jusqu\u2019au ' + jjL(lic.fin) : ', sans date de fin')
+              + '. L\u2019import est ouvert sans limite sur cet ordinateur.'
+            : '',
+          licEmail: s.licEmailSaisie !== undefined ? s.licEmailSaisie : ((lic && lic.email) || ''),
+          licCode: s.licCodeSaisi !== undefined ? s.licCodeSaisi : ((lic && lic.code) || ''),
+          setLicEmail: (e) => this.setState({ licEmailSaisie: e.target.value, licMsg: null }),
+          setLicCode: (e) => this.setState({ licCodeSaisi: e.target.value, licMsg: null }),
+          aLicMsg: !!s.licMsg,
+          licMsg: s.licMsg ? s.licMsg.txt : '',
+          licMsgEncre: s.licMsg && s.licMsg.bon ? 'var(--color-accent-700)' : 'var(--color-accent-900)',
+          licVerifier: async () => {
+            const email = (s.licEmailSaisie !== undefined ? s.licEmailSaisie : ((lic && lic.email) || '')).trim();
+            const code = (s.licCodeSaisi !== undefined ? s.licCodeSaisi : ((lic && lic.code) || '')).trim();
+            if (!email || !code) {
+              this.setState({ licMsg: { txt: 'L\u2019e-mail d\u2019achat ET le code : la licence est liée aux deux.' } });
+              return;
+            }
+            const r = await this.verifierLicence(code, email);
+            if (r.ok) {
+              // mémorisé localement : au prochain démarrage le code est revérifié,
+              // pas cru sur parole — c'est la date qui décide, pas le souvenir
+              this.garderLicence({ code: code.replace(/\s+/g, ''), email });
+              this.setState({ lic: { ...r, email, code: code.replace(/\s+/g, '') },
+                licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined });
+            } else {
+              this.setState({ licMsg: { txt: this.licenceMotifTexte(r) } });
+            }
+          },
+          licRetirer: () => {
+            this.garderLicence(null);
+            this.setState({ lic: null, licMsg: null });
+          },
           aAchatMsg: !!s.achatMsg,
           achatMsgTxt: s.achatMsg
             ? 'Le paiement n\u2019est pas encore ouvert pour ' + s.achatMsg

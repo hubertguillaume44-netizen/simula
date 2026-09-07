@@ -618,6 +618,13 @@
    ]
   },
   {
+   "terme": "retirer ce code de cet ordinateur",
+   "texte": "Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Risque",
    "texte": "Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.",
    "vues": [
