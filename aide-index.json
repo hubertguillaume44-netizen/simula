@@ -134,13 +134,6 @@
    ]
   },
   {
-   "terme": "comparée remettre au défaut Longueurs",
-   "texte": "Les distances de stop balayées, en pourcent.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "condition comparée remettre au défaut",
    "texte": "Les longueurs de ligne balayées — chaque valeur multiplie le calcul.",
    "vues": [
@@ -166,6 +159,13 @@
    "texte": "Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "connaître Amorce trop courte fermer",
+   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -331,14 +331,7 @@
    ]
   },
   {
-   "terme": "Fenêtre",
-   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "Fenêtre Unité",
+   "terme": "fermer",
    "texte": "Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul.",
    "vues": [
     "Nouveau scan"
@@ -347,6 +340,13 @@
   {
    "terme": "Filtre balayé retenu",
    "texte": "Parmi les conditions balayées, celle que la configuration retenue a effectivement gardée. Trois têtes qui gardent trois conditions différentes ne se lisent pas comme trois têtes qui gardent la même.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "finement… déplier les 8 conditions",
+   "texte": "Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence.",
    "vues": [
     "Nouveau scan"
    ]
@@ -394,10 +394,38 @@
    ]
   },
   {
+   "terme": "l’achat Sens du trade fermer",
+   "texte": "Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "La fiche",
    "texte": "Ouvrir la fiche détaillée de cet instrument, sous la grille",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "la virgule est admise fermer",
+   "texte": "Les distances de stop balayées, en pourcent.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "la virgule est admise fermer",
+   "texte": "Les objectifs visés balayés, en multiples du risque.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "la virgule est admise fermer",
+   "texte": "Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -422,20 +450,6 @@
    ]
   },
   {
-   "terme": "Longueurs Stops",
-   "texte": "Les objectifs visés balayés, en multiples du risque.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "mécanique connaître Amorce trop courte",
-   "texte": "Choisir la taille des bougies balayées",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Mesurer trades par an",
    "texte": "Les entrées candidates sont les bougies où le déclencheur a marqué un signal hors position ; les filtres actifs en ont écarté ce nombre.",
    "vues": [
@@ -457,24 +471,10 @@
    ]
   },
   {
-   "terme": "ne change pas la durée",
-   "texte": "Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Objectif",
    "texte": "Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.",
    "vues": [
     "Backtest"
-   ]
-  },
-  {
-   "terme": "Objectifs Lignes",
-   "texte": "Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul. Le réglage complet est dans « Sécurisation & seuils… ».",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -569,6 +569,13 @@
    ]
   },
   {
+   "terme": "replier les groupes vides fermer",
+   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "résultats fragiles de mesurées gardées",
    "texte": "La lecture des bougies ambiguës ne retire aucune ligne : elle décide laquelle des deux jumelles porte le chiffre. La lecture basse tranche contre vous ce que la donnée ne dit pas — c’est la seule exigence sans contrepartie.",
    "vues": [
@@ -647,6 +654,13 @@
    ]
   },
   {
+   "terme": "sécurisation & seuils complets…",
+   "texte": "Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "Sécurisation comparée",
    "texte": "Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.",
    "vues": [
@@ -700,13 +714,6 @@
    "texte": "Replier ou déplier ce cadre",
    "vues": [
     "Historique"
-   ]
-  },
-  {
-   "terme": "Stops Objectifs",
-   "texte": "Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -795,7 +802,7 @@
   },
   {
    "terme": "Unité",
-   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
+   "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
    ]

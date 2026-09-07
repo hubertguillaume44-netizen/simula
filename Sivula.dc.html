@@ -1963,109 +1963,19 @@
         </div>
 
         <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:196px;flex:none;padding:11px 15px;display:flex;flex-direction:column;gap:3px;border-inline-end:1px solid var(--color-divider);background:var(--color-neutral-100)">
-            <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Le périmètre</span>
-            <span style="font-size:10px;line-height:1.4" class="text-muted">ce sur quoi la mesure porte · ne change pas la durée</span>
+          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
+            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">1</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">Le périmètre</span></span>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">Ce sur quoi la mesure porte. Ne change pas la durée du calcul.</span>
           </div>
           <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))">
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);border-inline-start:{{ bsInstrFilet }};background:{{ bsInstrFond }};padding:10px 14px;display:flex;flex-direction:column;gap:3px" title="Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous." onClick="{{ bsOuvreInstr }}">
-              <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:{{ bsInstrEncre }}">Instruments</span>
-              <strong style="font-family:var(--font-heading);font-size:20px;line-height:1;color:{{ bsInstrGros }}">{{ bsInstrNb }} <span style="font-size:13px;font-weight:400">sur {{ nbTotal }}</span></strong>
-              <span style="font-size:10px;color:{{ bsInstrEncre }}">{{ bsInstrSous }}</span>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px" title="La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper." onClick="{{ bsOuvreFen }}">
-              <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Fenêtre</span>
-              <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ fenLigne }}</strong>
-              <span style="font-size:10px;color:var(--color-neutral-600)">{{ fenDuree }}</span>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px" title="La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires." onClick="{{ bsOuvreUnite }}">
-              <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Unité</span>
-              <strong style="font-family:var(--font-heading);font-size:20px;line-height:1">{{ utVal }}</strong>
-              <span style="font-size:10px;color:var(--color-neutral-600)">{{ bsUniteSous }}</span>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px" title="Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul." onClick="{{ bsOuvreEntree }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sens</span><sc-if value="{{ aSensX }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsSensX }}</span></sc-if></span>
-              <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ bsSensGros }}</strong>
-              <span style="font-size:10px;color:var(--color-neutral-600)">{{ bsSensSous }}</span>
-            </button>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:196px;flex:none;padding:11px 15px;display:flex;flex-direction:column;gap:4px;border-inline-end:1px solid var(--color-divider);background:var(--color-neutral-100)">
-            <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">La grille balayée</span>
-            <strong style="font-family:var(--font-heading);font-size:24px;line-height:1;letter-spacing:-.01em">×{{ bsRailGrille }}</strong>
-            <span style="font-size:10px;line-height:1.4" class="text-muted">réglages par instrument, par condition comparée</span>
-            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">remettre au défaut</button>
-          </div>
-          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 13px;display:flex;flex-direction:column;gap:5px" title="Les longueurs de ligne balayées — chaque valeur multiplie le calcul." onClick="{{ bsOuvreNombres }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Longueurs</span><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsPerX }}</span></span>
-              <strong style="font-size:13px;line-height:1.45">{{ bsPerListe }}</strong>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 13px;display:flex;flex-direction:column;gap:5px" title="Les distances de stop balayées, en pourcent." onClick="{{ bsOuvreNombres }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Stops</span><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsSlX }}</span></span>
-              <strong style="font-family:var(--font-heading);font-size:16px;line-height:1">{{ bsSlPlage }}</strong>
-              <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600)">{{ bsSlSous }}</span>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 13px;display:flex;flex-direction:column;gap:5px" title="Les objectifs visés balayés, en multiples du risque." onClick="{{ bsOuvreNombres }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Objectifs</span><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsRrX }}</span></span>
-              <strong style="font-size:13px;line-height:1.45">{{ bsRrListe }}</strong>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;border-inline-end:1px solid var(--color-divider);background:none;padding:10px 13px;display:flex;flex-direction:column;gap:5px" title="Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée." onClick="{{ bsOuvreLignes }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Lignes</span><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsLigX }}</span></span>
-              <strong style="font-family:var(--font-heading);font-size:16px;line-height:1">{{ bsLigGros }}</strong>
-              <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600)">{{ bsLigSous }}</span>
-            </button>
-            <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 13px;display:flex;flex-direction:column;gap:5px" title="Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul. Le réglage complet est dans « Sécurisation & seuils… »." onClick="{{ bsOuvreMesure }}">
-              <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sécurisation</span><span style="font-family:var(--font-heading);font-size:12px;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px">{{ bsSecuX }}</span></span>
-              <strong style="font-family:var(--font-heading);font-size:16px;line-height:1">{{ bsSecuGros }}</strong>
-              <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600)">{{ bsSecuSous }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!--
-          LES CONDITIONS EN LISTE, pas en pastilles : le nom, ce que la condition fait
-          EN CLAIR, et son état avec son prix. Sur le scan, une condition n'est pas un
-          interrupteur, c'est une dimension comparée — la mettre dans le scan multiplie
-          le calcul d'autant. L'état « fixe » n'existe pas : le moteur neutralise les
-          interrupteurs du Backtest à chaque scan. Les conditions hors scan tiennent
-          repliées sur une ligne, nommées — c'est ce qui donne l'idée de les essayer.
-        -->
-        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:196px;flex:none;padding:11px 15px;display:flex;flex-direction:column;gap:4px;border-inline-end:1px solid var(--color-divider);background:var(--color-neutral-100)">
-            <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Conditions d’entrée</span>
-            <strong style="font-family:var(--font-heading);font-size:24px;line-height:1;letter-spacing:-.01em">{{ bsCondX }}</strong>
-            <span style="font-size:10px;line-height:1.4" class="text-muted">{{ bsCondSous }}</span>
-            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ ouvrirConditions }}" title="Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.">régler finement…</button>
-            <sc-if value="{{ aCondSortie }}" hint-placeholder-val="{{ false }}">
-              <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsToutSortir }}" title="Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.">tout sortir du scan</button>
-            </sc-if>
-          </div>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column">
-            <sc-for list="{{ bsCondLignes }}" as="cx" hint-placeholder-count="9">
-              <button type="button" class="lg" style="cursor:pointer;font:inherit;text-align:left;border:none;border-top:1px solid var(--color-divider);border-inline-start:{{ cx.filet }};background:{{ cx.fond }};display:flex;align-items:center;gap:12px;padding:7px 14px;width:100%" title="{{ cx.aide }}" onClick="{{ cx.basculer }}">
-                <strong style="font-size:12px;width:16ch;flex:none">{{ cx.nom }}</strong>
-                <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:var(--color-neutral-700)">{{ cx.action }}</span>
-                <span style="font-size:11px;color:{{ cx.droiteCouleur }};white-space:nowrap">{{ cx.droite }}</span>
+            <div style="position:relative;z-index:{{ bsZInstr }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:{{ bsInstrFilet }};background:{{ bsFondInstr }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous." onClick="{{ bsOuvreInstr }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:{{ bsInstrEncre }};flex:1">Instruments</span><span style="font-size:9px;color:var(--color-accent-700)">{{ bsChevInstr }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.05;font-variant-numeric:tabular-nums;color:{{ bsInstrGros }}">{{ bsInstrNb }} <span style="font-size:13px;font-weight:400">sur {{ nbTotal }}</span></strong>
+                <span style="font-size:10px;line-height:1.45;color:{{ bsInstrEncre }}">{{ bsInstrSous }}</span>
               </button>
-            </sc-for>
-            <sc-if value="{{ aCondToggle }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:12px;padding:6px 14px;border-top:1px solid var(--color-divider)">
-                <span style="font-size:11px;line-height:1.4;flex:1;min-width:0" class="text-muted">{{ bsCondRepliTxt }}</span>
-                <button type="button" class="lien" onClick="{{ bsDeplierConds }}">{{ bsDeplierTxt }}</button>
-              </div>
-            </sc-if>
-            <div style="padding:6px 14px 8px;border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px;margin-top:auto">
-              <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ bsPhraseBH }}</span>
-              <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
-            </div>
-          </div>
-        </div>
-
-        <sc-if value="{{ bsPanInstr }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+              <sc-if value="{{ bsPanInstr }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
                 <sc-if value="{{ aChoisis }}" hint-placeholder-val="{{ true }}">
                   <div style="display:flex;flex-direction:column;gap:5px">
                     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
@@ -2115,10 +2025,18 @@
                   </div>
                   <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ prixInstrument }}</span>
                 </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ bsPanFen }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZFen }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondFen }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper." onClick="{{ bsOuvreFen }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Fenêtre</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevFen }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ fenLigne }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ fenDuree }}</span>
+              </button>
+              <sc-if value="{{ bsPanFen }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
                   <div style="display:flex;align-items:baseline;gap:8px">
                     <span style="font-size:12px;flex:1;min-width:0">{{ fenLigne }} · <strong>{{ fenDuree }}</strong></span>
@@ -2159,10 +2077,18 @@
                     </div>
                   </sc-if>
                 </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ bsPanUnite }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZUt }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondUt }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires." onClick="{{ bsOuvreUt }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Unité</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevUt }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.05">{{ utVal }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsUniteSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanUt }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
                   <div style="display:flex;align-items:baseline;gap:8px">
                     <span style="font-size:12px;flex:1;min-width:0">{{ utLigne }} · <strong>{{ utVal }}</strong></span>
@@ -2182,56 +2108,18 @@
                     <span style="font-size:10px;line-height:1.5;color:var(--color-accent-700)">{{ utAvertirTxt }}</span>
                   </sc-if>
                 </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ bsPanNombres }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
-
-                      <div style="display:flex;flex-direction:column;gap:7px;padding:0">
-                        <div style="display:flex;flex-direction:column;gap:3px">
-                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Longueurs de la ligne</span>
-                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
-                            <sc-for list="{{ chipsPeriodes }}" as="cp2" hint-placeholder-count="5">
-                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cp2.retirer }}">{{ cp2.texte }} ×</button>
-                            </sc-for>
-                            <input type="text" onKeyDown="{{ ajoutPeriode }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
-                          </div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:3px">
-                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Distance du stop (%)</span>
-                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
-                            <sc-for list="{{ chipsSls }}" as="cs3" hint-placeholder-count="4">
-                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cs3.retirer }}">{{ cs3.texte }} ×</button>
-                            </sc-for>
-                            <input type="text" onKeyDown="{{ ajoutSl }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
-                          </div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;gap:3px">
-                          <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Objectifs visés</span>
-                          <div class="input" style="min-height:2.2rem;height:auto;display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:5px 7px">
-                            <sc-for list="{{ chipsRrs }}" as="cr2" hint-placeholder-count="4">
-                              <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ cr2.retirer }}">{{ cr2.texte }} ×</button>
-                            </sc-for>
-                            <input type="text" onKeyDown="{{ ajoutRr }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:64px;color:inherit">
-                          </div>
-                        </div>
-                        <button type="button" class="btn btn-ghost" style="min-height:1.6rem;font-size:10px;align-self:flex-start;padding-inline:8px" onClick="{{ ouvrirNombres }}">Ouvrir en grand…</button>
-                      </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ bsPanLignes }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Lignes balayées</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixLignes }}" as="cl3" hint-placeholder-count="3">
-                          <button type="button" class="{{ cl3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl3.basculer }}">{{ cl3.nom }}</button>
-                        </sc-for>
-                      </div>
-          </div>
-        </sc-if>
-        <sc-if value="{{ bsPanEntree }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZSens }};display:flex;flex-direction:column;border-inline-start:2px solid transparent;background:{{ bsFondSens }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul." onClick="{{ bsOuvreSens }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sens</span><sc-if value="{{ aSensX }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSensX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSens }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ bsSensGros }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSensSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanSens }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
             <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Ce qui déclenche l’achat</span>
 
                       <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
@@ -2246,8 +2134,219 @@
                           <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
                         </sc-for>
                       </div>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
           </div>
-        </sc-if>
+        </div>
+        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
+          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
+            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">2</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">La grille balayée</span></span>
+            <strong style="font-family:var(--font-heading);font-size:28px;line-height:1;letter-spacing:-.015em;font-variant-numeric:tabular-nums">×{{ bsRailGrille }}</strong>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">réglages par instrument, par condition comparée</span>
+            <button type="button" class="lien" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">remettre au défaut</button>
+          </div>
+          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
+            <div style="position:relative;z-index:{{ bsZLong }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondLong }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les longueurs de ligne balayées — chaque valeur multiplie le calcul." onClick="{{ bsOuvreLong }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Longueurs</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPerX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span></span>
+                <strong style="font-size:13px;line-height:1.5">{{ bsPerListe }}</strong>
+              </button>
+              <sc-if value="{{ bsPanLong }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Combien de bougies la ligne moyenne regarde. Chaque valeur cochée multiplie le calcul.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ bsCatLong }}" as="cgl" hint-placeholder-count="10">
+                      <button type="button" class="{{ cgl.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cgl.basculer }}"><span style="font-size:11px">{{ cgl.txt }}</span></button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px;width:96px" type="text" onKeyDown="{{ ajoutPeriode }}" placeholder="+ autre…">
+                    <span style="font-size:10px;color:var(--color-neutral-600)">2 à 400 bougies — Entrée pour ajouter, la virgule est admise</span>
+                  </div>
+                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutLong }}</span>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZStop }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondStop }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les distances de stop balayées, en pourcent." onClick="{{ bsOuvreStop }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Stops</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSlX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevStop }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:18px;line-height:1;font-variant-numeric:tabular-nums">{{ bsSlPlage }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSlSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanStop }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">La distance du stop, en pourcentage du prix d’entrée. C’est elle qui définit 1 R.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ bsCatStop }}" as="cgs" hint-placeholder-count="10">
+                      <button type="button" class="{{ cgs.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cgs.basculer }}"><span style="font-size:11px">{{ cgs.txt }}</span></button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px;width:96px" type="text" onKeyDown="{{ ajoutSl }}" placeholder="+ autre…">
+                    <span style="font-size:10px;color:var(--color-neutral-600)">0,05 à 20 % — Entrée pour ajouter, la virgule est admise</span>
+                  </div>
+                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutStop }}</span>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZObj }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondObj }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les objectifs visés balayés, en multiples du risque." onClick="{{ bsOuvreObj }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Objectifs</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRrX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevObj }}</span></span>
+                <strong style="font-size:13px;line-height:1.5">{{ bsRrListe }}</strong>
+              </button>
+              <sc-if value="{{ bsPanObj }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Le gain visé, en multiples du risque. 2× signifie deux fois la distance du stop.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ bsCatObj }}" as="cgo" hint-placeholder-count="10">
+                      <button type="button" class="{{ cgo.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cgo.basculer }}"><span style="font-size:11px">{{ cgo.txt }}</span></button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px;width:96px" type="text" onKeyDown="{{ ajoutRr }}" placeholder="+ autre…">
+                    <span style="font-size:10px;color:var(--color-neutral-600)">0,2× à 20× — Entrée pour ajouter, la virgule est admise</span>
+                  </div>
+                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutObj }}</span>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZLi }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondLi }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée." onClick="{{ bsOuvreLi }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Lignes</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsLigX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLi }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsLigGros }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsLigSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanLi }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Lignes balayées</span>
+
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
+                        <sc-for list="{{ choixLignes }}" as="cl3" hint-placeholder-count="3">
+                          <button type="button" class="{{ cl3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl3.basculer }}">{{ cl3.nom }}</button>
+                        </sc-for>
+                      </div>
+            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Ce qui déclenche l’achat</span>
+
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
+                        <sc-for list="{{ choixEntrees }}" as="ce2" hint-placeholder-count="5">
+                          <button type="button" class="{{ ce2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce2.basculer }}">{{ ce2.nom }}</button>
+                        </sc-for>
+                      </div>
+            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Sens du trade</span>
+
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
+                        <sc-for list="{{ choixSens }}" as="cs4" hint-placeholder-count="2">
+                          <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
+                        </sc-for>
+                      </div>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZSecuC }};display:flex;flex-direction:column;border-inline-start:2px solid transparent;background:{{ bsFondSecuC }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul." onClick="{{ bsOuvreSecuC }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sécurisation</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsSecuGros }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSecuSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sur une bougie qui touche le stop ET l’objectif, l’ordre des deux est indécidable en H1. Les deux lectures encadrent le résultat vrai.</span>
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ bsCellLectures }}" as="cle2" hint-placeholder-count="2">
+                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ cle2.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ cle2.basculer }}">
+                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ cle2.marque }}</span>
+                        <strong style="font-size:12px;width:12ch">{{ cle2.nom }}</strong>
+                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ cle2.aide }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsSecuAvert }}</span>
+                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs.">sécurisation & seuils complets…</button>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
+          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
+            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">3</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">Conditions d’entrée</span></span>
+            <strong style="font-family:var(--font-heading);font-size:28px;line-height:1;letter-spacing:-.015em;font-variant-numeric:tabular-nums">{{ bsCondX }}</strong>
+            <span style="font-size:10px;line-height:1.45" class="text-muted">{{ bsCondSous }}</span>
+            <button type="button" class="lien" onClick="{{ ouvrirConditions }}" title="Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.">régler finement…</button>
+          </div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+            <sc-if value="{{ bsCondPlie }}" hint-placeholder-val="{{ true }}">
+              <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:none;display:flex;align-items:center;gap:11px;padding:12px 14px" onClick="{{ bsDeplierConds }}">
+                <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ bsCondMarque }}</span>
+                <span style="font-size:12px;line-height:1.45;flex:1;min-width:0">{{ bsCondResume }}</span>
+                <span style="font-size:11px;white-space:nowrap;color:var(--color-accent-700)">déplier les 8 conditions</span>
+                <span style="font-size:9px;color:var(--color-neutral-600);width:9px">▸</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{ bsCondDeplie }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column">
+                <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:{{ bsRefFond }};border-inline-start:{{ bsRefFilet }};display:flex;align-items:center;gap:11px;padding:8px 14px" title="Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence." onClick="{{ bsRefBascule }}">
+                  <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ bsRefMarque }}</span>
+                  <strong style="font-size:12px;width:18ch;flex:none">Sans filtre</strong>
+                  <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:var(--color-neutral-700)">tous les signaux sont pris — la référence à battre</span>
+                  <span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRefBadge }}</span>
+                  <span style="width:9px"></span>
+                </button>
+                <sc-for list="{{ bsConds }}" as="cd" hint-placeholder-count="8">
+                  <div style="border-top:1px solid var(--color-divider);border-inline-start:{{ cd.bord }};background:{{ cd.fond }}">
+                    <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:none;display:flex;align-items:center;gap:11px;padding:8px 14px" title="{{ cd.aide }}" onClick="{{ cd.ouvrir }}">
+                      <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ cd.marque }}</span>
+                      <strong style="font-size:12px;width:18ch;flex:none">{{ cd.nom }}</strong>
+                      <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:{{ cd.resumeEncre }}">{{ cd.resume }}</span>
+                      <span style="font-family:var(--font-heading);font-size:12px;border:1px solid {{ cd.badgeBord }};color:{{ cd.badgeEncre }};padding:0 6px;white-space:nowrap;line-height:1.55;font-variant-numeric:tabular-nums">{{ cd.badge }}</span>
+                      <span style="font-size:9px;color:var(--color-neutral-600);width:9px">{{ cd.chev }}</span>
+                    </button>
+                    <sc-if value="{{ cd.ouvert }}" hint-placeholder-val="{{ false }}">
+                      <div style="background:var(--color-bg);border-top:1px solid var(--color-accent);padding:10px 14px 11px;display:flex;flex-direction:column;gap:9px">
+                        <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">{{ cd.aide }} Cochez les réglages à essayer — chacun est une condition de plus dans la comparaison, et une seule suffit à mettre la condition dans le scan.</span>
+                        <sc-for list="{{ cd.groupes }}" as="gp" hint-placeholder-count="3">
+                          <div style="display:flex;flex-direction:column;gap:4px">
+                            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">{{ gp.lib }}</span>
+                            <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+                              <sc-for list="{{ gp.pastilles }}" as="pa" hint-placeholder-count="4">
+                                <button type="button" class="{{ pa.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ pa.basculer }}"><span style="font-size:11px">{{ pa.txt }}</span></button>
+                              </sc-for>
+                              <sc-if value="{{ gp.aSaisie }}" hint-placeholder-val="{{ false }}">
+                                <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:11px;padding:0 7px;width:78px" type="text" onKeyDown="{{ gp.ajouter }}" placeholder="+ autre…">
+                              </sc-if>
+                            </div>
+                          </div>
+                        </sc-for>
+                        <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--color-divider);padding-top:7px">
+                          <span style="font-size:10px;line-height:1.4;flex:1;color:var(--color-neutral-600)">{{ cd.pied }}</span>
+                          <button type="button" class="lien" onClick="{{ cd.basculerScan }}">{{ cd.scanTxt }}</button>
+                          <button type="button" class="lien" onClick="{{ bsFermeCond }}">fermer</button>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;gap:11px;padding:7px 14px;border-top:1px solid var(--color-divider)">
+                  <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:var(--color-neutral-600)">{{ bsCondPied }}</span>
+                  <button type="button" class="lien" onClick="{{ bsToutSortir }}" title="Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.">tout sortir du scan</button>
+                  <button type="button" class="lien" onClick="{{ bsDeplierConds }}">▾ replier</button>
+                </div>
+                <div style="padding:6px 14px 8px;border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ bsPhraseBH }}</span>
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
         <sc-if value="{{ bsPanMesure }}" hint-placeholder-val="{{ false }}">
           <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
 
@@ -2293,7 +2392,7 @@
         -->
         <div style="position:sticky;bottom:{{ bsPiedBas }};z-index:25;display:flex;align-items:center;gap:16px;padding:11px 15px;background:var(--color-accent-900);color:var(--color-bg);flex-wrap:wrap">
           <div style="display:flex;flex-direction:column;gap:1px">
-            <span style="font-family:var(--font-heading);font-size:30px;line-height:1;letter-spacing:-.01em">{{ combiTxt }}</span>
+            <span style="font-family:var(--font-heading);font-size:38px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ combiTxt }}</span>
             <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75">combinaisons demandées</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:1px;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:16px" title="{{ decompoTxt }}">
@@ -16434,6 +16533,193 @@ GROUPES = {
             + ' \u00d7 ' + nCond + ' condition' + (nCond > 1 ? 's' : '') + '.'
             + (nUB === 0 ? ' Le premier instrument coché porte le devis à ' + frB(parInstrB) + '.' : ''),
           bsPiedParInstr: this.duree(parInstrB / cpsB) + ' par instrument',
+          // ————— LES PANNEAUX PAR CARRÉ : décor des neuf cellules —————
+          // un seul ouvert à la fois (s.bsPanneau) ; la cellule ouverte remonte en
+          // z-index pour que son menu passe au-dessus des cellules voisines
+          ...(() => {
+            const d = { bsFermePan: () => this.setState({ bsPanneau: '' }) };
+            const PAIRES = [['Instr', 'instruments'], ['Fen', 'fenetre'], ['Ut', 'unite'],
+              ['Sens', 'entree'], ['Long', 'longueurs'], ['Stop', 'stops'],
+              ['Obj', 'objectifs'], ['Li', 'lignes'], ['SecuC', 'secucell']];
+            for (const [suf, k] of PAIRES) {
+              const o = s.bsPanneau === k;
+              d['bsPan' + suf] = o;
+              d['bsOuvre' + suf] = ouvre(k);
+              d['bsChev' + suf] = o ? '\u25be' : '\u25b8';
+              d['bsZ' + suf] = o ? '40' : '1';
+              d['bsFond' + suf] = o ? 'color-mix(in srgb,var(--color-accent) 10%,transparent)' : 'none';
+            }
+            if (s.bsPanneau !== 'instruments' && nUB === 0) d.bsFondInstr = 'var(--color-accent-100)';
+            return d;
+          })(),
+          bsInstrSous: nUB ? frB(nUB * parInstrB) + ' combinaisons' : 'à choisir pour lancer \u2192',
+          // ————— LES CATALOGUES OUVERTS : pastilles cochables + saisie libre —————
+          // le catalogue n'est pas une clôture : une valeur tapée (Entrée) rejoint la
+          // grille par les champs d'ajout existants, et apparaît cochée ici
+          ...(() => {
+            const basculeNombre = (cle, v, def) => () => this.setState((p) => {
+              const l = this.nombres(p[cle], def);
+              const dedans = l.includes(v);
+              if (dedans && l.length === 1) return null;
+              const suite = dedans ? l.filter((x) => x !== v) : [...l, v].sort((a, b) => a - b);
+              return { [cle]: suite.map((x) => String(x).replace('.', ',')).join(' ') };
+            }, () => this.ecrireSession());
+            const catDe = (cle, def, cat, unite) => {
+              const l = this.nombres(s[cle], def);
+              return [...new Set([...cat, ...l])].sort((a, b) => a - b).map((v) => ({
+                txt: String(v).replace('.', ',') + unite,
+                cls: 'fc' + (l.includes(v) ? ' bal' : ''),
+                basculer: basculeNombre(cle, v, def),
+              }));
+            };
+            const enleve = (nFacteur) => 'retirer une valeur enlève '
+              + frB(parInstrB / Math.max(1, nFacteur)) + ' combinaisons par instrument';
+            return {
+              bsCatLong: catDe('gPeriodes', [26], [3, 5, 6, 7, 8, 9, 10, 12, 15, 20, 26, 50], ''),
+              bsCatStop: catDe('gSls', [1], [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 2.5, 3, 4], ' %'),
+              bsCatObj: catDe('gRrs', [2.5], [1, 1.5, 2, 2.5, 3, 3.5, 4, 5], '\u00d7'),
+              bsCoutLong: enleve(per), bsCoutStop: enleve(sls), bsCoutObj: enleve(rrs),
+            };
+          })(),
+          // la cellule sécurisation : les deux lectures, cochables, et ce que perd
+          // celui qui n'en garde qu'une
+          bsCellLectures: Object.entries(this.LECTURE_VARIANTES).map(([v, [nomL, , expl]]) => {
+            const l = s.gLectures || ['favorable'];
+            const pris = l.includes(v);
+            return { nom: nomL, aide: expl, marque: pris ? '\u2713' : '',
+              fond: pris ? 'var(--color-accent-100)' : 'transparent',
+              basculer: () => this.setState((p) => {
+                const pl = p.gLectures || ['favorable'];
+                const suite = pl.includes(v) ? pl.filter((x) => x !== v) : [...pl, v];
+                return suite.length ? { gLectures: suite } : null;
+              }, () => this.ecrireSession()) };
+          }),
+          bsSecuAvert: nLect === 2
+            ? 'Les deux lectures sont mesurées : une configuration validée l\u2019est dans les deux.'
+            : 'Une seule lecture : le résultat n\u2019est plus encadré \u2014 il est optimiste ou pessimiste.',
+          // ————— LE RANG 3 : conditions repliées, réglages par condition —————
+          // Chaque pastille agit sur le CHAMP réel de la condition (périodes, lignes,
+          // unité, seuil) : cocher une valeur met la condition dans le scan, décocher
+          // la dernière valeur d'un champ multiple l'en sort. Les variantes affichées
+          // sont celles que `developper` produira — rien d'inventé.
+          ...(() => {
+            const nombresDe = (v) => String(v ?? '').split(/[^0-9,.\-]+/)
+              .map((x) => Number(String(x).replace(',', '.'))).filter((x) => !isNaN(x) && x > 0);
+            const CATC = { gPeriodeMtf: [9, 20, 26, 50], gPeriodeMa: [20, 50, 100, 200],
+              gPenteRecul: [3, 5, 8, 10, 15, 20], periodeRsi: [7, 14, 21], fRsiSeuil: [50, 60, 70],
+              periodeAdx: [7, 14, 21], fAdxSeuil: [20, 25, 30],
+              resistLookback: [20, 50, 100, 200], resistMarge: [0, 1, 2, 5] };
+            const auScan = (l, k) => (l.includes(k) ? l : [...l, k]);
+            // HORS scan, les pastilles s'affichent décochées et le premier clic ne
+            // retient QUE la valeur cliquée : sinon « cocher une seule variante »
+            // embarquerait les valeurs préremplies du champ (gPeriodeMa porte
+            // « 50 100 200 » avant même d'entrer au scan).
+            const basculerNums = (k, champ, v, multi) => () => this.setState((p) => {
+              const gfp = p.gFiltres || [];
+              const dehors = !gfp.includes(k);
+              if (!multi) return { gFiltres: auScan(gfp, k), [champ]: v };
+              if (dehors) return { gFiltres: auScan(gfp, k), [champ]: String(v).replace('.', ',') };
+              const l = nombresDe(p[champ]);
+              const dedans = l.includes(v);
+              const suite = dedans ? l.filter((x) => x !== v) : [...l, v].sort((a, b) => a - b);
+              if (dedans && !suite.length) {
+                const sansK = gfp.filter((x) => x !== k);
+                return { gFiltres: sansK.length ? sansK : ['aucun'] };
+              }
+              return { gFiltres: gfp, [champ]: suite.map((x) => String(x).replace('.', ',')).join(' ') };
+            }, () => this.ecrireSession());
+            const basculerLigne = (k, champ, v) => () => this.setState((p) => {
+              const gfp = p.gFiltres || [];
+              if (!gfp.includes(k)) return { gFiltres: auScan(gfp, k), [champ]: [v] };
+              const l = (p[champ] || []).length ? p[champ] : ['mediane'];
+              const suite = l.includes(v) ? l.filter((x) => x !== v) : [...l, v];
+              if (!suite.length) return null;
+              return { gFiltres: gfp, [champ]: suite };
+            }, () => this.ecrireSession());
+            const groupesDe = (k, champs, dans) => (champs || []).map(([champ, lib, kind]) => {
+              if (kind === 'nums') {
+                const l = dans ? nombresDe(s[champ]) : [];
+                const cat = [...new Set([...(CATC[champ] || []), ...nombresDe(s[champ]), ...l])].sort((a, b) => a - b);
+                return { lib, aSaisie: true, ajouter: this.ajout(champ),
+                  pastilles: cat.map((v) => ({ txt: String(v).replace('.', ','),
+                    cls: 'fc' + (l.includes(v) ? ' bal' : ''), basculer: basculerNums(k, champ, v, true) })) };
+              }
+              if (kind === 'lignes') {
+                const l = dans ? ((s[champ] || []).length ? s[champ] : ['mediane']) : [];
+                return { lib, aSaisie: false, ajouter: () => {},
+                  pastilles: Object.keys(LIGNES_TXT).map((v) => ({ txt: (LIGNES_TXT[v] || v).replace(/ \(.*\)/, ''),
+                    cls: 'fc' + (l.includes(v) ? ' bal' : ''), basculer: basculerLigne(k, champ, v) })) };
+              }
+              if (kind === 'ut') {
+                const cur = dans ? (s[champ] || 'D1') : '';
+                return { lib, aSaisie: false, ajouter: () => {},
+                  pastilles: [...new Set(['H1', 'H4', 'D1', cur])].map((v) => ({ txt: v,
+                    cls: 'fc' + (cur === v ? ' bal' : ''), basculer: basculerNums(k, champ, v, false) })) };
+              }
+              const cur = dans ? Number(s[champ]) : NaN;
+              const cat = [...new Set([...(CATC[champ] || []), ...(isNaN(cur) ? [] : [cur])])].sort((a, b) => a - b);
+              return { lib, aSaisie: false, ajouter: () => {},
+                pastilles: cat.map((v) => ({ txt: String(v).replace('.', ','),
+                  cls: 'fc' + (cur === v ? ' bal' : ''), basculer: basculerNums(k, champ, v, false) })) };
+            });
+            const actives = Object.keys(this.VARIANTES_FILTRE).filter((k) => k !== 'aucun' && gf.includes(k));
+            const nVarTotal = actives.reduce((a, k) => a + this.developper(s, this.VARIANTES_FILTRE, [k], k).length, 0);
+            const bsConds = Object.entries(this.VARIANTES_FILTRE).filter(([k]) => k !== 'aucun')
+              .map(([k, [nomL, , expl, champs]]) => {
+                const dans = gf.includes(k);
+                const devs = this.developper(s, this.VARIANTES_FILTRE, [k], k);
+                const nVar = devs.length;
+                const ouvertC = s.bsCondOuverte === k;
+                const noms = devs.map((x) => x.nom.replace(nomL, '').trim()).filter(Boolean);
+                return { nom: this.COURTS_FILTRE[k] || nomL, aide: expl, ouvert: ouvertC,
+                  marque: dans ? '\u2713' : '', chev: ouvertC ? '\u25be' : '\u25b8',
+                  fond: dans ? 'var(--color-accent-100)' : 'transparent',
+                  bord: dans ? '2px solid var(--color-accent)' : '2px solid transparent',
+                  resume: dans ? (noms.join(' · ') || 'réglage simple, une variante') : (this.CLAIRS_FILTRE[k] || ''),
+                  resumeEncre: dans ? 'var(--color-accent-900)' : 'var(--color-neutral-700)',
+                  badge: dans ? nVar + (nVar > 1 ? ' réglages' : ' réglage') : 'hors scan',
+                  badgeEncre: dans ? 'var(--color-accent-900)' : 'var(--color-neutral-600)',
+                  badgeBord: dans ? 'var(--color-accent)' : 'transparent',
+                  pied: dans
+                    ? nVar + (nVar > 1 ? ' réglages balayés' : ' réglage balayé') + ' — chacun est essayé sur toute la grille'
+                    : 'hors scan — cocher un réglage l\u2019y met',
+                  scanTxt: dans ? 'sortir du scan' : 'mettre dans le scan',
+                  basculerScan: () => this.setState((p) => {
+                    const l = p.gFiltres || [];
+                    const suite = l.includes(k) ? l.filter((x) => x !== k) : [...l, k];
+                    return { gFiltres: suite.length ? suite : ['aucun'] };
+                  }, () => this.ecrireSession()),
+                  ouvrir: () => this.setState((p) => ({ bsCondOuverte: p.bsCondOuverte === k ? '' : k })),
+                  groupes: groupesDe(k, champs, dans) };
+              });
+            return {
+              bsConds,
+              bsFermeCond: () => this.setState({ bsCondOuverte: '' }),
+              bsCondPlie: !s.bsCondsDepliees,
+              bsCondDeplie: !!s.bsCondsDepliees,
+              bsCondMarque: nVarTotal ? '\u2713' : '',
+              bsCondResume: nVarTotal
+                ? 'Sans filtre + ' + actives.map((k) => (this.COURTS_FILTRE[k] || k) + ' ('
+                    + this.developper(s, this.VARIANTES_FILTRE, [k], k).length + ')').join(', ')
+                  + ' — ' + nVarTotal + ' réglage' + (nVarTotal > 1 ? 's' : '') + ' balayé' + (nVarTotal > 1 ? 's' : '')
+                : 'Sans filtre seul — chaque configuration est mesurée sans condition d\u2019entrée. Huit conditions attendent d\u2019être essayées.',
+              bsCondPied: nVarTotal
+                ? nVarTotal + ' réglage' + (nVarTotal > 1 ? 's' : '') + ' dans la comparaison — chacun est essayé sur toute la grille'
+                : 'Aucune condition dans le scan : ouvrez-en une pour cocher ses réglages.',
+              bsCondSous: nVarTotal
+                ? nVarTotal + ' réglage' + (nVarTotal > 1 ? 's' : '') + ' balayé' + (nVarTotal > 1 ? 's' : '') + ' sur ' + nTot + ' conditions, plus la référence'
+                : 'aucune balayée sur ' + nTot + ' — chaque configuration est mesurée sans condition d\u2019entrée',
+              bsRefMarque: gf.includes('aucun') ? '\u2713' : '',
+              bsRefFond: gf.includes('aucun') ? 'var(--color-accent-100)' : 'transparent',
+              bsRefFilet: gf.includes('aucun') ? '2px solid var(--color-accent)' : '2px solid transparent',
+              bsRefBadge: gf.includes('aucun') ? 'référence' : 'sortie',
+              bsRefBascule: () => this.setState((p) => {
+                const l = p.gFiltres || [];
+                const suite = l.includes('aucun') ? l.filter((x) => x !== 'aucun') : [...l, 'aucun'];
+                return { gFiltres: suite.length ? suite : l };
+              }, () => this.ecrireSession()),
+            };
+          })(),
           // LE VRAI COÛT D'UN FILTRE BALAYÉ, écrit : plus de conditions, c'est plus de
           // configurations qui passeront le tri par hasard — la correction de
           // Benjamini-Hochberg du contrôle se durcit, la stratégie ne s'améliore pas.
