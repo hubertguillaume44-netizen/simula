@@ -246,13 +246,6 @@
    ]
   },
   {
-   "terme": "Depuis Unité Déclencheur Ligne période",
-   "texte": "La ligne de référence que le prix doit franchir ou toucher pour déclencher l'entrée, et sur combien de bougies elle est calculée. Plus la période est petite, plus elle réagit vite.",
-   "vues": [
-    "Backtest"
-   ]
-  },
-  {
    "terme": "Distance du stop",
    "texte": "À combien de pourcent sous le prix d'achat vous coupez la perte. Le scan essaie chaque valeur cochée : serré = beaucoup de sorties pour rien, large = chaque perte coûte cher.",
    "vues": [
@@ -805,6 +798,13 @@
    "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "UTC fermer Déclencheur Ligne période",
+   "texte": "La ligne de référence que le prix doit franchir ou toucher pour déclencher l'entrée, et sur combien de bougies elle est calculée. Plus la période est petite, plus elle réagit vite.",
+   "vues": [
+    "Backtest"
    ]
   },
   {

@@ -1766,6 +1766,37 @@ export function nuitsPortage(debut, fin) {
 // Aucune donnée supplémentaire n'est requise : les H1 SONT les données de base
 // (invariant 1). Les filtres restent évalués sur la bougie de décision, pas sur la H1 :
 // la bascule ne doit changer que le suivi, sinon on comparerait deux règles.
+// Les médianes de spread qui servent aux moments « spread » et « glissant » — UNE
+// source, partagée avec scripts/moment-entree.mjs : deux calculs auraient fini par
+// diverger, et la mesure n'aurait plus décrit ce que le moteur fait.
+export function medianesSpread(df) {
+  const sp = spreadEnPct(df);
+  if (!sp) return null;
+  const serie = memo(df, 'medSpread', () => {
+    const v = [];
+    for (let i = 0; i < df.n; i++) if (sp[i] > 0) v.push(sp[i]);
+    v.sort((a, b) => a - b);
+    return v.length ? v[Math.floor(v.length / 2)] : 0;
+  });
+  // médiane glissante ~250 séances, recalculée par pas de 24 bougies : suit la dérive
+  // annuelle de la prime de rollover sans mélanger les époques
+  const glissante = memo(df, 'medSpreadGliss', () => {
+    const F = 250 * 24, out = new Float64Array(df.n);
+    let ancre = -1, val = serie || 0;
+    for (let i = 0; i < df.n; i++) {
+      if (ancre < 0 || i - ancre >= 24) {
+        const a = Math.max(0, i - F), v = [];
+        for (let k = a; k < i; k++) if (sp[k] > 0) v.push(sp[k]);
+        if (v.length > 100) { v.sort((x, y) => x - y); val = v[Math.floor(v.length / 2)]; }
+        ancre = i;
+      }
+      out[i] = val;
+    }
+    return out;
+  });
+  return { sp, serie, glissante };
+}
+
 export function backtesterSuivi(df, cfg, ut) {
   if (!ut || ut === 'H1') return backtester(df, cfg);
   const sup = resampler(df, ut);
@@ -1867,9 +1898,25 @@ export function backtesterSuivi(df, cfg, ut) {
     .map((f) => [f.type, f.ut, f.ligne, f.periode, f.seuil, f.sens, f.recul, f.lookback,
       f.marge_pct, f.touches, f.tolerance_pct, f.memoire, f.debut, f.fin, f.ecart].join(','))
     .join(';');
+  // ————— LE MOMENT D'EXÉCUTION (cfg.moment) —————
+  // Quatre valeurs, exactement celles que scripts/moment-entree.mjs mesure :
+  // 'ouverture' (défaut, comportement historique), 'spread' (première bougie du seau
+  // dont le spread passe sous la médiane de la série), 'glissant' (idem contre la
+  // médiane des ~250 dernières séances), 'heure' (heure fixe, cfg.moment.heure).
+  // Le moment choisit QUELLE bougie suivante — jamais une entrée dans la bougie du
+  // signal (invariant 5) — et le suivi reste sur la même granularité H1. Les bougies
+  // à partir du moment retenu restent TOUTES candidates : la reprise sur refus
+  // (position ouverte, spread, séance) garde exactement la sémantique du robot.
+  const mo = cfg.moment && cfg.moment.type && cfg.moment.type !== 'ouverture'
+    ? { type: cfg.moment.type, heure: Number(cfg.moment.heure) || 8 } : null;
+  const meds = mo && (mo.type === 'spread' || mo.type === 'glissant') ? medianesSpread(df) : null;
+  const spMo = meds ? meds.sp : null;
+  const medSerie = meds ? meds.serie : 0;
+  const medGliss = meds ? meds.glissante : null;
   const cleForce = 'force|' + ut + '|' + eF.type + '|' + eF.ligne + '|' + eF.periode
     + '|' + (eF.vente ? 'v' : 'a') + '|' + cleFiltres + '|' + facteur
-    + '|' + (pasDebutSemaine ? 1 : 0) + '|' + hD + '-' + hF;
+    + '|' + (pasDebutSemaine ? 1 : 0) + '|' + hD + '-' + hF
+    + '|' + (mo ? mo.type + (mo.type === 'heure' ? mo.heure : '') : 'ouv');
   const { force, seauDe, candidats } = memo(df, cleForce, () => construireForce());
 
   function construireForce() {
@@ -1897,7 +1944,25 @@ export function backtesterSuivi(df, cfg, ut) {
     // `backtester` entre à la PREMIÈRE bougie marquée où il n'est pas déjà en position,
     // et ne peut pas entrer sur la bougie même où il vient de sortir : la reprise suit
     // la sortie d'une bougie, comme chez le robot.
-    for (let z = idx.length - 1; z >= 0; z--) {
+    // le moment déplace le DÉPART des candidates dans le seau. Aucune bougie du seau
+    // ne satisfait le moment → signal PERDU, jamais un repli sur l'ouverture : le
+    // robot, lui, ne peut pas entrer rétroactivement à une bougie déjà passée — un
+    // repli ferait entrer Sivula là où le robot n'entrera jamais.
+    let zDeb = idx.length - 1;
+    if (mo) {
+      zDeb = -1;
+      for (let z = idx.length - 1; z >= 0; z--) {
+        const i = idx[z];
+        if (mo.type === 'heure') {
+          if (new Date(df.t[i]).getUTCHours() >= mo.heure) { zDeb = z; break; }
+        } else {
+          const m2 = mo.type === 'spread' ? medSerie : medGliss[i];
+          if (spMo[i] > 0 && m2 > 0 && spMo[i] <= m2) { zDeb = z; break; }
+        }
+      }
+      if (zDeb < 0) continue;
+    }
+    for (let z = zDeb; z >= 0; z--) {
       if (!acceptable(idx[z])) continue;
       force[idx[z]] = 1;
       seauDe[idx[z]] = k;   // l'INDICE du seau, pas son horodatage : seule l'égalité est lue

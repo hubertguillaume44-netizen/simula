@@ -87,5 +87,8 @@ export function construireConfig(o) {
     // en prend 355 — le courtier refuse les ordres dont le stop tient dans 200,00.
     stop_mini: o.stopMini ?? 0,
     debut: o.debut,
+    // le moment d'exécution voyage avec la configuration : sans lui, le harnais de
+    // conformité rejouerait l'ouverture face à un robot qui attend son moment
+    ...(o.moment ? { moment: o.moment } : {}),
   };
 }

@@ -3750,6 +3750,43 @@
             <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ ut }}" onChange="{{ setUt }}">
               <sc-for list="{{ uts }}" as="u" hint-placeholder-count="3"><option value="{{ u.v }}">{{ u.nom }}</option></sc-for>
             </select></label>
+          <label style="display:flex;flex-direction:column;gap:2px;position:relative;z-index:{{ btMoZ }}"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Moment d’exécution</span>
+            <button type="button" class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ btMoAide }}" onClick="{{ btMoOuvrir }}">{{ btMoVal }}</button>
+            <sc-if value="{{ btMoPan }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(430px,90vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ btMoPhrase }}</span>
+                <sc-if value="{{ aBtMoMesures }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ btMoLignes }}" as="ml" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:9px;padding:5px 4px;border-bottom:1px solid var(--color-divider);background:{{ ml.fond }}">
+                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ ml.marque }}</span>
+                        <span style="font-size:11px;flex:1;min-width:0">{{ ml.nom }}</span>
+                        <span style="font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap" class="text-muted">{{ ml.detail }}</span>
+                        <strong style="font-size:12px;font-variant-numeric:tabular-nums;width:9ch;text-align:right">{{ ml.r }}</strong>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:11px;line-height:1.5;color:{{ btMoVerdictEncre }}">{{ btMoVerdict }}</span>
+                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ btMoProvenance }}</span>
+                </sc-if>
+                <sc-if value="{{ aBtMoSansMesure }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">Aucune mesure déposée pour cet instrument. Produisez moments.csv — node scripts/moment-entree.mjs --dossier exports/ --sortie moments.csv — puis déposez-le ici comme un fichier de bougies. Sans mesure, l’ouverture du jour est conservée.</span>
+                </sc-if>
+                <sc-if value="{{ aBtMoChoix }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--color-divider);padding-top:8px">
+                  <sc-for list="{{ btMoChoix }}" as="mc" hint-placeholder-count="5">
+                    <button type="button" class="{{ mc.cls }}" style="font-size:11px;padding:3px 8px" title="{{ mc.aide }}" onClick="{{ mc.choisir }}"><span style="font-size:11px">{{ mc.nom }}</span></button>
+                  </sc-for>
+                  <sc-if value="{{ aBtMoHeure }}" hint-placeholder-val="{{ false }}">
+                    <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:11px;padding:0 6px;width:56px" type="number" min="0" max="23" step="1" value="{{ btMomentHeure }}" onChange="{{ setBtMomentHeure }}">
+                    <span style="font-size:10px" class="text-muted">h UTC</span>
+                  </sc-if>
+                </div>
+                </sc-if>
+                <button type="button" class="lien" style="align-self:flex-end" onClick="{{ btMoFermer }}">fermer</button>
+              </div>
+            </sc-if>
+          </label>
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Déclencheur</span>
             <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ btEntree }}" onChange="{{ setEntree }}" title="{{ declencheurNom }}">
               <sc-for list="{{ entrees }}" as="en" hint-placeholder-count="5"><option value="{{ en.v }}">{{ en.nom }}</option></sc-for>
@@ -5459,8 +5496,33 @@ class Component extends DCLogic {
       // exporté depuis une mesure faite sans fenêtre ne doit pas hériter d'une fenêtre
       // saisie après coup. `etatDeLigne` rend les réglages de la mesure elle-même.
       const cfgRobot = { ...v, heures_entree: { debut: Number(etat.btFenDeb) || 0, fin: Number(etat.btFenFin) || 0 } };
+      // Le moment d'exécution voyage lui aussi avec la ligne : le moment résolu des
+      // réglages de la MESURE (mesuré via moments.csv, ou choisi à la main), jamais
+      // l'état courant. La médiane de spread est écrite DANS le robot, datée : il
+      // honore « spread » et « glissant » contre le chiffre de la mesure, sans
+      // recalculer sur un historique qui ne serait pas celui du backtest.
+      const moRobot = (() => {
+        const utR = v.ut || etat.ut || this.state.ut || 'H1';
+        if (utR === 'H1') return null;
+        const mo = this.momentResolu(v.sym, etat);
+        if (!mo || mo.type === 'ouverture') return null;
+        let med = mo.verdict && Number(mo.verdict.medSpread) > 0 ? Number(mo.verdict.medSpread) : 0;
+        let medDate = (mo.verdict && mo.verdict.date) || '';
+        if (mo.type === 'spread' || mo.type === 'glissant') {
+          if (!med) {
+            try {
+              const df = this.base(v.sym);
+              const m3 = df && this.M && this.M.medianesSpread ? this.M.medianesSpread(df) : null;
+              if (m3 && m3.serie > 0) { med = m3.serie; medDate = new Date().toISOString().slice(0, 10); }
+            } catch (e) {}
+          }
+          if (!med) return null; // pas de médiane connue : un plafond à zéro bloquerait toute entrée
+        }
+        return { type: mo.type, heure: mo.heure, medSpread: med, medDate };
+      })();
       txt = mod.genererMQ5(cfgRobot, { risquePct: Number(this.state.risquePct) || 1,
         ut: v.ut || etat.ut || this.state.ut, hasard, etat, spreadMaxPct, stamp, magic,
+        moment: moRobot,
         spreadFacteur: this.facteurSpread(),
         mesureVieille: (v._mv || 'e1') !== this.MOTEUR_V,
         // les heures que le nettoyage de la mesure a gardées : le robot doit agréger
@@ -6348,7 +6410,7 @@ GROUPES = {
   // lit un CSV déposé par l'utilisateur : rien n'est envoyé, tout reste dans le navigateur
   async accepterFichiers(liste) {
     if (!this.M || !liste || !liste.length) return;
-    const ajoutes = [], refuses = [], nonGardes = [], infosM1 = [];
+    const ajoutes = [], refuses = [], nonGardes = [], infosM1 = [], infosMoments = [];
     // lecture + validation : plusieurs secondes par fichier sur un gros historique.
     // Sans indicateur, l'utilisateur ne sait pas si son dépôt a été pris.
     const nTot = liste.length;
@@ -6399,6 +6461,15 @@ GROUPES = {
       const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
       try {
         const txt = await f.text();
+        // ————— LA MESURE DES MOMENTS D'EXÉCUTION (moments.csv) —————
+        // reconnue au nom OU à l'en-tête : elle ne passe jamais par le chargeur de
+        // bougies, elle alimente le magasin qui propose le moment par défaut
+        if (/moments/i.test(f.name) || /^sym;moment;/i.test(txt.slice(0, 30))) {
+          const r4 = this.garderMoments(txt);
+          if (r4.ok) infosMoments.push(f.name + ' — moments d\u2019exécution de ' + r4.nSym + ' instrument(s), le gagnant mesuré devient le défaut (verdicts nets seulement)');
+          else refuses.push(f.name + ' (' + r4.motif + ')');
+          continue;
+        }
         // ————— GARDE-FOU MT4 : date et heure en deux colonnes —————
         // Le lecteur recolle date+heure, mais un export MT4 n'a ni spread ni séance
         // ni ordre des extrêmes : accepté à moitié, les colonnes optionnelles se
@@ -6436,14 +6507,15 @@ GROUPES = {
       ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
       messageDepot: (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) : '
           + ajoutes.map((x) => { const f = this.fluxDe(x); return f.label ? x + ' (flux ' + f.label + ', frais ' + f.label + ')' : x; }).join(', ') : '')
+        + (infosMoments.length ? (ajoutes.length ? ' — ' : '') + infosMoments.join(', ') : '')
         + (infosM1.length ? ((ajoutes.length) ? ' — ' : '') + 'M1 rangé à part pour ' + infosM1.join(', ')
           + ' (départage robot : jamais dans le scan ni le backtest)' : '')
-        + (refuses.length ? (ajoutes.length || infosM1.length ? ' — ' : '') + 'Ignoré(s) : ' + refuses.join(', ') : '')
+        + (refuses.length ? (ajoutes.length || infosM1.length || infosMoments.length ? ' — ' : '') + 'Ignoré(s) : ' + refuses.join(', ') : '')
         + (nonGardes.length ? ' — ATTENTION : ' + nonGardes.length + ' série(s) n\u2019ont pas pu être enregistrées '
           + '(mémoire du navigateur pleine). Elles fonctionnent jusqu\u2019à la fermeture de l\u2019onglet, puis seront perdues. '
           + 'Supprimez des bougies dont vous n\u2019avez plus besoin (colonne Bougies de l\u2019onglet Symboles dispos), puis redéposez celles-ci : '
           + nonGardes.join(', ') : ''),
-    }), () => { if (ajoutes.length) this.lancerTest(); });
+    }), () => { if (ajoutes.length || infosMoments.length) this.lancerTest(); });
   }
   // portefeuille et indices de départ pris dans le catalogue réel du compte : les
   // noms du courtier ne sont pas devinables d'avance
@@ -9574,7 +9646,17 @@ GROUPES = {
       // Fenêtre horaire d'ENTRÉE : elle porte sur la bougie où l'ordre part, pas sur la
       // bougie de décision — un filtre `horaire` sur une décision D1 serait évalué sur
       // des bougies toutes à 00:00. Début égal à fin : inactive.
-      heures_entree: { debut: Number(s.btFenDeb) || 0, fin: Number(s.btFenFin) || 0 },
+      // Hors H1, le choix de la bougie d'entrée appartient au MOMENT D'EXÉCUTION :
+      // la fenêtre horaire ne s'applique qu'en H1 — une seule règle, jamais deux qui
+      // pourraient se contredire (la carte du bandeau est grisée hors H1 et le dit).
+      heures_entree: (s.ut || 'H1') === 'H1'
+        ? { debut: Number(s.btFenDeb) || 0, fin: Number(s.btFenFin) || 0 }
+        : { debut: 0, fin: 0 },
+      ...(() => {
+        if ((s.ut || 'H1') === 'H1') return {};
+        const mo = this.momentResolu(sym || s.btSym, s);
+        return mo && mo.type !== 'ouverture' ? { moment: { type: mo.type, heure: mo.heure } } : {};
+      })(),
       // LA FENÊTRE DE MESURE, portée par la configuration elle-même. `debut` borne la
       // première entrée sans toucher aux bougies d'amorce qui la précèdent, `fin` borne
       // la dernière — les positions déjà ouvertes sont suivies jusqu'à leur sortie.
@@ -11964,6 +12046,7 @@ GROUPES = {
   // tout ce qui change un résultat : sauvegardé et restauré en bloc, jamais champ par champ
   REGLAGES = ['btSym', 'ut', 'btEntree', 'btLigne', 'btPeriode', 'btSL', 'btRR', 'risquePct',
     'btMtf', 'utMtf', 'ligneMtf', 'periodeMtf', 'btBE', 'btFrais', 'btDelai', 'btFenDeb', 'btFenFin',
+    'btMoment', 'btMomentHeure',
     'fRsi', 'utRsi', 'periodeRsi', 'fRsiSeuil',
     'fAdx', 'utAdx', 'periodeAdx', 'fAdxSeuil', 'fNuage', 'utNuage',
     'fMa', 'utMa', 'periodeMa',
@@ -13838,6 +13921,90 @@ GROUPES = {
   // Vue intégrée (aperçu, iframe) : `showSaveFilePicker` y est interdit, donc la
   // sauvegarde automatique dans un fichier ne peut PAS être activée. C'est le cas
   // exact où le travail ne tient qu'au stockage du navigateur.
+  // ————— LE MOMENT D'EXÉCUTION, mesuré par instrument —————
+  // La valeur n'est jamais choisie au doigt mouillé : elle vient de moments.csv,
+  // produit par scripts/moment-entree.mjs sur les exports du compte — quatre moments
+  // mesurés par le moteur lui-même (backtesterSuivi + cfg.moment). Le garde-fou est
+  // le cœur : sous ~100 trades, ou quand l'écart au deuxième reste dans le bruit,
+  // le verdict est « indécis » et l'ouverture du jour est conservée — sans cette
+  // règle, chaque instrument hériterait du moment qui a gagné par hasard sur
+  // quarante-sept trades, et on aurait industrialisé le surajustement.
+  CLE_MOMENTS = 'simula.moments.v1';
+  MOMENTS_TXT = { ouverture: 'Ouverture du jour', spread: 'Spread sous la médiane (série)',
+    glissant: 'Spread sous la médiane (250 séances)', heure: 'Heure fixe' };
+  garderMoments(txt) {
+    const lignes = String(txt || '').trim().split(/\r?\n/);
+    if (!lignes.length || !/^sym;moment;/i.test(lignes[0])) {
+      return { ok: false, motif: 'en-tête inattendu — le fichier attendu sort de scripts/moment-entree.mjs' };
+    }
+    const cols = lignes[0].split(';');
+    const iDe = (n) => cols.indexOf(n);
+    const I = { moment: iDe('moment'), heure: iDe('heure_fixe'), trades: iDe('trades'),
+      r: iDe('r_net'), pf: iDe('pf'), win: iDe('taux_reussite_pct'), dd: iDe('pire_creux_r'),
+      frais: iDe('frais_r'), spm: iDe('spread_moyen_pct'), hs: iDe('r_net_hors_spread'),
+      sig: iDe('signaux'), per: iDe('signaux_perdus'), entree: iDe('entree'), ligne: iDe('ligne'),
+      periode: iDe('periode'), sl: iDe('sl_pct'), rr: iDe('rr'), filtres: iDe('filtres'),
+      med: iDe('med_spread_pct'), date: iDe('mesure_le') };
+    if (I.moment < 0 || I.r < 0 || I.trades < 0) return { ok: false, motif: 'colonnes manquantes' };
+    const table = {};
+    for (let k = 1; k < lignes.length; k++) {
+      const p = lignes[k].split(';');
+      if (p.length < 5) continue;
+      const sym = String(p[0] || '').replace(/^#/, '').trim();
+      if (!sym) continue;
+      const e = table[sym] || (table[sym] = { moments: {} });
+      const nb2 = (i) => (i >= 0 ? Number(p[i]) : NaN);
+      e.moments[p[I.moment]] = { trades: nb2(I.trades), rNet: nb2(I.r), pf: nb2(I.pf),
+        winRate: nb2(I.win), dd: nb2(I.dd), fraisR: nb2(I.frais), spreadMoyen: nb2(I.spm),
+        horsSpread: nb2(I.hs), signaux: nb2(I.sig), perdus: nb2(I.per), heure: nb2(I.heure) };
+      e.config = { entree: p[I.entree], ligne: p[I.ligne], periode: nb2(I.periode),
+        sl: nb2(I.sl), rr: nb2(I.rr), filtres: p[I.filtres] };
+      e.medSpread = nb2(I.med);
+      e.date = I.date >= 0 ? p[I.date] : '';
+    }
+    const nSym = Object.keys(table).length;
+    if (!nSym) return { ok: false, motif: 'aucune ligne exploitable' };
+    this._momentsPar = { ...(this._momentsPar || {}), [this.cle(this.CLE_MOMENTS)]: table };
+    try { localStorage.setItem(this.cle(this.CLE_MOMENTS), JSON.stringify(table)); } catch (e2) {}
+    return { ok: true, nSym };
+  }
+  lireMoments() {
+    const k = this.cle(this.CLE_MOMENTS);
+    this._momentsPar = this._momentsPar || {};
+    if (!this._momentsPar[k]) {
+      try { this._momentsPar[k] = JSON.parse(localStorage.getItem(k) || '{}') || {}; }
+      catch (e) { this._momentsPar[k] = {}; }
+    }
+    return this._momentsPar[k];
+  }
+  momentVerdict(symBrut) {
+    const table = this.lireMoments();
+    const sym = String(symBrut || '').replace(/^#/, '');
+    const e = table[sym] || table[this.fluxDe(sym).base];
+    if (!e || !e.moments) return null;
+    const liste = Object.entries(e.moments).filter(([, m]) => Number.isFinite(m.rNet))
+      .map(([type, m]) => ({ type, ...m })).sort((a, b) => b.rNet - a.rNet);
+    if (liste.length < 2) return null;
+    const g = liste[0], d2 = liste[1];
+    const ecartR = g.rNet - d2.rNet;
+    const indecis = !(g.trades >= 100) || ecartR < Math.max(5, 0.10 * Math.abs(g.rNet));
+    return { sym, gagnant: g, deuxieme: d2, ecartR,
+      ecartPct: d2.rNet !== 0 ? (ecartR / Math.abs(d2.rNet)) * 100 : null,
+      indecis, retenu: indecis ? 'ouverture' : g.type,
+      date: e.date, config: e.config, medSpread: e.medSpread, moments: e.moments };
+  }
+  // Le moment effectivement envoyé au moteur : le choix manuel s'il existe, sinon le
+  // gagnant mesuré quand le verdict est net, sinon l'ouverture du jour.
+  momentResolu(symBrut, etat) {
+    const s = etat || this.state;
+    const choix = s.btMoment || 'auto';
+    if (choix !== 'auto') return { type: choix, heure: Number(s.btMomentHeure) || 8, auto: false, verdict: this.momentVerdict(symBrut) };
+    const v = this.momentVerdict(symBrut);
+    if (v && !v.indecis) {
+      return { type: v.retenu, heure: Number.isFinite(v.gagnant.heure) && v.gagnant.heure > 0 ? v.gagnant.heure : (Number(s.btMomentHeure) || 8), auto: true, verdict: v };
+    }
+    return { type: 'ouverture', heure: Number(s.btMomentHeure) || 8, auto: true, verdict: v || null };
+  }
   dansIframe() {
     try { return window.self !== window.top; } catch (e) { return true; }
   }
@@ -18027,7 +18194,7 @@ GROUPES = {
             grise: !enH1,
             phrase: enH1
               ? 'N\u2019entre qu\u2019à l\u2019intérieur de la plage horaire, en heure UTC — elle porte sur la bougie où l\u2019ordre part. Début égal à fin = inactive.'
-              : 'Sans effet en ' + s.ut + ' : la bougie couvre ' + (s.ut === 'D1' ? 'la journée entière' : 'plusieurs heures') + ' et l\u2019entrée se fait à son ouverture. Repassez la mesure en H1 pour filtrer les heures.',
+              : 'Sans effet en ' + s.ut + ' : la bougie de décision couvre ' + (s.ut === 'D1' ? 'la journée entière' : 'plusieurs heures') + ' — c\u2019est le Moment d\u2019exécution, dans le bandeau du haut, qui choisit la bougie H1 où l\u2019ordre part. Une seule règle à la fois, jamais deux qui se contredisent.',
             val: () => enH1 ? hh(fenD) + ' \u2013 ' + hh(fenF) + ' UTC'
               : (aFen ? 'réglée ' + hh(fenD) + ' \u2013 ' + hh(fenF) + ' — ' : '') + 'sans effet en ' + s.ut,
             champs: enH1 ? [ch('De', 'btFenDeb', null, null, 'h UTC', [0, 23, 1]),
@@ -18076,7 +18243,9 @@ GROUPES = {
           btSignature: (s.btSym || '') + ' · ' + (s.ut || 'H1') + ' · '
             + (nomLigne[s.btLigne] || s.btLigne) + ' ' + s.btPeriode
             + ' · SL ' + s.btSL + ' % · RR ' + s.btRR + ' · ' + (vente ? 'vente' : 'achat')
-            + ' · ' + (nOn ? actifs.map((d) => d.nom + ' (' + d.val() + ')').join(' + ') : 'sans filtre'),
+            + ' · ' + (nOn ? actifs.map((d) => d.nom + ' (' + d.val() + ')').join(' + ') : 'sans filtre')
+            + ((s.ut || 'H1') !== 'H1' ? (() => { const mo = this.momentResolu(s.btSym, s);
+              return ' · moment : ' + mo.type + (mo.type === 'heure' ? ' ' + mo.heure + ' h' : ''); })() : ''),
           toutDesactiverF: () => this.maj({ btMtf: false, fPente: false, fRsi: false, fAdx: false,
             fNuage: false, fPivot: false, fResist: false, fZone: false,
             btDelai: 0, btFenDeb: 0, btFenFin: 0 }),
@@ -18090,6 +18259,94 @@ GROUPES = {
                 : 'aucune entrée')
               + ' sur ' + ce.candidates.toLocaleString('fr-FR')
             : '',
+        };
+      })(),
+      // ————— LE MOMENT D'EXÉCUTION : la carte du bandeau —————
+      // La valeur affichée est le moment RÉSOLU — exactement celui que cfgCourante
+      // enverra au moteur — jamais un état d'interface qui pourrait en diverger.
+      ...(() => {
+        const enH1 = (s.ut || 'H1') === 'H1';
+        const mo = this.momentResolu(s.btSym, s);
+        const v = mo.verdict;
+        const choix = s.btMoment || 'auto';
+        const court = { ouverture: 'ouverture du jour', spread: 'spread sous médiane',
+          glissant: 'spread sous médiane 250 s.', heure: 'heure fixe' };
+        const courtDe = (t, h) => (court[t] || t)
+          + (t === 'heure' && Number.isFinite(h) ? ' (' + h + ' h UTC)' : '');
+        const fr2 = (x, d) => (Number.isFinite(x)
+          ? x.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }) : '?');
+        const rTxt = (x) => (x >= 0 ? '+' : '\u2212') + fr2(Math.abs(x), 1) + ' R';
+        const lignes = v ? ['ouverture', 'spread', 'glissant', 'heure']
+          .filter((t) => v.moments[t]).map((t) => {
+            const m = v.moments[t];
+            const retenu = !enH1 && t === mo.type;
+            return {
+              marque: retenu ? '\u2713' : '',
+              fond: retenu ? 'color-mix(in srgb,var(--color-accent) 10%,transparent)' : 'transparent',
+              nom: courtDe(t, m.heure),
+              detail: m.trades + ' trades · PF ' + fr2(m.pf, 2)
+                + (m.perdus > 0 ? ' · ' + m.perdus + ' signaux perdus' : ''),
+              r: rTxt(m.rNet),
+            };
+          }) : [];
+        // Le verdict dit POURQUOI, pas seulement quoi : sans le motif de l'indécision,
+        // l'utilisateur forcerait le « gagnant » que le garde-fou vient d'écarter.
+        let verdict = '', encre = 'var(--color-neutral-700)';
+        if (v) {
+          if (v.indecis) {
+            const motif = !(v.gagnant.trades >= 100)
+              ? v.gagnant.trades + ' trades seulement — il en faut au moins 100'
+              : 'écart de ' + fr2(v.ecartR, 1) + ' R sur le deuxième, dans le bruit';
+            verdict = 'Indécis — « ' + courtDe(v.gagnant.type, v.gagnant.heure)
+              + ' » arrive en tête, mais ' + motif + ' : l\u2019ouverture du jour est conservée.';
+          } else {
+            verdict = 'Mesuré — « ' + courtDe(v.gagnant.type, v.gagnant.heure)
+              + ' » gagne de ' + fr2(v.ecartR, 1) + ' R sur « '
+              + courtDe(v.deuxieme.type, v.deuxieme.heure) + ' ».';
+            encre = 'var(--color-accent-700)';
+          }
+        }
+        const c4 = v && v.config;
+        const provenance = !v ? '' : 'Mesuré le ' + (v.date || '?')
+          + (c4 ? ' · ' + c4.entree + ' · ' + c4.ligne + ' ' + c4.periode
+            + ' · SL ' + c4.sl + ' % · RR ' + c4.rr + ' · filtres ' + (c4.filtres || 'aucun') : '')
+          + (Number.isFinite(v.medSpread) && v.medSpread > 0
+            ? ' · médiane spread ' + fr2(v.medSpread, 5) + ' %' : '');
+        const btMoChoix = [
+          ['auto', 'auto (mesuré)', 'Suit le verdict mesuré : le gagnant quand il est net, sinon l\u2019ouverture du jour.'],
+          ['ouverture', 'ouverture', 'Force la première bougie du jour, quel que soit le verdict.'],
+          ['spread', 'spread', 'Force la première bougie du jour dont le spread passe sous la médiane de la série.'],
+          ['glissant', 'glissant', 'Force la première bougie sous la médiane des ~250 dernières séances.'],
+          ['heure', 'heure fixe', 'Force la première bougie à partir de l\u2019heure choisie, en UTC.'],
+        ].map(([vx, nom, aide]) => ({
+          nom, aide, cls: 'fc' + (choix === vx ? ' bal' : ''),
+          choisir: () => this.maj({ btMoment: vx }),
+        }));
+        const suffixe = choix !== 'auto' ? ' — choisi à la main'
+          : v ? (v.indecis ? ' — indécis, conservée' : ' — mesuré') : ' — sans mesure';
+        return {
+          btMoZ: s.btMoPan ? '40' : '1',
+          btMoVal: enH1 ? 'la bougie suivante (H1)' : courtDe(mo.type, mo.heure) + suffixe,
+          btMoAide: 'Quelle bougie H1 exécute le signal quand la décision se lit sur une unité plus large. Mesuré par instrument (moments.csv) ; sous 100 trades ou dans le bruit, le verdict est « indécis » et l\u2019ouverture du jour est conservée.',
+          btMoOuvrir: () => this.setState((p) => ({ btMoPan: !p.btMoPan })),
+          btMoFermer: () => this.setState({ btMoPan: false }),
+          btMoPan: !!s.btMoPan,
+          btMoPhrase: enH1
+            ? 'En H1, le signal se lit à la clôture d\u2019une bougie et l\u2019ordre part à l\u2019ouverture de la suivante : il n\u2019y a pas de latitude — la fenêtre horaire s\u2019en charge. Ce réglage agit dès que l\u2019unité de mesure dépasse H1.'
+            : 'La bougie de décision couvre plusieurs heures : ce réglage choisit la bougie H1 où l\u2019ordre part. Un jour sans bougie qui satisfait le moment perd son signal — le robot ne peut pas entrer rétroactivement.',
+          aBtMoMesures: !!v,
+          btMoLignes: lignes,
+          btMoVerdict: verdict,
+          btMoVerdictEncre: encre,
+          btMoProvenance: provenance,
+          aBtMoSansMesure: !v && !enH1,
+          aBtMoChoix: !enH1,
+          btMoChoix,
+          aBtMoHeure: !enH1 && choix === 'heure',
+          btMomentHeure: Number(s.btMomentHeure) || 8,
+          setBtMomentHeure: (e) => this.maj({
+            btMomentHeure: Math.max(0, Math.min(23, Number(e.target.value) || 0)),
+            btMoment: 'heure' }),
         };
       })(),
       btSecuTxt: !s.btBE ? 'Sans sécurisation : le stop de départ reste en place.'

@@ -110,6 +110,21 @@ export function genererMQ5(cfg, ctx = {}) {
   // Si elle a été produite sous une règle de moteur antérieure, le robot ne doit pas la
   // présenter comme sa référence : c'est ce chiffre que l'utilisateur compare à son vécu.
   const mesureVieille = !!ctx.mesureVieille;
+  // Le MOMENT D'EXÉCUTION, porté tel quel depuis la mesure (moments.csv, résolu par
+  // l'application). Hors H1 il désigne la bougie H1 du seau où l'ordre a le droit de
+  // partir. La médiane de spread est FIGÉE à l'export et datée : la recalculer sur
+  // l'historique du terminal jugerait d'autres bougies que celles du backtest.
+  const mom = ctx.moment && ctx.moment.type && ctx.moment.type !== 'ouverture' ? ctx.moment : null;
+  const momType = mom ? String(mom.type) : 'ouverture';
+  const momHeure = mom ? Math.min(23, Math.max(0, Math.round(nb(mom.heure, 8)))) : 0;
+  const momMed = mom ? nb(mom.medSpread, 0) : 0;
+  const momDate = mom && mom.medDate ? String(mom.medDate) : '';
+  const momTxt = !mom ? "l'ouverture de la première bougie du seau"
+    : mom.type === 'heure'
+      ? 'la première bougie H1 à partir de ' + momHeure + ' h serveur'
+      : 'la première bougie H1 du jour dont le spread passe sous ' + momMed.toFixed(5)
+        + ' % — médiane ' + (mom.type === 'glissant' ? 'glissante ' : '') + 'de la mesure'
+        + (momDate ? ' du ' + momDate : '');
 
   // Creux de référence de CETTE configuration, pas celui du portefeuille : afficher
   // un chiffre emprunté à un autre calcul serait une affirmation sans support.
@@ -218,6 +233,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  Paliers         : ${paliers.length ? paliers.map((x) => x[0] + '→' + x[1]).join(' / ') : 'aucun'}
 //|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des spreads d\'ouverture des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
 //|  Fenêtre entrée  : ${fenD === fenF ? 'aucune (toutes les heures)' : String(fenD).padStart(2, '0') + ' h → ' + String(fenF).padStart(2, '0') + ' h exclue, heures serveur'}
+//|  Moment d'entrée : ${momTxt}
 //|  Durée maximale  : ${nb(etat.btDureeMax, 0) > 0 ? nb(etat.btDureeMax, 0) + ' bougies H1' : 'aucune'}
 //|  Mesuré          : ${nb(cfg.n, 0)} trades · ${nb(cfg.total, 0)} R cumulés · ${nb(cfg.rAn, 0).toFixed(1)} R/an${mesureVieille ? ' — MESURE ANTÉRIEURE À LA RÈGLE ACTUELLE, à remesurer' : ''}
 //|  Contrôle hasard : ${esc(ctx.hasard || 'non contrôlé')}
@@ -278,6 +294,13 @@ input ulong  InpMagic           = ${nb(ctx.magic, 20260901)};
 #define M_SIGNAL        ${mode === 'MEDIANE' ? 'M_MEDIANE' : mode === 'SMA' ? 'M_SMA' : 'M_EMA'}
 #define DUREE_MAX       ${nb(etat.btDureeMax, 0)}   // en bougies H1, comme le moteur
 #define SPREAD_FENETRE  ${SPREAD_FENETRE}   // bougies H1 servant à la médiane du spread
+// Moment d'exécution MESURÉ par instrument (moments.csv → scripts/moment-entree.mjs) :
+// quelle bougie H1 du seau a le droit d'exécuter le signal. "ouverture" = la première,
+// le comportement historique. Constantes et non paramètres : les changer sans remesurer
+// rendrait le backtest de Sivula non comparable.
+#define MOMENT_TYPE       "${momType}"
+#define MOMENT_HEURE      ${momHeure}   // heure serveur minimale (type "heure")
+#define MOMENT_MED_SPREAD ${momMed > 0 ? momMed.toFixed(6) : '0.0'}   // % du prix (types "spread"/"glissant")${momDate ? ', figée le ' + momDate : ''}
 // Paliers de sécurisation : en PARAMÈTRES et non en constantes, pour pouvoir les mettre
 // à zéro dans le testeur et voir ce que la sécurisation coûte ou rapporte, sans
 // recompiler. Les valeurs par défaut sont celles de la mesure : les changer rend le
@@ -588,6 +611,7 @@ int OnInit()
          " · ${esc(cfg.sym)} ${vente ? 'VENTE' : 'ACHAT'} ${esc(cfg.ligne)} ${periode}",
          " · stop ${sl}% R/R ${rr} · attendu ${nb(cfg.n, 0)} trades ===");
    Print("Journées découpées à 00:00 heure serveur, comme les horodatages des CSV mesurés.");
+   Print("Moment d'exécution : ${momTxt}");
    if(StringCompare(_Symbol, "${esc(cfg.sym)}", false) != 0)
       Print("ATTENTION : ce robot a été mesuré sur ${esc(cfg.sym)}, il tourne sur ", _Symbol);
    if(Period() != PERIOD_H1)
@@ -976,6 +1000,39 @@ bool ExecutionAutorisee()
                                        InpHeureEntreeDeb, InpHeureEntreeFin, sFen.hour);
             return false;
          }
+      }
+   }
+
+   // MOMENT D'EXÉCUTION, port exact de cfg.moment (backtesterSuivi). Même mécanique
+   // que la fenêtre : un refus ne perd pas le signal — le seau reste en attente et la
+   // tentative repart à la bougie H1 suivante. Si aucune bougie du seau ne satisfait
+   // le moment, la journée passe sans entrée, exactement comme dans le moteur (pas de
+   // repli sur l'ouverture : elle est déjà passée).
+   if(StringCompare(MOMENT_TYPE, "heure") == 0)
+   {
+      datetime hMo[];
+      if(CopyTime(_Symbol, PERIOD_H1, 0, 1, hMo) == 1)
+      {
+         MqlDateTime sMo; TimeToStruct(hMo[0], sMo);
+         if(sMo.hour < MOMENT_HEURE)
+         {
+            g_confRefus = StringFormat("moment : avant l'heure fixe %d h (heure %d)",
+                                       MOMENT_HEURE, sMo.hour);
+            return false;
+         }
+      }
+   }
+   else if(StringCompare(MOMENT_TYPE, "spread") == 0 || StringCompare(MOMENT_TYPE, "glissant") == 0)
+   {
+      // le spread jugé est celui de la BOUGIE (SpreadBarre), la grandeur de la colonne
+      // du CSV que le moteur compare à la médiane — pas le spread du tick
+      double spMo = SpreadBarre(0);
+      if(spMo <= 0.0) { g_confRefus = "moment : pas de spread sur la bougie"; return false; }
+      if(MOMENT_MED_SPREAD > 0.0 && spMo > MOMENT_MED_SPREAD)
+      {
+         g_confRefus = StringFormat("moment : spread %s %% > médiane mesurée %s %%",
+                                    DoubleToString(spMo, 5), DoubleToString(MOMENT_MED_SPREAD, 5));
+         return false;
       }
    }
 
