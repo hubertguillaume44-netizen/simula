@@ -57,6 +57,13 @@
    ]
   },
   {
+   "terme": "Amorce trop courte fermer Unité",
+   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "aucun",
    "texte": "La référence « sans filtre » a battu les conditions balayées sur cette ligne.",
    "vues": [
@@ -141,13 +148,6 @@
    ]
   },
   {
-   "terme": "condition comparée remettre au défaut",
-   "texte": "Les longueurs de ligne balayées — chaque valeur multiplie le calcul.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Condition de la ligne NON restaurée",
    "texte": "La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.",
    "vues": [
@@ -166,13 +166,6 @@
    "texte": "Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.",
    "vues": [
     "Historique"
-   ]
-  },
-  {
-   "terme": "connaître Amorce trop courte fermer",
-   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -236,6 +229,13 @@
    "texte": "Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "défaut tout sortir du scan",
+   "texte": "Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -316,6 +316,13 @@
    ]
   },
   {
+   "terme": "est admise fermer Objectifs R",
+   "texte": "Les objectifs visés balayés, en multiples du risque.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "Et si j'avais simplement détenu ?",
    "texte": "Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.",
    "vues": [
@@ -338,15 +345,43 @@
    ]
   },
   {
-   "terme": "fermer",
-   "texte": "Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul.",
+   "terme": "fermer Déclencheur",
+   "texte": "Ce qui déclenche l’entrée — chaque déclencheur coché est essayé sur toute la grille.",
    "vues": [
     "Nouveau scan"
    ]
   },
   {
-   "terme": "fermer",
-   "texte": "La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai. Balayer les deux double le calcul.",
+   "terme": "fermer Ligne périodes",
+   "texte": "La ligne que le prix doit franchir, et ses longueurs en bougies de l’unité — chaque valeur cochée multiplie le calcul.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "fermer Moment d’exécution",
+   "texte": "Sur quelle bougie H1 l’ordre part. Hors H1, résolu par instrument depuis la mesure moments.csv — le détail se lit dans le Backtest.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "fermer Paliers",
+   "texte": "Comment le stop est porté en cours de route — chaque jeu coché est essayé sur toute la grille.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "fermer Risque",
+   "texte": "Ne multiplie rien : fixe la taille de 1 R en euros.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "fermer Unité",
+   "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
    ]
@@ -359,17 +394,17 @@
    ]
   },
   {
-   "terme": "finement… déplier les 8 conditions",
-   "texte": "Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Frais",
    "texte": "Ce que le courtier prend sur chaque trade, en pourcentage du risque unitaire — le coût moyen de l’instrument rapporté à votre stop.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "grille au défaut",
+   "texte": "Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -415,27 +450,6 @@
    ]
   },
   {
-   "terme": "la virgule est admise fermer",
-   "texte": "Les distances de stop balayées, en pourcent.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "la virgule est admise fermer",
-   "texte": "Les objectifs visés balayés, en multiples du risque.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "la virgule est admise fermer",
-   "texte": "Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Lancez un premier balayage",
    "texte": "Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.",
    "vues": [
@@ -447,6 +461,13 @@
    "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
    "vues": [
     "Mes instruments"
+   ]
+  },
+  {
+   "terme": "les groupes vides fermer Depuis",
+   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -548,8 +569,8 @@
    ]
   },
   {
-   "terme": "réglage fin… fermer",
-   "texte": "Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés. Chaque durée cochée multiplie le calcul.",
+   "terme": "réglage fin… fermer Durée maximale",
+   "texte": "Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés.",
    "vues": [
     "Nouveau scan"
    ]
@@ -569,13 +590,6 @@
    ]
   },
   {
-   "terme": "remettre au défaut",
-   "texte": "Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Rendement par unité de creux",
    "texte": "Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.",
    "vues": [
@@ -587,13 +601,6 @@
    "texte": "Replie le détail : le bandeau du bas continue de résumer l’instrument sélectionné.",
    "vues": [
     "Mes instruments"
-   ]
-  },
-  {
-   "terme": "replier les groupes vides fermer",
-   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -696,15 +703,15 @@
    ]
   },
   {
-   "terme": "Sécurisation seuils…",
-   "texte": "Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.",
+   "terme": "sécurisation seuils complets… fermer Sens",
+   "texte": "Achat, vente, ou les deux — balayer les deux sens double le calcul.",
    "vues": [
     "Nouveau scan"
    ]
   },
   {
-   "terme": "Sens du trade fermer",
-   "texte": "Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c’est le réglage qui change le plus les creux.",
+   "terme": "Sécurisation seuils…",
+   "texte": "Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.",
    "vues": [
     "Nouveau scan"
    ]
@@ -749,6 +756,13 @@
    "texte": "Replier ou déplier ce cadre",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "sur",
+   "texte": "Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -836,13 +850,6 @@
    ]
   },
   {
-   "terme": "Unité",
-   "texte": "Choisir la taille des bougies balayées",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "UTC fermer Déclencheur Ligne période",
    "texte": "La ligne de référence que le prix doit franchir ou toucher pour déclencher l'entrée, et sur combien de bougies elle est calculée. Plus la période est petite, plus elle réagit vite.",
    "vues": [
@@ -854,6 +861,20 @@
    "texte": "Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "virgule est admise fermer Sécurisation",
+   "texte": "La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "virgule est admise fermer Stop",
+   "texte": "Les distances de stop balayées, en pourcent du prix d’entrée : c’est elles qui définissent 1 R.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {

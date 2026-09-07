@@ -1994,17 +1994,20 @@
           <button type="button" class="lien" style="margin-inline-start:auto" onClick="{{ enregistrerGrille }}" title="Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.">Sauver cette grille</button>
         </div>
 
-        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
-            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">1</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">Le périmètre</span></span>
-            <span style="font-size:10px;line-height:1.45" class="text-muted">Ce sur quoi la mesure porte. Ne change pas la durée du calcul.</span>
-          </div>
-          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))">
-            <div style="position:relative;z-index:{{ bsZInstr }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:{{ bsInstrFilet }};background:{{ bsFondInstr }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous." onClick="{{ bsOuvreInstr }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:{{ bsInstrEncre }};flex:1">Instruments</span><span style="font-size:9px;color:var(--color-accent-700)">{{ bsChevInstr }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.05;font-variant-numeric:tabular-nums;color:{{ bsInstrGros }}">{{ bsInstrNb }} <span style="font-size:13px;font-weight:400">sur {{ nbTotal }}</span></strong>
-                <span style="font-size:10px;line-height:1.45;color:{{ bsInstrEncre }}">{{ bsInstrSous }}</span>
+        <!--
+          UNE SEULE GRILLE DE CASES, exactement comme le Backtest : étiquette en
+          petites capitales, valeur lisible, facteur ×N en pastille, chevron. Les
+          trois rails numérotés expliquaient le calcul mais rendaient le Scan et le
+          Backtest étrangers l’un à l’autre — alors qu’ils règlent la même chose.
+          Chaque panneau est celui d’avant, réutilisé tel quel : la forme change,
+          pas un producteur du devis — le produit des pastilles reste le chiffre du rail.
+        -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:9px 14px;padding:11px 15px;border-bottom:1px solid var(--color-divider)">
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZInstr }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Instruments</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous." onClick="{{ bsOuvreInstr }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:{{ bsInstrGros }}">{{ bsInstrNb }} sur {{ nbTotal }}</span></span>
+                <span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevInstr }}</span>
               </button>
               <sc-if value="{{ bsPanInstr }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
@@ -2061,11 +2064,11 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZFen }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondFen }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper." onClick="{{ bsOuvreFen }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Fenêtre</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevFen }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ fenLigne }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ fenDuree }}</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZFen }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Depuis</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper." onClick="{{ bsOuvreFen }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ fenLigne }}</span>
+                <span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevFen }}</span>
               </button>
               <sc-if value="{{ bsPanFen }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
@@ -2113,11 +2116,11 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZUt }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondUt }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires." onClick="{{ bsOuvreUt }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Unité</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevUt }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:21px;line-height:1.05">{{ utVal }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsUniteSous }}</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZUt }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Unité</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires." onClick="{{ bsOuvreUt }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ utVal }}</span>
+                <span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevUt }}</span>
               </button>
               <sc-if value="{{ bsPanUt }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2144,50 +2147,54 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZSens }};display:flex;flex-direction:column;border-inline-start:2px solid transparent;background:{{ bsFondSens }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul." onClick="{{ bsOuvreSens }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sens</span><sc-if value="{{ aSensX }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSensX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSens }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.15">{{ bsSensGros }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSensSous }}</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZMoment }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Moment d’exécution</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Sur quelle bougie H1 l’ordre part. Hors H1, résolu par instrument depuis la mesure moments.csv — le détail se lit dans le Backtest." onClick="{{ bsOuvreMoment }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsMomentVal }}</span>
+                <span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevMoment }}</span>
               </button>
-              <sc-if value="{{ bsPanSens }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Ce qui déclenche l’achat</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixEntrees }}" as="ce2" hint-placeholder-count="5">
-                          <button type="button" class="{{ ce2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce2.basculer }}">{{ ce2.nom }}</button>
-                        </sc-for>
-                      </div>
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Sens du trade</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixSens }}" as="cs4" hint-placeholder-count="2">
-                          <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
-                        </sc-for>
-                      </div>
+              <sc-if value="{{ bsPanMoment }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(430px,92vw)">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">Sur quelle bougie H1 l’ordre part, le signal restant lu sur la clôture de l’unité choisie. En H1, pas de latitude : l’ordre part à la bougie suivante. Au-dessus de H1, le moment est résolu PAR INSTRUMENT depuis la mesure déposée (moments.csv) : le gagnant quand le verdict est net, l’ouverture du jour sinon.</span>
+                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">Rien à multiplier ici : le scan applique à chaque instrument son moment résolu. Le détail par instrument — mesures, verdict, choix manuel — se lit dans le Backtest.</span>
                   <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
                 </div>
               </sc-if>
             </div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
-            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">2</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">La grille balayée</span></span>
-            <strong style="font-family:var(--font-heading);font-size:28px;line-height:1;letter-spacing:-.015em;font-variant-numeric:tabular-nums">×{{ bsRailGrille }}</strong>
-            <span style="font-size:10px;line-height:1.45" class="text-muted">réglages par instrument, par condition comparée</span>
-            <button type="button" class="lien" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">remettre au défaut</button>
-          </div>
-          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr))">
-            <div style="position:relative;z-index:{{ bsZLong }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondLong }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les longueurs de ligne balayées — chaque valeur multiplie le calcul." onClick="{{ bsOuvreLong }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Longueurs</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPerX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span></span>
-                <strong style="font-size:13px;line-height:1.5">{{ bsPerListe }}</strong>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZDecl }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Déclencheur</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Ce qui déclenche l’entrée — chaque déclencheur coché est essayé sur toute la grille." onClick="{{ bsOuvreDecl }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsDeclVal }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDeclX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDecl }}</span>
+              </button>
+              <sc-if value="{{ bsPanDecl }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(430px,92vw)">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">Ce qui déclenche l’entrée. Chaque déclencheur coché est essayé sur toute la grille.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ choixEntrees }}" as="ce2" hint-placeholder-count="5">
+                      <button type="button" class="{{ ce2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce2.basculer }}">{{ ce2.nom }}</button>
+                    </sc-for>
+                  </div>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZLong }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ligne · périodes</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La ligne que le prix doit franchir, et ses longueurs en bougies de l’unité — chaque valeur cochée multiplie le calcul." onClick="{{ bsOuvreLong }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsLiPVal }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsLiPX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span>
               </button>
               <sc-if value="{{ bsPanLong }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
-                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Combien de bougies la ligne moyenne regarde. Chaque valeur cochée multiplie le calcul.</span>
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">La ligne que le prix doit franchir, et sa longueur en bougies de l’unité choisie. Chaque ligne et chaque longueur cochées multiplient le calcul.</span>
+                  <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Lignes balayées</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ choixLignes }}" as="cl3" hint-placeholder-count="3">
+                      <button type="button" class="{{ cl3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl3.basculer }}">{{ cl3.nom }}</button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Longueurs balayées</span>
                   <div style="display:flex;gap:5px;flex-wrap:wrap">
                     <sc-for list="{{ bsCatLong }}" as="cgl" hint-placeholder-count="10">
                       <button type="button" class="{{ cgl.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cgl.basculer }}"><span style="font-size:11px">{{ cgl.txt }}</span></button>
@@ -2202,11 +2209,11 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZStop }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondStop }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les distances de stop balayées, en pourcent." onClick="{{ bsOuvreStop }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Stops</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSlX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevStop }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:18px;line-height:1;font-variant-numeric:tabular-nums">{{ bsSlPlage }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSlSous }}</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZStop }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Stop %</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Les distances de stop balayées, en pourcent du prix d’entrée : c’est elles qui définissent 1 R." onClick="{{ bsOuvreStop }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSlPlage }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSlX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevStop }}</span>
               </button>
               <sc-if value="{{ bsPanStop }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
@@ -2225,10 +2232,11 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZObj }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondObj }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les objectifs visés balayés, en multiples du risque." onClick="{{ bsOuvreObj }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Objectifs</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRrX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevObj }}</span></span>
-                <strong style="font-size:13px;line-height:1.5">{{ bsRrListe }}</strong>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZObj }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Objectifs ×R</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Les objectifs visés balayés, en multiples du risque." onClick="{{ bsOuvreObj }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsRrListe }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRrX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevObj }}</span>
               </button>
               <sc-if value="{{ bsPanObj }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2247,89 +2255,11 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;z-index:{{ bsZLi }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondLi }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée." onClick="{{ bsOuvreLi }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Lignes</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsLigX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLi }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsLigGros }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsLigSous }}</span>
-              </button>
-              <sc-if value="{{ bsPanLi }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Lignes balayées</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixLignes }}" as="cl3" hint-placeholder-count="3">
-                          <button type="button" class="{{ cl3.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ cl3.basculer }}">{{ cl3.nom }}</button>
-                        </sc-for>
-                      </div>
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Ce qui déclenche l’achat</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixEntrees }}" as="ce2" hint-placeholder-count="5">
-                          <button type="button" class="{{ ce2.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ ce2.basculer }}">{{ ce2.nom }}</button>
-                        </sc-for>
-                      </div>
-            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Sens du trade</span>
-
-                      <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
-                        <sc-for list="{{ choixSens }}" as="cs4" hint-placeholder-count="2">
-                          <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
-                        </sc-for>
-                      </div>
-                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
-                </div>
-              </sc-if>
-            </div>
-            <div style="position:relative;z-index:{{ bsZPal }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondPal }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c\u2019est le réglage qui change le plus les creux." onClick="{{ bsOuvrePal }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Paliers</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsPalGros }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsPalSous }}</span>
-              </button>
-              <sc-if value="{{ bsPanPal }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
-                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c\u2019est le réglage qui change le plus les creux. Les valeurs exactes restent réglables dans le réglage fin : ces trois jeux sont des raccourcis, pas un remplacement.</span>
-                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
-                    <sc-for list="{{ bsJeuxPal }}" as="jp" hint-placeholder-count="3">
-                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ jp.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ jp.basculer }}">
-                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ jp.marque }}</span>
-                        <strong style="font-size:12px;width:11ch">{{ jp.nom }}</strong>
-                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ jp.aide }}</span>
-                      </button>
-                    </sc-for>
-                  </div>
-                  <sc-if value="{{ aPalFin }}" hint-placeholder-val="{{ false }}">
-                    <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsPalFinTxt }}</span>
-                  </sc-if>
-                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Escaliers à la carte, stop suiveur et distances : le réglage fin complet.">réglage fin…</button>
-                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
-                </div>
-              </sc-if>
-            </div>
-            <div style="position:relative;z-index:{{ bsZDuree }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondDuree }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Sortir au cours de clôture après N bougies H1 si ni le stop ni l\u2019objectif n\u2019ont été touchés. Chaque durée cochée multiplie le calcul." onClick="{{ bsOuvreDuree }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Durée max</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsDureeGros }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsDureeSous }}</span>
-              </button>
-              <sc-if value="{{ bsPanDuree }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
-                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sortir au cours de clôture après N bougies si ni le stop ni l\u2019objectif n\u2019ont été touchés — c\u2019est ce qui coupe les creux les plus profonds. Compté en bougies H1, la série de suivi, quelle que soit l\u2019unité de mesure. Chaque durée cochée est essayée sur toute la grille.</span>
-                  <div style="display:flex;gap:5px;flex-wrap:wrap">
-                    <sc-for list="{{ bsCatDuree }}" as="cdu" hint-placeholder-count="8">
-                      <button type="button" class="{{ cdu.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cdu.basculer }}"><span style="font-size:11px">{{ cdu.txt }}</span></button>
-                    </sc-for>
-                  </div>
-                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutDuree }}</span>
-                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
-                </div>
-              </sc-if>
-            </div>
-            <div style="position:relative;z-index:{{ bsZSecuC }};display:flex;flex-direction:column;border-inline-start:2px solid transparent;background:{{ bsFondSecuC }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai. Balayer les deux double le calcul." onClick="{{ bsOuvreSecuC }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Lecture</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span></span>
-                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsSecuGros }}</strong>
-                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSecuSous }}</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZSecuC }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sécurisation</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai." onClick="{{ bsOuvreSecuC }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSecuGros }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span>
               </button>
               <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2349,80 +2279,125 @@
                 </div>
               </sc-if>
             </div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:stretch;border-bottom:1px solid var(--color-divider)">
-          <div style="width:208px;flex:none;padding:12px 16px;display:flex;flex-direction:column;gap:5px;border-inline-end:1px solid var(--color-divider);background:color-mix(in srgb,var(--color-accent) 7%,var(--color-bg))">
-            <span style="display:flex;align-items:baseline;gap:7px"><span style="font-family:var(--font-heading);font-size:11px;color:var(--color-accent-700)">3</span><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">Conditions d’entrée</span></span>
-            <strong style="font-family:var(--font-heading);font-size:28px;line-height:1;letter-spacing:-.015em;font-variant-numeric:tabular-nums">{{ bsCondX }}</strong>
-            <span style="font-size:10px;line-height:1.45" class="text-muted">{{ bsCondSous }}</span>
-            <button type="button" class="lien" onClick="{{ ouvrirConditions }}" title="Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.">régler finement…</button>
-          </div>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column">
-            <sc-if value="{{ bsCondPlie }}" hint-placeholder-val="{{ true }}">
-              <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:none;display:flex;align-items:center;gap:11px;padding:12px 14px" onClick="{{ bsDeplierConds }}">
-                <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ bsCondMarque }}</span>
-                <span style="font-size:12px;line-height:1.45;flex:1;min-width:0">{{ bsCondResume }}</span>
-                <span style="font-size:11px;white-space:nowrap;color:var(--color-accent-700)">déplier les 8 conditions</span>
-                <span style="font-size:9px;color:var(--color-neutral-600);width:9px">▸</span>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZSens }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sens</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Achat, vente, ou les deux — balayer les deux sens double le calcul." onClick="{{ bsOuvreSens }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSensGros }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSensX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSens }}</span>
               </button>
-            </sc-if>
-            <sc-if value="{{ bsCondDeplie }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column">
-                <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:{{ bsRefFond }};border-inline-start:{{ bsRefFilet }};display:flex;align-items:center;gap:11px;padding:8px 14px" title="Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence." onClick="{{ bsRefBascule }}">
-                  <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ bsRefMarque }}</span>
-                  <strong style="font-size:12px;width:18ch;flex:none">Sans filtre</strong>
-                  <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:var(--color-neutral-700)">tous les signaux sont pris — la référence à battre</span>
-                  <span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRefBadge }}</span>
-                  <span style="width:9px"></span>
-                </button>
-                <sc-for list="{{ bsConds }}" as="cd" hint-placeholder-count="8">
-                  <div style="border-top:1px solid var(--color-divider);border-inline-start:{{ cd.bord }};background:{{ cd.fond }}">
-                    <button type="button" class="lg" style="cursor:pointer;width:100%;font:inherit;text-align:left;border:none;background:none;display:flex;align-items:center;gap:11px;padding:8px 14px" title="{{ cd.aide }}" onClick="{{ cd.ouvrir }}">
-                      <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ cd.marque }}</span>
-                      <strong style="font-size:12px;width:18ch;flex:none">{{ cd.nom }}</strong>
-                      <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:{{ cd.resumeEncre }}">{{ cd.resume }}</span>
-                      <span style="font-family:var(--font-heading);font-size:12px;border:1px solid {{ cd.badgeBord }};color:{{ cd.badgeEncre }};padding:0 6px;white-space:nowrap;line-height:1.55;font-variant-numeric:tabular-nums">{{ cd.badge }}</span>
-                      <span style="font-size:9px;color:var(--color-neutral-600);width:9px">{{ cd.chev }}</span>
-                    </button>
-                    <sc-if value="{{ cd.ouvert }}" hint-placeholder-val="{{ false }}">
-                      <div style="background:var(--color-bg);border-top:1px solid var(--color-accent);padding:10px 14px 11px;display:flex;flex-direction:column;gap:9px">
-                        <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">{{ cd.aide }} Cochez les réglages à essayer — chacun est une condition de plus dans la comparaison, et une seule suffit à mettre la condition dans le scan.</span>
-                        <sc-for list="{{ cd.groupes }}" as="gp" hint-placeholder-count="3">
-                          <div style="display:flex;flex-direction:column;gap:4px">
-                            <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">{{ gp.lib }}</span>
-                            <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-                              <sc-for list="{{ gp.pastilles }}" as="pa" hint-placeholder-count="4">
-                                <button type="button" class="{{ pa.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ pa.basculer }}"><span style="font-size:11px">{{ pa.txt }}</span></button>
-                              </sc-for>
-                              <sc-if value="{{ gp.aSaisie }}" hint-placeholder-val="{{ false }}">
-                                <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:11px;padding:0 7px;width:78px" type="text" onKeyDown="{{ gp.ajouter }}" placeholder="+ autre…">
-                              </sc-if>
-                            </div>
-                          </div>
-                        </sc-for>
-                        <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--color-divider);padding-top:7px">
-                          <span style="font-size:10px;line-height:1.4;flex:1;color:var(--color-neutral-600)">{{ cd.pied }}</span>
-                          <button type="button" class="lien" onClick="{{ cd.basculerScan }}">{{ cd.scanTxt }}</button>
-                          <button type="button" class="lien" onClick="{{ bsFermeCond }}">fermer</button>
-                        </div>
-                      </div>
-                    </sc-if>
+              <sc-if value="{{ bsPanSens }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(430px,92vw)">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">Prendre les deux sens double le nombre de configurations — et c’est la moitié des stratégies possibles qui n’est jamais mesurée si on ne le fait pas. À la vente, l’entrée et les conditions se lisent en miroir.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ choixSens }}" as="cs4" hint-placeholder-count="2">
+                      <button type="button" class="{{ cs4.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" title="{{ cs4.aide }}" onClick="{{ cs4.basculer }}">{{ cs4.nom }}</button>
+                    </sc-for>
                   </div>
-                </sc-for>
-                <div style="display:flex;align-items:center;gap:11px;padding:7px 14px;border-top:1px solid var(--color-divider)">
-                  <span style="font-size:11px;line-height:1.4;flex:1;min-width:0;color:var(--color-neutral-600)">{{ bsCondPied }}</span>
-                  <button type="button" class="lien" onClick="{{ bsToutSortir }}" title="Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.">tout sortir du scan</button>
-                  <button type="button" class="lien" onClick="{{ bsDeplierConds }}">▾ replier</button>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
                 </div>
-                <div style="padding:6px 14px 8px;border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px">
-                  <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ bsPhraseBH }}</span>
-                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
+              </sc-if>
+            </div>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZPal }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Paliers</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Comment le stop est porté en cours de route — chaque jeu coché est essayé sur toute la grille." onClick="{{ bsOuvrePal }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsPalGros }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span>
+              </button>
+              <sc-if value="{{ bsPanPal }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c’est le réglage qui change le plus les creux. Les valeurs exactes restent réglables dans le réglage fin : ces trois jeux sont des raccourcis, pas un remplacement.</span>
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ bsJeuxPal }}" as="jp" hint-placeholder-count="3">
+                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ jp.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ jp.basculer }}">
+                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ jp.marque }}</span>
+                        <strong style="font-size:12px;width:11ch">{{ jp.nom }}</strong>
+                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ jp.aide }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ aPalFin }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsPalFinTxt }}</span>
+                  </sc-if>
+                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Escaliers à la carte, stop suiveur et distances : le réglage fin complet.">réglage fin…</button>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
                 </div>
-              </div>
-            </sc-if>
-          </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZDuree }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée maximale</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés." onClick="{{ bsOuvreDuree }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsDureeGros }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span>
+              </button>
+              <sc-if value="{{ bsPanDuree }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sortir au cours de clôture après N bougies si ni le stop ni l’objectif n’ont été touchés — c’est ce qui coupe les creux les plus profonds. Compté en bougies H1, la série de suivi, quelle que soit l’unité de mesure. Chaque durée cochée est essayée sur toute la grille.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ bsCatDuree }}" as="cdu" hint-placeholder-count="8">
+                      <button type="button" class="{{ cdu.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cdu.basculer }}"><span style="font-size:11px">{{ cdu.txt }}</span></button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutDuree }}</span>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Risque %</span>
+              <input class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;width:100%" type="number" step="0.1" min="0.1" value="{{ risquePct }}" onChange="{{ setRisque }}" title="Ne multiplie rien : fixe la taille de 1 R en euros.">
+            </div>
         </div>
+        <div style="display:flex;align-items:baseline;gap:12px;padding:8px 15px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
+          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ bsFiltresTitre }}</span>
+          <span style="font-size:11px;line-height:1.45;flex:1;min-width:28ch" class="text-muted">Balayée, chaque condition s’ajoute à la comparaison — chaque réglage coché est essayé sur toute la grille.</span>
+          <button type="button" class="lien" onClick="{{ ouvrirConditions }}" title="Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.">régler finement…</button>
+          <button type="button" class="lien" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">grille au défaut</button>
+          <button type="button" class="lien" onClick="{{ bsToutSortir }}" title="Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.">tout sortir du scan</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:0;border-bottom:1px solid var(--color-divider)">
+          <div style="position:relative;border-inline-end:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);border-inline-start:{{ bsRefFilet }};background:{{ bsRefFond }};min-height:46px;display:flex">
+            <button type="button" class="lg" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:6px 9px;width:100%;display:flex;flex-direction:column;gap:2px" title="Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence." onClick="{{ bsRefBascule }}">
+              <span style="display:flex;align-items:center;gap:6px;width:100%"><span style="font-size:10px;font-weight:600;flex:1;min-width:0">Sans filtre</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsRefBadge }}</span></span>
+              <span style="font-size:10px;line-height:1.35;color:var(--color-neutral-700)">tous les signaux sont pris — la référence à battre</span>
+            </button>
+          </div>
+          <sc-for list="{{ bsConds }}" as="cd" hint-placeholder-count="8">
+            <div style="position:relative;z-index:{{ cd.z }};border-inline-end:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);border-inline-start:{{ cd.bord }};background:{{ cd.fond }};min-height:46px;display:flex">
+              <button type="button" class="lg" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:6px 9px;width:100%;display:flex;flex-direction:column;gap:2px" title="{{ cd.aide }}" onClick="{{ cd.ouvrir }}">
+                <span style="display:flex;align-items:center;gap:6px;width:100%"><span style="font-size:10px;font-weight:600;flex:1;min-width:0">{{ cd.nom }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ cd.chev }}</span></span>
+                <span style="font-size:10px;line-height:1.35;color:{{ cd.resumeEncre }}">{{ cd.badge }}</span>
+              </button>
+              <sc-if value="{{ cd.ouvert }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:{{ cd.gauche }};right:{{ cd.droite }};max-width:min(430px,90vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">{{ cd.aide }} Cochez les réglages à essayer — chacun est une condition de plus dans la comparaison, et une seule suffit à mettre la condition dans le scan.</span>
+                  <sc-for list="{{ cd.groupes }}" as="gp" hint-placeholder-count="3">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">{{ gp.lib }}</span>
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+                        <sc-for list="{{ gp.pastilles }}" as="pa" hint-placeholder-count="4">
+                          <button type="button" class="{{ pa.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ pa.basculer }}"><span style="font-size:11px">{{ pa.txt }}</span></button>
+                        </sc-for>
+                        <sc-if value="{{ gp.aSaisie }}" hint-placeholder-val="{{ false }}">
+                          <input class="input" style="min-height:1.7rem;height:1.7rem;font-size:11px;padding:0 7px;width:78px" type="text" onKeyDown="{{ gp.ajouter }}" placeholder="+ autre…">
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--color-divider);padding-top:7px">
+                    <span style="font-size:10px;line-height:1.4;flex:1;color:var(--color-neutral-600)">{{ cd.pied }}</span>
+                    <button type="button" class="lien" onClick="{{ cd.basculerScan }}">{{ cd.scanTxt }}</button>
+                    <button type="button" class="lien" onClick="{{ bsFermeCond }}">fermer</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:6px 15px 8px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ bsPhraseBH }}</span>
+          <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
+        </div>
+
 
         <sc-if value="{{ bsPanMesure }}" hint-placeholder-val="{{ false }}">
           <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
@@ -17142,6 +17117,15 @@ GROUPES = {
           bsRrX: '\u00d7' + rrs,
           bsRrListe: this.nombres(s.gRrs, [2.5]).map((n) => String(n).replace('.', ',') + '\u00d7').join(' · '),
           bsLigX: '\u00d7' + (nLig * nEnt),
+          // les cases « à la Backtest » : Déclencheur et Ligne·périodes séparés,
+          // et le moment d'exécution dit où il se règle vraiment
+          bsDeclVal: nEnt > 1 ? 'Croisement + rebond, et croisement seul'
+            : (ENTREES_TXT[(s.gEntrees || ['croisement_ou_rebond'])[0]] || 'Croisement et rebond'),
+          bsDeclX: '\u00d7' + nEnt,
+          bsLiPVal: (((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'Méd' }[k] || k)).join(' · ')) || 'MME')
+            + ' · ' + per + (per > 1 ? ' périodes' : ' période'),
+          bsLiPX: '\u00d7' + (nLig * per),
+          bsMomentVal: (s.ut || 'H1') === 'H1' ? 'la bougie suivante (H1)' : 'résolu par instrument',
           bsLigGros: ((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'Méd' }[k] || k)).join(' · ') || 'MME'),
           bsLigSous: 'entrée : ' + (nEnt > 1 ? 'croisement + rebond, et croisement seul'
             : (ENTREES_TXT[(s.gEntrees || ['croisement_ou_rebond'])[0]] || 'croisement et rebond').toLowerCase()),
@@ -17319,7 +17303,7 @@ GROUPES = {
             const PAIRES = [['Instr', 'instruments'], ['Fen', 'fenetre'], ['Ut', 'unite'],
               ['Sens', 'entree'], ['Long', 'longueurs'], ['Stop', 'stops'],
               ['Obj', 'objectifs'], ['Li', 'lignes'], ['Pal', 'paliers2'], ['Duree', 'durees2'],
-              ['SecuC', 'secucell']];
+              ['SecuC', 'secucell'], ['Moment', 'moment2'], ['Decl', 'declencheur']];
             for (const [suf, k] of PAIRES) {
               const o = s.bsPanneau === k;
               d['bsPan' + suf] = o;
@@ -17444,13 +17428,16 @@ GROUPES = {
             const actives = Object.keys(this.VARIANTES_FILTRE).filter((k) => k !== 'aucun' && gf.includes(k));
             const nVarTotal = actives.reduce((a, k) => a + this.developper(s, this.VARIANTES_FILTRE, [k], k).length, 0);
             const bsConds = Object.entries(this.VARIANTES_FILTRE).filter(([k]) => k !== 'aucun')
-              .map(([k, [nomL, , expl, champs]]) => {
+              .map(([k, [nomL, , expl, champs]], iC) => {
                 const dans = gf.includes(k);
                 const devs = this.developper(s, this.VARIANTES_FILTRE, [k], k);
                 const nVar = devs.length;
                 const ouvertC = s.bsCondOuverte === k;
                 const noms = devs.map((x) => x.nom.replace(nomL, '').trim()).filter(Boolean);
                 return { nom: this.COURTS_FILTRE[k] || nomL, aide: expl, ouvert: ouvertC,
+                  z: ouvertC ? '40' : '1',
+                  gauche: ((iC + 1) % 4) >= 2 ? 'auto' : '-1px',
+                  droite: ((iC + 1) % 4) >= 2 ? '-1px' : 'auto',
                   marque: dans ? '\u2713' : '', chev: ouvertC ? '\u25be' : '\u25b8',
                   fond: dans ? 'var(--color-accent-100)' : 'transparent',
                   bord: dans ? '2px solid var(--color-accent)' : '2px solid transparent',
