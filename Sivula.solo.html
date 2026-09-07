@@ -637,8 +637,11 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;flex-direction:column;gap:2px">
             <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Mensuel</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">12 €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / mois</span></strong>
+            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">{{ prixMois }} €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / mois</span></strong>
             <span style="font-size:12px;color:var(--color-neutral-700)">résiliable à tout moment</span>
+            <sc-if value="{{ aLancement }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:12px;line-height:1.5;color:var(--color-accent-700)">{{ mentionLancement }}</span>
+            </sc-if>
           </div>
           <div style="height:1px;background:var(--color-divider)"></div>
           <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
@@ -653,9 +656,12 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         <div class="blueprint elev-sm" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px;border-color:var(--color-accent)">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <div style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Annuel · le plus choisi</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">40 €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / an</span></strong>
-            <span style="font-size:12px;color:var(--color-neutral-700)">soit 3,33 € par mois</span>
+            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Annuel · deux mois offerts</span>
+            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">{{ prixAn }} €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / an</span></strong>
+            <span style="font-size:12px;color:var(--color-neutral-700)">{{ prixAnDetail }}</span>
+            <sc-if value="{{ aLancement }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:12px;line-height:1.5;color:var(--color-accent-700)">{{ mentionLancement }}</span>
+            </sc-if>
           </div>
           <div style="height:1px;background:var(--color-divider)"></div>
           <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
@@ -666,21 +672,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           <button class="btn btn-primary" type="button" style="min-height:2.5rem;margin-top:auto" onClick="{{ acheterAn }}">Prendre l'année</button>
         </div>
 
-        <div class="blueprint" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">À vie</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">120 €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> une fois</span></strong>
-            <span style="font-size:12px;color:var(--color-neutral-700)">rentable au bout de trois ans</span>
-          </div>
-          <div style="height:1px;background:var(--color-divider)"></div>
-          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-            <li>Tout l'annuel, sans échéance</li>
-            <li>Toutes les mises à jour à venir</li>
-            <li>Aucun abonnement à surveiller</li>
-          </ul>
-          <button class="btn btn-secondary" type="button" style="min-height:2.5rem;margin-top:auto" onClick="{{ acheterVie }}">Acheter une fois</button>
-        </div>
       </div>
 
       <div class="blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:1060px">
@@ -706,7 +697,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Sivula ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation, et il vaut aussi pour la formule à vie.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
       </div>
     </section>
 
@@ -4663,7 +4654,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text)">Abonnement</div>
-          <p style="margin:0" class="text-muted">L'abonnement se résilie à tout moment et prend fin au terme de la période en cours. Vos données étant enregistrées sur votre appareil, elles ne sont pas supprimées par la résiliation : exportez-les si vous changez de machine. Aucune donnée de marché ni aucun résultat n'est conservé par l'éditeur.</p>
+          <p style="margin:0" class="text-muted">L'abonnement se résilie à tout moment et prend fin au terme de la période en cours. Le tarif de lancement est garanti tant que l'abonnement court : il ne remonte jamais pour ceux qui en bénéficient. Vos données étant enregistrées sur votre appareil, elles ne sont pas supprimées par la résiliation : exportez-les si vous changez de machine. Aucune donnée de marché ni aucun résultat n'est conservé par l'éditeur.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text)">Droit applicable</div>
@@ -15500,22 +15491,44 @@ GROUPES = {
         };
       })(),
       isAccueil: tab === 'accueil',
-      // liens de paiement REVOLUT, à coller ici une fois les trois produits créés
-      // (mensuel, annuel, à vie). Tant qu'ils sont vides, le bouton l'annonce au
-      // lieu d'ouvrir une page morte — la vente peut ouvrir avec délivrance
-      // manuelle : scripts/licence/signer.mjs signe un code à la main.
+      // ————— LE TARIF ET SES QUATRE LIENS REVOLUT, UN SEUL DRAPEAU —————
+      // Créez chez Revolut les quatre plans (lancement mensuel/annuel, normal
+      // mensuel/annuel) et collez les quatre URL d'avance. Quand le tableau de
+      // bord Revolut affiche cinquante abonnés, passez TARIF à 'normal' : un mot
+      // à changer, aucun risque de coller la mauvaise URL au mauvais bouton.
+      // Pas de compteur décompté dans la page : sans serveur, personne ne peut le
+      // savoir ici, et un chiffre invérifiable décrédibiliserait le reste.
+      // Tant qu'une URL est vide, le bouton annonce que le paiement n'est pas
+      // encore ouvert — délivrance manuelle : scripts/licence/signer.mjs.
       ...(() => {
-        const LIENS = { mois: '', an: '', vie: '' };
-        const NOMS = { mois: 'l\u2019abonnement mensuel', an: 'la formule annuelle', vie: 'la licence à vie' };
+        const TARIF = 'lancement'; // 'lancement' | 'normal' — LE drapeau
+        const LIENS = {
+          lancement: { mois: '', an: '' },
+          normal: { mois: '', an: '' },
+        };
+        const PRIX = {
+          lancement: { mois: '14,99', an: '149', parMois: '12,42', douze: '179,88' },
+          normal: { mois: '19,99', an: '199', parMois: '16,58', douze: '239,88' },
+        };
+        const NOMS = { mois: 'l\u2019abonnement mensuel', an: 'la formule annuelle' };
         const aller = (k) => () => {
-          if (LIENS[k]) { window.open(LIENS[k], '_blank', 'noopener'); return; }
+          if (LIENS[TARIF][k]) { window.open(LIENS[TARIF][k], '_blank', 'noopener'); return; }
           // on reste sur la page de vente : le visiteur venait payer, pas naviguer
           this.setState({ achatMsg: NOMS[k] });
         };
+        const p = PRIX[TARIF];
         const lic = s.lic;
         const jjL = (f) => (f ? f.split('-').reverse().join('/') : '');
         const NOMS_PLAN = { mensuel: 'abonnement mensuel', annuel: 'formule annuelle', vie: 'licence à vie' };
-        return { acheterMois: aller('mois'), acheterAn: aller('an'), acheterVie: aller('vie'),
+        return { acheterMois: aller('mois'), acheterAn: aller('an'),
+          // les prix viennent du DRAPEAU : basculer TARIF change les deux colonnes,
+          // les liens et l'économie annoncée, sans autre modification
+          prixMois: p.mois,
+          prixAn: p.an,
+          prixAnDetail: 'soit ' + p.parMois + ' € par mois — ' + p.an + ' € au lieu de '
+            + p.douze + ' € en douze mensualités',
+          aLancement: TARIF === 'lancement',
+          mentionLancement: 'Tarif de lancement, pour les cinquante premiers abonnés — garanti tant que votre abonnement court.',
           // ————— LE CODE D'ACCÈS : plan et date EN CLAIR, motif en clair au refus —————
           licValide: !!(lic && lic.ok),
           licSaisie: !(lic && lic.ok),
@@ -15866,8 +15879,12 @@ GROUPES = {
         this.setState({ risqueVu: true });
         try { localStorage.setItem('simula.risque.v1', new Date().toISOString()); } catch (e) {}
       },
-      mentionEditeur: 'Éditeur : à compléter avant mise en ligne (dénomination, forme juridique, '
-        + 'siège, RCS, contact). Simulateur logiciel — aucun agrément d\u2019intermédiaire financier '
+      mentionEditeur: 'Éditeur et VENDEUR : à compléter avant mise en ligne (dénomination, forme '
+        + 'juridique, siège, SIREN, contact) — avec Revolut, c\u2019est cette entreprise qui figure '
+        + 'sur la facture, pas un vendeur tiers. TVA non applicable, article 293 B du CGI '
+        + '(franchise en base) ; pour les ventes aux particuliers d\u2019autres pays de l\u2019Union '
+        + 'européenne, la TVA française s\u2019applique en dessous du seuil de 10 000 € par an. '
+        + 'Simulateur logiciel — aucun agrément d\u2019intermédiaire financier '
         + 'n\u2019est requis pour cette activité, et aucun n\u2019est revendiqué.',
       sousTitre: '',
       titreRegime: this.essai ? 'Régime, mesuré sur les séries de démonstration' : 'Régime, mesuré sur vos fichiers',
