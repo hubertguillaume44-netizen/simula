@@ -51,6 +51,23 @@ test("la page porte l'en-tête versionné et les mêmes constantes", () => {
   }
 });
 
+test("le robot exporté est nominatif — jamais dans les commentaires d'ordre", async () => {
+  const { genererMQ5 } = await import("../../robot-mt5.js");
+  const cfg = { sym: "T", entree: "croisement", ligne: "mediane", periode: 15, sl: 0.5,
+    rr: 2, n: 1, total: 1, heures_entree: { debut: 0, fin: 0 } };
+  const t = genererMQ5(cfg, { ut: "D1", magic: 1,
+    licence: { email: "client@exemple.fr", plan: "formule annuelle", fin: "2027-10-07" } });
+  assert.ok(/\|  Licence         : client@exemple\.fr/.test(t), "l'en-tête du robot ne porte pas le nom");
+  assert.ok(/Print\("Licence : client@exemple/.test(t), "l'empreinte OnInit ne porte pas le nom");
+  assert.ok(/# licence : client@exemple/.test(t), "le journal de conformité ne porte pas le nom");
+  // la marque d'ordre envoyée au courtier ne porte JAMAIS l'e-mail
+  const marque = t.match(/marque des ordres : (\S+)/);
+  assert.ok(marque && !marque[1].includes("@"), "l'e-mail fuit dans la marque d'ordre");
+  assert.ok(!/SetString\([^)]*@|Comment[^\n]*client@/.test(t), "l'e-mail approche un commentaire d'ordre");
+  const sans = genererMQ5(cfg, { ut: "D1", magic: 1 });
+  assert.ok(/Licence         : sans licence \(essai\)/.test(sans), "sans licence, le robot doit le dire");
+});
+
 test("le relais d'usage ne laisse passer que le format annoncé", async () => {
   assert.equal(filtrerCharge("pas du json"), null);
   assert.equal(filtrerCharge('{"outil":"autre","schema":1,"evenements":[]}'), null);

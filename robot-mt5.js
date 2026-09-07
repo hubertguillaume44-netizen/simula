@@ -115,6 +115,15 @@ export function genererMQ5(cfg, ctx = {}) {
   // partir. La médiane de spread est FIGÉE à l'export et datée : la recalculer sur
   // l'historique du terminal jugerait d'autres bougies que celles du backtest.
   const mom = ctx.moment && ctx.moment.type && ctx.moment.type !== 'ouverture' ? ctx.moment : null;
+  // La licence est NOMINATIVE et le robot la porte : en-tête, empreinte de
+  // démarrage, journal de conformité. Jamais dans un commentaire d'ordre — le
+  // courtier n'a pas à connaître l'e-mail du client (la marque d'ordre reste
+  // SIV_<stamp>). C'est du frein social au prêt de code : prêter son code, c'est
+  // inscrire son adresse dans les robots que l'autre compile.
+  const lic = ctx.licence && ctx.licence.email ? ctx.licence : null;
+  const licTxt = !lic ? 'sans licence (essai)'
+    : lic.email + (lic.plan ? ' · ' + lic.plan : '')
+      + (lic.fin ? ' · jusqu\u2019au ' + String(lic.fin).split('-').reverse().join('/') : '');
   const momType = mom ? String(mom.type) : 'ouverture';
   const momHeure = mom ? Math.min(23, Math.max(0, Math.round(nb(mom.heure, 8)))) : 0;
   const momMed = mom ? nb(mom.medSpread, 0) : 0;
@@ -234,6 +243,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  Plafond spread  : ${Number(facteurSpread) > 0 ? facteurSpread + ' × médiane des spreads d\'ouverture des ' + SPREAD_FENETRE + ' dernières H1' : 'aucun'}
 //|  Fenêtre entrée  : ${fenD === fenF ? 'aucune (toutes les heures)' : String(fenD).padStart(2, '0') + ' h → ' + String(fenF).padStart(2, '0') + ' h exclue, heures serveur'}
 //|  Moment d'entrée : ${momTxt}
+//|  Licence         : ${esc(licTxt)}
 //|  Durée maximale  : ${nb(etat.btDureeMax, 0) > 0 ? nb(etat.btDureeMax, 0) + ' bougies H1' : 'aucune'}
 //|  Mesuré          : ${nb(cfg.n, 0)} trades · ${nb(cfg.total, 0)} R cumulés · ${nb(cfg.rAn, 0).toFixed(1)} R/an${mesureVieille ? ' — MESURE ANTÉRIEURE À LA RÈGLE ACTUELLE, à remesurer' : ''}
 //|  Contrôle hasard : ${esc(ctx.hasard || 'non contrôlé')}
@@ -612,6 +622,7 @@ int OnInit()
          " · stop ${sl}% R/R ${rr} · attendu ${nb(cfg.n, 0)} trades ===");
    Print("Journées découpées à 00:00 heure serveur, comme les horodatages des CSV mesurés.");
    Print("Moment d'exécution : ${momTxt}");
+   Print("Licence : ${esc(licTxt)}");
    if(StringCompare(_Symbol, "${esc(cfg.sym)}", false) != 0)
       Print("ATTENTION : ce robot a été mesuré sur ${esc(cfg.sym)}, il tourne sur ", _Symbol);
    if(Period() != PERIOD_H1)
@@ -659,6 +670,7 @@ void ConfOuvrir()
    // en-tête lisible : le harnais l'ignore, un humain en a besoin
    FileWriteString(g_confFic, "# " + _Symbol + " · ${stamp} · D=décision T=tentative "
                    + "E=entrée S=sortie P=palier\\r\\n");
+   FileWriteString(g_confFic, "# licence : ${esc(licTxt)}\\r\\n");
    Print("Journal de conformité : Common/Files/", nom);
 }
 

@@ -632,6 +632,13 @@
    ]
   },
   {
+   "terme": "Retirer mon nom des exports CSV et JSON",
+   "texte": "Pour partager un résultat sans votre adresse — une capture, un envoi à un ami. Le robot exporté, lui, reste toujours à votre nom : c'est l'objet même de la licence nominative.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Risque",
    "texte": "Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.",
    "vues": [

@@ -129,7 +129,9 @@ export async function traiter(corpsBrut, entetes, env, envoyerMail) {
     "votre e-mail d'achat puis le code. La vérification se fait dans votre",
     "navigateur, rien n'est envoyé nulle part.",
     "",
-    "Ce code est personnel : il est lié à cette adresse e-mail.",
+    "Ce code est personnel et NOMINATIF : il porte cette adresse e-mail, qui",
+    "s'affiche dans l'application et signe les robots et fichiers exportés.",
+    "Il couvre vos machines personnelles — fixe et portable.",
     "",
     "Sivula",
   ].join("\n");

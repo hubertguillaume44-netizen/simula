@@ -2,8 +2,8 @@
  * Le NOYAU de la licence : format du code, signature, vérification, durées.
  *
  * Le code n'est pas une entrée dans une base : c'est une LICENCE SIGNÉE. Le jeton
- * porte l'empreinte de l'e-mail (jamais l'e-mail en clair), le plan et la date de
- * fin ; la signature Ed25519 se vérifie hors ligne avec la seule clé publique.
+ * porte l'e-mail de l'acheteur, le plan et la date de fin ; la signature Ed25519
+ * se vérifie hors ligne avec la seule clé publique.
  * Personne ne peut forger un code sans la clé privée, l'application n'appelle
  * jamais l'extérieur, et rien n'est stocké nulle part.
  *
@@ -13,9 +13,13 @@
  * identiques donneraient deux codes différents.)
  *
  * Format : SIV1.<base64url(payload JSON)>.<base64url(signature 64 octets)>
- * Payload, clés dans CET ordre (le JSON est signé tel quel, l'ordre en fait partie) :
- *   {"v":1,"e":"<empreinte e-mail>","p":"mensuel|annuel|vie","f":"AAAA-MM-JJ"}
+ * Payload v2, clés dans CET ordre (le JSON est signé tel quel, l'ordre en fait partie) :
+ *   {"v":2,"m":"<e-mail EN CLAIR>","p":"mensuel|annuel|vie","f":"AAAA-MM-JJ"}
  *   — « f » absent pour la licence à vie.
+ * La licence est NOMINATIVE : l'e-mail de l'acheteur est dans le jeton en clair,
+ * l'application l'affiche et le porte dans tout ce qui sort — la signature empêche
+ * de fabriquer un code, le nom rend le prêt visible et sans intérêt. Les jetons v1
+ * (empreinte seule) restent vérifiables : un code émis hier ne meurt pas.
  *
  * Ce fichier est du Node pur (fonction serverless, CLI, tests). L'application
  * embarque son propre miroir de `verifier` en WebCrypto : les deux sont verrouillés
@@ -41,7 +45,9 @@ export function payloadDe({ email, plan, fin }) {
   if (plan !== "vie" && !/^\d{4}-\d{2}-\d{2}$/.test(String(fin))) {
     throw new Error("date de fin attendue AAAA-MM-JJ, reçu : " + fin);
   }
-  return '{"v":1,"e":"' + empreinteEmail(email) + '","p":"' + plan + '"' + f + "}";
+  const norme = String(email || "").trim().toLowerCase();
+  if (!/@/.test(norme)) throw new Error("e-mail requis : la licence est nominative");
+  return '{"v":2,"m":' + JSON.stringify(norme) + ',"p":"' + plan + '"' + f + "}";
 }
 
 /** Signe un code. `clePrivee` : PKCS8 en base64 (la variable d'environnement) ou un KeyObject. */
@@ -72,7 +78,7 @@ export function verifierCode(code, clePublique, { email, maintenant = Date.now()
   } catch (e) {
     return { ok: false, motif: "forme" };
   }
-  if (sig.length !== 64 || !jeton || jeton.v !== 1) return { ok: false, motif: "forme" };
+  if (sig.length !== 64 || !jeton || (jeton.v !== 1 && jeton.v !== 2)) return { ok: false, motif: "forme" };
   let clePub;
   try {
     // SPKI Ed25519 = un préfixe DER fixe de 12 octets + la clé brute de 32 octets
@@ -84,16 +90,24 @@ export function verifierCode(code, clePublique, { email, maintenant = Date.now()
   }
   if (!verify(null, payload, clePub, sig)) return { ok: false, motif: "signature" };
   if (!PLANS.includes(jeton.p)) return { ok: false, motif: "plan" };
-  if (email !== undefined && jeton.e !== empreinteEmail(email)) {
+  // v2 : l'e-mail est en clair dans le jeton ; v1 : seule l'empreinte y est
+  if (jeton.v === 2) {
+    if (typeof jeton.m !== "string" || !/@/.test(jeton.m)) return { ok: false, motif: "forme" };
+    if (email !== undefined
+        && String(email).trim().toLowerCase() !== jeton.m) {
+      return { ok: false, motif: "email" };
+    }
+  } else if (email !== undefined && jeton.e !== empreinteEmail(email)) {
     return { ok: false, motif: "email" };
   }
   if (jeton.p !== "vie") {
     // la journée de fin est comprise : un code « 2026-10-14 » vit jusqu'à minuit UTC
     const finMs = Date.parse(jeton.f + "T23:59:59Z");
     if (!Number.isFinite(finMs)) return { ok: false, motif: "forme" };
-    if (maintenant > finMs) return { ok: false, motif: "expire", plan: jeton.p, fin: jeton.f };
+    if (maintenant > finMs) return { ok: false, motif: "expire", plan: jeton.p, fin: jeton.f, email: jeton.v === 2 ? jeton.m : undefined };
   }
-  return { ok: true, plan: jeton.p, fin: jeton.p === "vie" ? null : jeton.f };
+  return { ok: true, plan: jeton.p, fin: jeton.p === "vie" ? null : jeton.f,
+    email: jeton.v === 2 ? jeton.m : undefined };
 }
 
 const jourUTC = (ms) => new Date(ms).toISOString().slice(0, 10);

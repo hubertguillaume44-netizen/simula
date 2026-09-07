@@ -21,18 +21,30 @@ import { CLE_DEMO_PRIVEE, CLE_DEMO_PUBLIQUE } from "./cle-demo.mjs";
 const CLES = genererCles();
 const EMAIL = "client@exemple.fr";
 
-test("signer puis vérifier : les trois plans, l'e-mail et la date en clair", () => {
+test("signer puis vérifier : les trois plans, l'e-mail EN CLAIR et la date", async () => {
   const an = signerCode({ email: EMAIL, plan: "annuel", fin: "2027-10-07" }, CLES.privee);
   assert.deepEqual(verifierCode(an, CLES.publique, { email: EMAIL }),
-    { ok: true, plan: "annuel", fin: "2027-10-07" });
+    { ok: true, plan: "annuel", fin: "2027-10-07", email: EMAIL });
   const vie = signerCode({ email: EMAIL, plan: "vie" }, CLES.privee);
   assert.deepEqual(verifierCode(vie, CLES.publique, { email: EMAIL }),
-    { ok: true, plan: "vie", fin: null });
-  // l'e-mail est une EMPREINTE dans le jeton, jamais en clair
-  assert.ok(!an.includes("client") && !an.includes("exemple"),
-    "l'e-mail apparaît en clair dans le code");
+    { ok: true, plan: "vie", fin: null, email: EMAIL });
+  // la licence est NOMINATIVE : l'e-mail est EN CLAIR dans le jeton (v2), et la
+  // vérification le rend — c'est lui que l'application affiche et écrit partout
+  const rv = verifierCode(an, CLES.publique, { email: EMAIL });
+  assert.equal(rv.email, EMAIL, "l'e-mail du jeton v2 n'est pas rendu");
+  assert.ok(Buffer.from(an.split(".")[1], "base64url").toString("utf8").includes(EMAIL),
+    "l'e-mail n'est pas en clair dans le payload v2");
   // la casse et les espaces de l'e-mail ne comptent pas
   assert.equal(verifierCode(an, CLES.publique, { email: "  Client@Exemple.FR " }).ok, true);
+  // un jeton v1 (empreinte seule) émis hier se vérifie toujours
+  const payloadV1 = '{"v":1,"e":"' + empreinteEmail(EMAIL) + '","p":"annuel","f":"2027-10-07"}';
+  const { sign, createPrivateKey } = await import("node:crypto");
+  const sigV1 = sign(null, Buffer.from(payloadV1, "utf8"),
+    createPrivateKey({ key: Buffer.from(CLES.privee, "base64url"), format: "der", type: "pkcs8" }));
+  const v1 = "SIV1." + Buffer.from(payloadV1, "utf8").toString("base64url") + "." + Buffer.from(sigV1).toString("base64url");
+  assert.deepEqual(verifierCode(v1, CLES.publique, { email: EMAIL }),
+    { ok: true, plan: "annuel", fin: "2027-10-07", email: undefined });
+  assert.equal(verifierCode(v1, CLES.publique, { email: "autre@exemple.fr" }).motif, "email");
 });
 
 test("un caractère changé tue le code ; un autre e-mail est nommé ; l'expiration est datée", () => {
@@ -96,7 +108,7 @@ test("webhook valide → un code accepté, avec le bon plan et la bonne date", a
   assert.equal(vus[0].a, EMAIL);
   const code = vus[0].texte.match(/SIV1\.[A-Za-z0-9_.-]+/)[0];
   assert.deepEqual(verifierCode(code, CLES.publique, { email: EMAIL }),
-    { ok: true, plan: "annuel", fin: "2027-10-07" });
+    { ok: true, plan: "annuel", fin: "2027-10-07", email: EMAIL });
   assert.ok(vus[0].texte.includes("07/10/2027"), "la date de fin manque au mail");
   assert.ok(vus[0].texte.includes("personnel"), "la mention « personnel » manque au mail");
 });

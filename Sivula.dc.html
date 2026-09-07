@@ -443,6 +443,10 @@
           </sc-if>
         </div>
 
+        <sc-if value="{{ aSansNom }}" hint-placeholder-val="{{ false }}">
+          <label class="radio" style="font-size:12px" title="Pour partager un résultat sans votre adresse — une capture, un envoi à un ami. Le robot exporté, lui, reste toujours à votre nom : c'est l'objet même de la licence nominative."><input type="checkbox" checked="{{ exportSansNomVal }}" onChange="{{ basculerSansNom }}"><span class="dot"></span>Retirer mon nom des exports CSV et JSON</label>
+        </sc-if>
+
         <!-- PORTE 2 : le compteur d'usage anonyme, ÉTEINT par défaut -->
         <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
           <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Compteur d’usage anonyme — éteint par défaut</span>
@@ -723,6 +727,7 @@
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Sivula ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">À votre nom, sur vos machines.</strong> La licence couvre vos machines personnelles — fixe et portable. Elle est nominative : votre adresse s'affiche dans l'application et signe les robots et fichiers exportés (une case permet de la retirer d'un résultat que vous partagez). Et ce que vous achetez est un outil de mesure, pas un contenu : un code emprunté ne donne accès à aucune bibliothèque, aucun signal, aucun résultat — seulement au droit de mesurer ses propres séries, à exporter soi-même depuis son propre MetaTrader, avec ses propres relevés de frais.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Trois portes, toutes facultatives.</strong> Une sauvegarde chiffrée dont vous détenez seul la phrase ; un compteur d'usage anonyme, <strong style="color:var(--color-text)">éteint par défaut</strong>, avec un bouton qui montre exactement ce qui part avant que ça parte ; et un fichier de diagnostic qui se télécharge et ne s'envoie jamais tout seul. Aucune ne conditionne l'usage du logiciel — et à part elles, rien ne quitte votre navigateur.</p>
       </div>
     </section>
@@ -4631,6 +4636,7 @@
   </sc-if>
 
   <footer style="border-top:1px solid var(--color-divider);margin-top:36px;padding:22px 32px 34px;display:flex;flex-direction:column;gap:12px;font-size:12px;line-height:1.6">
+    <span style="font-size:11px" class="text-muted">{{ piedIdentite }}</span>
     <p style="margin:0;max-width:110ch" class="text-muted"><strong style="color:var(--color-text)">Sivula est un outil de mesure, pas un conseil en investissement.</strong> Il applique vos propres règles à vos propres historiques de prix et en restitue le résultat chiffré. Il ne délivre aucune recommandation personnalisée, ne passe aucun ordre, ne détient aucun fonds et ne garantit aucune performance. Les résultats sont issus de données passées : ils ne préjugent en rien des résultats futurs. Le trading à effet de levier expose à un risque de perte rapide du capital investi, pouvant dépasser le montant déposé.</p>
     <details style="max-width:110ch">
       <summary style="cursor:pointer;color:var(--color-accent-700)">Informations légales, données et confidentialité</summary>
@@ -4653,7 +4659,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text)">Ce que vous achetez</div>
-          <p style="margin:0" class="text-muted">Un droit d'usage personnel du logiciel, non exclusif et non cessible, pour la durée de l'abonnement. Vous n'achetez ni signal, ni portefeuille, ni performance : vous achetez un instrument de mesure que vous appliquez à vos propres données. Le code, l'interface et la méthode restent la propriété de l'éditeur ; vos données et vos résultats restent les vôtres.</p>
+          <p style="margin:0" class="text-muted">Un droit d'usage personnel du logiciel, non exclusif et non cessible, pour la durée de l'abonnement. La licence est nominative — le code porte l'adresse de l'acheteur, qui s'affiche dans l'application et dans les fichiers exportés — et couvre vos machines personnelles, fixe et portable ; son prêt à un tiers est hors licence. Vous n'achetez ni signal, ni portefeuille, ni performance : vous achetez un instrument de mesure que vous appliquez à vos propres données. Le code, l'interface et la méthode restent la propriété de l'éditeur ; vos données et vos résultats restent les vôtres.</p>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text)">Responsabilité</div>
@@ -4859,6 +4865,9 @@
   -->
   <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
   <div id="pied-sauv" style="position:sticky;bottom:0;z-index:60;background:{{ sauvFondPied }};color:var(--color-bg);border-top:2px solid {{ sauvBordPied }};padding:{{ sansSauvPadIn }} 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
+      <span style="flex-basis:100%;font-size:10px;line-height:1.4;opacity:.8">{{ licPiedTxt }}</span>
+    </sc-if>
     <sc-if value="{{ aPurgeLigne }}" hint-placeholder-val="{{ false }}">
       <span style="flex-basis:100%;font-size:12px;line-height:1.5;display:flex;gap:12px;align-items:baseline"><strong style="flex:1;min-width:30ch">{{ purgeLigneTxt }}</strong><button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:2px 9px;white-space:nowrap" onClick="{{ fermerPurge }}">compris</button></span>
     </sc-if>
@@ -5004,7 +5013,7 @@ class Component extends DCLogic {
       sig = deB64u(m[2]);
       jeton = JSON.parse(new TextDecoder().decode(payload));
     } catch (e) { return { ok: false, motif: 'forme' }; }
-    if (sig.length !== 64 || !jeton || jeton.v !== 1) return { ok: false, motif: 'forme' };
+    if (sig.length !== 64 || !jeton || (jeton.v !== 1 && jeton.v !== 2)) return { ok: false, motif: 'forme' };
     let valide = false;
     try {
       const cle = await crypto.subtle.importKey('raw', deB64u(this.CLE_PUB_LICENCE),
@@ -5013,18 +5022,27 @@ class Component extends DCLogic {
     } catch (e) { return { ok: false, motif: 'navigateur' }; }
     if (!valide) return { ok: false, motif: 'signature' };
     const norme = String(email || '').trim().toLowerCase();
-    const h = new Uint8Array(await crypto.subtle.digest('SHA-256',
-      new TextEncoder().encode(norme))).slice(0, 16);
-    let b = '';
-    for (const x of h) b += String.fromCharCode(x);
-    const empreinte = btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    if (jeton.e !== empreinte) return { ok: false, motif: 'email' };
+    // v2 : l'e-mail est EN CLAIR dans le jeton — la licence est nominative, et le nom
+    // affiché vient du jeton que l'utilisateur a lui-même collé, jamais d'ailleurs.
+    // v1 : seule l'empreinte y est ; l'e-mail vérifié est celui qui a été saisi.
+    if (jeton.v === 2) {
+      if (typeof jeton.m !== 'string' || !/@/.test(jeton.m)) return { ok: false, motif: 'forme' };
+      if (norme !== jeton.m) return { ok: false, motif: 'email' };
+    } else {
+      const h = new Uint8Array(await crypto.subtle.digest('SHA-256',
+        new TextEncoder().encode(norme))).slice(0, 16);
+      let b = '';
+      for (const x of h) b += String.fromCharCode(x);
+      const empreinte = btoa(b).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      if (jeton.e !== empreinte) return { ok: false, motif: 'email' };
+    }
+    const emailJeton = jeton.v === 2 ? jeton.m : norme;
     if (jeton.p !== 'vie') {
       const finMs = Date.parse(jeton.f + 'T23:59:59Z');
       if (!Number.isFinite(finMs)) return { ok: false, motif: 'forme' };
-      if (Date.now() > finMs) return { ok: false, motif: 'expire', plan: jeton.p, fin: jeton.f };
+      if (Date.now() > finMs) return { ok: false, motif: 'expire', plan: jeton.p, fin: jeton.f, email: emailJeton };
     }
-    return { ok: true, plan: jeton.p, fin: jeton.p === 'vie' ? null : jeton.f };
+    return { ok: true, plan: jeton.p, fin: jeton.p === 'vie' ? null : jeton.f, email: emailJeton };
   }
   // Un code invalide dit POURQUOI — un simple refus enverrait chaque faute de
   // frappe au support.
@@ -5040,6 +5058,24 @@ class Component extends DCLogic {
     }[r && r.motif] || 'Code refusé.';
   }
   get licenceActive() { return !!(this.state.lic && this.state.lic.ok); }
+  // La mention NOMINATIVE — information de propriété, pas avertissement. Elle
+  // s'affiche à trois endroits sans se masquer, et signe tout ce qui sort.
+  licenceMention() {
+    const l = this.state.lic;
+    if (!l || !l.ok || !l.email) return null;
+    const NOMS = { mensuel: 'abonnement mensuel', annuel: 'formule annuelle', vie: 'licence à vie' };
+    return 'licence de ' + l.email + ', ' + (NOMS[l.plan] || l.plan)
+      + (l.fin ? ', jusqu\u2019au ' + l.fin.split('-').reverse().join('/') : '');
+  }
+  // La case « retirer mon nom » — honnête et assumée : elle sert à montrer son
+  // travail sans son adresse (CSV, JSON), jamais à anonymiser le robot exporté,
+  // qui est précisément l'objet du prêt qu'on veut freiner.
+  exportSansNom() {
+    try { return localStorage.getItem('simula.sansNom.v1') === '1'; } catch (e) { return false; }
+  }
+  ligneLicenceExport() {
+    return this.exportSansNom() ? null : this.licenceMention();
+  }
   // le palier gratuit : trois instruments personnels — la licence ou le verrou
   // propriétaire l'ouvrent. Le compte démo n'est jamais compté ni limité.
   PALIER_GRATUIT = 3;
@@ -5746,6 +5782,15 @@ class Component extends DCLogic {
       txt = mod.genererMQ5(cfgRobot, { risquePct: Number(this.state.risquePct) || 1,
         ut: v.ut || etat.ut || this.state.ut, hasard, etat, spreadMaxPct, stamp, magic,
         moment: moRobot,
+        // le robot porte le nom quoi qu'il arrive : c'est LUI, l'objet du prêt que
+        // la licence nominative rend visible — la case « retirer mon nom » ne
+        // s'applique qu'aux exports de résultats
+        licence: (() => {
+          const l = this.state.lic;
+          if (!l || !l.ok || !l.email) return null;
+          const NOMS = { mensuel: 'abonnement mensuel', annuel: 'formule annuelle', vie: 'licence à vie' };
+          return { email: l.email, plan: NOMS[l.plan] || l.plan, fin: l.fin };
+        })(),
         spreadFacteur: this.facteurSpread(),
         mesureVieille: (v._mv || 'e1') !== this.MOTEUR_V,
         // les heures que le nettoyage de la mesure a gardées : le robot doit agréger
@@ -9469,7 +9514,7 @@ GROUPES = {
       const lm = this.lireLicence();
       if (!lm || !lm.code) return;
       const r = await this.verifierLicence(lm.code, lm.email);
-      this.setState({ lic: { ...r, email: lm.email, code: lm.code } });
+      this.setState({ lic: { ...r, email: r.email || lm.email, code: lm.code } });
     })();
     const M = await import('./moteur.js');
     this.M = M;
@@ -14537,8 +14582,10 @@ GROUPES = {
         if (k.startsWith('gros:' + this.CLE_SERIES)) delete dump[k];
       }
     }
+    const licC = this.ligneLicenceExport();
     const clair = new TextEncoder().encode(JSON.stringify(
-      { outil: 'simula', version: 1, date: new Date().toISOString(), donnees: dump }));
+      { outil: 'simula', version: 1, date: new Date().toISOString(),
+        ...(licC ? { licence: licC } : {}), donnees: dump }));
     const sel = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const cle = await this.cleDePhrase(phrase, sel, this.CHIFFRE_ITER);
@@ -14698,7 +14745,9 @@ GROUPES = {
   // ————— sauvegarde complète : un fichier, tout ce qui est à toi —————
   async exporterTout() {
     const dump = await this.dumpCompletAvecScan();
-    const blob = new Blob([JSON.stringify({ outil: 'simula', version: 1, date: new Date().toISOString(), donnees: dump }, null, 1)],
+    const licE = this.ligneLicenceExport();
+    const blob = new Blob([JSON.stringify({ outil: 'simula', version: 1, date: new Date().toISOString(),
+      ...(licE ? { licence: licE } : {}), donnees: dump }, null, 1)],
       { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -15791,9 +15840,9 @@ GROUPES = {
           licValide: !!(lic && lic.ok),
           licSaisie: !(lic && lic.ok),
           licEtatTxt: lic && lic.ok
-            ? 'Code reconnu : ' + (NOMS_PLAN[lic.plan] || lic.plan)
-              + (lic.fin ? ', valable jusqu\u2019au ' + jjL(lic.fin) : ', sans date de fin')
-              + '. L\u2019import est ouvert sans limite sur cet ordinateur.'
+            ? 'Licence de ' + (lic.email || 'vous') + ' — ' + (NOMS_PLAN[lic.plan] || lic.plan)
+              + (lic.fin ? ', jusqu\u2019au ' + jjL(lic.fin) : ', sans date de fin')
+              + '. Elle couvre vos machines personnelles, fixe et portable ; l\u2019import est ouvert sans limite.'
             : '',
           licEmail: s.licEmailSaisie !== undefined ? s.licEmailSaisie : ((lic && lic.email) || ''),
           licCode: s.licCodeSaisi !== undefined ? s.licCodeSaisi : ((lic && lic.code) || ''),
@@ -15814,7 +15863,7 @@ GROUPES = {
               // mémorisé localement : au prochain démarrage le code est revérifié,
               // pas cru sur parole — c'est la date qui décide, pas le souvenir
               this.garderLicence({ code: code.replace(/\s+/g, ''), email });
-              this.setState({ lic: { ...r, email, code: code.replace(/\s+/g, '') },
+              this.setState({ lic: { ...r, email: r.email || email, code: code.replace(/\s+/g, '') },
                 licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined });
             } else {
               this.setState({ licMsg: { txt: this.licenceMotifTexte(r) } });
@@ -15947,6 +15996,8 @@ GROUPES = {
           sauvBordPied: purgeRisque ? 'var(--color-accent)' : 'var(--color-accent-500)',
           // l'avertissement textuel : une fois par session, refermable, jamais modal —
           // et sans nom de navigateur : la détection porte sur la fonction
+          aLicPied: !!this.licenceMention(),
+          licPiedTxt: (() => { const m2 = this.licenceMention(); return m2 ? 'L' + m2.slice(1) : ''; })(),
           aPurgeLigne: purgeRisque && !purgeVu,
           purgeLigneTxt: 'La protection du stockage n\u2019existe pas dans ce navigateur : il peut effacer ces données après plusieurs jours sans visite. Exportez cette mesure avant de partir — c\u2019est l\u2019unique parade.',
           fermerPurge: () => {
@@ -16305,8 +16356,16 @@ GROUPES = {
             ? JSON.stringify(this.usageEnveloppe(u), null, 2)
             : 'Rien en attente d’envoi' + (u.actif ? ' — le prochain scan ajoutera une ligne.' : ' — le compteur est éteint, rien n’est même accumulé.'),
           preparerDiagnosticClic: () => this.preparerDiagnostic(),
+          aSansNom: !!this.licenceMention(),
+          exportSansNomVal: this.exportSansNom(),
+          basculerSansNom: () => {
+            try { localStorage.setItem('simula.sansNom.v1', this.exportSansNom() ? '0' : '1'); } catch (e) {}
+            this.setState({ sansNomRev: (s.sansNomRev || 0) + 1 });
+          },
         };
       })(),
+      piedIdentite: 'Sivula ' + this.VERSION_APP + ' · ' + this.navFamille()
+        + (this.licenceMention() ? ' · ' + this.licenceMention() : ' · version d\u2019essai — aucune licence'),
       ...(() => {
         // l'état des trois sections repliées : lisible sans les ouvrir
         const rep = s.tirRep || '';
@@ -18237,7 +18296,10 @@ GROUPES = {
           r.winRate.toFixed(1), (r.pf === Infinity ? '' : r.pf.toFixed(2)),
           (r.esp ?? 0).toFixed(3), (r.calmar === Infinity ? '' : (r.calmar ?? 0).toFixed(2)),
           (r.oos ?? 0).toFixed(2), (r.tenue ?? 0).toFixed(0), (r.serie ?? 0)].join(';'));
-        const blob = new Blob(['\uFEFF' + [entete, ...lignes].join('\n')], { type: 'text/csv;charset=utf-8' });
+        // la licence signe le fichier — sauf si la case « retirer mon nom » est
+        // cochée : montrer son travail n'oblige pas à montrer son adresse
+        const licL = this.ligneLicenceExport();
+        const blob = new Blob(['\uFEFF' + (licL ? '# Sivula · ' + licL + '\n' : '') + [entete, ...lignes].join('\n')], { type: 'text/csv;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = 'simula_top_' + new Date().toISOString().slice(0, 10) + '.csv';
