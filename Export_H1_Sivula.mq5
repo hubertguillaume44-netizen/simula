@@ -284,12 +284,27 @@ const int TRANCHE_SECONDES = 31536000;   // 365 jours
 
 bool Exporter(string sym)
 {
+   // ————— LE SCRIPT S'AJOUTE LUI-MÊME LES SYMBOLES —————
+   // Un script ne peut interroger que l'Observation du marché : un symbole qui
+   // existe chez le courtier mais n'y est pas n'est PAS une erreur — treize indices
+   // rejetés d'un bloc pour ça. On l'ajoute (sans jamais le retirer : le panneau de
+   // l'utilisateur ne doit pas changer en silence — c'est dit au récapitulatif).
+   bool etaitAbsent = !(bool)SymbolInfoInteger(sym, SYMBOL_SELECT);
    if(!SymbolSelect(sym, true))
    {
-      PrintFormat("%s : symbole inconnu du courtier — vérifiez l'orthographe exacte "
-                  "dans l'Observation du marché (certains portent un « # »).", sym);
-      Rate(sym, "symbole inconnu du courtier");
+      // Le nom n'existe pas sous cette orthographe : donner la réponse plutôt que
+      // le problème — les voisins du catalogue complet, et corriger symboles.txt.
+      string cands = Candidats(sym);
+      PrintFormat("%s inconnu chez ce courtier — %s. Corrigez symboles.txt.",
+                  sym, StringLen(cands) > 0 ? "candidats : " + cands : "aucun nom voisin trouvé");
+      Inconnu(sym, cands);
       return false;
+   }
+   if(etaitAbsent)
+   {
+      if(StringLen(g_ajoutes) > 0) g_ajoutes += ", ";
+      g_ajoutes += sym;
+      AttendreSpecs(sym);
    }
 
    // Le « # » de certains symboles (#Japan225) n'est pas valide dans un nom de fichier
@@ -536,8 +551,12 @@ bool Exporter(string sym)
    // demande recadrée, tout historique court y serait tombé systématiquement.
    // La profondeur par symbole est déjà reprise au récapitulatif.
    if(premierT > InpDu + 86400 * 40)
+   {
       PrintFormat("%s : exporté, mais l'historique ne remonte qu'au %s au lieu du %s.",
            sym, TimeToString(premierT, TIME_DATE), TimeToString(InpDu, TIME_DATE));
+      Court(sym, StringFormat("fichier écrit, mais depuis %s au lieu du %s — c'est la profondeur du courtier",
+           TimeToString(premierT, TIME_DATE), TimeToString(InpDu, TIME_DATE)));
+   }
    if(chargerM1 && totalM1 == 0)
       PrintFormat("%s : aucune bougie M1 — le spread écrit sera celui de la H1, la valeur "
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
@@ -711,6 +730,7 @@ bool DejaCouvert(string nom, string sym)
    datetime finSerie = (datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_LASTBAR_DATE);
    datetime butoir = finSerie > 0 ? finSerie - 7200 : TimeCurrent() - 4 * 86400;
    if(finFic < butoir) return false;
+   g_gardes++;
    PrintFormat("%s : %s existe déjà et va jusqu'au %s — conservé, symbole suivant. "
                "Supprimez le fichier pour le ré-exporter.",
                sym, nom, TimeToString(finFic, TIME_DATE));
@@ -751,6 +771,103 @@ int LireListeFichier(string chemin, string &out[])
 // échecs sont donc COLLECTÉS, avec leur raison, et récapitulés à la fin.
 string g_ratesNom[];
 string g_ratesPourquoi[];
+// Les trois autres issues du récapitulatif : elles ne demandent pas la même chose
+// à l'utilisateur, elles ne peuvent pas partager un panier.
+string g_inconnusNom[];
+string g_inconnusTxt[];
+string g_courtsNom[];
+string g_courtsTxt[];
+string g_ajoutes = "";
+int    g_gardes = 0;
+
+void Inconnu(string sym, string cands)
+{
+   int k = ArraySize(g_inconnusNom);
+   ArrayResize(g_inconnusNom, k + 1);
+   ArrayResize(g_inconnusTxt, k + 1);
+   g_inconnusNom[k] = sym;
+   g_inconnusTxt[k] = StringLen(cands) > 0 ? "candidats : " + cands : "aucun nom voisin trouvé";
+}
+
+void Court(string sym, string txt)
+{
+   int k = ArraySize(g_courtsNom);
+   ArrayResize(g_courtsNom, k + 1);
+   ArrayResize(g_courtsTxt, k + 1);
+   g_courtsNom[k] = sym;
+   g_courtsTxt[k] = txt;
+}
+
+bool DernierEst(string &arr[], string sym)
+{
+   int k = ArraySize(arr);
+   return k > 0 && arr[k - 1] == sym;
+}
+
+//+------------------------------------------------------------------+
+//| Les lettres seules, en majuscules : la racine d'un nom d'indice.  |
+//| #AUS200 → AUS, #Australia200 → AUSTRALIA — l'une contient l'autre.|
+//+------------------------------------------------------------------+
+string Racine(string sym)
+{
+   string maj = sym;
+   StringToUpper(maj);
+   string out = "";
+   for(int i = 0; i < StringLen(maj); i++)
+   {
+      ushort c = StringGetCharacter(maj, i);
+      if(c >= 'A' && c <= 'Z') out += ShortToString(c);
+   }
+   return out;
+}
+
+//+------------------------------------------------------------------+
+//| Un nom inconnu propose ses voisins du catalogue COMPLET du        |
+//| courtier : la réponse plutôt que le problème. Correspondance sur  |
+//| la sous-chaîne sans « # » ni casse, ou sur la racine sans chiffres.|
+//+------------------------------------------------------------------+
+string Candidats(string sym)
+{
+   string cible = sym;
+   StringToUpper(cible);
+   StringReplace(cible, "#", "");
+   string rac = Racine(sym);
+   string out = "";
+   int nOut = 0;
+   int total = SymbolsTotal(false);
+   for(int i = 0; i < total && nOut < 5; i++)
+   {
+      string b = SymbolName(i, false);
+      string bMaj = b;
+      StringToUpper(bMaj);
+      StringReplace(bMaj, "#", "");
+      string rb = Racine(b);
+      bool proche = false;
+      if(StringLen(cible) >= 3 && StringFind(bMaj, cible) >= 0) proche = true;
+      else if(StringLen(rac) >= 3 && StringLen(rb) >= 3
+              && (StringFind(rb, rac) >= 0 || StringFind(rac, rb) >= 0)) proche = true;
+      if(!proche) continue;
+      out += (nOut > 0 ? ", " : "") + b;
+      nOut++;
+   }
+   return out;
+}
+
+//+------------------------------------------------------------------+
+//| Un symbole tout juste ajouté à l'Observation du marché n'a pas    |
+//| ses spécifications tout de suite : lues trop tôt, elles valent    |
+//| zéro. On attend un peu — sans échouer, AttendreHistorique fait le |
+//| reste avec sa propre patience.                                    |
+//+------------------------------------------------------------------+
+void AttendreSpecs(string sym)
+{
+   for(int i = 0; i < 60 && !IsStopped(); i++)   // ~3 s au plus
+   {
+      if(SymbolInfoDouble(sym, SYMBOL_POINT) > 0.0
+         && SymbolInfoInteger(sym, SYMBOL_TIME) > 0) return;
+      Sleep(50);
+   }
+}
 // Les profondeurs obtenues, collectées par symbole : c'est ce qui dit, sans relire le
 // journal, sur quelle partie de l'historique le départage intrabar est possible.
 string g_profNom[];
@@ -849,20 +966,36 @@ void OnStart()
       if(Exporter(s)) faits++;
       // les échecs sans motif enregistré viennent d'un chemin non instrumenté :
       // les compter quand même, plutôt que de les perdre
-      else if(ArraySize(g_ratesNom) == 0
-              || g_ratesNom[ArraySize(g_ratesNom) - 1] != s) Rate(s, "échec non détaillé");
+      else if(!DernierEst(g_ratesNom, s) && !DernierEst(g_inconnusNom, s))
+         Rate(s, "échec non détaillé");
    }
+   // ————— QUATRE ISSUES, QUATRE ACTIONS — elles ne partagent pas un message —————
    int rates = ArraySize(g_ratesNom);
-   PrintFormat("════ TERMINÉ : %d demandé(s), %d exporté(s), %d échec(s). "
-               "Dossier : MQL5\\Files. ════", demandes, faits, rates);
+   int nInc = ArraySize(g_inconnusNom);
+   PrintFormat("════ TERMINÉ : %d demandé(s) — %d exporté(s), %d déjà à jour conservé(s), "
+               "%d nom(s) inconnu(s), %d échec(s). Dossier : MQL5\\Files. ════",
+               demandes, faits - g_gardes, g_gardes, nInc, rates);
    if(ArraySize(g_profNom) > 0)
       Print("Profondeur obtenue par symbole — le départage intrabar n'est possible que "
             "là où la M1 existe :");
    for(int i = 0; i < ArraySize(g_profNom); i++)
       PrintFormat("   • %s — %s", g_profNom[i], g_profTxt[i]);
+   if(StringLen(g_ajoutes) > 0)
+      PrintFormat("Ajoutés à l'Observation du marché par ce script, et laissés en place : %s.",
+                  g_ajoutes);
+   if(ArraySize(g_courtsNom) > 0)
+      Print("Historique plus court que demandé — le fichier existe, il est seulement "
+            "moins profond :");
+   for(int i = 0; i < ArraySize(g_courtsNom); i++)
+      PrintFormat("   • %s — %s", g_courtsNom[i], g_courtsTxt[i]);
+   if(nInc > 0)
+      Print("Noms inconnus chez ce courtier — corrigez symboles.txt :");
+   for(int i = 0; i < nInc; i++)
+      PrintFormat("   ✗ %s — %s", g_inconnusNom[i], g_inconnusTxt[i]);
+   if(rates > 0)
+      Print("Échecs :");
    for(int i = 0; i < rates; i++)
       PrintFormat("   ✗ %s — %s", g_ratesNom[i], g_ratesPourquoi[i]);
-   if(rates > 0)
-      Print("Ces instruments n'ont PAS de fichier : Sivula ne pourra pas les scanner. "
-            "Ajoutez-les à l'Observation du marché, ou retirez-les de symboles.txt.");
+   if(nInc + rates > 0)
+      Print("Ces instruments n'ont PAS de fichier : Sivula ne pourra pas les scanner.");
 }

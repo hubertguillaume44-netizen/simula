@@ -6355,6 +6355,21 @@ GROUPES = {
       const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
       try {
         const txt = await f.text();
+        // ————— GARDE-FOU MT4 : date et heure en deux colonnes —————
+        // Le lecteur recolle date+heure, mais un export MT4 n'a ni spread ni séance
+        // ni ordre des extrêmes : accepté à moitié, les colonnes optionnelles se
+        // décalent et ça ne se voit qu'au moment où les résultats deviennent absurdes.
+        const lignesTete = txt.split(/\r?\n/).slice(0, 5);
+        const estMT4 = lignesTete.some((l) => {
+          const p2 = l.split(/[,;\t]/);
+          return p2.length >= 6 && /^\d{4}[.\-\/]\d{2}[.\-\/]\d{2}$/.test((p2[0] || '').trim())
+            && /^\d{1,2}:\d{2}/.test((p2[1] || '').trim());
+        });
+        if (estMT4) {
+          refuses.push(f.name + ' (fichier au format MT4 — date et heure en deux colonnes. '
+            + 'Sivula attend un export MT5 produit par le script Export_H1_Sivula)');
+          continue;
+        }
         const brut = this.M.texteVersDf(txt);
         if (!brut.n) { refuses.push(f.name + ' (aucune bougie lisible : il faut les colonnes date, ouverture, haut, bas, clôture)'); continue; }
         if (brut.n < 300) { refuses.push(f.name + ' (' + brut.n + ' bougies seulement : il en faut 300 au minimum — remontez l\u2019historique avant d\u2019exporter)'); continue; }
@@ -15689,9 +15704,20 @@ GROUPES = {
             : 'Cochez d\u2019abord les instruments voulus dans la liste de gauche : c\u2019est cette '
               + 'sélection que symboles.txt porte, et elle seule décide de ce que le terminal exporte.',
           telechargerListe: () => {
+            // L'orthographe vient du relevé quand il existe (nomCourtier lit
+            // ligneCourtier) ; l'en-tête doit le DIRE — treize indices rejetés d'un
+            // bloc parce que le fichier portait l'orthographe du catalogue, et rien
+            // dans le fichier ne le disait.
+            const aReleve = !!(this.baremes || {})[cle];
+            const sansLigne = aReleve ? (s.univers || []).filter((sy) => !this.ligneCourtier(cle, sy)) : [];
             const entete = '# symboles.txt — écrit par Sivula le '
               + new Date().toLocaleString('fr-FR') + '\n'
-              + '# ' + noms.length + ' instrument(s), orthographe de ' + this.nomCompteActif() + '\n'
+              + (aReleve
+                ? '# ' + noms.length + ' instrument(s) · orthographe du relevé de ' + this.nomCompteActif() + '\n'
+                  + (sansLigne.length ? '# ' + sansLigne.length + ' nom(s) SANS ligne de relevé — orthographe du catalogue, à vérifier : '
+                    + sansLigne.join(', ') + '\n' : '')
+                : '# ' + noms.length + ' instrument(s) · orthographe du CATALOGUE, À VÉRIFIER — aucun relevé déposé pour '
+                  + this.nomCompteActif() + '. Passez Sivula_Releve puis déposez releve.csv pour l\u2019orthographe exacte du compte.\n')
               + '# À placer dans MQL5\\Files\\Sivula\\ — remplacez-le quand votre sélection change.\n';
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([entete + noms.join('\n') + '\n'],

@@ -435,11 +435,13 @@ for (const fichier of ["Sivula_Releve.mq5", "Export_H1_Sivula.mq5"]) {
 
 test("le script de bougies récapitule ses échecs avec leur raison", () => {
   const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
-  // un Print par symbole se perd dans le journal : le bilan doit être groupé à la fin
-  assert.match(src, /TERMINÉ : %d demandé\(s\), %d exporté\(s\), %d échec\(s\)/);
-  for (const motif of ["symbole inconnu du courtier", "historique H1 vide depuis",
-    "l'historique ne remonte qu'au"]) {
-    assert.ok(src.includes(motif), `motif d'échec « ${motif} » absent`);
+  // un Print par symbole se perd dans le journal : le bilan doit être groupé à la
+  // fin, et distinguer les quatre issues — exporté, conservé, nom inconnu, échec
+  assert.match(src, /TERMINÉ : %d demandé\(s\) — %d exporté\(s\), %d déjà à jour conservé\(s\)/);
+  for (const motif of ["inconnu chez ce courtier", "historique H1 vide depuis",
+    "l'historique ne remonte qu'au", "Noms inconnus chez ce courtier",
+    "Ajoutés à l'Observation du marché"]) {
+    assert.ok(src.includes(motif), `motif « ${motif} » absent`);
   }
 });
 
