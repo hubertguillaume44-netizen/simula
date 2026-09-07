@@ -60,6 +60,14 @@ input int      InpAttenteSec = 1800;          // Attente max du téléchargement
 // ils travaillent en H1. Comptez soixante fois le volume du H1 : n'exportez en M1
 // que les instruments que vous comparez.
 input bool     InpM1       = false;           // Exporter la M1 (départage robot) au lieu du H1
+// Le départage intrabar (spread d'ouverture, ordre des extrêmes, colonnes m1_*)
+// demande la M1 entière : des millions de barres que le terminal construit EN
+// MÉMOIRE, au point de cesser de répondre plusieurs minutes par symbole — constaté
+// sur AUDNZD, 1,78 million de barres. La M1 ne se charge donc que sur demande.
+// Sans elle, le spread écrit est celui de la H1 et l'ordre des extrêmes reste
+// inconnu : le moteur le dit et retombe sur sa convention de lecture, comportement
+// déjà prévu. InpM1 (le format de sortie) charge la M1 quoi qu'il arrive.
+input bool     InpChargerM1 = false;          // Charger la M1 (départage intrabar — lourd)
 
 //+------------------------------------------------------------------+
 //| Force le téléchargement d'un historique et attend qu'il arrive.   |
@@ -75,8 +83,9 @@ input bool     InpM1       = false;           // Exporter la M1 (départage robo
 //| et à réclamer le morceau manquant au serveur.                     |
 //+------------------------------------------------------------------+
 bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
-                        datetime depuis, int secondesMax)
+                        datetime depuis, int secondesMax, datetime &dispo)
 {
+   dispo = 0;
    uint fin = GetTickCount() + (uint)secondesMax * 1000;
    datetime premiere = 0;
    int paliers[] = {50000, 200000, 500000, 1000000, 2000000, 4000000, 8000000};
@@ -98,6 +107,7 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
       {
          PrintFormat("%s %s : historique complet depuis %s.", sym, nomTf,
                      TimeToString(premiere, TIME_DATE));
+         dispo = premiere;
          return true;
       }
 
@@ -122,6 +132,7 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
             PrintFormat("%s %s : le courtier ne fournit la %s que depuis %s (%d barres). "
                         "L'export s'arrêtera à cette date.",
                         sym, nomTf, nomTf, TimeToString(premiere, TIME_DATE), lu);
+         dispo = premiere;
          return true;
       }
       luPrec = lu;
@@ -139,6 +150,7 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
                sym, nomTf, secondesMax,
                premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune",
                TimeToString(depuis, TIME_DATE), nomTf);
+   dispo = premiere;
    return false;
 }
 
@@ -245,7 +257,19 @@ bool Traitable(string sym, datetime t)
 
 //+------------------------------------------------------------------+
 //| Exporte un symbole. Rend false si rien n'a pu être écrit.         |
+//|                                                                   |
+//| PAR TRANCHES D'UN AN, jamais tout d'un coup : demander 1,78       |
+//| million de barres M1 en un seul CopyRates les fait construire en  |
+//| mémoire dans le processus du terminal, qui passe en « Ne répond   |
+//| pas » plusieurs minutes — constaté sur AUDNZD. Une tranche d'un   |
+//| an plafonne l'appel à ~372 000 barres M1 (~8 800 H1), la mémoire  |
+//| est rendue entre deux tranches, et le fichier s'écrit au fur et à |
+//| mesure. Le fichier n'est OUVERT qu'au premier lot de barres       |
+//| obtenu : une interruption ne laisse plus de CSV de 0 Ko que       |
+//| Sivula lirait comme une série vide.                               |
 //+------------------------------------------------------------------+
+const int TRANCHE_SECONDES = 31536000;   // 365 jours
+
 bool Exporter(string sym)
 {
    if(!SymbolSelect(sym, true))
@@ -256,196 +280,252 @@ bool Exporter(string sym)
       return false;
    }
 
-   PrintFormat("%s : demande de l'historique depuis %s.", sym, TimeToString(InpDu, TIME_DATE));
-   AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec);
-   if(InpM1) return ExporterM1(sym);
-   AttendreHistorique(sym, PERIOD_H1, "H1", InpDu, InpAttenteSec);
-
-   MqlRates r[];
-   ArraySetAsSeries(r, false);
-   int n = CopyRates(sym, PERIOD_H1, InpDu, TimeCurrent(), r);
-   if(n <= 0)
-   {
-      PrintFormat("%s : aucune bougie H1 depuis %s. Si « historique incomplet » est "
-                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(InpDu, TIME_DATE));
-      Rate(sym, "historique H1 vide depuis " + TimeToString(InpDu, TIME_DATE));
-      return false;
-   }
-   if(n > InpMaxBarres) n = InpMaxBarres;
-   // Un historique plus court que demandé n'empêche pas l'export, mais il explique
-   // qu'un scan mesure six ans sur un instrument et deux sur son voisin. On le NOTE
-   // sans faire échouer : le fichier est écrit, seulement plus court qu'attendu.
-   if(r[0].time > InpDu + 86400 * 40)
-      Rate(sym, StringFormat("exporté, mais l'historique ne remonte qu'au %s au lieu du %s",
-           TimeToString(r[0].time, TIME_DATE), TimeToString(InpDu, TIME_DATE)));
-
    // Le « # » de certains symboles (#Japan225) n'est pas valide dans un nom de fichier
    // sur tous les systèmes, et Sivula reconnaît l'instrument sans lui.
    string propre = sym;
    StringReplace(propre, "#", "");
-   string nom = propre + "_H1.csv";
-   int f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
-   if(f == INVALID_HANDLE)
+   string nom = propre + (InpM1 ? "_M1.csv" : "_H1.csv");
+
+   // ————— LA REPRISE : relancer un export interrompu ne recommence pas tout —————
+   if(DejaCouvert(nom, sym)) return true;
+
+   bool chargerM1 = InpChargerM1 || InpM1;
+   PrintFormat("%s : demande de l'historique depuis %s.", sym, TimeToString(InpDu, TIME_DATE));
+   datetime dispoM1 = 0, dispoH1 = 0;
+   if(chargerM1) AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec, dispoM1);
+   if(InpM1) return ExporterM1(sym, nom, dispoM1);
+   AttendreHistorique(sym, PERIOD_H1, "H1", InpDu, InpAttenteSec, dispoH1);
+
+   // ————— LA DEMANDE RECADRÉE sur ce que le courtier fournit —————
+   // Demander une plage qui commence trois ans avant le premier historique disponible
+   // rend zéro barre : c'est ce qui produisait le fichier vide.
+   datetime debut = InpDu;
+   if(dispoH1 > debut)
    {
-      PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
-      Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
-      return false;
+      debut = dispoH1;
+      PrintFormat("%s : demande recadrée sur %s — le courtier n'a rien avant.",
+                  sym, TimeToString(debut, TIME_DATE));
    }
+   if(!chargerM1)
+      PrintFormat("%s : M1 non demandée (InpChargerM1=false) — spread de la H1, ordre "
+                  "des extrêmes inconnu. Cochez InpChargerM1 pour le départage intrabar.", sym);
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-
-   // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
-   // horodatage. C'est l'instant exact où le robot place son ordre.
+   int f = INVALID_HANDLE;
+   MqlRates r[];
+   ArraySetAsSeries(r, false);
    MqlRates m1[];
    ArraySetAsSeries(m1, false);
-   int nM1 = CopyRates(sym, PERIOD_M1, InpDu, TimeCurrent(), m1);
-   if(nM1 <= 0)
+
+   int sansSpread = 0, sansM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0, ecartH1M1 = 0;
+   int renduN = 0, renduFort = 0; double renduTotal = 0.0;
+   int totalN = 0; long totalM1 = 0;
+   datetime premierT = 0, dernierT = 0, premierM1 = 0;
+   bool plafond = false;
+
+   for(datetime t0 = debut; t0 < TimeCurrent() && !IsStopped() && !plafond; t0 += TRANCHE_SECONDES)
+   {
+      datetime t1 = t0 + TRANCHE_SECONDES;
+      datetime maintenant = TimeCurrent();
+      if(t1 > maintenant) t1 = maintenant;
+
+      int n = CopyRates(sym, PERIOD_H1, t0, t1 - 1, r);
+      if(n <= 0) { ArrayFree(r); continue; }
+      int nM1 = 0;
+      if(chargerM1)
+      {
+         // l'heure de marge : la dernière H1 de la tranche a besoin de ses 60 minutes
+         nM1 = CopyRates(sym, PERIOD_M1, t0, t1 - 1 + 3600, m1);
+         if(nM1 < 0) nM1 = 0;
+         if(nM1 > 0 && premierM1 == 0) premierM1 = m1[0].time;
+         totalM1 += nM1;
+      }
+
+      if(f == INVALID_HANDLE)
+      {
+         f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
+         if(f == INVALID_HANDLE)
+         {
+            PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
+            Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
+            ArrayFree(r); ArrayFree(m1);
+            return false;
+         }
+         // La date à partir de laquelle la M1 existe voyage AVEC les données : sans elle,
+         // la comparaison moteur ↔ MT5 accuserait un écart de modèle là où il n'y a
+         // qu'une absence de matière. Le jeton vit DANS la dernière cellule de l'en-tête,
+         // pas dans une quinzième : Sivula compte les cellules pour détecter une date sur
+         // deux colonnes, et repère ses colonnes par nom — « bas_apres … » reste reconnu,
+         // le compte ne bouge pas, les fichiers déjà déposés restent lisibles.
+         string m1Dep = "aucune";
+         if(chargerM1 && dispoM1 > 0)
+            m1Dep = TimeToString(dispoM1 > debut ? dispoM1 : debut, TIME_DATE);
+         FileWriteString(f, StringFormat("date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas,haut_apres,bas_apres m1_depuis=%s\r\n", m1Dep));
+      }
+
+      int iM1 = 0;
+      for(int i = 0; i < n; i++)
+      {
+         if(totalN >= InpMaxBarres) { plafond = true; break; }
+         // les deux séries sont croissantes : une seule passe suffit
+         while(iM1 < nM1 && m1[iM1].time < r[i].time) iM1++;
+         int sp = r[i].spread;
+         // La PREMIÈRE M1 de l'heure, pas celle dont l'horodatage égale l'heure pile.
+         //
+         // Exiger l'égalité ratait la bougie d'ouverture de la journée : la séance de
+         // #Germany40 ouvre à 03:31, il n'existe donc AUCUNE M1 à 03:00, et l'export
+         // retombait sur l'agrégat H1 — la valeur basse et tardive — au lieu du spread
+         // d'ouverture que le robot paie. Mesuré sur le journal du 6 septembre 2026 :
+         // 45 spreads sur 462 s'écartaient de ce que lit le robot, TOUS sur la bougie de
+         // 03:00, jusqu'à 38 fois trop bas — 0,00100 écrit contre 0,03793 payé. Sur GOLD,
+         // 16 sur 2 933, tous à 00:00 ou 01:00. Le moteur croyait donc pouvoir entrer à
+         // l'ouverture là où le robot refusait, plafond dépassé.
+         if(iM1 < nM1 && m1[iM1].time < r[i].time + 3600) sp = m1[iM1].spread;
+         else sansM1++;
+
+         // ORDRE DES EXTRÊMES — la minute du plus haut et celle du plus bas.
+         //
+         // Deux entiers, et l'indécision du backtest s'effondre. Une bougie H1 dit ce que
+         // le prix a touché, pas dans quel ordre : quand elle arme un palier PUIS
+         // redescend le toucher, le sort du trade dépend de cet ordre et de rien d'autre.
+         // Mesuré sur les sept instruments de référence : sans palier la question ne se
+         // pose jamais, mais avec les paliers 25→0 / 50→25 / 75→50 elle décide de 26 % des
+         // trades de GOLD et de 42 % de ceux de BITCOIN, pour une bande de 100 R.
+         //
+         // Exporter la M1 entière coûterait soixante fois le fichier. Ces deux colonnes
+         // coûtent quatre caractères par ligne et tranchent le même cas : le haut avant le
+         // bas, ou l'inverse. Quand les deux tombent dans la MÊME minute, on écrit -1 :
+         // l'ordre reste inconnu, et le moteur doit continuer à le dire plutôt que d'en
+         // inventer un.
+         int minHaut = -1, minBas = -1;
+         double m1Haut = 0.0, m1Bas = 0.0;
+         {
+            int j = iM1;
+            double hh = -1.0, ll = -1.0;
+            while(j < nM1 && m1[j].time < r[i].time + 3600)
+            {
+               if(hh < 0.0 || m1[j].high > hh) { hh = m1[j].high; minHaut = (int)((m1[j].time - r[i].time) / 60); }
+               if(ll < 0.0 || m1[j].low  < ll) { ll = m1[j].low;  minBas  = (int)((m1[j].time - r[i].time) / 60); }
+               j++;
+            }
+            m1Haut = (hh > 0.0) ? hh : 0.0;
+            m1Bas  = (ll > 0.0) ? ll : 0.0;
+            if(minHaut < 0 || minBas < 0) sansOrdre++;
+            else if(minHaut == minBas) memeMinute++;
+            // Le haut et le bas VUS PAR LA M1 — ceux que le testeur rejoue réellement.
+            //
+            // Ils ne sont pas toujours ceux de la bougie H1 : le courtier stocke une H1
+            // reconstituée dont les extrêmes n'ont jamais existé à la minute. Vu sur GOLD
+            // le 21 janvier 2020 — la H1 de 00:00 porte un bas de 1 546,23, sous le stop
+            // initial d'une position ouverte le 16 ; aucune autre heure de la journée ne
+            // descend sous 1 558, et le testeur, lui, n'a rien vu et est sorti au point
+            // mort dix heures plus tard. Le signal se lit sur la H1 du courtier, comme le
+            // robot ; l'exécution doit se lire sur la M1, comme le testeur.
+            if(m1Haut > 0.0 && (m1Haut < r[i].high - _Point || m1Bas > r[i].low + _Point)) ecartH1M1++;
+         }
+
+         // CE QUE LE PRIX A FAIT APRÈS LE SECOND EXTRÊME.
+         //
+         // L'ordre des deux extrêmes ne suffit pas, et c'est le dernier écart face au
+         // testeur. Quand le bas tombe EN PREMIER, il ne ferme rien : le palier n'existe
+         // pas encore. Le haut arrive ensuite et l'arme. Entre ce haut et la clôture, le
+         // prix a pu redescendre toucher le palier puis remonter — deux extrêmes et une
+         // clôture ne le disent pas, et une clôture au-dessus du palier ne le réfute pas.
+         // Mesuré sur les huit configurations de référence : 133 trades sur 538 sur GOLD,
+         // 118 sur 355 sur BITCOIN, pour une bande de 80 R et 54 R.
+         //
+         // Ces deux colonnes ferment le cas dans un sens, et c'est le sens utile : quand
+         // `bas_apres` est SOUS le palier, le retour a eu lieu APRÈS l'armement — c'est
+         // une preuve, puisque l'armement précède le haut qui ouvre la fenêtre. Le moteur
+         // sort alors au palier dans les DEUX lectures. Quand il est au-dessus, le doute
+         // subsiste sur le seul intervalle allant de l'armement au haut, et le moteur
+         // continue à le déclarer indécidable au lieu de parier.
+         double hautApres = 0.0, basApres = 0.0;
+         if(minHaut >= 0 && minBas >= 0)
+         {
+            int depart = (minHaut > minBas) ? minHaut : minBas;
+            int j = iM1;
+            while(j < nM1 && m1[j].time < r[i].time + 3600)
+            {
+               int mn = (int)((m1[j].time - r[i].time) / 60);
+               if(mn >= depart)
+               {
+                  if(hautApres <= 0.0 || m1[j].high > hautApres) hautApres = m1[j].high;
+                  if(basApres  <= 0.0 || m1[j].low  < basApres)  basApres  = m1[j].low;
+               }
+               j++;
+            }
+            // Part de l'amplitude de l'heure que le prix REND après son second extrême.
+            // C'est elle qui dit si ces colonnes valent leur place : à 0 le prix ne revient
+            // jamais et le doute était sans objet, à 1 il revient toujours et la lecture
+            // optimiste était fausse partout.
+            double ampl = r[i].high - r[i].low;
+            if(ampl > 0.0 && basApres > 0.0 && hautApres > 0.0)
+            {
+               double rendu = (minHaut > minBas)
+                  ? (r[i].high - basApres) / ampl     // haut en second : ce qu'on rend vers le bas
+                  : (hautApres - r[i].low) / ampl;    // bas en second : ce qu'on rend vers le haut
+               renduTotal += rendu; renduN++;
+               if(rendu > 0.5) renduFort++;
+            }
+         }
+
+         int seance = Traitable(sym, r[i].time) ? 1 : 0;
+         if(seance == 0) horsSeance++;
+         if(sp <= 0) sansSpread++;
+         FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d,%s,%s,%s,%s\r\n",
+            TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
+            DoubleToString(r[i].open,  dec),
+            DoubleToString(r[i].high,  dec),
+            DoubleToString(r[i].low,   dec),
+            DoubleToString(r[i].close, dec),
+            r[i].tick_volume,
+            sp, seance, minHaut, minBas,
+            DoubleToString(m1Haut, dec), DoubleToString(m1Bas, dec),
+            DoubleToString(hautApres, dec), DoubleToString(basApres, dec)));
+
+         if(premierT == 0) premierT = r[i].time;
+         dernierT = r[i].time;
+         totalN++;
+      }
+      // ————— LA MÉMOIRE EST RENDUE entre deux tranches, et la main au terminal —————
+      ArrayFree(r);
+      ArrayFree(m1);
+      Sleep(50);
+   }
+
+   // ————— UN FICHIER VIDE N'EST JAMAIS ÉCRIT —————
+   if(f == INVALID_HANDLE || totalN == 0)
+   {
+      if(f != INVALID_HANDLE) { FileClose(f); FileDelete(nom); }
+      PrintFormat("%s : aucune bougie H1 depuis %s. Si « historique incomplet » est "
+                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(debut, TIME_DATE));
+      Rate(sym, "historique H1 vide depuis " + TimeToString(debut, TIME_DATE));
+      return false;
+   }
+   FileClose(f);
+
+   // Un historique plus court que demandé n'empêche pas l'export, mais il explique
+   // qu'un scan mesure six ans sur un instrument et deux sur son voisin. On le NOTE
+   // sans faire échouer : le fichier est écrit, seulement plus court qu'attendu.
+   if(premierT > InpDu + 86400 * 40)
+      Rate(sym, StringFormat("exporté, mais l'historique ne remonte qu'au %s au lieu du %s",
+           TimeToString(premierT, TIME_DATE), TimeToString(InpDu, TIME_DATE)));
+   if(chargerM1 && totalM1 == 0)
       PrintFormat("%s : aucune bougie M1 — le spread écrit sera celui de la H1, la valeur "
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
 
-   // La date à partir de laquelle la M1 existe voyage AVEC les données : sans elle, la
-   // comparaison moteur ↔ MT5 accuserait un écart de modèle là où il n'y a qu'une
-   // absence de matière. Le jeton vit DANS la dernière cellule de l'en-tête, pas dans
-   // une quinzième : Sivula compte les cellules pour détecter une date sur deux
-   // colonnes, et repère ses colonnes par nom — « bas_apres … » reste reconnu, le
-   // compte ne bouge pas, les fichiers déjà déposés restent lisibles.
-   FileWriteString(f, StringFormat("date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas,haut_apres,bas_apres m1_depuis=%s\r\n",
-      nM1 > 0 ? TimeToString(m1[0].time, TIME_DATE) : "aucune"));
-
-   int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0, ecartH1M1 = 0;
-   int renduN = 0, renduFort = 0; double renduTotal = 0.0;
-   for(int i = 0; i < n; i++)
-   {
-      // les deux séries sont croissantes : une seule passe suffit
-      while(iM1 < nM1 && m1[iM1].time < r[i].time) iM1++;
-      int sp = r[i].spread;
-      // La PREMIÈRE M1 de l'heure, pas celle dont l'horodatage égale l'heure pile.
-      //
-      // Exiger l'égalité ratait la bougie d'ouverture de la journée : la séance de
-      // #Germany40 ouvre à 03:31, il n'existe donc AUCUNE M1 à 03:00, et l'export
-      // retombait sur l'agrégat H1 — la valeur basse et tardive — au lieu du spread
-      // d'ouverture que le robot paie. Mesuré sur le journal du 6 septembre 2026 :
-      // 45 spreads sur 462 s'écartaient de ce que lit le robot, TOUS sur la bougie de
-      // 03:00, jusqu'à 38 fois trop bas — 0,00100 écrit contre 0,03793 payé. Sur GOLD,
-      // 16 sur 2 933, tous à 00:00 ou 01:00. Le moteur croyait donc pouvoir entrer à
-      // l'ouverture là où le robot refusait, plafond dépassé.
-      if(iM1 < nM1 && m1[iM1].time < r[i].time + 3600) sp = m1[iM1].spread;
-      else sansM1++;
-
-      // ORDRE DES EXTRÊMES — la minute du plus haut et celle du plus bas.
-      //
-      // Deux entiers, et l'indécision du backtest s'effondre. Une bougie H1 dit ce que
-      // le prix a touché, pas dans quel ordre : quand elle arme un palier PUIS
-      // redescend le toucher, le sort du trade dépend de cet ordre et de rien d'autre.
-      // Mesuré sur les sept instruments de référence : sans palier la question ne se
-      // pose jamais, mais avec les paliers 25→0 / 50→25 / 75→50 elle décide de 26 % des
-      // trades de GOLD et de 42 % de ceux de BITCOIN, pour une bande de 100 R.
-      //
-      // Exporter la M1 entière coûterait soixante fois le fichier. Ces deux colonnes
-      // coûtent quatre caractères par ligne et tranchent le même cas : le haut avant le
-      // bas, ou l'inverse. Quand les deux tombent dans la MÊME minute, on écrit -1 :
-      // l'ordre reste inconnu, et le moteur doit continuer à le dire plutôt que d'en
-      // inventer un.
-      int minHaut = -1, minBas = -1;
-      double m1Haut = 0.0, m1Bas = 0.0;
-      {
-         int j = iM1;
-         double hh = -1.0, ll = -1.0;
-         while(j < nM1 && m1[j].time < r[i].time + 3600)
-         {
-            if(hh < 0.0 || m1[j].high > hh) { hh = m1[j].high; minHaut = (int)((m1[j].time - r[i].time) / 60); }
-            if(ll < 0.0 || m1[j].low  < ll) { ll = m1[j].low;  minBas  = (int)((m1[j].time - r[i].time) / 60); }
-            j++;
-         }
-         m1Haut = (hh > 0.0) ? hh : 0.0;
-         m1Bas  = (ll > 0.0) ? ll : 0.0;
-         if(minHaut < 0 || minBas < 0) sansOrdre++;
-         else if(minHaut == minBas) memeMinute++;
-         // Le haut et le bas VUS PAR LA M1 — ceux que le testeur rejoue réellement.
-         //
-         // Ils ne sont pas toujours ceux de la bougie H1 : le courtier stocke une H1
-         // reconstituée dont les extrêmes n'ont jamais existé à la minute. Vu sur GOLD
-         // le 21 janvier 2020 — la H1 de 00:00 porte un bas de 1 546,23, sous le stop
-         // initial d'une position ouverte le 16 ; aucune autre heure de la journée ne
-         // descend sous 1 558, et le testeur, lui, n'a rien vu et est sorti au point
-         // mort dix heures plus tard. Le signal se lit sur la H1 du courtier, comme le
-         // robot ; l'exécution doit se lire sur la M1, comme le testeur.
-         if(m1Haut > 0.0 && (m1Haut < r[i].high - _Point || m1Bas > r[i].low + _Point)) ecartH1M1++;
-      }
-
-      // CE QUE LE PRIX A FAIT APRÈS LE SECOND EXTRÊME.
-      //
-      // L'ordre des deux extrêmes ne suffit pas, et c'est le dernier écart face au
-      // testeur. Quand le bas tombe EN PREMIER, il ne ferme rien : le palier n'existe
-      // pas encore. Le haut arrive ensuite et l'arme. Entre ce haut et la clôture, le
-      // prix a pu redescendre toucher le palier puis remonter — deux extrêmes et une
-      // clôture ne le disent pas, et une clôture au-dessus du palier ne le réfute pas.
-      // Mesuré sur les huit configurations de référence : 133 trades sur 538 sur GOLD,
-      // 118 sur 355 sur BITCOIN, pour une bande de 80 R et 54 R.
-      //
-      // Ces deux colonnes ferment le cas dans un sens, et c'est le sens utile : quand
-      // `bas_apres` est SOUS le palier, le retour a eu lieu APRÈS l'armement — c'est
-      // une preuve, puisque l'armement précède le haut qui ouvre la fenêtre. Le moteur
-      // sort alors au palier dans les DEUX lectures. Quand il est au-dessus, le doute
-      // subsiste sur le seul intervalle allant de l'armement au haut, et le moteur
-      // continue à le déclarer indécidable au lieu de parier.
-      double hautApres = 0.0, basApres = 0.0;
-      if(minHaut >= 0 && minBas >= 0)
-      {
-         int depart = (minHaut > minBas) ? minHaut : minBas;
-         int j = iM1;
-         while(j < nM1 && m1[j].time < r[i].time + 3600)
-         {
-            int mn = (int)((m1[j].time - r[i].time) / 60);
-            if(mn >= depart)
-            {
-               if(hautApres <= 0.0 || m1[j].high > hautApres) hautApres = m1[j].high;
-               if(basApres  <= 0.0 || m1[j].low  < basApres)  basApres  = m1[j].low;
-            }
-            j++;
-         }
-         // Part de l'amplitude de l'heure que le prix REND après son second extrême.
-         // C'est elle qui dit si ces colonnes valent leur place : à 0 le prix ne revient
-         // jamais et le doute était sans objet, à 1 il revient toujours et la lecture
-         // optimiste était fausse partout.
-         double ampl = r[i].high - r[i].low;
-         if(ampl > 0.0 && basApres > 0.0 && hautApres > 0.0)
-         {
-            double rendu = (minHaut > minBas)
-               ? (r[i].high - basApres) / ampl     // haut en second : ce qu'on rend vers le bas
-               : (hautApres - r[i].low) / ampl;    // bas en second : ce qu'on rend vers le haut
-            renduTotal += rendu; renduN++;
-            if(rendu > 0.5) renduFort++;
-         }
-      }
-
-      int seance = Traitable(sym, r[i].time) ? 1 : 0;
-      if(seance == 0) horsSeance++;
-      if(sp <= 0) sansSpread++;
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d,%d,%d,%d,%s,%s,%s,%s\r\n",
-         TimeToString(r[i].time, TIME_DATE | TIME_MINUTES),
-         DoubleToString(r[i].open,  dec),
-         DoubleToString(r[i].high,  dec),
-         DoubleToString(r[i].low,   dec),
-         DoubleToString(r[i].close, dec),
-         r[i].tick_volume,
-         sp, seance, minHaut, minBas,
-         DoubleToString(m1Haut, dec), DoubleToString(m1Bas, dec),
-         DoubleToString(hautApres, dec), DoubleToString(basApres, dec)));
-   }
-   FileClose(f);
-
    PrintFormat("%s : %d bougies écrites dans MQL5/Files/%s — de %s à %s",
-               sym, n, nom,
-               TimeToString(r[0].time, TIME_DATE),
-               TimeToString(r[n - 1].time, TIME_DATE));
+               sym, totalN, nom,
+               TimeToString(premierT, TIME_DATE),
+               TimeToString(dernierT, TIME_DATE));
    // L'ordre des extrêmes est la donnée qui ferme l'indécision du backtest : si la M1
    // manque sur une partie de l'historique, le moteur y retombera sur une convention
    // de lecture, et il faut le savoir AVANT de mesurer.
    PrintFormat("%s : ordre des extrêmes — %d bougies sans M1 (%.1f %%), %d où le haut et "
                "le bas tombent dans la même minute (%.1f %%).",
-               sym, sansOrdre, 100.0 * sansOrdre / n, memeMinute, 100.0 * memeMinute / n);
+               sym, sansOrdre, 100.0 * sansOrdre / totalN, memeMinute, 100.0 * memeMinute / totalN);
    // Ce que valent les colonnes `haut_apres` / `bas_apres`, mesuré et non supposé : la
    // part de l'amplitude horaire que le prix REND après son second extrême. À 0 il ne
    // revient jamais et le doute du backtest était sans objet ; à 1 il revient toujours,
@@ -456,29 +536,30 @@ bool Exporter(string sym)
                   sym, 100.0 * renduTotal / renduN, renduFort, renduN, 100.0 * renduFort / renduN);
    PrintFormat("%s : %d bougies (%.1f %%) dont les extrêmes H1 n'existent PAS dans la M1 — "
                "le testeur ne les voit pas, Sivula ne les lira pas non plus.",
-               sym, ecartH1M1, 100.0 * ecartH1M1 / n);
+               sym, ecartH1M1, 100.0 * ecartH1M1 / totalN);
    PrintFormat("%s : plus ancienne barre — H1 %s | M1 %s", sym,
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
    Profondeur(sym, StringFormat("H1 depuis %s (%d bougies) · M1 %s",
-      TimeToString(r[0].time, TIME_DATE), n,
-      nM1 > 0 ? StringFormat("depuis %s (%d bougies)", TimeToString(m1[0].time, TIME_DATE), nM1)
-              : "absente"));
+      TimeToString(premierT, TIME_DATE), totalN,
+      !chargerM1 ? "non demandée"
+        : (totalM1 > 0 ? StringFormat("depuis %s (%I64d bougies)", TimeToString(premierM1, TIME_DATE), totalM1)
+                       : "absente")));
 
    // Une M1 manquante n'est pas neutre : la bougie retombe sur le spread agrégé de la
    // H1, et Sivula n'entrera pas au même moment que le robot sur cette bougie-là.
-   if(sansM1 > 0)
+   if(chargerM1 && sansM1 > 0)
       PrintFormat("%s : ATTENTION %d bougies sur %d sans M1 correspondante (%.1f %%) — "
-                  "spread de la H1 pour celles-ci.", sym, sansM1, n, 100.0 * sansM1 / n);
+                  "spread de la H1 pour celles-ci.", sym, sansM1, totalN, 100.0 * sansM1 / totalN);
    // Un spread à zéro n'est pas un spread nul : c'est un historique importé par le
    // courtier sans cette information. Sivula le détecte et retombe sur le relevé, mais
    // autant le savoir tout de suite plutôt que de croire la série complète.
    if(sansSpread > 0)
       PrintFormat("%s : ATTENTION %d bougies sur %d sans spread (%.1f %%) — Sivula "
                   "utilisera le spread du relevé sur cette partie.",
-                  sym, sansSpread, n, 100.0 * sansSpread / n);
+                  sym, sansSpread, totalN, 100.0 * sansSpread / totalN);
    PrintFormat("%s : %d bougies sur %d hors séance de négociation (%.1f %%) — Sivula "
-               "n'y entrera pas.", sym, horsSeance, n, 100.0 * horsSeance / n);
+               "n'y entrera pas.", sym, horsSeance, totalN, 100.0 * horsSeance / totalN);
    return true;
 }
 
@@ -490,48 +571,118 @@ bool Exporter(string sym)
 //| réellement fait DANS l'heure. Ils n'entrent jamais dans le moteur |
 //| de scan ni de backtest, qui exige du H1 confirmé. Pas de plafond  |
 //| InpMaxBarres ici : tronquer un départage le rendrait muet sur la  |
-//| période justement disputée.                                       |
+//| période justement disputée. Mêmes règles que le H1 : tranches     |
+//| d'un an, fichier ouvert au premier lot, mémoire rendue.           |
 //+------------------------------------------------------------------+
-bool ExporterM1(string sym)
+bool ExporterM1(string sym, string nom, datetime dispoM1)
 {
-   MqlRates m1[];
-   ArraySetAsSeries(m1, false);
-   int n = CopyRates(sym, PERIOD_M1, InpDu, TimeCurrent(), m1);
-   if(n <= 0)
+   datetime debut = InpDu;
+   if(dispoM1 > debut)
    {
-      PrintFormat("%s : aucune bougie M1 depuis %s. Si « historique incomplet » est "
-                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(InpDu, TIME_DATE));
-      Rate(sym, "historique M1 vide depuis " + TimeToString(InpDu, TIME_DATE));
-      return false;
-   }
-   string propre = sym;
-   StringReplace(propre, "#", "");
-   string nom = propre + "_M1.csv";
-   int f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
-   if(f == INVALID_HANDLE)
-   {
-      PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
-      Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
-      return false;
+      debut = dispoM1;
+      PrintFormat("%s : demande recadrée sur %s — le courtier n'a rien avant.",
+                  sym, TimeToString(debut, TIME_DATE));
    }
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
-   for(int i = 0; i < n; i++)
-      FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d\r\n",
-         TimeToString(m1[i].time, TIME_DATE | TIME_MINUTES),
-         DoubleToString(m1[i].open,  dec),
-         DoubleToString(m1[i].high,  dec),
-         DoubleToString(m1[i].low,   dec),
-         DoubleToString(m1[i].close, dec),
-         m1[i].tick_volume,
-         m1[i].spread));
+   int f = INVALID_HANDLE;
+   MqlRates m1[];
+   ArraySetAsSeries(m1, false);
+   long totalN = 0;
+   datetime premierT = 0, dernierT = 0;
+
+   for(datetime t0 = debut; t0 < TimeCurrent() && !IsStopped(); t0 += TRANCHE_SECONDES)
+   {
+      datetime t1 = t0 + TRANCHE_SECONDES;
+      datetime maintenant = TimeCurrent();
+      if(t1 > maintenant) t1 = maintenant;
+
+      int n = CopyRates(sym, PERIOD_M1, t0, t1 - 1, m1);
+      if(n <= 0) { ArrayFree(m1); continue; }
+
+      if(f == INVALID_HANDLE)
+      {
+         f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
+         if(f == INVALID_HANDLE)
+         {
+            PrintFormat("%s : écriture impossible (%d)", sym, GetLastError());
+            Rate(sym, StringFormat("écriture du fichier impossible (erreur %d)", GetLastError()));
+            ArrayFree(m1);
+            return false;
+         }
+         FileWriteString(f, "date,open,high,low,close,volume,spread\r\n");
+      }
+      for(int i = 0; i < n; i++)
+         FileWriteString(f, StringFormat("%s,%s,%s,%s,%s,%I64d,%d\r\n",
+            TimeToString(m1[i].time, TIME_DATE | TIME_MINUTES),
+            DoubleToString(m1[i].open,  dec),
+            DoubleToString(m1[i].high,  dec),
+            DoubleToString(m1[i].low,   dec),
+            DoubleToString(m1[i].close, dec),
+            m1[i].tick_volume,
+            m1[i].spread));
+      if(premierT == 0) premierT = m1[0].time;
+      dernierT = m1[n - 1].time;
+      totalN += n;
+      ArrayFree(m1);
+      Sleep(50);
+   }
+
+   if(f == INVALID_HANDLE || totalN == 0)
+   {
+      if(f != INVALID_HANDLE) { FileClose(f); FileDelete(nom); }
+      PrintFormat("%s : aucune bougie M1 depuis %s. Si « historique incomplet » est "
+                  "apparu, augmentez InpAttenteSec.", sym, TimeToString(debut, TIME_DATE));
+      Rate(sym, "historique M1 vide depuis " + TimeToString(debut, TIME_DATE));
+      return false;
+   }
    FileClose(f);
-   PrintFormat("%s : %d bougies M1 écrites dans MQL5/Files/%s — de %s à %s",
-               sym, n, nom,
-               TimeToString(m1[0].time, TIME_DATE),
-               TimeToString(m1[n - 1].time, TIME_DATE));
-   Profondeur(sym, StringFormat("M1 depuis %s (%d bougies)",
-      TimeToString(m1[0].time, TIME_DATE), n));
+   PrintFormat("%s : %I64d bougies M1 écrites dans MQL5/Files/%s — de %s à %s",
+               sym, totalN, nom,
+               TimeToString(premierT, TIME_DATE),
+               TimeToString(dernierT, TIME_DATE));
+   Profondeur(sym, StringFormat("M1 depuis %s (%I64d bougies)",
+      TimeToString(premierT, TIME_DATE), totalN));
+   return true;
+}
+
+//+------------------------------------------------------------------+
+//| La reprise : un export interrompu ne recommence pas tout.         |
+//|                                                                   |
+//| Si le CSV du symbole existe, n'est pas vide, et va jusqu'à moins  |
+//| de quatre jours d'aujourd'hui (le week-end compris), il couvre la |
+//| période demandée : on passe au suivant en le disant. Un fichier   |
+//| de 0 Ko ou périmé est ré-exporté. Pour un gros fichier, on lit sa |
+//| fin plutôt que ses 1,7 million de lignes.                         |
+//+------------------------------------------------------------------+
+bool DejaCouvert(string nom, string sym)
+{
+   if(!FileIsExist(nom)) return false;
+   int f = FileOpen(nom, FILE_READ | FILE_TXT | FILE_ANSI);
+   if(f == INVALID_HANDLE) return false;
+   ulong taille = FileSize(f);
+   bool grand = taille > 8192;
+   // près de la fin : la première lecture peut tomber au milieu d'une ligne, les
+   // suivantes sont entières, et on ne garde que la dernière ligne pleine
+   if(grand) FileSeek(f, -2048, SEEK_END);
+   string derniere = "";
+   int lignes = 0;
+   while(!FileIsEnding(f))
+   {
+      string l = FileReadString(f);
+      if(StringLen(l) > 10) { lignes++; derniere = l; }
+   }
+   FileClose(f);
+   if(!grand && lignes < 2) return false;        // vide, ou l'en-tête seule
+   string parts[];
+   if(StringSplit(derniere, ',', parts) < 5) return false;
+   datetime finFic = StringToTime(parts[0]);
+   if(finFic <= 0) return false;
+   if(finFic < TimeCurrent() - 4 * 86400) return false;
+   PrintFormat("%s : %s existe déjà et va jusqu'au %s — conservé, symbole suivant. "
+               "Supprimez le fichier pour le ré-exporter.",
+               sym, nom, TimeToString(finFic, TIME_DATE));
+   Profondeur(sym, StringFormat("déjà exporté — %s jusqu'au %s",
+      nom, TimeToString(finFic, TIME_DATE)));
    return true;
 }
 
@@ -597,12 +748,15 @@ void OnStart()
    // barres quoi qu'on demande et la plus ancienne date ne recule jamais — la boucle
    // tourne alors indéfiniment sans que rien n'indique pourquoi. Observé sur le VPS.
    long maxBarres = TerminalInfoInteger(TERMINAL_MAXBARS);
-   long besoin = (TimeCurrent() - InpDu) / 60;   // ordre de grandeur en barres M1
+   // en barres M1 seulement si la M1 est demandée : sans elle, la H1 suffit et le
+   // plafond du terminal n'a plus besoin d'être soixante fois plus large
+   bool m1Voulue = InpChargerM1 || InpM1;
+   long besoin = (TimeCurrent() - InpDu) / (m1Voulue ? 60 : 3600);
    if(maxBarres < besoin)
    {
       PrintFormat("ARRÊT : « Barres max dans le graphique » vaut %I64d, il en faut environ "
-                  "%I64d pour couvrir la M1 depuis %s.", maxBarres, besoin,
-                  TimeToString(InpDu, TIME_DATE));
+                  "%I64d pour couvrir la %s depuis %s.", maxBarres, besoin,
+                  m1Voulue ? "M1" : "H1", TimeToString(InpDu, TIME_DATE));
       Print("Outils > Options > Graphiques > « Barres max dans le graphique » = Illimité, "
             "PUIS REDÉMARREZ le terminal : le réglage ne s'applique à l'historique déjà "
             "chargé qu'au démarrage. Relancez ce script ensuite.");
