@@ -436,6 +436,35 @@ for (const fichier of ["Sivula_Releve.mq5", "Export_H1_Sivula.mq5"]) {
   });
 }
 
+test("le robot dessine ses niveaux, en témoins et jamais en paramètres", () => {
+  const ref = REFERENCES.find((r) => r.sym === "AUDCAD");
+  const src = genererMQ5(
+    { sym: ref.sym, sens: "achat", entree: ref.entree, ligne: ref.ligne,
+      periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1" },
+    { etat: etatDepuisReference(ref), stamp: "260907_NIV", magic: 7,
+      paliers: [[30, -50], [50, 0]], spreadFacteur: 1.5 },
+  );
+  // le groupe d'objets est préfixé du magic : deux robots ne se marchent pas dessus
+  assert.ok(src.includes('"SIV_NIV_" + IntegerToString((long)InpMagic)'));
+  // témoins seulement : commandés par une entrée, non sélectionnables, nettoyés à la
+  // désinstallation ET à la fermeture de la position
+  assert.match(src, /input bool InpDessin {7}= true/);
+  assert.ok(src.includes("OBJPROP_SELECTABLE, false"));
+  assert.match(src, /OnDeinit\(const int reason\) \{ ConfFermer\(\);.*NiveauxNettoyer\(\);/);
+  assert.ok(src.includes("NiveauxNettoyer(); return; }"), "position fermée : tout s'efface");
+  // paliers : déclenchement ET niveau porté en pointillés, gris « atteint », zéro = inactif
+  for (const m of ["STYLE_DOT", " — atteint", "seuil à zéro = palier inactif",
+    "stop porté au point mort", "posé chez le courtier"]) {
+    assert.ok(src.includes(m), `« ${m} » absent du robot généré`);
+  }
+  // la même convention de niveau que GererPaliers, au caractère près : négatif = part
+  // du risque, positif = part du chemin — si l'une des deux formules change sans
+  // l'autre, le dessin mentirait
+  const formule = /\? ouv \+ \(niveaux\[k\] \/ 100\.0\) \* \(ouv - sl0\)\s*\n\s*: ouv \+ \(niveaux\[k\] \/ 100\.0\) \* \(tp - ouv\);/g;
+  assert.equal((src.match(formule) || []).length, 2,
+    "la formule des niveaux doit exister deux fois à l'identique : GererPaliers et le dessin");
+});
+
 test("le dièse seul ne marque plus un commentaire dans les listes", () => {
   // Chez FxPro les indices s'appellent #USNDAQ100 : un lecteur qui saute les lignes
   // à dièse jetait dix-neuf noms sur vingt, en silence. Un commentaire, c'est « // »

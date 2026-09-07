@@ -288,6 +288,10 @@ input int InpPalier2Seuil  = ${p(1, 0)};  // Palier 2 — chemin parcouru (%) ; 
 input int InpPalier2Niveau = ${p(1, 1)};  // Palier 2 — stop porté à (%)
 input int InpPalier3Seuil  = ${p(2, 0)};  // Palier 3 — chemin parcouru (%) ; 0 = palier désactivé
 input int InpPalier3Niveau = ${p(2, 1)};  // Palier 3 — stop porté à (%)
+// Les niveaux dessinés sont des TÉMOINS, pas des paramètres : aucune décision du
+// robot n'en dépend, et le journal CONF| reste la source de vérité du harnais.
+// L'entrée existe pour ceux qui exécutent sur plusieurs symboles à la fois.
+input bool InpDessin       = true;  // Dessiner entrée, stop, objectif et paliers sur le graphique
 ${vente ? '#define SENS_VENTE' : '#define SENS_ACHAT'}
 
 // Heures de séance conservées par la MESURE. Sivula écarte les heures qui ne sont pas
@@ -567,7 +571,7 @@ double AdxAgr(long sec, int per, int shift)
 }
 
 //+------------------------------------------------------------------+
-void OnDeinit(const int reason) { ConfFermer(); LivFermer(); PanneauNettoyer(); ChartRedraw(0); }
+void OnDeinit(const int reason) { ConfFermer(); LivFermer(); PanneauNettoyer(); NiveauxNettoyer(); ChartRedraw(0); }
 
 int OnInit()
 {
@@ -1186,6 +1190,193 @@ void GererDuree()
    }
 }
 
+//+------------------------------------------------------------------+
+//| Les niveaux de la position, dessinés sur le graphique.            |
+//|                                                                   |
+//| Des TÉMOINS, pas des paramètres : aucune décision du robot ne     |
+//| dépend de ces objets — le calcul des paliers, du stop et de       |
+//| l'objectif reste celui de GererPaliers, et le journal CONF| reste |
+//| la source de vérité du harnais. Leur raison d'être : vérifier à   |
+//| l'œil, sur le chandelier, que le robot voit la même chose que     |
+//| Sivula — le vrai test des premières semaines.                     |
+//|                                                                   |
+//| Tenue : un seul groupe d'objets, préfixé du magic pour que deux   |
+//| robots sur deux graphiques ne se marchent pas dessus ; traits     |
+//| fins, une couleur d'accent plus le gris, jamais de remplissage ;  |
+//| objets non sélectionnables — un niveau déplacé à la souris ne     |
+//| doit surtout pas laisser croire qu'il a changé chez le courtier.  |
+//| Tout est supprimé à la fermeture de la position et à la           |
+//| désinstallation.                                                  |
+//+------------------------------------------------------------------+
+bool g_nivDessines = false;
+
+string NivPref() { return "SIV_NIV_" + IntegerToString((long)InpMagic) + "_"; }
+
+void NiveauxNettoyer()
+{
+   if(!g_nivDessines) return;
+   ObjectsDeleteAll(0, NivPref());
+   g_nivDessines = false;
+   ChartRedraw(0);
+}
+
+void NivLigne(string id, double prix, color c, int style)
+{
+   string nom = NivPref() + id;
+   if(ObjectFind(0, nom) < 0)
+   {
+      ObjectCreate(0, nom, OBJ_HLINE, 0, 0, prix);
+      ObjectSetInteger(0, nom, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, nom, OBJPROP_HIDDEN, true);
+      ObjectSetInteger(0, nom, OBJPROP_BACK, true);
+      ObjectSetInteger(0, nom, OBJPROP_WIDTH, 1);
+   }
+   ObjectSetDouble(0, nom, OBJPROP_PRICE, prix);
+   ObjectSetInteger(0, nom, OBJPROP_COLOR, c);
+   ObjectSetInteger(0, nom, OBJPROP_STYLE, style);
+}
+
+void NivTexte(string id, datetime t, double prix, string txt, color c)
+{
+   string nom = NivPref() + id;
+   if(ObjectFind(0, nom) < 0)
+   {
+      ObjectCreate(0, nom, OBJ_TEXT, 0, t, prix);
+      ObjectSetInteger(0, nom, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(0, nom, OBJPROP_HIDDEN, true);
+      ObjectSetInteger(0, nom, OBJPROP_FONTSIZE, 8);
+      ObjectSetInteger(0, nom, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
+      ObjectSetString(0, nom, OBJPROP_FONT, "Consolas");
+   }
+   ObjectSetInteger(0, nom, OBJPROP_TIME, t);
+   ObjectSetDouble(0, nom, OBJPROP_PRICE, prix);
+   ObjectSetString(0, nom, OBJPROP_TEXT, txt);
+   ObjectSetInteger(0, nom, OBJPROP_COLOR, c);
+}
+
+// La convention des niveaux, dite en clair : négatif = fraction du risque encore
+// assumé, zéro = point mort, positif = fraction du chemin vers l'objectif.
+string NivNiveauTxt(int niveau)
+{
+   if(niveau < 0)  return StringFormat("stop porté à %d %% du risque", -niveau);
+   if(niveau == 0) return "stop porté au point mort";
+   return StringFormat("stop porté à %d %% du chemin (gain sécurisé)", niveau);
+}
+
+void DessinerNiveaux()
+{
+   if(!InpDessin) { NiveauxNettoyer(); return; }
+
+   double ouv = 0.0, sl = 0.0, tp = 0.0;
+   datetime ouverture = 0;
+   bool enPosition = false;
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+   {
+      if(PositionGetTicket(i) <= 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+      if(PositionGetInteger(POSITION_MAGIC) != (long)InpMagic) continue;
+      ouv = PositionGetDouble(POSITION_PRICE_OPEN);
+      sl  = PositionGetDouble(POSITION_SL);
+      tp  = PositionGetDouble(POSITION_TP);
+      ouverture = (datetime)PositionGetInteger(POSITION_TIME);
+      enPosition = true;
+      break;
+   }
+   // position fermée : tout s'efface — ces témoins ne parlent que de la position en cours
+   if(!enPosition || ouv <= 0.0) { NiveauxNettoyer(); return; }
+
+#ifdef SENS_VENTE
+   double d = -1.0;
+#else
+   double d = 1.0;
+#endif
+   double sl0     = ouv * (1.0 - d * STOP_PCT / 100.0);
+   double risque0 = d * (ouv - sl0);
+   if(risque0 <= 0.0) { NiveauxNettoyer(); return; }
+   double risqueEur = AccountInfoDouble(ACCOUNT_BALANCE) * InpRisquePct / 100.0;
+
+   color acc = C'80,150,230';
+   color gri = C'150,155,165';
+
+   // l'entrée, étiquetée de la bougie qui a déclenché : le premier chiffre à
+   // confronter au backtest
+   NivLigne("ENT", ouv, acc, STYLE_SOLID);
+   NivTexte("ENTt", ouverture, ouv,
+            StringFormat("Entrée %s — %s",
+                         TimeToString(ouverture, TIME_DATE | TIME_MINUTES),
+                         DoubleToString(ouv, _Digits)), acc);
+
+   NivLigne("SL0", sl0, gri, STYLE_SOLID);
+   NivTexte("SL0t", ouverture, sl0,
+            StringFormat("Stop initial -%.2f %% · -1 R (-%.0f EUR)", STOP_PCT, risqueEur), gri);
+
+   if(tp > 0.0)
+   {
+      // « posé chez le courtier » : un objectif seulement surveillé côté robot ne se
+      // déclencherait pas si la connexion tombe — la distinction est décisive
+      NivLigne("TP", tp, acc, STYLE_SOLID);
+      NivTexte("TPt", ouverture, tp,
+               StringFormat("Objectif +%.1f R (+%.0f EUR) — posé chez le courtier",
+                            OBJECTIF_R, OBJECTIF_R * risqueEur), acc);
+   }
+
+   // le stop courant, d'une autre couleur que l'initial : voir les deux ensemble est
+   // ce qui permet de vérifier qu'un palier a bien fait ce qu'il annonçait
+   if(sl > 0.0 && MathAbs(sl - sl0) > _Point)
+   {
+      double enR = d * (sl - ouv) / risque0;
+      NivLigne("SLC", sl, acc, STYLE_SOLID);
+      NivTexte("SLCt", ouverture, sl,
+               StringFormat("Stop courant %+.2f R (%+.0f EUR)", enR, enR * risqueEur), acc);
+   }
+   else
+   {
+      ObjectDelete(0, NivPref() + "SLC");
+      ObjectDelete(0, NivPref() + "SLCt");
+   }
+
+   // les paliers : le prix de DÉCLENCHEMENT et le prix où le stop sera PORTÉ, en
+   // pointillés — deux niveaux qu'il ne faut pas confondre, une seule étiquette qui
+   // dit les deux. Un palier franchi passe en gris « atteint » et ne disparaît pas :
+   // c'est l'historique de la position en cours. Le prix porté dessiné est le prix
+   // NOMINAL du palier ; la butée dynamique à 90 % du parcours (GererPaliers) peut
+   // retenir le stop en dessous au moment du franchissement.
+   if(tp > 0.0)
+   {
+      double extreme  = ExtremeDepuis(ouverture, d);
+      double parcours = (extreme > 0.0) ? (extreme - ouv) / (tp - ouv) * 100.0 : 0.0;
+      int seuils[3];  seuils[0]  = InpPalier1Seuil;  seuils[1]  = InpPalier2Seuil;  seuils[2]  = InpPalier3Seuil;
+      int niveaux[3]; niveaux[0] = InpPalier1Niveau; niveaux[1] = InpPalier2Niveau; niveaux[2] = InpPalier3Niveau;
+      for(int k = 0; k < 3; k++)
+      {
+         string idS = "P" + IntegerToString(k + 1) + "S";
+         string idN = "P" + IntegerToString(k + 1) + "N";
+         if(seuils[k] <= 0)
+         {
+            // seuil à zéro = palier inactif : rien à dessiner
+            ObjectDelete(0, NivPref() + idS);
+            ObjectDelete(0, NivPref() + idN);
+            ObjectDelete(0, NivPref() + idS + "t");
+            continue;
+         }
+         bool  atteint = parcours >= (double)seuils[k];
+         color c = atteint ? gri : acc;
+         double decl  = ouv + (seuils[k] / 100.0) * (tp - ouv);
+         double porte = (niveaux[k] < 0)
+            ? ouv + (niveaux[k] / 100.0) * (ouv - sl0)
+            : ouv + (niveaux[k] / 100.0) * (tp - ouv);
+         NivLigne(idS, decl, c, STYLE_DOT);
+         NivLigne(idN, porte, c, STYLE_DOT);
+         NivTexte(idS + "t", ouverture, decl,
+                  StringFormat("Palier %d — à %d %% du chemin, %s%s", k + 1, seuils[k],
+                               NivNiveauTxt(niveaux[k]), atteint ? " — atteint" : ""), c);
+      }
+   }
+
+   g_nivDessines = true;
+   ChartRedraw(0);
+}
+
 // Le tableau est dessiné en OBJETS (cadre + libellés) et non par Comment() : le
 // commentaire se superpose aux bougies et reste illisible sur fond sombre.
 #define PAN_PREF "SIV_PAN_"
@@ -1509,6 +1700,9 @@ void OnTick()
 {
    // pas dessiné dans le testeur : cela ralentirait le backtest
    if(!MQLInfoInteger(MQL_TESTER)) Tableau();
+   // les niveaux, eux, se dessinent aussi dans le testeur VISUEL : c'est là qu'on
+   // vérifie à l'œil que le robot voit la même chose que Sivula
+   if(!MQLInfoInteger(MQL_TESTER) || MQLInfoInteger(MQL_VISUAL_MODE)) DessinerNiveaux();
    SurveillerSortie();
    GererPaliers();
    GererDuree();
