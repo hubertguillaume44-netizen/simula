@@ -1,13 +1,6 @@
 {
  "entrees": [
   {
-   "terme": "—",
-   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "? Aide",
    "texte": "Les explications de l’application, cherchables",
    "vues": [
@@ -134,8 +127,22 @@
    ]
   },
   {
-   "terme": "combinaisons",
+   "terme": "combinaisons demandées",
    "texte": "Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "comparée remettre au défaut Longueurs",
+   "texte": "Les distances de stop balayées, en pourcent.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "condition comparée remettre au défaut",
+   "texte": "Les longueurs de ligne balayées — chaque valeur multiplie le calcul.",
    "vues": [
     "Nouveau scan"
    ]
@@ -324,6 +331,20 @@
    ]
   },
   {
+   "terme": "Fenêtre",
+   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "Fenêtre Unité",
+   "texte": "Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux. Balayer les deux sens double le calcul.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "Filtre balayé retenu",
    "texte": "Parmi les conditions balayées, celle que la configuration retenue a effectivement gardée. Trois têtes qui gardent trois conditions différentes ne se lisent pas comme trois têtes qui gardent la même.",
    "vues": [
@@ -373,13 +394,6 @@
    ]
   },
   {
-   "terme": "Instruments sur Fenêtre Unité",
-   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "La fiche",
    "texte": "Ouvrir la fiche détaillée de cet instrument, sous la grille",
    "vues": [
@@ -408,7 +422,7 @@
    ]
   },
   {
-   "terme": "Longueurs Stops Objectifs",
+   "terme": "Longueurs Stops",
    "texte": "Les objectifs visés balayés, en multiples du risque.",
    "vues": [
     "Nouveau scan"
@@ -443,6 +457,13 @@
    ]
   },
   {
+   "terme": "ne change pas la durée",
+   "texte": "Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "Objectif",
    "texte": "Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.",
    "vues": [
@@ -450,8 +471,8 @@
    ]
   },
   {
-   "terme": "Objectifs Lignes Entrée sens",
-   "texte": "Ce qui déclenche le trade, et dans quel sens — achat, vente, ou les deux.",
+   "terme": "Objectifs Lignes",
+   "texte": "Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul. Le réglage complet est dans « Sécurisation & seuils… ».",
    "vues": [
     "Nouveau scan"
    ]
@@ -524,6 +545,13 @@
    "texte": "Le tableau complet : unité de temps, période et seuil de chaque filtre.",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "remettre au défaut",
+   "texte": "Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -675,22 +703,8 @@
    ]
   },
   {
-   "terme": "Stops Objectifs Lignes",
-   "texte": "Les lignes de référence balayées : MME, MM simple, médiane.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "sur",
-   "texte": "Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "sur Fenêtre Unité Longueurs",
-   "texte": "Les longueurs de ligne balayées — chaque valeur multiplie le calcul.",
+   "terme": "Stops Objectifs",
+   "texte": "Les lignes de référence balayées — MME, MM simple, médiane — et ce qui déclenche l’entrée.",
    "vues": [
     "Nouveau scan"
    ]
@@ -780,8 +794,8 @@
    ]
   },
   {
-   "terme": "Unité Longueurs Stops",
-   "texte": "Les distances de stop balayées, en pourcent.",
+   "terme": "Unité",
+   "texte": "La taille des bougies balayées. H4 et Daily sont reconstruits depuis vos bougies horaires.",
    "vues": [
     "Nouveau scan"
    ]
