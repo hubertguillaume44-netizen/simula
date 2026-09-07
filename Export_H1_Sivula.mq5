@@ -90,6 +90,16 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
    datetime premiere = 0;
    int paliers[] = {50000, 200000, 500000, 1000000, 2000000, 4000000, 8000000};
    int p = 0;
+   // JAMAIS plus de barres que la période n'en contient. Les grands paliers sont
+   // faits pour la M1 ; demander 8 000 000 de barres H1 quand sept ans en font
+   // 61 000 force le terminal à construire des années hors sujet, en mémoire, dans
+   // son propre processus : interface « Ne répond pas », et fermeture pure et
+   // simple quand la machine est juste. Le dernier palier utile est ramené au
+   // besoin réel — le mécanisme d'extension par le nombre, lui, ne change pas.
+   long besoin = (TimeCurrent() - depuis) / PeriodSeconds(tf) + 5000;
+   int pMax = 0;
+   while(pMax < ArraySize(paliers) - 1 && paliers[pMax] < besoin) pMax++;
+   if((long)paliers[pMax] > besoin) paliers[pMax] = (int)besoin;
    // Détection d'épuisement : quand le courtier n'a plus rien à donner (AUDNZD chez
    // FxPro : M1 depuis le 26/11/2021, 1 778 154 barres face à 2 000 000 demandées),
    // ni « autant que demandé » ni « première date atteinte » ne peuvent plus se
@@ -138,8 +148,9 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
       luPrec = lu;
       premierePrec = premiere;
 
-      // le palier a porté ses fruits : on garde le même tant qu'il progresse
-      if(lu >= paliers[p] && p < ArraySize(paliers) - 1) p++;
+      // le palier a porté ses fruits : on garde le même tant qu'il progresse,
+      // et on ne dépasse jamais le palier du besoin réel
+      if(lu >= paliers[p] && p < pMax) p++;
       Sleep(3000);
    }
    // Ici la base PROGRESSAIT encore quand le délai est tombé : le conseil d'augmenter
@@ -292,7 +303,15 @@ bool Exporter(string sym)
    bool chargerM1 = InpChargerM1 || InpM1;
    PrintFormat("%s : demande de l'historique depuis %s.", sym, TimeToString(InpDu, TIME_DATE));
    datetime dispoM1 = 0, dispoH1 = 0;
-   if(chargerM1) AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec, dispoM1);
+   if(chargerM1)
+   {
+      // la construction de plusieurs millions de barres M1 occupe le PROCESSUS du
+      // terminal : l'interface peut sembler figée pendant quelques minutes — c'est
+      // le prix du départage intrabar, pas une panne. Le journal reprend ensuite.
+      PrintFormat("%s : téléchargement M1 — le terminal peut sembler figé quelques "
+                  "minutes, laissez-le finir.", sym);
+      AttendreHistorique(sym, PERIOD_M1, "M1", InpDu, InpAttenteSec, dispoM1);
+   }
    if(InpM1) return ExporterM1(sym, nom, dispoM1);
    AttendreHistorique(sym, PERIOD_H1, "H1", InpDu, InpAttenteSec, dispoH1);
 
