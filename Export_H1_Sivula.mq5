@@ -97,6 +97,7 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
    // simple quand la machine est juste. Le dernier palier utile est ramené au
    // besoin réel — le mécanisme d'extension par le nombre, lui, ne change pas.
    long besoin = (TimeCurrent() - depuis) / PeriodSeconds(tf) + 5000;
+   if(besoin < 2000) besoin = 2000;   // InpDu dans le futur : jamais de palier négatif
    int pMax = 0;
    while(pMax < ArraySize(paliers) - 1 && paliers[pMax] < besoin) pMax++;
    if((long)paliers[pMax] > besoin) paliers[pMax] = (int)besoin;
@@ -357,7 +358,10 @@ bool Exporter(string sym)
          nM1 = CopyRates(sym, PERIOD_M1, t0, t1 - 1 + 3600, m1);
          if(nM1 < 0) nM1 = 0;
          if(nM1 > 0 && premierM1 == 0) premierM1 = m1[0].time;
-         totalM1 += nM1;
+         // l'heure de marge appartient à la tranche suivante : ne pas la compter deux fois
+         int surplus = 0;
+         for(int j = nM1 - 1; j >= 0 && m1[j].time >= t1; j--) surplus++;
+         totalM1 += nM1 - surplus;
       }
 
       if(f == INVALID_HANDLE)
@@ -527,9 +531,13 @@ bool Exporter(string sym)
    // Un historique plus court que demandé n'empêche pas l'export, mais il explique
    // qu'un scan mesure six ans sur un instrument et deux sur son voisin. On le NOTE
    // sans faire échouer : le fichier est écrit, seulement plus court qu'attendu.
+   // Une note, pas un échec : par Rate(), le symbole finissait sous « Ces
+   // instruments n'ont PAS de fichier » alors que le fichier existe — et avec la
+   // demande recadrée, tout historique court y serait tombé systématiquement.
+   // La profondeur par symbole est déjà reprise au récapitulatif.
    if(premierT > InpDu + 86400 * 40)
-      Rate(sym, StringFormat("exporté, mais l'historique ne remonte qu'au %s au lieu du %s",
-           TimeToString(premierT, TIME_DATE), TimeToString(InpDu, TIME_DATE)));
+      PrintFormat("%s : exporté, mais l'historique ne remonte qu'au %s au lieu du %s.",
+           sym, TimeToString(premierT, TIME_DATE), TimeToString(InpDu, TIME_DATE));
    if(chargerM1 && totalM1 == 0)
       PrintFormat("%s : aucune bougie M1 — le spread écrit sera celui de la H1, la valeur "
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
@@ -696,7 +704,13 @@ bool DejaCouvert(string nom, string sym)
    if(StringSplit(derniere, ',', parts) < 5) return false;
    datetime finFic = StringToTime(parts[0]);
    if(finFic <= 0) return false;
-   if(finFic < TimeCurrent() - 4 * 86400) return false;
+   // « à jour » se juge contre la FIN réelle de l'historique, pas contre l'horloge :
+   // un export de mardi relancé jeudi doit être refait, mais le lundi matin la
+   // dernière bougie du vendredi soir reste la fin du monde connu. Série pas encore
+   // synchronisée (date inconnue) : on retombe sur quatre jours d'horloge.
+   datetime finSerie = (datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_LASTBAR_DATE);
+   datetime butoir = finSerie > 0 ? finSerie - 7200 : TimeCurrent() - 4 * 86400;
+   if(finFic < butoir) return false;
    PrintFormat("%s : %s existe déjà et va jusqu'au %s — conservé, symbole suivant. "
                "Supprimez le fichier pour le ré-exporter.",
                sym, nom, TimeToString(finFic, TIME_DATE));

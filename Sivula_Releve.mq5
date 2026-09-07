@@ -100,11 +100,17 @@ string LigneSymbole(string sym, bool dispo)
    // Les colonnes ajoutées viennent APRÈS celles que Sivula cherche : son lecteur
    // travaille par NOM d'en-tête, une colonne de plus lui est indifférente, mais une
    // colonne insérée au milieu décalerait un lecteur positionnel.
+   // Le séparateur du fichier est « ; » : un point-virgule dans la description ou
+   // le chemin du courtier décalerait toutes les colonnes de la ligne.
+   string desc = SymbolInfoString(sym, SYMBOL_DESCRIPTION);
+   string chemin = SymbolInfoString(sym, SYMBOL_PATH);
+   StringReplace(desc, ";", ",");
+   StringReplace(chemin, ";", ",");
    return StringFormat("%s;%s;%s;%s;%d;%s;%s;%I64d;%s;%d;%s;%s;%I64d;%I64d;%s"
                        ";%s;%s;%s;%s;%s;%s",
       sym,
-      SymbolInfoString(sym, SYMBOL_DESCRIPTION),
-      SymbolInfoString(sym, SYMBOL_PATH),
+      desc,
+      chemin,
       DoubleToString(point, 8), dig,
       DoubleToString(bid, dig), DoubleToString(ask, dig),
       spr,
