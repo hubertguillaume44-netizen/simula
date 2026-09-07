@@ -437,6 +437,65 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             <span style="font-size:10px;line-height:1.5" class="text-muted">Fusionner n’écrit que ce qui manque ici. Remplacer écrase l’espace actuel : ce qu’il porte et qui n’est pas dans le fichier est perdu.</span>
           </div>
         </sc-if>
+
+        <!-- PORTE 1 : le fichier chiffré demande d'abord sa phrase — rien n'est lu avant -->
+        <sc-if value="{{ aDlgChiffre }}" hint-placeholder-val="{{ false }}">
+          <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-color:var(--color-accent)">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Fichier chiffré</span>
+            <strong style="font-size:13px;line-height:1.35">{{ dlgChiffreNom }}</strong>
+            <span style="font-size:11px;line-height:1.55" class="text-muted">Ce fichier est chiffré : sa phrase secrète le déchiffre ici, dans votre navigateur — elle ne part nulle part.</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+              <input class="input" style="min-height:2rem;height:2rem;font-size:12px;padding:0 8px;width:240px" type="password" value="{{ dlgChiffrePhrase }}" onChange="{{ setDlgChiffrePhrase }}" placeholder="phrase secrète">
+              <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ dechiffrerImportClic }}">Déchiffrer</button>
+              <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:10px" onClick="{{ annulerChiffre }}">Annuler</button>
+            </div>
+            <sc-if value="{{ aDlgChiffreErr }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ dlgChiffreErr }}</span>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- PORTE 1 : la sauvegarde chiffrée, transportable — l'utilisateur détient la clé -->
+        <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
+          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sauvegarde chiffrée, transportable</span>
+          <span style="font-size:11px;line-height:1.55" class="text-muted">Un fichier unique, chiffré ici même avec une phrase que vous choisissez et détenez seul (AES-GCM, clé dérivée par PBKDF2). Déposez-le où vous voulez — disque, clé USB, cloud — et rouvrez-le sur un autre poste par « Importer un fichier ». Ni clé ni copie nulle part : personne d’autre que vous ne peut le déchiffrer.</span>
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ basculerChiffrePan }}">{{ chiffreBoutonTxt }}</button>
+          <sc-if value="{{ aChiffrePan }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)"><strong>Perdre la phrase, c’est perdre le fichier.</strong> Aucune récupération n’est possible, par personne — c’est le prix du chiffrement de bout en bout. Notez-la ailleurs que dans ce navigateur.</span>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <input class="input" style="min-height:2rem;height:2rem;font-size:12px;padding:0 8px;width:230px" type="password" value="{{ chiffreP1 }}" onChange="{{ setChiffreP1 }}" placeholder="phrase secrète — 12 caractères ou plus">
+                <input class="input" style="min-height:2rem;height:2rem;font-size:12px;padding:0 8px;width:230px" type="password" value="{{ chiffreP2 }}" onChange="{{ setChiffreP2 }}" placeholder="la même phrase, pour confirmer">
+              </div>
+              <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ chiffreSeries }}" onChange="{{ basculerChiffreSeries }}"><span class="dot"></span>Inclure les séries de bougies — {{ chiffreTailleTxt }}</label>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:14px" onClick="{{ exporterChiffreClic }}">Exporter le fichier chiffré</button>
+                <sc-if value="{{ aChiffreMsg }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ chiffreMsg }}</span>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- PORTE 2 : le compteur d'usage anonyme, ÉTEINT par défaut -->
+        <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
+          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Compteur d’usage anonyme — éteint par défaut</span>
+          <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ usageActif }}" onChange="{{ basculerUsage }}"><span class="dot"></span>Aider à améliorer Sivula en envoyant des comptes anonymes</label>
+          <span style="font-size:11px;line-height:1.55" class="text-muted"><strong>Ce qui part, liste exhaustive :</strong> nombre de scans lancés, nombre de combinaisons, durée, unité choisie, nombre d’instruments, quels filtres ont été balayés, version de l’application, famille de navigateur, et les messages d’erreur rencontrés. <strong>Ce qui ne part jamais :</strong> une série, un prix, un nom d’instrument, une configuration, un résultat, un montant, ni aucun identifiant qui vous suivrait — pas de cookie, pas d’empreinte, pas d’adresse conservée. L’envoi est groupé et différé, jamais pendant un scan ; le relais ne stocke rien.</span>
+          <button type="button" class="lien" style="align-self:flex-start" onClick="{{ basculerUsageVoir }}" title="La charge réelle, telle quelle, avant envoi.">{{ usageVoirTxt }}</button>
+          <sc-if value="{{ aUsageVoir }}" hint-placeholder-val="{{ false }}">
+            <pre style="margin:0;font-family:Consolas,ui-monospace,monospace;font-size:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:var(--color-neutral-100);padding:8px 9px;max-height:220px;overflow:auto">{{ usageCharge }}</pre>
+          </sc-if>
+        </div>
+
+        <!-- PORTE 3 : le diagnostic — un téléchargement, pas une télémétrie -->
+        <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
+          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Fichier de diagnostic — sans réseau</span>
+          <span style="font-size:11px;line-height:1.55" class="text-muted">Pour signaler un bogue : ce bouton prépare un fichier texte lisible — versions, navigateur, état du stockage, tailles par instrument (anonymisées), dernières erreurs, signature de la dernière mesure sans le nom de l’instrument. Aucun envoi automatique : c’est un téléchargement. Relisez-le, puis joignez-le à un mail si vous le voulez.</span>
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ preparerDiagnosticClic }}">Préparer le fichier de diagnostic</button>
+        </div>
       </div>
 
       <!--
@@ -700,6 +759,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Sivula ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Trois portes, toutes facultatives.</strong> Une sauvegarde chiffrée dont vous détenez seul la phrase ; un compteur d'usage anonyme, <strong style="color:var(--color-text)">éteint par défaut</strong>, avec un bouton qui montre exactement ce qui part avant que ça parte ; et un fichier de diagnostic qui se télécharge et ne s'envoie jamais tout seul. Aucune ne conditionne l'usage du logiciel — et à part elles, rien ne quitte votre navigateur.</p>
       </div>
     </section>
 
@@ -4645,7 +4705,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text)">Confidentialité</div>
-          <p style="margin:0" class="text-muted">Vos fichiers sont lus dans votre navigateur et n'en sortent pas. Portefeuilles, journaux et réglages sont enregistrés localement sur cet appareil : vider les données du navigateur les supprime définitivement. Pensez à exporter régulièrement.</p>
+          <p style="margin:0" class="text-muted">Vos fichiers sont lus dans votre navigateur et n'en sortent pas. Portefeuilles, journaux et réglages sont enregistrés localement sur cet appareil : vider les données du navigateur les supprime définitivement. Pensez à exporter régulièrement. Trois mécanismes facultatifs existent, tous déclenchés par vous : une sauvegarde chiffrée de bout en bout (la phrase secrète n'est ni transmise ni récupérable) ; un compteur d'usage anonyme, éteint par défaut, dont le contenu exact s'affiche avant envoi et qui ne transmet ni série, ni prix, ni nom d'instrument, ni identifiant ; et un fichier de diagnostic qui se télécharge sur votre disque et ne s'envoie jamais automatiquement.</p>
         </div>
       </div>
     </details>
@@ -6952,6 +7012,15 @@ GROUPES = {
     this.inventaireStockage(true).then(() => this.mesurerPlace());
     this.reclamerPersistance();
     this.detecterPrive();
+    // les erreurs de la page rejoignent le journal local (porte 3) — et le compteur
+    // d'usage SI ET SEULEMENT SI il est allumé
+    try {
+      window.addEventListener('error', (e) => this.journaliserErreur(e && e.message));
+      window.addEventListener('unhandledrejection', (e) =>
+        this.journaliserErreur(e && e.reason && (e.reason.message || e.reason)));
+    } catch (e) {}
+    // un reliquat d'événements d'usage non envoyés part au démarrage, différé
+    if (this.lireUsage().actif) this.usagePlanifier();
     this.suivreRetourOnglet();
     this.suivreAides();
     this.chargerMotifsFen();
@@ -12209,6 +12278,12 @@ GROUPES = {
     const fmt = (v) => v.map((x) => String(x).replace('.', ',')).join(', ');
     // Le rappel de fin porte le RÉSULTAT — instruments, combinaisons, durée, et combien
     // passent les seuils : c'est ce qu'on veut savoir en revenant, pas « c'est fini ».
+    // porte 2 : l'événement est noté LOCALEMENT ici, l'envoi viendra groupé et
+    // différé — jamais un appel réseau pendant un scan
+    this.usageNoter({ type: 'scan', combinaisons: this.state.scanTestes || 0,
+      duree_s: Math.round((Date.now() - t0) / 1000), unite: this.state.ut || 'H1',
+      instruments: symsScan.size,
+      filtres: ((this.state.gFiltres || []).filter((x) => x !== 'aucun')) });
     this.prevenirFinScan(this.pl(symsScan.size, 'instrument', 'instruments')
       + ' · ' + (this.state.scanTestes || 0).toLocaleString('fr-FR') + ' combinaisons en '
       + this.duree((Date.now() - t0) / 1000)
@@ -14465,6 +14540,197 @@ GROUPES = {
     }
   }
 
+  // ————— PORTE 1 : LA SAUVEGARDE CHIFFRÉE, TRANSPORTABLE —————
+  // Un fichier unique, chiffré ICI (AES-GCM, clé dérivée de la phrase par
+  // PBKDF2-SHA256 à 600 000 itérations, sel et IV aléatoires), l'en-tête portant
+  // l'algorithme, les itérations et la version du format : un fichier d'aujourd'hui
+  // doit s'ouvrir dans un an. Ni clé, ni copie, ni possibilité de déchiffrer côté
+  // éditeur — perdre la phrase, c'est perdre le fichier, et l'écran le dit.
+  CHIFFRE_ITER = 600000;
+  async cleDePhrase(phrase, sel, iter) {
+    const mat = await crypto.subtle.importKey('raw', new TextEncoder().encode(phrase),
+      'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: sel, iterations: iter, hash: 'SHA-256' },
+      mat, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  _b64o(u) {
+    let b = '';
+    for (let i = 0; i < u.length; i += 32768) b += String.fromCharCode(...u.subarray(i, i + 32768));
+    return btoa(b);
+  }
+  _deB64o(t) {
+    const b = atob(t);
+    const u = new Uint8Array(b.length);
+    for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  }
+  async exporterChiffre(phrase, avecSeries) {
+    const dump = await this.dumpCompletAvecScan();
+    // les séries de bougies sont optionnelles : sept ans de H1 sur trente instruments
+    // font un fichier que personne n'attend
+    if (!avecSeries) {
+      for (const k of Object.keys(dump)) {
+        if (k.startsWith('gros:' + this.CLE_SERIES)) delete dump[k];
+      }
+    }
+    const clair = new TextEncoder().encode(JSON.stringify(
+      { outil: 'simula', version: 1, date: new Date().toISOString(), donnees: dump }));
+    const sel = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const cle = await this.cleDePhrase(phrase, sel, this.CHIFFRE_ITER);
+    const chiffre = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cle, clair));
+    const fichier = JSON.stringify({ sivula_chiffre: 1, algo: 'AES-GCM',
+      kdf: 'PBKDF2-SHA256', iterations: this.CHIFFRE_ITER,
+      sel: this._b64o(sel), iv: this._b64o(iv), date: new Date().toISOString(),
+      donnees: this._b64o(chiffre) }, null, 1);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([fichier], { type: 'application/json' }));
+    a.download = 'simula-chiffre-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    try { localStorage.setItem(this.cleGlobale(this.CLE_SAUV), JSON.stringify({
+      t: Date.now(), nC: (this.lignesScan || []).length, nS: (this.state.deposes || []).length })); } catch (e) {}
+    this.setState({ sauvDate: Date.now() });
+    return Object.keys(dump).length;
+  }
+  async dechiffrerFichier(objet, phrase) {
+    try {
+      const cle = await this.cleDePhrase(phrase, this._deB64o(objet.sel),
+        Number(objet.iterations) || this.CHIFFRE_ITER);
+      const clair = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: this._deB64o(objet.iv) },
+        cle, this._deB64o(objet.donnees));
+      return { ok: true, texte: new TextDecoder().decode(clair) };
+    } catch (e) {
+      // AES-GCM authentifie : phrase fausse et fichier abîmé sont indistinguables,
+      // et c'est voulu — aucun indice sur le contenu ne doit filtrer
+      return { ok: false };
+    }
+  }
+
+  // ————— PORTE 2 : LE COMPTEUR D'USAGE ANONYME, ÉTEINT PAR DÉFAUT —————
+  // Éteint : RIEN n'est même accumulé — un tampon qui grossit à l'insu serait déjà
+  // une collecte. Allumé : des comptes et des durées, jamais une série, un prix, un
+  // nom d'instrument, une configuration, un résultat, un montant ni un identifiant.
+  // L'envoi est groupé et différé, jamais pendant un scan ; la fonction serverless
+  // relaie sans rien stocker (netlify/functions/usage.mjs).
+  CLE_USAGE = 'simula.usage.v1';
+  USAGE_URL = '/api/usage';
+  lireUsage() {
+    try { return JSON.parse(localStorage.getItem(this.CLE_USAGE) || 'null') || { actif: false, tampon: [] }; }
+    catch (e) { return { actif: false, tampon: [] }; }
+  }
+  ecrireUsage(u) { try { localStorage.setItem(this.CLE_USAGE, JSON.stringify(u)); } catch (e) {} }
+  navFamille() {
+    const u = (navigator && navigator.userAgent) || '';
+    for (const [re, nom] of [[/Edg\//, 'Edge'], [/OPR\//, 'Opera'], [/Firefox\//, 'Firefox'],
+      [/Chrome\//, 'Chrome'], [/Version\/[\d.]+.*Safari/, 'Safari']]) {
+      if (re.test(u)) return nom;
+    }
+    return 'inconnu';
+  }
+  usageNoter(evt) {
+    const u = this.lireUsage();
+    if (!u.actif) return;
+    u.tampon = [...(u.tampon || []).slice(-49),
+      { ...evt, version: this.VERSION_APP, navigateur: this.navFamille() }];
+    this.ecrireUsage(u);
+    this.usagePlanifier();
+  }
+  usageEnveloppe(u) { return { outil: 'simula', schema: 1, evenements: (u || this.lireUsage()).tampon || [] }; }
+  usagePlanifier() {
+    clearTimeout(this._usageT);
+    this._usageT = setTimeout(() => this.usageEnvoyer(), 30000);
+  }
+  async usageEnvoyer() {
+    const u = this.lireUsage();
+    if (!u.actif || !(u.tampon || []).length) return;
+    // jamais un appel réseau pendant un scan : ce serait faire mentir la promesse
+    // au moment le plus visible
+    if (this.state.scanEnCours) { this.usagePlanifier(); return; }
+    try {
+      const r = await fetch(this.USAGE_URL, { method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.usageEnveloppe(u)) });
+      if (r.ok) { u.tampon = []; this.ecrireUsage(u); this.setState({ usageRev: (this.state.usageRev || 0) + 1 }); }
+    } catch (e) {}
+  }
+
+  // ————— PORTE 3 : LE DIAGNOSTIC, SANS RÉSEAU DU TOUT —————
+  // Un téléchargement, pas une télémétrie : l'utilisateur relit le fichier ligne par
+  // ligne, puis le joint à un mail s'il le veut. Les instruments sont anonymisés
+  // (A, B, C…), la signature de la dernière mesure est écrite SANS le nom de
+  // l'instrument, et ni règle ni prix ni résultat n'y figurent.
+  CLE_ERREURS = 'simula.erreurs.v1';
+  journaliserErreur(msg) {
+    const m = String(msg || '').slice(0, 200);
+    if (!m) return;
+    try {
+      const l = JSON.parse(localStorage.getItem(this.CLE_ERREURS) || '[]');
+      l.push({ t: new Date().toISOString().slice(0, 16), m });
+      localStorage.setItem(this.CLE_ERREURS, JSON.stringify(l.slice(-20)));
+    } catch (e) {}
+    this.usageNoter({ type: 'erreur', erreur: m.slice(0, 160) });
+  }
+  lireErreurs() {
+    try { return JSON.parse(localStorage.getItem(this.CLE_ERREURS) || '[]'); } catch (e) { return []; }
+  }
+  async preparerDiagnostic() {
+    const s = this.state;
+    const masque = new Map();
+    const lettre = (sym) => {
+      if (!masque.has(sym)) masque.set(sym, 'Instrument ' + String.fromCharCode(65 + (masque.size % 26))
+        + (masque.size >= 26 ? Math.floor(masque.size / 26) : ''));
+      return masque.get(sym);
+    };
+    // tout nom d'instrument connu est effacé des messages d'erreur avant écriture
+    const anonymise = (txt) => {
+      let t = String(txt || '');
+      for (const sym of [...(s.deposes || []), ...this.SYMBOLES]) {
+        if (sym && sym.length > 2) t = t.split(sym).join('⟨instrument⟩');
+      }
+      return t;
+    };
+    const mo = (o) => (Number.isFinite(o) ? Math.round(o / 1048576) + ' Mo' : '?');
+    const l = [];
+    l.push('SIVULA — fichier de diagnostic · ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC');
+    l.push('Ce fichier ne part nulle part tout seul : relisez-le, puis joignez-le à un');
+    l.push('mail si vous le voulez. Les instruments y sont anonymisés (A, B, C…), et ni');
+    l.push('règle, ni prix, ni résultat n' + '’' + 'y figure.');
+    l.push('');
+    l.push('version application : ' + this.VERSION_APP + ' · moteur : ' + this.MOTEUR_V);
+    l.push('navigateur : ' + this.navFamille() + ' · vue intégrée : ' + (this.dansIframe() ? 'oui' : 'non'));
+    l.push('espace : ' + (this.essai ? 'essai' : (s.deverrouille ? 'perso' : 'client')));
+    l.push('persistance du stockage : ' + (s.persistEtat || 'non mesurée'));
+    if (s.place) l.push('stockage : ' + mo(s.place.utilise) + ' utilisés sur ' + mo(s.place.quota)
+      + (s.ecritureRefusee ? ' · UNE ÉCRITURE A ÉTÉ REFUSÉE (plein)' : ''));
+    l.push('');
+    const dep = s.deposes || [];
+    l.push('séries déposées : ' + dep.length);
+    for (const sym of dep.slice(0, 40)) {
+      const df = (this.dfs || {})[sym];
+      l.push('  ' + lettre(sym) + ' — ' + (df && df.n ? df.n.toLocaleString('fr-FR') + ' bougies' : 'non chargée'));
+    }
+    l.push('scans en mémoire : ' + (s.archives || []).length + ' · '
+      + (this.lignesScan || []).length.toLocaleString('fr-FR') + ' configurations');
+    l.push('');
+    l.push('signature de la dernière mesure (sans l' + '’' + 'instrument) :');
+    l.push('  unité ' + (s.ut || 'H1') + ' · ' + (s.btLigne || '?') + ' ' + (s.btPeriode || '?')
+      + ' · SL ' + (s.btSL || '?') + ' % · RR ' + (s.btRR || '?')
+      + ' · ' + (s.btSens === 'vente' ? 'vente' : 'achat')
+      + ' · paliers : ' + this.jeuPaliers(s).txt.split(' — ')[0]
+      + ' · durée max : ' + (Number(s.btDureeMax) || 'sans limite'));
+    l.push('');
+    const errs = this.lireErreurs();
+    l.push('dernières erreurs (' + errs.length + ') :');
+    for (const e of errs) l.push('  ' + e.t + '  ' + anonymise(e.m));
+    if (!errs.length) l.push('  aucune enregistrée');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([l.join('\n') + '\n'], { type: 'text/plain;charset=utf-8' }));
+    a.download = 'simula-diagnostic-' + new Date().toISOString().slice(0, 10) + '.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   // ————— sauvegarde complète : un fichier, tout ce qui est à toi —————
   async exporterTout() {
     const dump = await this.dumpCompletAvecScan();
@@ -14548,7 +14814,12 @@ GROUPES = {
   async examinerImport(fichier) {
     if (!fichier) return;
     try {
-      const b = JSON.parse(await fichier.text());
+      let b = JSON.parse(await fichier.text());
+      // un fichier CHIFFRÉ demande d'abord sa phrase : rien n'est lu avant
+      if (b && b.sivula_chiffre === 1) {
+        this.setState({ dlgChiffre: { nom: fichier.name, objet: b, phrase: '', err: null } });
+        return;
+      }
       if (!b || b.outil !== 'simula' || !b.donnees) {
         return this.setState({ sauvMsg: 'Ce fichier ne vient pas de Sivula.' });
       }
@@ -14592,6 +14863,20 @@ GROUPES = {
         blocs: cles.length, series: nSeries, scans: nScans, configs: nConfigs,
         pfs: nPfs, lignes: nLignes, ici, donnees: d } });
     } catch (e) { this.setState({ sauvMsg: 'Fichier illisible.' }); }
+  }
+  async dechiffrerImport() {
+    const d = this.state.dlgChiffre;
+    if (!d) return;
+    const r = await this.dechiffrerFichier(d.objet, d.phrase || '');
+    if (!r.ok) {
+      this.setState({ dlgChiffre: { ...d, err: 'Phrase secrète erronée, ou fichier abîmé — rien n' + '’' + 'a été lu.' } });
+      return;
+    }
+    this.setState({ dlgChiffre: null });
+    // le même chemin que l'import en clair : l'écran de confrontation, jamais
+    // d'écrasement silencieux
+    await this.examinerImport(new File([r.texte], d.nom.replace(/\.json$/i, '') + '-dechiffre.json',
+      { type: 'application/json' }));
   }
   async importerTout(fichier) {
     if (!fichier) return;
@@ -15992,6 +16277,70 @@ GROUPES = {
           fusionnerImport: () => this.appliquerImport('fusion'),
           remplacerImport: () => this.appliquerImport('remplace'),
           annulerImport: () => this.setState({ dlgImport: null }),
+        };
+      })(),
+      // ————— LES TROIS PORTES FACULTATIVES : l'utilisateur déclenche, et voit ce qui
+      // part avant que ça parte. Aucune n'est active par défaut, aucune ne conditionne
+      // l'usage, aucune n'est proposée deux fois — ce sont des interrupteurs, pas des
+      // invites.
+      ...(() => {
+        const dc = s.dlgChiffre;
+        const u = this.lireUsage();
+        const p1 = s.chiffreP1 || '', p2 = s.chiffreP2 || '';
+        // la taille des séries, annoncée AVANT l'export : l'estimation vient de la
+        // place mesurée du navigateur — grossière, mais dite comme telle
+        const aNous = s.place && Number.isFinite(s.place.aNous) ? s.place.aNous : null;
+        return {
+          aDlgChiffre: !!dc,
+          dlgChiffreNom: dc ? dc.nom : '',
+          dlgChiffrePhrase: dc ? (dc.phrase || '') : '',
+          setDlgChiffrePhrase: (e) => this.setState({ dlgChiffre: { ...this.state.dlgChiffre, phrase: e.target.value, err: null } }),
+          dechiffrerImportClic: () => this.dechiffrerImport(),
+          annulerChiffre: () => this.setState({ dlgChiffre: null }),
+          aDlgChiffreErr: !!(dc && dc.err),
+          dlgChiffreErr: (dc && dc.err) || '',
+          aChiffrePan: !!s.chiffrePan,
+          basculerChiffrePan: () => this.setState({ chiffrePan: !s.chiffrePan, chiffreMsg: null }),
+          chiffreBoutonTxt: s.chiffrePan ? 'Refermer' : 'Créer une sauvegarde chiffrée…',
+          chiffreP1: p1, chiffreP2: p2,
+          setChiffreP1: (e) => this.setState({ chiffreP1: e.target.value, chiffreMsg: null }),
+          setChiffreP2: (e) => this.setState({ chiffreP2: e.target.value, chiffreMsg: null }),
+          chiffreSeries: !!s.chiffreSeries,
+          basculerChiffreSeries: () => this.setState({ chiffreSeries: !s.chiffreSeries }),
+          chiffreTailleTxt: aNous !== null
+            ? 'le fichier approchera ' + Math.max(1, Math.round(aNous / 1048576)) + ' Mo'
+            : 'plusieurs Mo par année et par instrument',
+          exporterChiffreClic: async () => {
+            if (p1.length < 12) {
+              this.setState({ chiffreMsg: { txt: 'Douze caractères au moins : une phrase courte se force en quelques heures.' } });
+              return;
+            }
+            if (p1 !== p2) {
+              this.setState({ chiffreMsg: { txt: 'Les deux phrases ne sont pas identiques.' } });
+              return;
+            }
+            const n = await this.exporterChiffre(p1, !!s.chiffreSeries);
+            this.setState({ chiffreMsg: { txt: n + ' blocs chiffrés et téléchargés. Gardez la phrase ailleurs que dans ce navigateur.' },
+              chiffreP1: '', chiffreP2: '' });
+          },
+          aChiffreMsg: !!s.chiffreMsg,
+          chiffreMsg: s.chiffreMsg ? s.chiffreMsg.txt : '',
+          usageActif: !!u.actif,
+          basculerUsage: () => {
+            const u2 = this.lireUsage();
+            // ÉTEINDRE vide aussi le tampon : rien ne doit rester en attente d'un
+            // envoi que l'utilisateur vient de refuser
+            const actif = !u2.actif;
+            this.ecrireUsage({ actif, tampon: actif ? (u2.tampon || []) : [] });
+            this.setState({ usageRev: (s.usageRev || 0) + 1 });
+          },
+          aUsageVoir: !!s.usageVoir,
+          basculerUsageVoir: () => this.setState({ usageVoir: !s.usageVoir }),
+          usageVoirTxt: s.usageVoir ? 'masquer' : 'voir ce qui part',
+          usageCharge: (u.tampon || []).length
+            ? JSON.stringify(this.usageEnveloppe(u), null, 2)
+            : 'Rien en attente d’envoi' + (u.actif ? ' — le prochain scan ajoutera une ligne.' : ' — le compteur est éteint, rien n’est même accumulé.'),
+          preparerDiagnosticClic: () => this.preparerDiagnostic(),
         };
       })(),
       ...(() => {
