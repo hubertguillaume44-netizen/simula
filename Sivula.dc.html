@@ -3737,7 +3737,7 @@
         <button type="button" style="cursor:pointer;border:1px solid currentColor;background:{{ btRangerFond }};color:{{ btRangerEncre }};font-family:var(--font-body);font-size:11px;padding:4px 11px;white-space:nowrap;opacity:{{ btRangerVoile }}" onClick="{{ btRanger }}" disabled="{{ btRangerOff }}" title="{{ btRangerAide }}">{{ btRangerTxt }}</button>
       </div>
 
-      <div style="position:sticky;top:{{ btTopAside }};z-index:20;border:1px solid var(--color-divider);background:var(--color-bg);display:flex;flex-direction:column">
+      <div style="border:1px solid var(--color-divider);background:var(--color-bg);display:flex;flex-direction:column">
 
         <div style="padding:10px 15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px 16px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider)">
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Instrument</span>
@@ -14988,11 +14988,10 @@ GROUPES = {
       // hauteur mesurée de tout le bloc collant (bandeaux + en-tête) : elle change
       // quand un bandeau apparaît, quand la fenêtre se replie, sans rien à recalculer ici
       filTop: (s.hEntete || 46) + 'px',
-      // La colonne de configuration se cale sous le fil. Le bandeau de verdict, lui, ne
-      // colle plus : il défile avec la page. Le total est repris en tête de la mesure,
-      // juste à côté de la courbe — le garder à l'écran en permanence coûtait deux
-      // centimètres de hauteur pour un chiffre déjà lisible là où on le regarde.
-      btTopAside: ((s.hEntete || 46) + (s.hFil || 38) + 10) + 'px',
+      // Plus rien ne colle dans le Backtest : la configuration défile avec la page,
+      // comme le bandeau de scan. Un cadre de réglages figé à l'écran pendant qu'on
+      // lit la mesure mangeait un tiers de la hauteur — et on ne règle pas et ne lit
+      // pas en même temps.
       // ————— LA BARRE NE DÉCRIT PLUS, ELLE PROPOSE —————
       //
       // Elle affichait quatre couples étiquette-valeur en capitales corps 9, à l'extrême
