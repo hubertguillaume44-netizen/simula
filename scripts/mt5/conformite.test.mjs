@@ -425,13 +425,33 @@ for (const fichier of ["Sivula_Releve.mq5", "Export_H1_Sivula.mq5"]) {
     const src = readFileSync(new URL("../../" + fichier, import.meta.url), "utf8");
     assert.match(src, /input string\s+InpFichierListe\s*=\s*"Sivula\\\\symboles\.txt"/,
       "le chemin par défaut doit être celui que Sivula écrit");
-    assert.match(src, /if\(StringGetCharacter\(l, 0\) == '#'\) continue;/,
-      "l'en-tête commenté écrit par Sivula doit être ignoré");
+    // l'en-tête commenté doit être ignoré SANS jeter les noms à dièse (#USNDAQ100) :
+    // le commentaire, c'est « // » ou un dièse suivi d'une espace, jamais le seul
+    // premier caractère — la règle fine a son propre test plus bas
+    assert.match(src, /StringGetCharacter\(l, 1\) == ' '/,
+      "l'en-tête commenté écrit par Sivula doit être ignoré sans jeter les noms à dièse");
     // priorité : la liste du fichier l'emporte sur la saisie
     assert.match(src, /rien à faire : la liste du fichier l'emporte/,
       "la branche prioritaire doit exister");
   });
 }
+
+test("le dièse seul ne marque plus un commentaire dans les listes", () => {
+  // Chez FxPro les indices s'appellent #USNDAQ100 : un lecteur qui saute les lignes
+  // à dièse jetait dix-neuf noms sur vingt, en silence. Un commentaire, c'est « // »
+  // ou un dièse SUIVI D'UNE ESPACE — un nom ne contient jamais d'espace.
+  for (const f of ["Export_H1_Sivula.mq5", "Sivula_Releve.mq5"]) {
+    const src = readFileSync(new URL("../../" + f, import.meta.url), "utf8");
+    assert.ok(!src.includes("StringGetCharacter(l, 0) == '#') continue"),
+      f + " : le premier caractère ne peut pas être le critère");
+    assert.ok(src.includes("StringGetCharacter(l, 1) == ' '"),
+      f + " : la règle « dièse + espace » doit exister");
+    assert.ok(src.includes('StringFind(l, "//") == 0'),
+      f + " : la règle « // » doit exister");
+    assert.ok(src.includes("commentaire ignorée"),
+      f + " : un compte qui ne tombe pas juste doit s'expliquer");
+  }
+});
 
 test("le script de bougies récapitule ses échecs avec leur raison", () => {
   const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");

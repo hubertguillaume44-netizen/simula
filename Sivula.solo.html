@@ -15746,15 +15746,20 @@ GROUPES = {
             // dans le fichier ne le disait.
             const aReleve = !!(this.baremes || {})[cle];
             const sansLigne = aReleve ? (s.univers || []).filter((sy) => !this.ligneCourtier(cle, sy)) : [];
-            const entete = '# symboles.txt — écrit par Sivula le '
-              + new Date().toLocaleString('fr-FR') + '\n'
+            // En « // », plus jamais en « # » : chez FxPro les indices s'appellent
+            // #USNDAQ100 — un lecteur qui saute les lignes à dièse jetait dix-neuf
+            // noms sur vingt. L'ancien en-tête au dièse reste lisible par le nouveau
+            // lecteur (« # » suivi d'une espace), et celui-ci l'est par les deux.
+            const entete = '// symboles.txt — écrit par Sivula pour ' + this.nomCompteActif()
+              + ' le ' + new Date().toLocaleString('fr-FR') + '\n'
               + (aReleve
-                ? '# ' + noms.length + ' instrument(s) · orthographe du relevé de ' + this.nomCompteActif() + '\n'
-                  + (sansLigne.length ? '# ' + sansLigne.length + ' nom(s) SANS ligne de relevé — orthographe du catalogue, à vérifier : '
+                ? '// ' + noms.length + ' instrument(s) · orthographe du relevé de ' + this.nomCompteActif()
+                  + ' — un fichier écrit pour un courtier ne vaut rien chez un autre.\n'
+                  + (sansLigne.length ? '// ' + sansLigne.length + ' nom(s) SANS ligne de relevé — orthographe du catalogue, à vérifier : '
                     + sansLigne.join(', ') + '\n' : '')
-                : '# ' + noms.length + ' instrument(s) · orthographe du CATALOGUE, À VÉRIFIER — aucun relevé déposé pour '
+                : '// ' + noms.length + ' instrument(s) · orthographe du CATALOGUE, À VÉRIFIER — aucun relevé déposé pour '
                   + this.nomCompteActif() + '. Passez Sivula_Releve puis déposez releve.csv pour l\u2019orthographe exacte du compte.\n')
-              + '# À placer dans MQL5\\Files\\Sivula\\ — remplacez-le quand votre sélection change.\n';
+              + '// À placer dans MQL5\\Files\\Sivula\\ — remplacez-le quand votre sélection change.\n';
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([entete + noms.join('\n') + '\n'],
               { type: 'text/plain;charset=utf-8' }));

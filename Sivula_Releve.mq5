@@ -24,7 +24,7 @@
 #property script_show_inputs
 #property strict
 
-// Source PRIORITAIRE : un symbole par ligne, lignes vides et lignes « # » ignorées.
+// Source PRIORITAIRE : un symbole par ligne ; lignes vides et commentaires (« // », ou « # » suivi d'une espace) ignorés.
 // Si le fichier existe, il l'emporte sur InpSymboles.
 input string InpFichierListe = "Sivula\\symboles.txt";  // Liste de symboles (prioritaire)
 // Vide = tous les symboles de l'Observation du marché. Sinon une liste séparée par des
@@ -45,17 +45,31 @@ int LireListeFichier(string chemin, string &out[])
       PrintFormat("%s existe mais n'a pas pu être ouvert (%d).", chemin, GetLastError());
       return 0;
    }
-   int n = 0;
+   int n = 0, commentaires = 0, nonVides = 0;
    while(!FileIsEnding(f))
    {
       string l = FileReadString(f);
       StringTrimLeft(l); StringTrimRight(l);
       if(StringLen(l) == 0) continue;
-      if(StringGetCharacter(l, 0) == '#') continue;   // en-tête écrit par Sivula
+      nonVides++;
+      // LE PREMIER CARACTÈRE NE PEUT PAS ÊTRE LE CRITÈRE : chez FxPro les indices
+      // s'appellent #USNDAQ100, #France40, #UK100 — dix-neuf noms sur vingt jetés
+      // comme des commentaires, en silence. Un commentaire se reconnaît à « // »,
+      // ou à un dièse SUIVI D'UNE ESPACE : deux formes qu'un nom de symbole ne
+      // peut pas prendre, puisqu'un nom ne contient jamais d'espace.
+      if(StringFind(l, "//") == 0 || l == "#"
+         || (StringGetCharacter(l, 0) == '#' && StringGetCharacter(l, 1) == ' '))
+      { commentaires++; continue; }
       ArrayResize(out, n + 1);
       out[n++] = l;
    }
    FileClose(f);
+   // Un compte qui ne tombe pas juste doit s'expliquer de lui-même : c'est ce
+   // silence qui a envoyé l'utilisateur vérifier le chemin, l'encodage et
+   // l'Observation du marché — tous corrects.
+   if(commentaires > 0)
+      PrintFormat("%s : %d ligne(s) non vides, %d nom(s) retenu(s), %d ligne(s) de "
+                  "commentaire ignorée(s).", chemin, nonVides, n, commentaires);
    return n;
 }
 
