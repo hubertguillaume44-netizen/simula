@@ -3782,9 +3782,44 @@
             <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px;margin-inline-start:auto" onClick="{{ ouvrirFiltres }}" title="Le tableau complet : unité de temps, période et seuil de chaque filtre.">régler finement…</button>
             <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ toutDesactiverF }}" title="Éteint les dix filtres d'un coup : toutes les entrées candidates sont prises.">tout désactiver</button>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:5px">
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border:1px solid var(--color-divider);background:var(--color-bg)">
             <sc-for list="{{ btCases }}" as="fc" hint-placeholder-count="10">
-              <button type="button" class="{{ fc.cls }}" title="{{ fc.aide }}" onClick="{{ fc.basculer }}"><span style="font-size:10px;font-weight:600">{{ fc.nom }}</span><span style="font-size:10px" class="text-muted">{{ fc.valTxt }}</span></button>
+              <div style="position:relative;z-index:{{ fc.z }};border-inline-end:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);border-inline-start:{{ fc.bord }};background:{{ fc.fond }};min-height:46px;display:flex">
+                <button type="button" class="lg" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:6px 9px;width:100%;display:flex;flex-direction:column;gap:2px" title="{{ fc.aide }}" onClick="{{ fc.ouvrir }}">
+                  <span style="display:flex;align-items:center;gap:6px;width:100%"><span style="font-size:10px;font-weight:600;flex:1;min-width:0">{{ fc.nom }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ fc.chev }}</span></span>
+                  <span style="font-size:10px;line-height:1.35;color:{{ fc.valEncre }}">{{ fc.valTxt }}</span>
+                </button>
+                <sc-if value="{{ fc.ouvert }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:100%;left:{{ fc.gauche }};right:{{ fc.droite }};z-index:40;min-width:100%;width:max-content;max-width:min(360px,90vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                    <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ fc.phrase }}</span>
+                    <sc-if value="{{ fc.aChamps }}" hint-placeholder-val="{{ true }}">
+                      <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:8px">
+                        <sc-for list="{{ fc.champs }}" as="bch" hint-placeholder-count="3">
+                          <label style="display:flex;align-items:center;gap:9px">
+                            <span style="font-size:11px;flex:1;min-width:0;color:var(--color-neutral-700)">{{ bch.nom }}</span>
+                            <sc-if value="{{ bch.estNum }}" hint-placeholder-val="{{ true }}">
+                              <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px;width:82px" type="number" step="{{ bch.pas }}" min="{{ bch.min }}" max="{{ bch.max }}" value="{{ bch.val }}" onChange="{{ bch.set }}">
+                            </sc-if>
+                            <sc-if value="{{ bch.estSel }}" hint-placeholder-val="{{ false }}">
+                              <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 4px;width:auto;min-width:124px" value="{{ bch.val }}" onChange="{{ bch.set }}">
+                                <sc-for list="{{ bch.opts }}" as="bop" hint-placeholder-count="3"><option value="{{ bop.v }}">{{ bop.t }}</option></sc-for>
+                              </select>
+                            </sc-if>
+                            <span style="font-size:10px;width:9ch;color:var(--color-neutral-600)">{{ bch.unite }}</span>
+                          </label>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--color-divider);padding-top:8px">
+                      <sc-if value="{{ fc.aBouton }}" hint-placeholder-val="{{ true }}">
+                        <button type="button" class="btn btn-primary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fc.basculer }}" title="{{ fc.boutonAide }}">{{ fc.boutonTxt }}</button>
+                        <button type="button" class="lien" onClick="{{ fc.remettre }}" title="Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.">défaut</button>
+                      </sc-if>
+                      <button type="button" class="lien" style="margin-inline-start:auto" onClick="{{ btFermerF }}">fermer</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
             </sc-for>
           </div>
         </div>
@@ -3803,6 +3838,15 @@
             <button type="button" class="btn btn-secondary" style="min-height:1.7rem;font-size:11px;padding-inline:9px" onClick="{{ sauverBacktest }}" disabled="{{ perime }}" title="{{ sauverBtAide }}">Sauvegarder ce résultat</button>
             <button type="button" class="btn btn-primary" style="min-height:1.7rem;font-size:11px;padding-inline:11px" onClick="{{ lancerTest }}">Mesurer</button>
           </div>
+        </div>
+
+        <!-- La signature complète de ce qui part au moteur : on la relit avant de
+             cliquer « Mesurer », et c'est elle qu'on retrouvera dans le journal — les
+             valeurs des filtres en font partie, sinon deux mesures différentes
+             deviendraient indistinguables. -->
+        <div style="display:flex;flex-direction:column;gap:3px;padding:7px 15px 9px;border-top:1px solid var(--color-divider)">
+          <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qui partira au moteur</span>
+          <span style="font-size:11px;line-height:1.55;font-family:var(--font-heading);letter-spacing:.01em">{{ btSignature }}</span>
         </div>
       </div>
 
@@ -9501,7 +9545,10 @@ GROUPES = {
     if (s.fNuage) filtres.push({ type: 'nuage', ut: s.utNuage, sens: au });
     // ne rien prendre sous la moyenne mobile : le prix de clôture précédent doit être au-dessus
     if (s.fMa) filtres.push({ type: 'ma', ut: s.utMa, periode: Number(s.periodeMa), sens: au });
-    if (s.fPente) filtres.push({ type: 'pente', ut: s.utPente, ligne: s.lignePente, periode: Number(s.periodeMtf), recul: Number(s.fPenteRecul), sens: sens_pente });
+    // la longueur de la ligne de pente empruntait periodeMtf (la période de la
+    // TENDANCE) : régler l'une changeait l'autre en silence. periodePente prime,
+    // et retombe sur l'ancien comportement quand il n'a jamais été saisi.
+    if (s.fPente) filtres.push({ type: 'pente', ut: s.utPente, ligne: s.lignePente, periode: Number(s.periodePente || s.periodeMtf), recul: Number(s.fPenteRecul), sens: sens_pente });
     if (s.fPivot) filtres.push({ type: 'pivot', ut: s.utPivot, sens: au });
     if (s.fResist && !vente) filtres.push({ type: 'sous_resistance', ut: s.utResist,
       lookback: Number(s.resistLookback), marge_pct: Number(s.resistMarge) });
@@ -11920,7 +11967,7 @@ GROUPES = {
     'fRsi', 'utRsi', 'periodeRsi', 'fRsiSeuil',
     'fAdx', 'utAdx', 'periodeAdx', 'fAdxSeuil', 'fNuage', 'utNuage',
     'fMa', 'utMa', 'periodeMa',
-    'fPente', 'utPente', 'lignePente', 'fPenteRecul', 'fPivot', 'utPivot',
+    'fPente', 'utPente', 'lignePente', 'periodePente', 'fPenteRecul', 'fPivot', 'utPivot',
     'fResist', 'utResist', 'resistLookback', 'resistMarge', 'spreadSaisi', 'swapSaisi',
     'btSens', 'btDureeMax', 'typeSecu', 'beSeuil1', 'beNiveau1', 'beSeuil2', 'beNiveau2', 'beSeuil3', 'beNiveau3', 'trailingPct', 'secuPrudent',
     'fZone', 'utZone', 'zoneTouches', 'zoneTol', 'zoneMarge', 'zoneMemoire',
@@ -15873,7 +15920,14 @@ GROUPES = {
       setLigne: (e) => this.maj({ btLigne: e.target.value }),
       uts: [{ v: 'H1', nom: 'H1' }, { v: 'H4', nom: 'H4' }, { v: 'D1', nom: 'D1 (Daily)' }],
       ut: s.ut,
-      setUt: (e) => this.maj({ ut: e.target.value }),
+      setUt: (e) => {
+        // l'unité supérieure de la tendance suit l'unité de mesure : elle ne peut pas
+        // rester au niveau ou en dessous — remontée sans message d'erreur
+        const v = e.target.value;
+        const O2 = ['H1', 'H4', 'D1', 'W1'];
+        const sup2 = O2.slice(O2.indexOf(v) + 1);
+        this.maj(sup2.includes(this.state.utMtf) ? { ut: v } : { ut: v, utMtf: sup2[0] || 'W1' });
+      },
       gPeriodes: s.gPeriodes, gSls: s.gSls, gRrs: s.gRrs,
       setGPeriodes: (e) => this.setState({ gPeriodes: e.target.value }),
       setGSls: (e) => this.setState({ gSls: e.target.value }),
@@ -17013,7 +17067,13 @@ GROUPES = {
         v, nom, aide,
         avertir: v !== 'H1',
         cls: 'tag ' + (s.ut === v ? 'tag-accent' : 'tag-outline'),
-        choisir: () => this.maj({ ut: v }),
+        choisir: () => {
+          // l'unité supérieure de la tendance suit : elle ne peut pas rester au niveau
+          // ou en dessous de l'unité de mesure — remontée sans message d'erreur
+          const O2 = ['H1', 'H4', 'D1', 'W1'];
+          const sup2 = O2.slice(O2.indexOf(v) + 1);
+          this.maj(sup2.includes(this.state.utMtf) ? { ut: v } : { ut: v, utMtf: sup2[0] || 'W1' });
+        },
       })),
       utLigne: 'Unité de temps',
       utVal: s.ut || 'H1',
@@ -17866,64 +17926,157 @@ GROUPES = {
           btFiltresCls: 'tag ' + (on.length ? 'tag-accent' : 'tag-outline'),
           btFiltresTotal: 11 };
       })(),
-      // ————— LES DIX FILTRES EN CLAIR, une case chacun —————
-      // « Aucun filtre : toutes les entrées sont prises » ne disait pas LESQUELS
-      // existent, donc on ne pensait pas à les essayer. Chaque case porte son nom et sa
-      // valeur — la valeur se lit sans rien ouvrir — et un filtre inactif reste nommé :
-      // c'est ce qui donne l'idée de l'essayer. Le texte long, angle mort compris, est
-      // l'infobulle de la case.
+      // ————— LES DIX FILTRES RÉGLABLES, un panneau par carré —————
+      // Un filtre qu'on ne peut qu'allumer n'est pas réglable : l'utilisateur mesurait
+      // la valeur qu'un développeur a codée un jour, sans moyen de savoir laquelle.
+      // Chaque carte ouvre SES réglages sous elle — jamais dans un panneau commun —
+      // et TOUCHER UNE VALEUR ACTIVE LE FILTRE : un seuil déplacé sans effet sur la
+      // mesure serait le piège le plus coûteux de l'interface. Chaque champ est
+      // réellement lu par cfgCourante ; rien de décoratif.
       ...(() => {
         const hh = (h) => (h < 10 ? '0' + h : String(h)) + ' h';
         const nomLigne = { ema: 'MME', ma: 'MM', mediane: 'médiane' };
+        const O2 = ['H1', 'H4', 'D1', 'W1'];
+        const sup = O2.slice(O2.indexOf(s.ut || 'H1') + 1);
         const fenD = Number(s.btFenDeb) || 0, fenF = Number(s.btFenFin) || 0;
         const aFen = fenD !== fenF;
         const aDelai = (Number(s.btDelai) || 0) > 0;
-        const cases = [
-          { nom: 'Tendance sup.', on: !!s.btMtf, aide: AIDE_F.mtf,
-            val: s.utMtf + ' · ' + (nomLigne[s.ligneMtf] || s.ligneMtf) + ' ' + s.periodeMtf,
-            basculer: () => this.maj({ btMtf: !s.btMtf }) },
-          { nom: 'Pente', on: !!s.fPente, aide: AIDE_F.pente,
-            val: s.utPente + ' · la ligne monte',
-            basculer: () => this.maj({ fPente: !s.fPente }) },
-          { nom: 'RSI', on: !!s.fRsi, aide: AIDE_F.rsi,
-            val: s.utRsi + ' · ≥ ' + s.fRsiSeuil,
-            basculer: () => this.maj({ fRsi: !s.fRsi }) },
-          { nom: 'ADX', on: !!s.fAdx, aide: AIDE_F.adx,
-            val: s.utAdx + ' · ≥ ' + s.fAdxSeuil,
-            basculer: () => this.maj({ fAdx: !s.fAdx }) },
-          { nom: 'Nuage Ichimoku', on: !!s.fNuage, aide: AIDE_F.nuage,
-            val: s.utNuage + ' · au-dessus',
-            basculer: () => this.maj({ fNuage: !s.fNuage }) },
-          { nom: 'Pivot', on: !!s.fPivot, aide: AIDE_F.pivot,
-            val: s.utPivot + ' · au-dessus',
-            basculer: () => this.maj({ fPivot: !s.fPivot }) },
-          { nom: 'Plus haut', on: !!s.fResist, aide: AIDE_F.resist,
-            val: s.utResist + ' · ' + s.resistLookback + ' barres',
-            basculer: () => this.maj({ fResist: !s.fResist }) },
-          { nom: 'Zones', on: !!s.fZone, aide: AIDE_F.zone,
-            val: s.utZone + ' · ' + s.zoneTouches + ' touches',
-            basculer: () => this.maj({ fZone: !s.fZone }) },
-          // Délai et fenêtre sont des nombres, pas des interrupteurs : la case retient la
-          // dernière valeur pour rallumer au même réglage, et ouvre le panneau quand il
-          // n'y a encore rien à restaurer — inventer un défaut serait régler à sa place.
-          { nom: 'Délai mini', on: aDelai, aide: AIDE_F.delai,
-            val: s.btDelai + (Number(s.btDelai) > 1 ? ' bougies' : ' bougie'),
+        const enH1 = (s.ut || 'H1') === 'H1';
+        const vente = s.btSens === 'vente';
+        const regle = (drapeau, champ, num) => (e) => {
+          const v = num ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value;
+          const patch = { [champ]: v };
+          if (drapeau && !s[drapeau]) patch[drapeau] = true;
+          this.maj(patch);
+        };
+        const OPT = (l) => l.map((o) => (typeof o === 'string' ? { v: o, t: o } : o));
+        const LIG = OPT([{ v: 'ema', t: 'MME' }, { v: 'ma', t: 'MM' }, { v: 'mediane', t: 'Médiane' }]);
+        const uts3 = OPT(['H1', 'H4', 'D1']);
+        const ch = (nom, champ, drapeau, opts, unite, bornes, val) => ({
+          nom, unite: unite || '',
+          estNum: !opts, estSel: !!opts, opts: opts || [],
+          min: bornes ? bornes[0] : '', max: bornes ? bornes[1] : '', pas: bornes ? (bornes[2] || 1) : '',
+          val: val !== undefined ? val : s[champ],
+          set: regle(drapeau, champ, !opts),
+        });
+        const defs = [
+          { nom: 'Tendance sup.', on: !!s.btMtf, drapeau: 'btMtf', aide: AIDE_F.mtf,
+            phrase: 'N\u2019entre que si l\u2019unité au-dessus monte : la ligne choisie doit être orientée à la hausse sur sa clôture. Les périodes se comptent en bougies de l\u2019unité supérieure ; la mesure, elle, reste en ' + s.ut + '.',
+            val: () => s.utMtf + ' · ' + (nomLigne[s.ligneMtf] || s.ligneMtf) + ' ' + s.periodeMtf,
+            champs: [ch('Unité supérieure', 'utMtf', 'btMtf', OPT(sup.length ? sup : ['W1']), ''),
+              ch('Ligne', 'ligneMtf', 'btMtf', LIG, ''),
+              ch('Période', 'periodeMtf', 'btMtf', null, 'bougies ' + s.utMtf, [2, 200, 1])],
+            defaut: { utMtf: sup.includes('D1') ? 'D1' : (sup[0] || 'W1'), ligneMtf: 'mediane', periodeMtf: 9 } },
+          { nom: 'Pente', on: !!s.fPente, drapeau: 'fPente', aide: AIDE_F.pente,
+            phrase: 'N\u2019entre que si la ligne choisie monte, mesuré sur les dernières bougies. Toutes les périodes se comptent en bougies ' + s.utPente + '.',
+            val: () => s.utPente + ' · ' + (nomLigne[s.lignePente] || s.lignePente) + ' ' + (s.periodePente || s.periodeMtf) + ' monte sur ' + s.fPenteRecul,
+            champs: [ch('Unité', 'utPente', 'fPente', uts3, ''),
+              ch('Ligne', 'lignePente', 'fPente', LIG, ''),
+              ch('Longueur de la ligne', 'periodePente', 'fPente', null, 'bougies ' + s.utPente, [2, 400, 1], s.periodePente || s.periodeMtf),
+              ch('Mesurée sur', 'fPenteRecul', 'fPente', null, 'bougies ' + s.utPente, [1, 50, 1])],
+            defaut: { utPente: 'H4', lignePente: 'mediane', periodePente: 9, fPenteRecul: 3 } },
+          { nom: 'RSI', on: !!s.fRsi, drapeau: 'fRsi', aide: AIDE_F.rsi,
+            phrase: 'N\u2019entre que si le RSI est AU-DESSUS du seuil : les acheteurs dominent. À la vente, la condition se lit en miroir (100 \u2212 seuil). Période en bougies ' + s.utRsi + '.',
+            val: () => s.utRsi + ' · RSI ' + s.periodeRsi + ' \u2265 ' + s.fRsiSeuil,
+            champs: [ch('Unité', 'utRsi', 'fRsi', uts3, ''),
+              ch('Période', 'periodeRsi', 'fRsi', null, 'bougies ' + s.utRsi, [2, 100, 1]),
+              ch('Seuil', 'fRsiSeuil', 'fRsi', null, '\u2265', [1, 99, 1])],
+            defaut: { utRsi: 'H1', periodeRsi: 14, fRsiSeuil: 50 } },
+          { nom: 'ADX', on: !!s.fAdx, drapeau: 'fAdx', aide: AIDE_F.adx,
+            phrase: 'N\u2019entre que si la tendance a de la force : ADX au-dessus du seuil. L\u2019ADX ne dit pas la direction — il ne s\u2019inverse pas à la vente.',
+            val: () => s.utAdx + ' · ADX ' + s.periodeAdx + ' \u2265 ' + s.fAdxSeuil,
+            champs: [ch('Unité', 'utAdx', 'fAdx', uts3, ''),
+              ch('Période', 'periodeAdx', 'fAdx', null, 'bougies ' + s.utAdx, [2, 100, 1]),
+              ch('Seuil', 'fAdxSeuil', 'fAdx', null, '\u2265', [5, 60, 1])],
+            defaut: { utAdx: 'H1', periodeAdx: 14, fAdxSeuil: 20 } },
+          { nom: 'Nuage Ichimoku', on: !!s.fNuage, drapeau: 'fNuage', aide: AIDE_F.nuage,
+            phrase: 'N\u2019entre que si le prix est au-dessus du nuage (en dessous, à la vente). Les périodes du nuage sont celles d\u2019Ichimoku — 9, 26, 52 — fixées par le moteur : seule l\u2019unité se règle.',
+            val: () => s.utNuage + ' · au-dessus du nuage',
+            champs: [ch('Unité', 'utNuage', 'fNuage', uts3, '')],
+            defaut: { utNuage: 'D1' } },
+          { nom: 'Pivot', on: !!s.fPivot, drapeau: 'fPivot', aide: AIDE_F.pivot,
+            phrase: 'N\u2019entre qu\u2019au-dessus du pivot — le prix moyen de la période de référence précédente. La référence est l\u2019unité choisie : D1 = pivot du jour, W1 = de la semaine.',
+            val: () => 'au-dessus du pivot ' + (s.utPivot === 'D1' ? 'du jour' : s.utPivot === 'W1' ? 'de la semaine' : s.utPivot),
+            champs: [ch('Référence', 'utPivot', 'fPivot', OPT([{ v: 'H4', t: 'H4' }, { v: 'D1', t: 'Jour (D1)' }, { v: 'W1', t: 'Semaine (W1)' }]), '')],
+            defaut: { utPivot: 'D1' } },
+          { nom: 'Plus haut', on: !!s.fResist, drapeau: 'fResist', aide: AIDE_F.resist,
+            phrase: 'Refuse d\u2019acheter trop près du plus haut des N dernières bougies : inutile d\u2019acheter juste sous un plafond. À la vente, ce filtre est ignoré par le moteur.',
+            val: () => s.utResist + ' · plus haut ' + s.resistLookback + ' · marge ' + s.resistMarge + ' %' + (vente ? ' — ignoré à la vente' : ''),
+            champs: [ch('Unité', 'utResist', 'fResist', uts3, ''),
+              ch('Fenêtre', 'resistLookback', 'fResist', null, 'bougies ' + s.utResist, [3, 500, 1]),
+              ch('Marge', 'resistMarge', 'fResist', null, '%', [0, 20, 0.05])],
+            defaut: { utResist: 'D1', resistLookback: 20, resistMarge: 1 } },
+          { nom: 'Zones', on: !!s.fZone, drapeau: 'fZone', aide: AIDE_F.zone,
+            phrase: 'N\u2019entre que s\u2019il reste de la place sous la zone de résistance la plus proche — un niveau touché plusieurs fois dans la mémoire choisie. À la vente, ce filtre est ignoré par le moteur.',
+            val: () => s.utZone + ' · ' + s.zoneTouches + ' touches · marge ' + s.zoneMarge + ' %' + (vente ? ' — ignoré à la vente' : ''),
+            champs: [ch('Unité', 'utZone', 'fZone', uts3, ''),
+              ch('Touches minimum', 'zoneTouches', 'fZone', null, '', [2, 10, 1]),
+              ch('Tolérance', 'zoneTol', 'fZone', null, '%', [0.05, 5, 0.05]),
+              ch('Marge', 'zoneMarge', 'fZone', null, '%', [0, 10, 0.1]),
+              ch('Mémoire', 'zoneMemoire', 'fZone', null, 'bougies ' + s.utZone, [20, 1000, 10])],
+            defaut: { utZone: 'D1', zoneTouches: 3, zoneTol: 0.5, zoneMarge: 1, zoneMemoire: 250 } },
+          { nom: 'Délai mini', on: aDelai, drapeau: null, aide: AIDE_F.delai,
+            phrase: 'Interdit une nouvelle entrée trop près de la précédente, pour ne pas empiler le même signal. Compté en bougies H1 — la série de base — quelle que soit l\u2019unité de mesure. Zéro = inactif.',
+            val: () => s.btDelai + (Number(s.btDelai) > 1 ? ' bougies H1' : ' bougie H1') + ' entre deux entrées',
+            champs: [ch('Écart minimal', 'btDelai', null, null, 'bougies H1', [0, 200, 1])],
+            defaut: { btDelai: 0 },
+            boutonAide: 'Rallume au dernier écart utilisé, ou à 6 bougies s\u2019il n\u2019y en a pas.',
             basculer: () => { if (aDelai) this.maj({ btDelaiMem: s.btDelai, btDelai: 0 });
-              else if (Number(s.btDelaiMem)) this.maj({ btDelai: s.btDelaiMem });
-              else this.setState({ btPanneau: 'secu' }); } },
-          { nom: 'Fenêtre horaire', on: aFen, aide: AIDE_F.fenetre,
-            val: hh(fenD) + ' – ' + hh(fenF),
+              else this.maj({ btDelai: Number(s.btDelaiMem) || 6 }); } },
+          { nom: 'Fenêtre horaire', on: aFen && enH1, drapeau: null, aide: AIDE_F.fenetre,
+            grise: !enH1,
+            phrase: enH1
+              ? 'N\u2019entre qu\u2019à l\u2019intérieur de la plage horaire, en heure UTC — elle porte sur la bougie où l\u2019ordre part. Début égal à fin = inactive.'
+              : 'Sans effet en ' + s.ut + ' : la bougie couvre ' + (s.ut === 'D1' ? 'la journée entière' : 'plusieurs heures') + ' et l\u2019entrée se fait à son ouverture. Repassez la mesure en H1 pour filtrer les heures.',
+            val: () => enH1 ? hh(fenD) + ' \u2013 ' + hh(fenF) + ' UTC'
+              : (aFen ? 'réglée ' + hh(fenD) + ' \u2013 ' + hh(fenF) + ' — ' : '') + 'sans effet en ' + s.ut,
+            champs: enH1 ? [ch('De', 'btFenDeb', null, null, 'h UTC', [0, 23, 1]),
+              ch('À', 'btFenFin', null, null, 'h UTC', [0, 23, 1])] : [],
+            defaut: { btFenDeb: 0, btFenFin: 0 },
+            boutonAide: 'Rallume à la dernière plage utilisée, ou 08 h \u2013 17 h s\u2019il n\u2019y en a pas.',
             basculer: () => { if (aFen) this.maj({ btFenMem: [fenD, fenF], btFenDeb: 0, btFenFin: 0 });
-              else if (s.btFenMem && (Number(s.btFenMem[0]) || Number(s.btFenMem[1])))
-                this.maj({ btFenDeb: Number(s.btFenMem[0]) || 0, btFenFin: Number(s.btFenMem[1]) || 0 });
-              else this.setState({ btPanneau: 'secu' }); } },
-        ].map((c) => ({ ...c, cls: 'fl' + (c.on ? ' on' : ''), valTxt: c.on ? c.val : 'inactif' }));
-        const nOn = cases.filter((c) => c.on).length;
+              else this.maj({ btFenDeb: Number(s.btFenMem && s.btFenMem[0]) || 8, btFenFin: Number(s.btFenMem && s.btFenMem[1]) || 17 }); } },
+        ];
+        const cases = defs.map((d, i) => {
+          const ouvert = s.btFOuvert === d.nom;
+          const grise = !!d.grise;
+          const on = d.on && !grise;
+          return {
+            nom: d.nom, aide: d.aide, ouvert,
+            chev: ouvert ? '\u25be' : '\u25b8',
+            z: ouvert ? '40' : '1',
+            gauche: (i % 5) >= 3 ? 'auto' : '-1px',
+            droite: (i % 5) >= 3 ? '-1px' : 'auto',
+            fond: ouvert ? 'color-mix(in srgb,var(--color-accent) 10%,transparent)'
+              : on ? 'var(--color-accent-100)' : grise ? 'var(--color-neutral-100)' : 'transparent',
+            bord: on ? '2px solid var(--color-accent)' : '2px solid transparent',
+            valTxt: grise ? d.val() : (d.on ? d.val() : 'inactif'),
+            valEncre: on ? 'var(--color-accent-700)' : 'var(--color-neutral-500)',
+            phrase: d.phrase,
+            aChamps: d.champs.length > 0,
+            champs: d.champs,
+            aBouton: d.champs.length > 0 || d.on,
+            boutonTxt: d.on ? 'Retirer ce filtre' : 'Activer avec ces valeurs',
+            boutonAide: d.boutonAide || (d.on ? 'Sort ce filtre de la mesure ; ses valeurs sont conservées.' : 'Met ce filtre dans la mesure, avec les valeurs affichées.'),
+            ouvrir: () => this.setState((p) => ({ btFOuvert: p.btFOuvert === d.nom ? '' : d.nom })),
+            basculer: d.basculer || (() => this.maj({ [d.drapeau]: !s[d.drapeau] })),
+            remettre: () => this.maj(d.defaut),
+          };
+        });
+        const actifs = defs.filter((d) => d.on && !d.grise);
+        const nOn = actifs.length;
         const ce = s.btEntrees;
         return {
           btCases: cases,
+          btFermerF: () => this.setState({ btFOuvert: '' }),
           btCasesTitre: 'Filtres · ' + (nOn ? nOn + ' actif' + (nOn > 1 ? 's' : '') : 'aucun actif')
             + ' sur ' + cases.length,
+          // La signature complète de ce qui part au moteur — construite sur le MÊME état
+          // que cfgCourante lit : elle ne peut pas mentir.
+          btSignature: (s.btSym || '') + ' · ' + (s.ut || 'H1') + ' · '
+            + (nomLigne[s.btLigne] || s.btLigne) + ' ' + s.btPeriode
+            + ' · SL ' + s.btSL + ' % · RR ' + s.btRR + ' · ' + (vente ? 'vente' : 'achat')
+            + ' · ' + (nOn ? actifs.map((d) => d.nom + ' (' + d.val() + ')').join(' + ') : 'sans filtre'),
           toutDesactiverF: () => this.maj({ btMtf: false, fPente: false, fRsi: false, fAdx: false,
             fNuage: false, fPivot: false, fResist: false, fZone: false,
             btDelai: 0, btFenDeb: 0, btFenFin: 0 }),

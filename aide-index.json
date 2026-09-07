@@ -225,6 +225,13 @@
    ]
   },
   {
+   "terme": "défaut",
+   "texte": "Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.",
+   "vues": [
+    "Backtest"
+   ]
+  },
+  {
    "terme": "Déposez le relevé de symboles de votre courtier",
    "texte": "Un fichier CSV, lu dans votre navigateur.",
    "vues": [
@@ -447,13 +454,6 @@
    "texte": "Une configuration validée rejoint votre portefeuille.",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "Mesurer trades par an",
-   "texte": "Les entrées candidates sont les bougies où le déclencheur a marqué un signal hors position ; les filtres actifs en ont écarté ce nombre.",
-   "vues": [
-    "Backtest"
    ]
   },
   {
@@ -791,6 +791,13 @@
    "texte": "Sorties sur objectif atteint",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "trades par an",
+   "texte": "Les entrées candidates sont les bougies où le déclencheur a marqué un signal hors position ; les filtres actifs en ont écarté ce nombre.",
+   "vues": [
+    "Backtest"
    ]
   },
   {
