@@ -2650,12 +2650,8 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-ghost" type="button" onClick="{{ toutUnivers }}">Tout sélectionner</button>
               <button class="btn btn-ghost" type="button" onClick="{{ viderUnivers }}">Tout désélectionner</button>
-              <button class="btn btn-secondary" type="button" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\Files\Sivula\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.">{{ listeMt5Txt }}</button>
             </div>
           </div>
-          <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
-            <div style="font-size:12px;color:var(--color-accent-700);margin-top:6px">{{ mt5Copie }}</div>
-          </sc-if>
           <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
             <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="11">
               <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
