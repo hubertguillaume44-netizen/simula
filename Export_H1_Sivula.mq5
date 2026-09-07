@@ -81,6 +81,14 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
    datetime premiere = 0;
    int paliers[] = {50000, 200000, 500000, 1000000, 2000000, 4000000, 8000000};
    int p = 0;
+   // Détection d'épuisement : quand le courtier n'a plus rien à donner (AUDNZD chez
+   // FxPro : M1 depuis le 26/11/2021, 1 778 154 barres face à 2 000 000 demandées),
+   // ni « autant que demandé » ni « première date atteinte » ne peuvent plus se
+   // produire, et la boucle tournait à vide jusqu'au bout d'InpAttenteSec. Deux tours
+   // consécutifs au même compte ET à la même première date disent que la base est au
+   // bout — deux, pas un : pendant un téléchargement le compte bouge à chaque passage.
+   int luPrec = -1;
+   datetime premierePrec = 0;
 
    while(GetTickCount() < fin && !IsStopped())
    {
@@ -96,14 +104,35 @@ bool AttendreHistorique(string sym, ENUM_TIMEFRAMES tf, string nomTf,
       // demande par le nombre, pas par la date : c'est ce qui fait remonter la base
       datetime t[];
       int lu = CopyTime(sym, tf, 0, paliers[p], t);
+      // relue APRÈS la demande : lue avant, la date imprimée était celle du tour
+      // précédent, d'où des suites incohérentes pendant un téléchargement normal
+      premiere = (datetime)SeriesInfoInteger(sym, tf, SERIES_FIRSTDATE);
       PrintFormat("%s %s : %d barres demandées, %d reçues — plus ancienne : %s",
                   sym, nomTf, paliers[p], lu,
                   premiere > 0 ? TimeToString(premiere, TIME_DATE) : "aucune");
+
+      if(lu > 0 && premiere > 0 && lu == luPrec && premiere == premierePrec)
+      {
+         // La base du courtier est au bout : information, pas erreur — l'export continue.
+         if(tf == PERIOD_M1)
+            PrintFormat("%s M1 : le courtier ne fournit la M1 que depuis %s (%d barres). "
+                        "Avant cette date, Sivula utilisera le spread du relevé.",
+                        sym, TimeToString(premiere, TIME_DATE), lu);
+         else
+            PrintFormat("%s %s : le courtier ne fournit la %s que depuis %s (%d barres). "
+                        "L'export s'arrêtera à cette date.",
+                        sym, nomTf, nomTf, TimeToString(premiere, TIME_DATE), lu);
+         return true;
+      }
+      luPrec = lu;
+      premierePrec = premiere;
 
       // le palier a porté ses fruits : on garde le même tant qu'il progresse
       if(lu >= paliers[p] && p < ArraySize(paliers) - 1) p++;
       Sleep(3000);
    }
+   // Ici la base PROGRESSAIT encore quand le délai est tombé : le conseil d'augmenter
+   // InpAttenteSec reste juste dans ce cas-là — l'épuisement, lui, sort plus haut.
    PrintFormat("%s %s : ARRÊT après %d s. Plus ancienne barre : %s, demandé : %s. "
                "Augmentez InpAttenteSec, ou passez par Affichage > Symboles (Ctrl+U), "
                "onglet Barres, période %s, et cliquez Demander.",
@@ -264,7 +293,6 @@ bool Exporter(string sym)
    }
 
    int dec = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   FileWriteString(f, "date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas,haut_apres,bas_apres\r\n");
 
    // Spread d'ouverture, repris sur la M1 : pour chaque bougie H1, la M1 de même
    // horodatage. C'est l'instant exact où le robot place son ordre.
@@ -275,6 +303,15 @@ bool Exporter(string sym)
       PrintFormat("%s : aucune bougie M1 — le spread écrit sera celui de la H1, la valeur "
                   "agrégée, deux fois trop haute en séance et deux fois trop basse au "
                   "rollover. Augmentez InpAttenteSec plutôt que d'exporter ainsi.", sym);
+
+   // La date à partir de laquelle la M1 existe voyage AVEC les données : sans elle, la
+   // comparaison moteur ↔ MT5 accuserait un écart de modèle là où il n'y a qu'une
+   // absence de matière. Le jeton vit DANS la dernière cellule de l'en-tête, pas dans
+   // une quinzième : Sivula compte les cellules pour détecter une date sur deux
+   // colonnes, et repère ses colonnes par nom — « bas_apres … » reste reconnu, le
+   // compte ne bouge pas, les fichiers déjà déposés restent lisibles.
+   FileWriteString(f, StringFormat("date,open,high,low,close,volume,spread,session,min_haut,min_bas,m1_haut,m1_bas,haut_apres,bas_apres m1_depuis=%s\r\n",
+      nM1 > 0 ? TimeToString(m1[0].time, TIME_DATE) : "aucune"));
 
    int sansSpread = 0, sansM1 = 0, iM1 = 0, horsSeance = 0, sansOrdre = 0, memeMinute = 0, ecartH1M1 = 0;
    int renduN = 0, renduFort = 0; double renduTotal = 0.0;
@@ -423,6 +460,10 @@ bool Exporter(string sym)
    PrintFormat("%s : plus ancienne barre — H1 %s | M1 %s", sym,
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_H1, SERIES_FIRSTDATE), TIME_DATE),
                TimeToString((datetime)SeriesInfoInteger(sym, PERIOD_M1, SERIES_FIRSTDATE), TIME_DATE));
+   Profondeur(sym, StringFormat("H1 depuis %s (%d bougies) · M1 %s",
+      TimeToString(r[0].time, TIME_DATE), n,
+      nM1 > 0 ? StringFormat("depuis %s (%d bougies)", TimeToString(m1[0].time, TIME_DATE), nM1)
+              : "absente"));
 
    // Une M1 manquante n'est pas neutre : la bougie retombe sur le spread agrégé de la
    // H1, et Sivula n'entrera pas au même moment que le robot sur cette bougie-là.
@@ -489,6 +530,8 @@ bool ExporterM1(string sym)
                sym, n, nom,
                TimeToString(m1[0].time, TIME_DATE),
                TimeToString(m1[n - 1].time, TIME_DATE));
+   Profondeur(sym, StringFormat("M1 depuis %s (%d bougies)",
+      TimeToString(m1[0].time, TIME_DATE), n));
    return true;
 }
 
@@ -524,6 +567,19 @@ int LireListeFichier(string chemin, string &out[])
 // échecs sont donc COLLECTÉS, avec leur raison, et récapitulés à la fin.
 string g_ratesNom[];
 string g_ratesPourquoi[];
+// Les profondeurs obtenues, collectées par symbole : c'est ce qui dit, sans relire le
+// journal, sur quelle partie de l'historique le départage intrabar est possible.
+string g_profNom[];
+string g_profTxt[];
+
+void Profondeur(string sym, string txt)
+{
+   int k = ArraySize(g_profNom);
+   ArrayResize(g_profNom, k + 1);
+   ArrayResize(g_profTxt, k + 1);
+   g_profNom[k] = sym;
+   g_profTxt[k] = txt;
+}
 
 void Rate(string sym, string pourquoi)
 {
@@ -612,6 +668,11 @@ void OnStart()
    int rates = ArraySize(g_ratesNom);
    PrintFormat("════ TERMINÉ : %d demandé(s), %d exporté(s), %d échec(s). "
                "Dossier : MQL5\\Files. ════", demandes, faits, rates);
+   if(ArraySize(g_profNom) > 0)
+      Print("Profondeur obtenue par symbole — le départage intrabar n'est possible que "
+            "là où la M1 existe :");
+   for(int i = 0; i < ArraySize(g_profNom); i++)
+      PrintFormat("   • %s — %s", g_profNom[i], g_profTxt[i]);
    for(int i = 0; i < rates; i++)
       PrintFormat("   ✗ %s — %s", g_ratesNom[i], g_ratesPourquoi[i]);
    if(rates > 0)
