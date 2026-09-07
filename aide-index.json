@@ -36,6 +36,20 @@
    ]
   },
   {
+   "terme": "Achat Vente",
+   "texte": "Achat : on gagne si le prix monte. Vente à découvert : l’entrée et les conditions se lisent en miroir — croisement vers le bas, prix sous la moyenne, pente baissière.",
+   "vues": [
+    "Backtest"
+   ]
+  },
+  {
+   "terme": "Achat Vente Paliers Durée max",
+   "texte": "0 = sans limite. Sortie au cours de clôture après N bougies H1 — la série de suivi, quelle que soit l’unité de mesure — si ni le stop ni l’objectif n’ont été touchés.",
+   "vues": [
+    "Backtest"
+   ]
+  },
+  {
    "terme": "Adopter",
    "texte": "Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement",
    "vues": [
@@ -103,13 +117,6 @@
    "texte": "Ce que le capital devient sur toute la période, gains réinvestis.",
    "vues": [
     "Portefeuille"
-   ]
-  },
-  {
-   "terme": "cher Plus cher tout décocher",
-   "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
-   "vues": [
-    "Mes instruments"
    ]
   },
   {
@@ -338,6 +345,13 @@
    ]
   },
   {
+   "terme": "fermer",
+   "texte": "La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai. Balayer les deux double le calcul.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "Filtre balayé retenu",
    "texte": "Parmi les conditions balayées, celle que la configuration retenue a effectivement gardée. Trois têtes qui gardent trois conditions différentes ne se lisent pas comme trois têtes qui gardent la même.",
    "vues": [
@@ -394,13 +408,6 @@
    ]
   },
   {
-   "terme": "l’achat Sens du trade fermer",
-   "texte": "Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "La fiche",
    "texte": "Ouvrir la fiche détaillée de cet instrument, sous la grille",
    "vues": [
@@ -438,6 +445,13 @@
   {
    "terme": "Les deux scripts MT5",
    "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
+   "terme": "les plus chers tout décocher",
+   "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
    "vues": [
     "Mes instruments"
    ]
@@ -524,6 +538,20 @@
    "texte": "Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.",
    "vues": [
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "réglage fin…",
+   "texte": "Escaliers à la carte, stop suiveur et distances : le réglage fin complet.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "réglage fin… fermer",
+   "texte": "Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés. Chaque durée cochée multiplie le calcul.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -663,6 +691,13 @@
   {
    "terme": "Sécurisation seuils…",
    "texte": "Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "Sens du trade fermer",
+   "texte": "Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c’est le réglage qui change le plus les creux.",
    "vues": [
     "Nouveau scan"
    ]

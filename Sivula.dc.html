@@ -48,6 +48,18 @@
          display: flex; align-items: baseline; gap: 8px; width: 100%; }
   .rep:hover { color: var(--color-accent-700); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
+  /* Le panneau ancré d'un champ ou d'une carte. La media query est la SEULE raison
+     d'en faire une classe : une règle responsive ne s'écrit pas en style en ligne.
+     left/right et la largeur maximale restent portés par chaque panneau. */
+  .pan { position: absolute; top: 100%; z-index: 40; min-width: 100%; width: max-content;
+         max-width: min(460px, 92vw); background: var(--color-bg);
+         border: 1px solid var(--color-accent); box-shadow: var(--shadow-md);
+         padding: 11px 13px; display: flex; flex-direction: column; gap: 9px; }
+  @media (max-width: 900px) {
+    .pan { position: static; left: auto !important; right: auto !important;
+           width: 100%; min-width: 0; max-width: none !important;
+           box-shadow: none; margin-top: 4px; }
+  }
   .fl { cursor: pointer; font: inherit; text-align: left; display: flex; flex-direction: column;
         gap: 1px; padding: 4px 7px; background: none; border: 1px solid var(--color-divider);
         color: var(--color-text); }
@@ -1012,6 +1024,7 @@
             <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
             <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triCher }}" onChange="{{ setTriCher }}">Plus cher</label>
           </div>
+          <label class="radio" style="font-size:11px" title="{{ masquerChersAide }}"><input type="checkbox" checked="{{ masquerChers }}" onChange="{{ basculerChers }}"><span class="dot"></span>Masquer les plus chers</label>
           <div style="display:flex;gap:9px;align-items:center;margin-inline-start:auto;flex-wrap:wrap">
             <sc-if value="{{ aCoches }}" hint-placeholder-val="{{ false }}">
               <strong style="font-size:11px;color:var(--color-accent-700)">{{ cochesTxt }}</strong>
@@ -1975,7 +1988,7 @@
                 <span style="font-size:10px;line-height:1.45;color:{{ bsInstrEncre }}">{{ bsInstrSous }}</span>
               </button>
               <sc-if value="{{ bsPanInstr }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
                 <sc-if value="{{ aChoisis }}" hint-placeholder-val="{{ true }}">
                   <div style="display:flex;flex-direction:column;gap:5px">
                     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
@@ -2036,7 +2049,7 @@
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ fenDuree }}</span>
               </button>
               <sc-if value="{{ bsPanFen }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
                   <div style="display:flex;align-items:baseline;gap:8px">
                     <span style="font-size:12px;flex:1;min-width:0">{{ fenLigne }} · <strong>{{ fenDuree }}</strong></span>
@@ -2088,7 +2101,7 @@
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsUniteSous }}</span>
               </button>
               <sc-if value="{{ bsPanUt }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
                 <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:10px">
                   <div style="display:flex;align-items:baseline;gap:8px">
                     <span style="font-size:12px;flex:1;min-width:0">{{ utLigne }} · <strong>{{ utVal }}</strong></span>
@@ -2119,7 +2132,7 @@
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSensSous }}</span>
               </button>
               <sc-if value="{{ bsPanSens }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
             <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Ce qui déclenche l’achat</span>
 
                       <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
@@ -2147,14 +2160,14 @@
             <span style="font-size:10px;line-height:1.45" class="text-muted">réglages par instrument, par condition comparée</span>
             <button type="button" class="lien" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">remettre au défaut</button>
           </div>
-          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
+          <div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr))">
             <div style="position:relative;z-index:{{ bsZLong }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondLong }}">
               <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Les longueurs de ligne balayées — chaque valeur multiplie le calcul." onClick="{{ bsOuvreLong }}">
                 <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Longueurs</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPerX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span></span>
                 <strong style="font-size:13px;line-height:1.5">{{ bsPerListe }}</strong>
               </button>
               <sc-if value="{{ bsPanLong }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
                   <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Combien de bougies la ligne moyenne regarde. Chaque valeur cochée multiplie le calcul.</span>
                   <div style="display:flex;gap:5px;flex-wrap:wrap">
                     <sc-for list="{{ bsCatLong }}" as="cgl" hint-placeholder-count="10">
@@ -2177,7 +2190,7 @@
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSlSous }}</span>
               </button>
               <sc-if value="{{ bsPanStop }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
                   <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">La distance du stop, en pourcentage du prix d’entrée. C’est elle qui définit 1 R.</span>
                   <div style="display:flex;gap:5px;flex-wrap:wrap">
                     <sc-for list="{{ bsCatStop }}" as="cgs" hint-placeholder-count="10">
@@ -2199,7 +2212,7 @@
                 <strong style="font-size:13px;line-height:1.5">{{ bsRrListe }}</strong>
               </button>
               <sc-if value="{{ bsPanObj }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
                   <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Le gain visé, en multiples du risque. 2× signifie deux fois la distance du stop.</span>
                   <div style="display:flex;gap:5px;flex-wrap:wrap">
                     <sc-for list="{{ bsCatObj }}" as="cgo" hint-placeholder-count="10">
@@ -2222,7 +2235,7 @@
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsLigSous }}</span>
               </button>
               <sc-if value="{{ bsPanLi }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
             <span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Lignes balayées</span>
 
                       <div style="display:flex;gap:5px;flex-wrap:wrap;padding:0">
@@ -2248,14 +2261,59 @@
                 </div>
               </sc-if>
             </div>
+            <div style="position:relative;z-index:{{ bsZPal }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondPal }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c\u2019est le réglage qui change le plus les creux." onClick="{{ bsOuvrePal }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Paliers</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsPalGros }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsPalSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanPal }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c\u2019est le réglage qui change le plus les creux. Les valeurs exactes restent réglables dans le réglage fin : ces trois jeux sont des raccourcis, pas un remplacement.</span>
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ bsJeuxPal }}" as="jp" hint-placeholder-count="3">
+                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ jp.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ jp.basculer }}">
+                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ jp.marque }}</span>
+                        <strong style="font-size:12px;width:11ch">{{ jp.nom }}</strong>
+                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ jp.aide }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ aPalFin }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsPalFinTxt }}</span>
+                  </sc-if>
+                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Escaliers à la carte, stop suiveur et distances : le réglage fin complet.">réglage fin…</button>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position:relative;z-index:{{ bsZDuree }};display:flex;flex-direction:column;border-inline-end:1px solid var(--color-divider);border-inline-start:2px solid transparent;background:{{ bsFondDuree }}">
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Sortir au cours de clôture après N bougies H1 si ni le stop ni l\u2019objectif n\u2019ont été touchés. Chaque durée cochée multiplie le calcul." onClick="{{ bsOuvreDuree }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Durée max</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span></span>
+                <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsDureeGros }}</strong>
+                <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsDureeSous }}</span>
+              </button>
+              <sc-if value="{{ bsPanDuree }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sortir au cours de clôture après N bougies si ni le stop ni l\u2019objectif n\u2019ont été touchés — c\u2019est ce qui coupe les creux les plus profonds. Compté en bougies H1, la série de suivi, quelle que soit l\u2019unité de mesure. Chaque durée cochée est essayée sur toute la grille.</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap">
+                    <sc-for list="{{ bsCatDuree }}" as="cdu" hint-placeholder-count="8">
+                      <button type="button" class="{{ cdu.cls }}" style="font-size:11px;padding:3px 8px;font-variant-numeric:tabular-nums" onClick="{{ cdu.basculer }}"><span style="font-size:11px">{{ cdu.txt }}</span></button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:10px;line-height:1.4;color:var(--color-neutral-600);border-top:1px solid var(--color-divider);padding-top:7px">{{ bsCoutDuree }}</span>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
+            </div>
             <div style="position:relative;z-index:{{ bsZSecuC }};display:flex;flex-direction:column;border-inline-start:2px solid transparent;background:{{ bsFondSecuC }}">
-              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="Sécurisation, lecture et durée : elles décrivent comment on mesure, mais elles multiplient aussi — la lecture haute/basse double le calcul." onClick="{{ bsOuvreSecuC }}">
-                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Sécurisation</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span></span>
+              <button type="button" class="lg" style="cursor:pointer;text-align:left;font:inherit;border:none;background:none;padding:10px 14px;display:flex;flex-direction:column;gap:3px;flex:1;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai. Balayer les deux double le calcul." onClick="{{ bsOuvreSecuC }}">
+                <span style="display:flex;align-items:center;gap:8px;width:100%"><span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);flex:1">Lecture</span><span style="font-family:var(--font-heading);font-size:12px;line-height:1.55;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 6px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span></span>
                 <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.05">{{ bsSecuGros }}</strong>
                 <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-600)">{{ bsSecuSous }}</span>
               </button>
               <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
-                <div style="position:absolute;top:100%;left:auto;right:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(460px,92vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
                   <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sur une bougie qui touche le stop ET l’objectif, l’ordre des deux est indécidable en H1. Les deux lectures encadrent le résultat vrai.</span>
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
                     <sc-for list="{{ bsCellLectures }}" as="cle2" hint-placeholder-count="2">
@@ -2408,6 +2466,18 @@
             <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:6px 9px" onClick="{{ bsOuvreMesure }}" title="Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.">Sécurisation &amp; seuils…</button>
             <button id="lancerScan" type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:{{ devisBoutonEncre }};font-family:var(--font-body);font-size:12px;padding:8px 15px;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
           </div>
+        </div>
+      </div>
+
+      <!-- La signature du scan : ce qui partira au moteur, en cinq lignes étiquetées —
+           les mêmes que le Backtest. Une seule ligne était illisible dès trois filtres. -->
+      <div style="display:flex;flex-direction:column;gap:3px;padding:8px 14px 2px">
+        <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qui partira au moteur</span>
+        <div style="display:grid;grid-template-columns:11ch minmax(0,1fr);gap:0 12px">
+          <sc-for list="{{ bsSigLignes }}" as="sg2" hint-placeholder-count="5">
+            <span style="font-size:10px;padding:3px 0;color:var(--color-neutral-600);border-top:1px solid var(--color-divider)">{{ sg2.lib }}</span>
+            <span style="font-size:11px;line-height:1.5;padding:3px 0;border-top:1px solid var(--color-divider);font-family:var(--font-heading);letter-spacing:.01em">{{ sg2.txt }}</span>
+          </sc-for>
         </div>
       </div>
 
@@ -3753,7 +3823,7 @@
           <label style="display:flex;flex-direction:column;gap:2px;position:relative;z-index:{{ btMoZ }}"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Moment d’exécution</span>
             <button type="button" class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px;text-align:left;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ btMoAide }}" onClick="{{ btMoOuvrir }}">{{ btMoVal }}</button>
             <sc-if value="{{ btMoPan }}" hint-placeholder-val="{{ false }}">
-              <div style="position:absolute;top:100%;left:-1px;z-index:40;min-width:100%;width:max-content;max-width:min(430px,90vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+              <div class="pan" style="left:-1px;max-width:min(430px,90vw)">
                 <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ btMoPhrase }}</span>
                 <sc-if value="{{ aBtMoMesures }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
@@ -3802,6 +3872,16 @@
             <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" value="{{ btSL }}" step="0.1" min="0.1" onChange="{{ setSL }}"></label>
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Objectif<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.">?</span></span>
             <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" value="{{ btRR }}" step="0.1" min="0.1" onChange="{{ setRR }}"></label>
+          <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sens</span>
+            <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ btSensVal }}" onChange="{{ setSensSel }}" title="Achat : on gagne si le prix monte. Vente à découvert : l\u2019entrée et les conditions se lisent en miroir — croisement vers le bas, prix sous la moyenne, pente baissière.">
+              <option value="achat">Achat</option><option value="vente">Vente</option>
+            </select></label>
+          <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Paliers</span>
+            <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ btPaliersJeu }}" onChange="{{ setPaliersJeu }}" title="{{ paliersJeuAide }}">
+              <sc-for list="{{ paliersJeux }}" as="pj" hint-placeholder-count="3"><option value="{{ pj.v }}">{{ pj.nom }}</option></sc-for>
+            </select></label>
+          <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée max<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="0 = sans limite. Sortie au cours de clôture après N bougies H1 — la série de suivi, quelle que soit l\u2019unité de mesure — si ni le stop ni l\u2019objectif n\u2019ont été touchés.">?</span></span>
+            <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" min="0" step="1" value="{{ btDureeMaxVal }}" onChange="{{ setDureeMax }}"></label>
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Risque %<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.">?</span></span>
             <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" value="{{ risquePct }}" step="0.1" onChange="{{ setRisque }}"></label>
         </div>
@@ -3819,7 +3899,7 @@
             <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px;margin-inline-start:auto" onClick="{{ ouvrirFiltres }}" title="Le tableau complet : unité de temps, période et seuil de chaque filtre.">régler finement…</button>
             <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ toutDesactiverF }}" title="Éteint les dix filtres d'un coup : toutes les entrées candidates sont prises.">tout désactiver</button>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border:1px solid var(--color-divider);background:var(--color-bg)">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:0;border:1px solid var(--color-divider);background:var(--color-bg)">
             <sc-for list="{{ btCases }}" as="fc" hint-placeholder-count="10">
               <div style="position:relative;z-index:{{ fc.z }};border-inline-end:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);border-inline-start:{{ fc.bord }};background:{{ fc.fond }};min-height:46px;display:flex">
                 <button type="button" class="lg" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:6px 9px;width:100%;display:flex;flex-direction:column;gap:2px" title="{{ fc.aide }}" onClick="{{ fc.ouvrir }}">
@@ -3827,7 +3907,7 @@
                   <span style="font-size:10px;line-height:1.35;color:{{ fc.valEncre }}">{{ fc.valTxt }}</span>
                 </button>
                 <sc-if value="{{ fc.ouvert }}" hint-placeholder-val="{{ false }}">
-                  <div style="position:absolute;top:100%;left:{{ fc.gauche }};right:{{ fc.droite }};z-index:40;min-width:100%;width:max-content;max-width:min(360px,90vw);background:var(--color-bg);border:1px solid var(--color-accent);box-shadow:var(--shadow-md);padding:11px 13px;display:flex;flex-direction:column;gap:9px">
+                  <div class="pan" style="left:{{ fc.gauche }};right:{{ fc.droite }};max-width:min(360px,90vw)">
                     <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ fc.phrase }}</span>
                     <sc-if value="{{ fc.aChamps }}" hint-placeholder-val="{{ true }}">
                       <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:8px">
@@ -3883,7 +3963,12 @@
              deviendraient indistinguables. -->
         <div style="display:flex;flex-direction:column;gap:3px;padding:7px 15px 9px;border-top:1px solid var(--color-divider)">
           <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qui partira au moteur</span>
-          <span style="font-size:11px;line-height:1.55;font-family:var(--font-heading);letter-spacing:.01em">{{ btSignature }}</span>
+          <div style="display:grid;grid-template-columns:11ch minmax(0,1fr);gap:0 12px">
+            <sc-for list="{{ btSigLignes }}" as="sg" hint-placeholder-count="5">
+              <span style="font-size:10px;padding:3px 0;color:var(--color-neutral-600);border-top:1px solid var(--color-divider)">{{ sg.lib }}</span>
+              <span style="font-size:11px;line-height:1.5;padding:3px 0;border-top:1px solid var(--color-divider);font-family:var(--font-heading);letter-spacing:.01em">{{ sg.txt }}</span>
+            </sc-for>
+          </div>
         </div>
       </div>
 
@@ -9424,6 +9509,57 @@ GROUPES = {
   // déclenchement le cours n'a parcouru que ce seuil ; un stop posé dessus
   // encaisserait un simple passage intrabar), et ne dépasse pas le palier
   // SUIVANT (l'échelle ne peut que monter, sinon le suivant ne sert à rien).
+  // Les trois jeux NOMMÉS de paliers — des raccourcis vers les mêmes champs
+  // beSeuil/beNiveau que le réglage fin, jamais un état parallèle : le moteur lit
+  // l'état, pas le nom du jeu, donc un jeu choisi ici et un escalier saisi à la main
+  // qui décrivent la même échelle sont strictement la même mesure.
+  JEUX_PALIERS = {
+    aucun: ['Aucun', { btBE: false }],
+    point_mort: ['Point mort', { btBE: true, typeSecu: 'be_progressif',
+      beSeuil1: 50, beNiveau1: 0, beSeuil2: 0, beNiveau2: 0, beSeuil3: 0, beNiveau3: 0 }],
+    progressifs: ['Progressifs', { btBE: true, typeSecu: 'be_progressif',
+      beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0, beSeuil3: 0, beNiveau3: 0 }],
+  };
+  // L'état des jeux de paliers côté SCAN, lu depuis gSecus/gEchelles — partagé par
+  // la cellule du bandeau et la signature : deux lectures auraient fini par diverger.
+  jeuxPaliersScan(s) {
+    const memeEsc = (a, b) => a.length === b.length
+      && a.every(([q, n], k) => q === b[k][0] && n === b[k][1]);
+    const PM = [[50, 0]], PROG = [[30, -50], [50, 0]];
+    const segs = String(s.gEchelles || '').split(/\s*[;|]\s*/).map((x) => x.trim()).filter(Boolean);
+    const vaut = (t, cible) => { const g = this.echelles(t)[0]; return !!g && memeEsc(g, cible); };
+    const gs = (s.gSecus && s.gSecus.length) ? s.gSecus : ['aucune'];
+    const avecPaliers = gs.includes('paliers');
+    return {
+      gs, segs, vaut, PM, PROG, avecPaliers,
+      aucun: gs.includes('aucune'),
+      pm: avecPaliers && segs.some((t) => vaut(t, PM)),
+      prog: avecPaliers && segs.some((t) => vaut(t, PROG)),
+      suiveur: gs.includes('suiveur'),
+      finSegs: avecPaliers ? segs.filter((t) => !vaut(t, PM) && !vaut(t, PROG)) : [],
+    };
+  }
+  // Noms lisibles de ce que le Scan balaie en paliers — pour la signature.
+  nomsJeuxScan(s) {
+    const j = this.jeuxPaliersScan(s);
+    return [j.aucun ? 'aucun' : '', j.pm ? 'point mort' : '', j.prog ? 'progressifs' : '',
+      j.suiveur ? 'stop suiveur' : '',
+      j.finSegs.length ? 'réglage fin \u00d7' + j.finSegs.length : '']
+      .filter(Boolean).join(', ') || 'aucun';
+  }
+  // Reconnaît le jeu que l'état décrit — ou « perso » quand le réglage fin s'en est
+  // écarté : le sélecteur du bandeau ne doit jamais afficher un nom que l'état dément.
+  jeuPaliers(s) {
+    if (!s.btBE) return { cle: 'aucun', txt: 'aucun — le stop initial ne bouge jamais' };
+    if (s.typeSecu === 'trailing') {
+      return { cle: 'perso', txt: 'stop suiveur ' + String(s.trailingPct).replace('.', ',') + ' %' };
+    }
+    const p = this.paliers(s);
+    const egal = (a) => p.length === a.length && p.every(([q, n], k) => q === a[k][0] && n === a[k][1]);
+    if (egal([[50, 0]])) return { cle: 'point_mort', txt: 'point mort — à 50 % du chemin, stop à l\u2019entrée' };
+    if (egal([[30, -50], [50, 0]])) return { cle: 'progressifs', txt: 'progressifs — 30 % → mi-risque, 50 % → point mort' };
+    return { cle: 'perso', txt: p.length ? p.map(([q, n]) => q + ' → ' + n).join(' · ') : 'échelle vide' };
+  }
   paliers(s) {
     const vus = new Set();
     const brut = [[Number(s.beSeuil1), Number(s.beNiveau1)], [Number(s.beSeuil2), Number(s.beNiveau2)],
@@ -15536,8 +15672,12 @@ GROUPES = {
       // la disponibilité suit le symbole jusque dans le sélecteur : sinon on lance un
       // backtest sur un instrument qu'aucun compte ne chiffre sans jamais le voir
       symboles: this.SYMBOLES.map((x) => { const d = this.comptesDe(x);
+        // le rang de coût dans le libellé : choisir un instrument sans savoir qu'il est
+        // n° 40 au coût, c'est mesurer une stratégie que les frais ont déjà tranchée
+        const rg = this.rangCout(x);
         return { nom: x, sel: x === s.btSym,
-          etiq: x + '  \u2014 ' + (d.a ? d.txt : d.attente ? 'prix indisponible' : 'aucun compte') }; }),
+          etiq: x + '  \u2014 ' + (d.a ? d.txt : d.attente ? 'prix indisponible' : 'aucun compte')
+            + (rg ? ' · n° ' + rg + ' au coût' : '') }; }),
       recherche: s.recherche,
       setRecherche: (e) => this.setState({ recherche: e.target.value }),
       surSurvol: (e) => { e.preventDefault(); if (!s.survol) this.setState({ survol: true }); },
@@ -16751,12 +16891,105 @@ GROUPES = {
           bsLigGros: ((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'Méd' }[k] || k)).join(' · ') || 'MME'),
           bsLigSous: 'entrée : ' + (nEnt > 1 ? 'croisement + rebond, et croisement seul'
             : (ENTREES_TXT[(s.gEntrees || ['croisement_ou_rebond'])[0]] || 'croisement et rebond').toLowerCase()),
-          bsSecuX: '\u00d7' + secuF,
+          bsSecuX: '\u00d7' + nLect,
           bsSecuGros: nLect === 2 ? 'Lecture haute · basse'
             : ((s.gLectures || ['favorable'])[0] === 'prudente' ? 'Lecture basse' : 'Lecture haute'),
-          bsSecuSous: (nSecuV > 1 || nTempsV > 1)
-            ? 'sécurisations \u00d7 durées : \u00d7' + (nSecuV * nTempsV) + ' compris'
-            : 'sécurisation réglée, non balayée',
+          bsSecuSous: nLect === 2 ? 'les deux bornes du résultat mesurées'
+            : 'une seule borne — résultat non encadré',
+          // ————— PALIERS : les trois jeux nommés, cochables — mêmes jeux que le
+          // sélecteur du Backtest, écrits dans gSecus/gEchelles que le moteur lit déjà.
+          // Un escalier saisi à la main ou un stop suiveur du réglage fin RESTE : ces
+          // trois entrées sont des raccourcis, pas un remplacement, et le ×N les compte.
+          ...(() => {
+            const jx = this.jeuxPaliersScan(s);
+            const { vaut, PM, PROG, gs, finSegs } = jx;
+            const segsDe = (txt) => String(txt || '').split(/\s*[;|]\s*/).map((x) => x.trim()).filter(Boolean);
+            const gsEff = (l) => (l && l.length) ? l : ['aucune'];
+            const aucunPris = jx.aucun, pmPris = jx.pm, progPris = jx.prog;
+            const nJeux = (aucunPris ? 1 : 0) + (pmPris ? 1 : 0) + (progPris ? 1 : 0);
+            const aFin = jx.suiveur || finSegs.length > 0;
+            const basculeAucune = () => this.setState((p) => {
+              const l = gsEff(p.gSecus);
+              if (l.includes('aucune') && l.length === 1) return null;
+              return { gSecus: l.includes('aucune') ? l.filter((x) => x !== 'aucune') : [...l, 'aucune'] };
+            }, () => this.ecrireSession());
+            const basculeEsc = (cible, canon) => () => this.setState((p) => {
+              // des escaliers laissés dans gEchelles avec la variante « paliers »
+              // ÉTEINTE sont un souvenir, pas une sélection : le premier jeu coché
+              // repart d'eux seuls s'ils sont actifs, de rien sinon
+              const actif = gsEff(p.gSecus).includes('paliers');
+              const l0 = actif ? segsDe(p.gEchelles) : [];
+              const dedans = l0.some((t) => vaut(t, cible));
+              const l = dedans ? l0.filter((t) => !vaut(t, cible)) : [...l0, canon];
+              let g2 = gsEff(p.gSecus).filter((x) => x !== 'paliers');
+              if (l.length) g2.push('paliers');
+              if (!g2.length) g2 = ['aucune'];
+              return { gEchelles: l.join(' ; '), gSecus: g2 };
+            }, () => this.ecrireSession());
+            const jeux = [
+              ['Aucun', 'le stop initial ne bouge jamais — la référence', aucunPris, basculeAucune],
+              ['Point mort', 'à 50 % du chemin, stop à l\u2019entrée', pmPris, basculeEsc(PM, '50>0')],
+              ['Progressifs', '30 % → mi-risque, 50 % → point mort', progPris, basculeEsc(PROG, '30>-50 50>0')],
+            ];
+            return {
+              bsPalX: '\u00d7' + nSecuV,
+              bsPalGros: nJeux === 0 ? (aFin ? 'réglage fin' : 'Aucun')
+                : jeux.filter(([, , pris]) => pris).map(([n]) => n).join(' · ')
+                  + (aFin ? ' + fin' : ''),
+              bsPalSous: nSecuV > 1 ? 'chaque jeu essayé sur toute la grille'
+                : 'un seul jeu — ne multiplie pas',
+              bsJeuxPal: jeux.map(([nom, aide, pris, basculer]) => ({
+                nom, aide, basculer, marque: pris ? '\u2713' : '',
+                fond: pris ? 'var(--color-accent-100)' : 'transparent',
+              })),
+              aPalFin: aFin,
+              bsPalFinTxt: 'Réglage fin en plus, conservé et compté dans le \u00d7' + nSecuV + ' : '
+                + [gs.includes('suiveur') ? 'stop suiveur' : '',
+                   finSegs.length ? 'escalier' + (finSegs.length > 1 ? 's' : '') + ' ' + finSegs.join(' ; ') : '']
+                  .filter(Boolean).join(' · ') + '.',
+            };
+          })(),
+          // ————— DURÉE MAXIMALE : mêmes valeurs que le champ du Backtest, en liste.
+          // « sans limite » est la variante « jamais » ; chaque nombre coché est une
+          // durée de la variante « limite ». Bougies H1 — la série de suivi.
+          ...(() => {
+            const gtEff = (l) => (l && l.length) ? l : ['jamais'];
+            const gt = gtEff(s.gTemps);
+            const sansLimite = gt.includes('jamais');
+            const durees = this.nombres(s.gDurees, []).filter((x) => x > 0);
+            const avecLimite = gt.includes('limite') && durees.length > 0;
+            const basculeSans = () => this.setState((p) => {
+              const l = gtEff(p.gTemps);
+              const actives = l.includes('limite') ? this.nombres(p.gDurees, []).filter((x) => x > 0) : [];
+              if (l.includes('jamais') && (l.length === 1 || !actives.length)) return null;
+              return { gTemps: l.includes('jamais') ? l.filter((x) => x !== 'jamais') : [...l, 'jamais'] };
+            }, () => this.ecrireSession());
+            const basculeDuree = (v) => () => this.setState((p) => {
+              // même règle : des durées stockées avec la variante « limite » éteinte
+              // ne sont pas une sélection — le premier clic repart de la seule cochée
+              const actif = ((p.gTemps && p.gTemps.length) ? p.gTemps : ['jamais']).includes('limite');
+              const l0 = actif ? this.nombres(p.gDurees, []).filter((x) => x > 0) : [];
+              const dedans = l0.includes(v);
+              const l = dedans ? l0.filter((x) => x !== v) : [...l0, v].sort((a, b) => a - b);
+              let g2 = gtEff(p.gTemps).filter((x) => x !== 'limite');
+              if (l.length) g2.push('limite');
+              if (!g2.length) g2 = ['jamais'];
+              return { gDurees: l.join(' '), gTemps: g2 };
+            }, () => this.ecrireSession());
+            return {
+              bsDureeX: '\u00d7' + nTempsV,
+              bsDureeGros: !avecLimite ? 'Sans limite'
+                : (sansLimite ? 'Sans limite · ' : '') + durees.join(' · '),
+              bsDureeSous: nTempsV > 1 ? 'bougies H1 — chaque durée multiplie'
+                : 'bougies H1 — la série de suivi',
+              bsCatDuree: [{ v: 0, txt: 'sans limite', pris: sansLimite, basculer: basculeSans },
+                ...[...new Set([10, 20, 30, 50, 80, 120, ...durees])].sort((a, b) => a - b)
+                  .map((v) => ({ v, txt: String(v), pris: avecLimite && durees.includes(v), basculer: basculeDuree(v) }))]
+                .map((x) => ({ txt: x.txt, basculer: x.basculer, cls: 'fc' + (x.pris ? ' bal' : '') })),
+              bsCoutDuree: 'retirer une durée enlève '
+                + frB(parInstrB / Math.max(1, nTempsV)) + ' combinaisons par instrument',
+            };
+          })(),
           aSensX: nSens > 1, bsSensX: '\u00d7' + nSens,
           bsSensGros: nSens > 1 ? 'Achat · Vente' : (((s.gSens || [])[0] === 'vente') ? 'Vente' : 'Achat'),
           bsSensSous: nSens > 1 ? 'les deux sens balayés \u2014 le calcul double'
@@ -16776,6 +17009,50 @@ GROUPES = {
             + ' \u2014 ' + (horsConds.length > 1 ? 'aucune balayée' : 'hors scan'),
           bsDeplierTxt: s.bsCondsDepliees ? 'replier \u25b4' : 'les déployer \u25b8',
           bsDeplierConds: () => this.setState((p) => ({ bsCondsDepliees: !p.bsCondsDepliees })),
+          // ————— LA SIGNATURE EN CINQ LIGNES — construite sur les MÊMES facteurs que
+          // le devis : le produit annoncé dans « Total » est exactement combiTxt.
+          bsSigLignes: (() => {
+            const univ = this.universDuCompte(s.univers);
+            const jj = (ms) => new Date(ms).toLocaleDateString('fr-FR');
+            const fsc = this.fenetre(s);
+            const pers = this.nombres(s.gPeriodes, [26]);
+            const slsL = this.nombres(s.gSls, [1]);
+            const rrsL = this.nombres(s.gRrs, [2.5]);
+            const vg = (x) => String(x).replace('.', ',');
+            const dureesL = this.nombres(s.gDurees, []).filter((x) => x > 0);
+            const gtS = (s.gTemps && s.gTemps.length) ? s.gTemps : ['jamais'];
+
+            const gfS = (s.gFiltres && s.gFiltres.length) ? s.gFiltres : ['aucun'];
+            const balayees = gfS.filter((k) => k !== 'aucun')
+              .map((k) => this.COURTS_FILTRE[k] || k);
+            return [
+              { lib: 'Instruments', txt: nUB
+                ? univ.join(' · ') + '  (' + nUB + ')'
+                : 'aucun — le scan ne peut pas partir' },
+              { lib: 'Périmètre', txt: 'depuis le ' + jj(fsc.debut)
+                + (fsc.fin ? ' jusqu\u2019au ' + jj(fsc.fin) : '')
+                + ' · unité ' + (s.ut || 'H1')
+                + ((s.ut || 'H1') !== 'H1' ? ' · moment d\u2019exécution résolu par instrument (mesure moments.csv, ouverture sans mesure)' : '')
+                + ' · ' + (s.btFrais ? 'frais réels' : 'sans frais')
+                + ' · risque ' + s.risquePct + ' %' },
+              { lib: 'Grille balayée', txt: (s.gEntrees || []).map((k) => (ENTREES_TXT[k] || k).toLowerCase()).join(' ou ')
+                + ' · ' + ((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'médiane' }[k] || k)).join(' / ') || 'MME')
+                + ' \u00d7 ' + pers.length + ' longueurs (' + pers.join(', ') + ')'
+                + ' · ' + slsL.length + ' stops de ' + vg(slsL[0]) + ' à ' + vg(slsL[slsL.length - 1]) + ' %'
+                + ' · ' + rrsL.length + ' objectifs (' + rrsL.map((x) => vg(x) + '\u00d7').join(', ') + ')'
+                + ' · ' + (nLect === 2 ? '2 lectures' : '1 lecture')
+                + ' · ' + ((s.gSens || []).length > 1 ? 'achat et vente' : (((s.gSens || [])[0] === 'vente') ? 'vente' : 'achat'))
+                + ' · paliers : ' + this.nomsJeuxScan(s)
+                + ' · durée max : ' + gtS.map((k) => (k === 'jamais' ? 'sans limite'
+                  : (dureesL.length ? dureesL.join(', ') + ' bougies H1' : 'limite sans durée'))).join(' et ') },
+              { lib: 'Conditions', txt: (balayees.length
+                ? balayees.join(' · ') + ' — balayées, plus la référence sans filtre'
+                : 'sans filtre balayé — chaque configuration est mesurée sans condition d\u2019entrée') },
+              { lib: 'Total', txt: frB(railN) + ' réglages par instrument \u00d7 ' + nUB + ' instrument'
+                + (nUB > 1 ? 's' : '') + ' \u00d7 ' + nCond + ' condition' + (nCond > 1 ? 's' : '')
+                + ' = ' + frB(railN * nUB * nCond) + ' combinaisons' },
+            ];
+          })(),
           bsPiedEq: frB(railN) + ' réglages \u00d7 ' + nUB + ' instrument' + (nUB > 1 ? 's' : '')
             + ' \u00d7 ' + nCond + ' condition' + (nCond > 1 ? 's' : '') + '.'
             + (nUB === 0 ? ' Le premier instrument coché porte le devis à ' + frB(parInstrB) + '.' : ''),
@@ -16787,7 +17064,8 @@ GROUPES = {
             const d = { bsFermePan: () => this.setState({ bsPanneau: '' }) };
             const PAIRES = [['Instr', 'instruments'], ['Fen', 'fenetre'], ['Ut', 'unite'],
               ['Sens', 'entree'], ['Long', 'longueurs'], ['Stop', 'stops'],
-              ['Obj', 'objectifs'], ['Li', 'lignes'], ['SecuC', 'secucell']];
+              ['Obj', 'objectifs'], ['Li', 'lignes'], ['Pal', 'paliers2'], ['Duree', 'durees2'],
+              ['SecuC', 'secucell']];
             for (const [suf, k] of PAIRES) {
               const o = s.bsPanneau === k;
               d['bsPan' + suf] = o;
@@ -17193,7 +17471,18 @@ GROUPES = {
           // LESQUELS étaient cochés il fallait ouvrir la liste des 148 et y chercher les
           // cases. La sélection est la première chose que l'étape doit dire.
           choisisListe: this.universDuCompte(s.univers).map((sym) => ({
-            sym, nom: this.nomComplet(sym), cout: coutUn,
+            sym, nom: this.nomComplet(sym),
+            // le rang au coût et le coût en R par trade — l'application les calcule
+            // déjà pour la liste complète : les taire ici faisait cocher à l'aveugle
+            cout: (() => {
+              const rg = this.rangCout(sym);
+              const o = this.coutEnR(sym, this.stopDe(sym),
+                this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif);
+              const r = o && Number.isFinite((o.achatR + o.venteR) / 2) ? (o.achatR + o.venteR) / 2 : null;
+              return [rg ? 'n° ' + rg + ' au coût' : '',
+                r !== null && r > 0 ? String(Math.round(r * 100) / 100).replace('.', ',') + ' R par trade' : '']
+                .filter(Boolean).join(' · ') || coutUn;
+            })(),
             retirerAide: 'Retirer ' + this.nomComplet(sym) + ' de la sélection',
             retirer: () => this.setState((p) => ({ univers: (p.univers || []).filter((x) => x !== sym) })),
           })),
@@ -17715,6 +18004,32 @@ GROUPES = {
       setPeriode: (e) => this.maj({ btPeriode: Number(e.target.value) }),
       setSL: (e) => this.maj({ btSL: Number(e.target.value) }),
       setRR: (e) => this.maj({ btRR: Number(e.target.value) }),
+      // ————— SENS · PALIERS · DURÉE : les mêmes réglages que le Scan, dans le bandeau.
+      // Ils écrivent les champs que cfgCourante lit déjà (btSens, beSeuil*, btDureeMax),
+      // tous dans REGLAGES : la signature du journal les porte sans rien d'autre.
+      btSensVal: s.btSens === 'vente' ? 'vente' : 'achat',
+      setSensSel: (e) => this.maj({ btSens: e.target.value === 'vente' ? 'vente' : 'achat' }),
+      ...(() => {
+        const jeu = this.jeuPaliers(s);
+        const liste = [{ v: 'aucun', nom: 'Aucun' }, { v: 'point_mort', nom: 'Point mort' },
+          { v: 'progressifs', nom: 'Progressifs' }];
+        if (jeu.cle === 'perso') liste.push({ v: 'perso', nom: 'Réglage fin — ' + jeu.txt });
+        return {
+          btPaliersJeu: jeu.cle,
+          paliersJeux: liste,
+          paliersJeuAide: 'Comment le stop est porté en cours de route. Aucun : il ne bouge jamais. '
+            + 'Point mort : à 50 % du chemin, stop à l\u2019entrée. Progressifs : 30 % → mi-risque, '
+            + '50 % → point mort. Les valeurs exactes restent réglables dans « Sécurisation & frais… » : '
+            + 'ces trois jeux sont des raccourcis, pas un remplacement.'
+            + (jeu.cle === 'perso' ? ' Réglage fin actuel : ' + jeu.txt + '.' : ''),
+          setPaliersJeu: (e) => {
+            const p = this.JEUX_PALIERS[e.target.value];
+            if (p) this.maj({ ...p[1] });
+          },
+        };
+      })(),
+      btDureeMaxVal: Number(s.btDureeMax) || 0,
+      setDureeMax: (e) => this.maj({ btDureeMax: Math.max(0, Math.round(Number(e.target.value) || 0)) }),
       setDelai: (e) => this.maj({ btDelai: Number(e.target.value) }),
       deposerJournal: (e) => this.deposerJournal(e.target.files && e.target.files[0]),
       confEtat: s.confMsg || (s.conf
@@ -18238,13 +18553,34 @@ GROUPES = {
           btCasesTitre: 'Filtres · ' + (nOn ? nOn + ' actif' + (nOn > 1 ? 's' : '') : 'aucun actif')
             + ' sur ' + cases.length,
           // La signature complète de ce qui part au moteur — construite sur le MÊME état
-          // que cfgCourante lit : elle ne peut pas mentir.
-          btSignature: (s.btSym || '') + ' · ' + (s.ut || 'H1') + ' · '
-            + (nomLigne[s.btLigne] || s.btLigne) + ' ' + s.btPeriode
-            + ' · SL ' + s.btSL + ' % · RR ' + s.btRR + ' · ' + (vente ? 'vente' : 'achat')
-            + ' · ' + (nOn ? actifs.map((d) => d.nom + ' (' + d.val() + ')').join(' + ') : 'sans filtre')
-            + ((s.ut || 'H1') !== 'H1' ? (() => { const mo = this.momentResolu(s.btSym, s);
-              return ' · moment : ' + mo.type + (mo.type === 'heure' ? ' ' + mo.heure + ' h' : ''); })() : ''),
+          // que cfgCourante lit : elle ne peut pas mentir. Cinq lignes étiquetées, les
+          // mêmes que le Scan : instruments, périmètre, grille, conditions, total.
+          btSigLignes: (() => {
+            const rg = this.rangCout(s.btSym);
+            const cp = this.coutPrincipal(s.btSym);
+            const jeu = this.jeuPaliers(s);
+            const f = this.fenetre(s);
+            const jj = (ms) => new Date(ms).toLocaleDateString('fr-FR');
+            const duree = Number(s.btDureeMax) || 0;
+            return [
+              { lib: 'Instrument', txt: this.nomComplet(s.btSym)
+                + (rg ? ' · n° ' + rg + ' au coût' : '')
+                + (cp && Number.isFinite(cp.moyen) ? ' · ' + String(Math.round(cp.moyen * 100) / 100).replace('.', ',') + ' R par trade' : '') },
+              { lib: 'Périmètre', txt: 'depuis le ' + jj(f.debut) + (f.fin ? ' jusqu\u2019au ' + jj(f.fin) : '')
+                + ' · unité ' + (s.ut || 'H1')
+                + ((s.ut || 'H1') !== 'H1' ? (() => { const mo = this.momentResolu(s.btSym, s);
+                  return ' · moment : ' + mo.type + (mo.type === 'heure' ? ' ' + mo.heure + ' h' : ''); })() : '')
+                + ' · ' + (s.btFrais ? 'frais réels' : 'sans frais')
+                + ' · risque ' + s.risquePct + ' %' },
+              { lib: 'Réglages', txt: (ENTREES_TXT[s.btEntree] || s.btEntree).toLowerCase()
+                + ' · ' + (nomLigne[s.btLigne] || s.btLigne) + ' ' + s.btPeriode
+                + ' · SL ' + s.btSL + ' % · RR ' + s.btRR + ' · ' + (vente ? 'vente' : 'achat')
+                + ' · paliers : ' + jeu.txt.split(' — ')[0].toLowerCase()
+                + ' · durée max : ' + (duree ? duree + ' bougies H1' : 'sans limite') },
+              { lib: 'Conditions', txt: nOn ? actifs.map((d) => d.nom + ' (' + d.val() + ')').join(' + ') : 'sans filtre' },
+              { lib: 'Total', txt: 'une seule configuration — chaque champ porte UNE valeur ; le Scan porte les mêmes champs avec plusieurs valeurs chacun' },
+            ];
+          })(),
           toutDesactiverF: () => this.maj({ btMtf: false, fPente: false, fRsi: false, fAdx: false,
             fNuage: false, fPivot: false, fResist: false, fZone: false,
             btDelai: 0, btFenDeb: 0, btFenFin: 0 }),
@@ -20122,10 +20458,20 @@ GROUPES = {
         const nParFam = new Map();
         for (const f of famDe.values()) nParFam.set(f, (nParFam.get(f) || 0) + 1);
         const fam = s.familleFiltre || '';
+        // « masquer les plus chers » : la moitié la plus chère du classement disparaît —
+        // SAUF un instrument déjà coché, sinon il sortirait de la sélection sans qu'on
+        // s'en aperçoive. Un coût inconnu n'est pas un coût élevé : il reste visible.
+        const cochesAv = new Set(s.univers || []);
+        const nClasses = [...ordinal.values()].filter((x) => x !== null).length;
+        const seuilCher = Math.ceil(nClasses / 2);
         const visibles = triee.filter((sym) => {
           if (q && !(sym.toLowerCase().includes(q)
             || this.nomComplet(sym).toLowerCase().includes(q))) return false;
           if (fam && famDe.get(sym) !== fam) return false;
+          if (s.masquerChers && !cochesAv.has(sym)) {
+            const o = ordinal.get(sym);
+            if (o !== null && o > seuilCher) return false;
+          }
           if (fb === 'avec') return aLa(sym);
           if (fb === 'sans') return !aLa(sym);
           return true;
@@ -20246,6 +20592,12 @@ GROUPES = {
           };
         });
         return {
+          masquerChers: !!s.masquerChers,
+          basculerChers: () => this.setState((p) => ({ masquerChers: !p.masquerChers }),
+            () => this.ecrireSession()),
+          masquerChersAide: 'Cache la moitié la plus chère du classement des coûts ('
+            + (nClasses ? 'rang au-delà de ' + seuilCher + ' sur ' + nClasses : 'classement vide')
+            + ') — leurs frais mangent l\u2019avantage avant la mesure. Un instrument déjà coché reste visible, et un coût inconnu aussi.',
           instrRows,
           familles,
           aFamilles: familles.length > 1,
