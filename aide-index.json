@@ -717,13 +717,6 @@
    ]
   },
   {
-   "terme": "sur Tout sélectionner Tout désélectionner",
-   "texte": "Écrit symboles.txt : un instrument par ligne, dans l'orthographe de VOTRE courtier. À placer dans MQL5\\Files\\Sivula\\ — les deux scripts MT5 le lisent, et il n'y a rien à recompiler quand la sélection change.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Tirages",
    "texte": "Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.",
    "vues": [
