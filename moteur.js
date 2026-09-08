@@ -1180,6 +1180,20 @@ export function backtester(df, cfg) {
   const finEntrees = Number(cfg.fin) || Infinity;
   const stopMini = Number(cfg.stop_mini) || 0;
 
+  // ————— FILTRE D'ÉVÉNEMENT (cfg.sauter_evenements) : aucune ENTRÉE dans la
+  // fenêtre ±heures autour de chaque instant fourni. Rien d'autre ne change : les
+  // indicateurs se calculent pareil, une position déjà ouverte se suit pareil —
+  // invariants 1 et 2 intacts. Éteint par défaut : l'option absente ne coûte rien.
+  const sautCfg = cfg.sauter_evenements || null;
+  const sautFen = sautCfg && Array.isArray(sautCfg.instants) && sautCfg.instants.length
+    ? [...sautCfg.instants].sort((x, y) => x - y) : null;
+  const sautDemi = sautFen ? Math.max(0, Number(sautCfg.heures) || 0) * 3600000 : 0;
+  let pSaut = 0;
+  const dansSaut = (ms) => {
+    while (pSaut < sautFen.length && sautFen[pSaut] + sautDemi < ms) pSaut++;
+    return pSaut < sautFen.length && Math.abs(sautFen[pSaut] - ms) <= sautDemi;
+  };
+
   const trades = [];
   // Le compte des entrées candidates et de ce que les filtres en retirent. Sans lui,
   // « + 4,2 R » ne dit pas si un filtre a affiné la stratégie ou l'a vidée — un
@@ -1578,6 +1592,9 @@ export function backtester(df, cfg) {
     // une bougie marquée par le signal est une entrée candidate ; celles que `autorise`
     // ou le délai écartent sont le coût, en trades, des filtres actifs
     if (autorise && !autorise[i]) { nEntCand++; nEntFiltrees++; continue; }
+    // le filtre d'événement compte comme les autres filtres : une entrée candidate
+    // écartée, visible dans « ce que les filtres coûtent »
+    if (sautFen && sautDemi && dansSaut(df.t[i])) { nEntCand++; nEntFiltrees++; continue; }
     if (seauEnt && seauEnt[i] === seauEntre) continue;   // ce signal a déjà été joué
     nEntCand++;
     if (delai && (i - derniere) < delai) { nEntFiltrees++; continue; }
@@ -2225,4 +2242,150 @@ export function sousPeriodes(trades, k = 3) {
 export function courbe(trades) {
   let eq = 0;
   return trades.map((t) => { eq += (t.R_net !== undefined ? t.R_net : t.R); return { t: t.sortie_t, eq }; });
+}
+
+// ————— ÉVÉNEMENTS MACRO : l'heure de Paris, le décalage de la série, l'impact mesuré —————
+//
+// Les séries déposées sont à l'heure du serveur du courtier, pas à celle de Paris ni
+// à l'UTC. Comme dans le comparateur MT5, le décalage n'est PAS une constante : on
+// cherche le décalage entier qui colle le mieux aux données — ici, celui qui maximise
+// l'amplitude médiane aux instants d'ancrage (les publications les plus violentes).
+
+// L'heure d'été européenne : du dernier dimanche de mars, 01:00 UTC, au dernier
+// dimanche d'octobre, 01:00 UTC. Paris = UTC+2 dedans, UTC+1 dehors.
+export function offsetParis(ms) {
+  const d = new Date(ms);
+  const an = d.getUTCFullYear();
+  const dernierDimanche = (mois) => {
+    const fin = new Date(Date.UTC(an, mois + 1, 0));
+    return Date.UTC(an, mois, fin.getUTCDate() - fin.getUTCDay(), 1, 0);
+  };
+  return ms >= dernierDimanche(2) && ms < dernierDimanche(9) ? 2 : 1;
+}
+
+// L'instant UTC d'une heure murale de Paris.
+export function msParis(an, mois, jour, heure, minute = 0) {
+  const approx = Date.UTC(an, mois, jour, heure, minute);
+  return approx - offsetParis(approx) * 3600000;
+}
+
+// La bougie H1 qui CONTIENT l'instant — recherche binaire ; -1 si aucune bougie ne
+// couvre l'heure (place fermée, trou de série).
+export function bougieContenant(df, ms) {
+  let a = 0, b = df.n - 1;
+  while (a <= b) {
+    const m = (a + b) >> 1;
+    if (df.t[m] > ms) b = m - 1; else a = m + 1;
+  }
+  const i = b;
+  return i >= 0 && ms >= df.t[i] && ms < df.t[i] + 3600000 ? i : -1;
+}
+
+const medianeDe = (liste) => {
+  if (!liste.length) return NaN;
+  const tri = [...liste].sort((x, y) => x - y);
+  const m = tri.length >> 1;
+  return tri.length % 2 ? tri[m] : (tri[m - 1] + tri[m]) / 2;
+};
+
+/**
+ * L'impact d'un rendez-vous sur une série, mesuré — jamais écrit à la main.
+ *
+ *   ampli    médiane de (H − B) / stop sur la bougie H1 qui contient la publication ;
+ *   rapport  ampli ÷ médiane de la même heure les jours SANS événement ;
+ *   n        occurrences réellement trouvées dans la série ;
+ *   efface4h part des cas où une clôture des 4 bougies suivantes revient dans la
+ *            fourchette de la bougie qui précédait la publication.
+ *
+ * `instantsUtc` sont des instants UTC ; `opts.dec` (heures entières) les convertit à
+ * l'horloge de la série — voir decalageSerie. `opts.stopPct` est la distance de stop
+ * de la configuration retenue pour ce symbole (1 % du prix à défaut).
+ */
+export function impactEvenement(df, instantsUtc, opts = {}) {
+  const dec = (Number(opts.dec) || 0) * 3600000;
+  const stopPct = Math.max(0.05, Number(opts.stopPct) || 1) / 100;
+  const debut = df.n ? df.t[0] : 0;
+  const fin = df.n ? df.t[df.n - 1] + 3600000 : 0;
+  const dedans = (instantsUtc || []).map((u) => u + dec).filter((ms) => ms >= debut && ms < fin);
+  const ampl = [];
+  const heures = new Set();
+  const joursEvt = new Set();
+  let fermees = 0, eff = 0, effN = 0;
+  for (const ms of dedans) {
+    heures.add(new Date(ms).getUTCHours());
+    joursEvt.add(Math.floor(ms / 86400000));
+    const i = bougieContenant(df, ms);
+    if (i < 0) { fermees++; continue; }
+    const stopDist = stopPct * df.c[i];
+    if (!(stopDist > 0)) continue;
+    ampl.push((df.h[i] - df.l[i]) / stopDist);
+    if (i > 0) {
+      const hPrev = df.h[i - 1], lPrev = df.l[i - 1];
+      let revenu = false;
+      for (let j = i + 1; j <= i + 4 && j < df.n; j++) {
+        if (df.c[j] <= hPrev && df.c[j] >= lPrev) { revenu = true; break; }
+      }
+      effN++; if (revenu) eff++;
+    }
+  }
+  // la référence : la MÊME heure de série, les jours sans événement
+  const base = [];
+  for (let i = 0; i < df.n; i++) {
+    if (!heures.has(new Date(df.t[i]).getUTCHours())) continue;
+    if (joursEvt.has(Math.floor(df.t[i] / 86400000))) continue;
+    const stopDist = stopPct * df.c[i];
+    if (stopDist > 0) base.push((df.h[i] - df.l[i]) / stopDist);
+  }
+  const ampli = medianeDe(ampl);
+  const ref = medianeDe(base);
+  return {
+    n: ampl.length,
+    total: dedans.length,
+    fermees,
+    ampli,
+    rapport: Number.isFinite(ampli) && Number.isFinite(ref) && ref > 0 ? ampli / ref : NaN,
+    efface4h: effN ? eff / effN : NaN,
+  };
+}
+
+/**
+ * Le décalage entier série ↔ UTC, cherché comme dans le comparateur MT5 : on essaie
+ * chaque décalage plausible et on garde celui qui colle le mieux — ici, celui qui
+ * maximise le rapport d'amplitude aux instants d'ancrage. `net` dit si le meilleur se
+ * détache vraiment du deuxième ; en dessous de 1,1 on ne conclut pas (dec: null).
+ */
+export function decalageSerie(df, ancresUtc, opts = {}) {
+  const de = Number.isFinite(opts.min) ? opts.min : -3;
+  const a2 = Number.isFinite(opts.max) ? opts.max : 6;
+  let mieux = null, second = null;
+  for (let dec = de; dec <= a2; dec++) {
+    const r = impactEvenement(df, ancresUtc, { dec, stopPct: 1 });
+    if (!Number.isFinite(r.rapport) || r.n < 6) continue;
+    const cand = { dec, rapport: r.rapport, n: r.n };
+    if (!mieux || cand.rapport > mieux.rapport) { second = mieux; mieux = cand; }
+    else if (!second || cand.rapport > second.rapport) second = cand;
+  }
+  if (!mieux) return { dec: null, rapport: NaN, net: NaN };
+  const net = second ? mieux.rapport / Math.max(1e-9, second.rapport) : Infinity;
+  return { dec: net >= 1.1 ? mieux.dec : null, rapport: mieux.rapport, net };
+}
+
+/**
+ * La marque des rendez-vous TRAVERSÉS par chaque trade clos : les clés dont l'instant
+ * tombe entre l'entrée et la sortie. Annotation pure — rien d'autre ne change.
+ * `evenements` : [{ cle, ms }] à l'horloge de la série.
+ */
+export function marquerEvenements(trades, evenements) {
+  if (!trades || !trades.length || !evenements || !evenements.length) return trades;
+  const evs = [...evenements].sort((x, y) => x.ms - y.ms);
+  for (const tr of trades) {
+    const dedans = [];
+    for (const e of evs) {
+      if (e.ms < tr.entree_t) continue;
+      if (e.ms > tr.sortie_t) break;
+      if (!dedans.includes(e.cle)) dedans.push(e.cle);
+    }
+    if (dedans.length) tr.evTraverses = dedans;
+  }
+  return trades;
 }

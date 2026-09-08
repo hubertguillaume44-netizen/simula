@@ -443,6 +443,13 @@
    ]
   },
   {
+   "terme": "Laisser les dates estimées déclencher le bandeau des 24 h",
+   "texte": "Éteint par défaut : une date estimée peut être fausse d'un jour ou deux, et un bandeau sur une date fausse est pire que pas de bandeau.",
+   "vues": [
+    "Marché"
+   ]
+  },
+  {
    "terme": "Lancez un premier balayage",
    "texte": "Le calcul tourne sur votre machine, vous pouvez l’arrêter à tout moment.",
    "vues": [

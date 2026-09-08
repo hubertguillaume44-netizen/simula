@@ -386,7 +386,7 @@
       <!-- la promesse reste dépliée : une promesse repliée ne rassure personne -->
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
-        <p style="margin:0;font-size:12px;line-height:1.55"><strong>Rien ne quitte votre navigateur.</strong> <span class="text-muted">Aucun fichier n'est envoyé : tout est lu et calculé sur votre machine, et enregistré sur cet appareil seulement. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
+        <p style="margin:0;font-size:12px;line-height:1.55"><strong>Vos données ne quittent pas votre navigateur.</strong> <span class="text-muted">Séries, scans, portefeuilles et réglages sont lus et calculés sur votre machine, et enregistrés sur cet appareil seulement. Les seules sorties possibles sont déclenchées par vous et décrites ici : les trois portes ci-dessous, et — si vous saisissez une clé — les tickers envoyés à Finnhub et les titres de presse envoyés au traducteur. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
             Importer un fichier
@@ -510,7 +510,7 @@
         <button type="button" class="rep" onClick="{{ tirBasculeNews }}"><span style="font-size:12px;flex:1"><strong>Actualités &amp; agenda</strong> <span style="color:var(--color-neutral-700)">— {{ tirNewsEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevNews }}</span></button>
         <sc-if value="{{ tirRepNews }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;flex-direction:column;gap:6px;padding:2px 0 10px">
-          <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">Seule exception à ce qui précède, et elle est facultative : avec une clé, Sivula demande à Finnhub les résultats trimestriels et les titres de presse de vos symboles. <strong>Seuls les tickers sortent</strong> — jamais vos historiques, vos scans ni vos réglages. Sans clé, aucun appel n'est fait.</p>
+          <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">Facultatif, et déclenché seulement par une clé : Sivula demande à Finnhub les résultats trimestriels et les titres de presse de vos symboles — <strong>seuls les tickers sortent</strong>, jamais vos historiques, vos scans ni vos réglages. Les titres reçus en anglais sont ensuite traduits via MyMemory : <strong>le texte du titre part au service de traduction</strong>, rien d'autre. Sans clé, aucun de ces appels n'est fait.</p>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input class="input" type="password" style="min-height:2rem;height:2rem;font-size:12px;width:24ch" value="{{ cleNews }}" placeholder="clé Finnhub (facultative)" onChange="{{ majCleNews }}">
             <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:11px" onClick="{{ oublierCleNews }}" disabled="{{ sansCleNews }}">Oublier</button>
@@ -1327,20 +1327,155 @@
     <sc-if value="{{ vueMarche }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;flex-direction:column;gap:30px">
     <sc-if value="{{ aMacro }}" hint-placeholder-val="{{ true }}">
-      <section class="card blueprint" style="padding:18px 20px;gap:10px">
+      <!--
+        L'AGENDA MACRO devient un registre de conséquences : aucune ligne ne s'affiche
+        sans dire ce qu'elle change pour votre livre, et tout impact chiffré vient de
+        VOS séries, avec son nombre d'occurrences — jamais d'un texte écrit à la main,
+        sauf quand la mesure est impossible, et alors la raison et la marche à suivre
+        s'affichent avec.
+      -->
+      <section class="card blueprint" style="padding:0;gap:0">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-          <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">Agenda macro</span>
-          <span style="font-size:12px" class="text-muted">Calculé sur votre machine, aucun appel réseau. Vaut pour tous vos instruments.</span>
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:17px 18px 12px">
+          <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">Agenda macro — ce qu'il change chez vous</span>
+          <span style="font-size:12px" class="text-muted">{{ macroNote }}</span>
         </div>
-        <sc-for list="{{ macroLignes }}" as="mc" hint-placeholder-count="4">
-          <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--color-divider)">
-            <span class="{{ mc.cls }}" style="font-size:10px;white-space:nowrap;min-width:11ch">{{ mc.dans }}</span>
-            <span style="font-size:12px;white-space:nowrap;min-width:11ch" class="text-muted">{{ mc.quand }}</span>
-            <strong style="font-size:13px;min-width:24ch">{{ mc.nom }}</strong>
-            <span style="font-size:11px;line-height:1.45;flex:1;min-width:26ch" class="text-muted">{{ mc.quoi }}</span>
+        <sc-for list="{{ evLignes }}" as="ev" hint-placeholder-count="5">
+          <div style="border-top:1px solid var(--color-divider)">
+            <button class="tete" type="button" style="gap:14px;padding:11px 14px" onClick="{{ ev.basculer }}">
+              <span class="{{ ev.clsDelai }}" style="font-size:10px;white-space:nowrap;min-width:10ch;text-align:center">{{ ev.dans }}</span>
+              <span style="font-size:12px;white-space:nowrap;min-width:9ch" class="text-muted">{{ ev.quand }}</span>
+              <strong style="font-size:14px;min-width:26ch;flex:none">{{ ev.nom }}</strong>
+              <sc-if value="{{ ev.estimee }}" hint-placeholder-val="{{ false }}">
+                <span class="tag tag-outline" style="font-size:9px;white-space:nowrap">date estimée</span>
+              </sc-if>
+              <span style="font-size:12px;line-height:1.5;flex:1;min-width:30ch">{{ ev.chezVous }}</span>
+              <span class="text-muted" style="font-size:14px">{{ ev.fleche }}</span>
+            </button>
+            <sc-if value="{{ ev.ouvert }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;padding:4px 16px 20px;background:color-mix(in srgb,var(--color-accent) 4%,transparent)">
+                <div style="display:flex;flex-direction:column;gap:9px;min-width:0">
+                  <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">Impact mesuré sur vos séries</span>
+                  <sc-if value="{{ ev.aMesure }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <sc-for list="{{ ev.exposes }}" as="ex" hint-placeholder-count="3">
+                        <div style="display:flex;flex-direction:column;gap:3px">
+                          <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+                            <strong style="font-size:13px;min-width:11ch">{{ ex.sym }}</strong>
+                            <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px">{{ ex.ampli }}</span>
+                            <span style="font-size:11px" class="text-muted">{{ ex.detail }}</span>
+                          </div>
+                          <div style="height:6px;background:var(--color-neutral-200)">
+                            <div style="height:6px;background:var(--color-accent);width:{{ ex.larg }}"></div>
+                          </div>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ ev.sansExpose }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:12px;line-height:1.5" class="text-muted">{{ ev.sansExposeTxt }}</span>
+                      </sc-if>
+                    </div>
+                    <sc-if value="{{ ev.aSous }}" hint-placeholder-val="{{ false }}">
+                      <button class="lien" type="button" style="font-size:11px" onClick="{{ ev.basculerSans }}">{{ ev.txtSans }}</button>
+                      <sc-if value="{{ ev.sansOuvert }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column;gap:4px;opacity:.55">
+                          <sc-for list="{{ ev.sansEffet }}" as="se" hint-placeholder-count="3">
+                            <div style="display:flex;gap:10px;align-items:baseline;font-size:12px;flex-wrap:wrap">
+                              <span style="min-width:11ch">{{ se.sym }}</span>
+                              <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ se.ampli }}</span>
+                              <span style="font-size:11px">{{ se.detail }}</span>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ ev.sansMesure }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">{{ ev.quoiEcrit }}</p>
+                    <div class="blueprint" style="padding:9px 11px;font-size:11px;line-height:1.5">
+                      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                      <span>{{ ev.manque }}</span>
+                    </div>
+                  </sc-if>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:9px;min-width:0">
+                  <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">Ce que ça change maintenant</span>
+                  <sc-for list="{{ ev.livre }}" as="lv" hint-placeholder-count="3">
+                    <div style="display:flex;gap:10px;align-items:baseline;font-size:12px;line-height:1.5;padding-bottom:7px;border-bottom:1px solid var(--color-divider)">
+                      <span class="{{ lv.cls }}" style="font-size:9px;white-space:nowrap;min-width:9ch;text-align:center">{{ lv.quoi }}</span>
+                      <span style="flex:1;min-width:20ch">{{ lv.txt }}</span>
+                    </div>
+                  </sc-for>
+                  <span style="font-size:11px;line-height:1.5" class="text-muted">{{ ev.source }}</span>
+                </div>
+              </div>
+            </sc-if>
           </div>
         </sc-for>
+      </section>
+
+      <!--
+        FAUT-IL RESTER À L'ÉCART ? La question est mesurable : la même configuration,
+        rejouée en sautant ±2 h autour des rendez-vous mesurables. Le filtre du moteur
+        (sauter_evenements) reste ÉTEINT par défaut ; ce bloc donne le chiffre, pas un
+        conseil — et sous 20 trades ou 0,1 de PF d'écart, il écrit « ne conclut rien ».
+      -->
+      <section class="card blueprint" style="padding:19px 20px;gap:13px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">Faut-il rester à l'écart ? La question est mesurable</span>
+          <p style="margin:0;font-size:13px;line-height:1.6;max-width:90ch" class="text-muted">La même configuration, rejouée en sautant les deux heures qui entourent chaque rendez-vous mesurable. Rien d'autre ne change. Ce n'est pas une opinion sur les jours de publication : c'est ce que vos séries répondent.</p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:13px" onClick="{{ lancerAvecSans }}" disabled="{{ avsOccupe }}">{{ avsBoutonTxt }}</button>
+          <span style="font-size:12px;line-height:1.5;flex:1;min-width:28ch" class="text-muted">{{ avsNote }}</span>
+        </div>
+        <sc-if value="{{ aAvs }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto">
+            <table class="table" style="font-size:13px;min-width:660px">
+              <thead>
+                <tr>
+                  <th style="text-align:left">Instrument · configuration</th>
+                  <th style="text-align:center">Sans filtre</th>
+                  <th style="text-align:center">En sautant ±2 h</th>
+                  <th style="text-align:left">Ce qu'on peut en dire</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ avsLignes }}" as="cp" hint-placeholder-count="3">
+                  <tr>
+                    <td style="text-align:left"><strong>{{ cp.sym }}</strong><span class="text-muted" style="display:block;font-size:11px">{{ cp.cfg }}</span></td>
+                    <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ cp.avant }}<span class="text-muted" style="display:block;font-size:11px;font-family:var(--font-body)">{{ cp.avantN }}</span></td>
+                    <td style="text-align:center;font-family:var(--font-heading);font-variant-numeric:tabular-nums">{{ cp.apres }}<span class="text-muted" style="display:block;font-size:11px;font-family:var(--font-body)">{{ cp.apresN }}</span></td>
+                    <td style="text-align:left;font-size:12px;line-height:1.5">{{ cp.dit }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <span style="font-size:11px;line-height:1.5" class="text-muted">Le filtre reste éteint par défaut : la page donne le chiffre, pas un conseil.</span>
+        </sc-if>
+      </section>
+
+      <!-- LES RENDEZ-VOUS SUIVIS : cochables, chacun avec la provenance de sa date -->
+      <section class="card blueprint" style="padding:19px 20px;gap:13px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="margin:0;font-family:var(--font-heading);font-size:26px;line-height:1.1;letter-spacing:-.005em">Rendez-vous suivis</span>
+          <p style="margin:0;font-size:13px;line-height:1.6;max-width:90ch" class="text-muted">Une date fausse est pire que pas de date. Chaque rendez-vous dit d'où vient la sienne : annoncée par l'institution, déduite d'une règle fixe, ou estimée — et une date estimée ne déclenche jamais le bandeau des 24 h.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:9px">
+          <sc-for list="{{ macroChoix }}" as="sv" hint-placeholder-count="8">
+            <button type="button" style="cursor:pointer;font:inherit;text-align:left;padding:4px 10px;background:none;display:flex;gap:10px;align-items:baseline;border:1px solid {{ sv.bord }}" onClick="{{ sv.basculer }}">
+              <span style="font-size:12px">{{ sv.coche }}</span>
+              <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+                <span style="font-size:12px">{{ sv.nom }}</span>
+                <span style="font-size:10px;color:var(--color-neutral-700)">{{ sv.srcTxt }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+        <label class="radio" style="font-size:11px;color:var(--color-neutral-700)" title="Éteint par défaut : une date estimée peut être fausse d'un jour ou deux, et un bandeau sur une date fausse est pire que pas de bandeau."><input type="checkbox" checked="{{ bandeauEstimeesVal }}" onChange="{{ basculerBandeauEstimees }}"><span class="dot"></span>Laisser les dates estimées déclencher le bandeau des 24 h</label>
+        <span style="font-size:11px;line-height:1.5" class="text-muted">Les résultats trimestriels sont les seuls à demander la clé Finnhub ; tout le reste est calculé localement, sans appel réseau.</span>
       </section>
     </sc-if>
 
@@ -3826,6 +3961,14 @@
               <button class="btn btn-ghost" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ exporterJournal }}" title="Enregistre la liste complète en CSV, ouvrable dans un tableur">Exporter en CSV</button>
             </div>
           </div>
+          <sc-if value="{{ aEvCheval }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:22px;align-items:baseline;flex-wrap:wrap">
+              <span style="display:flex;flex-direction:column;gap:1px"><strong style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ dEvChevalPf }}</strong><span style="font-size:11px" class="text-muted">{{ dEvChevalN }}</span></span>
+              <span style="width:1px;align-self:stretch;background:var(--color-divider)"></span>
+              <span style="display:flex;flex-direction:column;gap:1px"><strong style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ dEvAutresPf }}</strong><span style="font-size:11px" class="text-muted">{{ dEvAutresN }}</span></span>
+              <span style="font-size:11px;line-height:1.5;flex:1;min-width:26ch" class="text-muted">{{ dEvNote }}</span>
+            </div>
+          </sc-if>
           <div style="max-height:340px;overflow:auto">
           <table class="table" style="font-size:12px">
             <thead><tr>
@@ -3843,7 +3986,7 @@
                   <td class="text-muted">{{ jt.i }}</td>
                   <td style="white-space:nowrap">{{ jt.entree }}</td>
                   <td style="white-space:nowrap">{{ jt.sortie }}</td>
-                  <td><span class="{{ jt.cls }}">{{ jt.motif }}</span></td>
+                  <td><span class="{{ jt.cls }}">{{ jt.motif }}</span><sc-if value="{{ jt.aEvts }}" hint-placeholder-val="{{ false }}"><span class="tag tag-outline" style="font-size:9px;margin-inline-start:6px;white-space:nowrap">{{ jt.evtsTxt }}</span></sc-if></td>
                   <td style="text-align:right;white-space:nowrap">{{ jt.duree }}</td>
                   <td style="text-align:right;white-space:nowrap;font-weight:600;color:{{ jt.couleur }}">{{ jt.r }}</td>
                   <td style="text-align:right;white-space:nowrap" class="text-muted">{{ jt.cum }}</td>
@@ -10330,7 +10473,9 @@ GROUPES = {
       'hasardA', 'hasardB',
       // le nombre de tirages : un réglage qu'on change en connaissance de cause, et qui
       // ne doit pas retomber à sa valeur d'usine au rechargement suivant
-      'nTirages'];
+      'nTirages',
+      // l'agenda macro : la liste des rendez-vous suivis et le réglage du bandeau
+      'macroSuivis', 'bandeauEstimees'];
   }
   ecrireSession() {
     const p = {};
@@ -11286,11 +11431,35 @@ GROUPES = {
     this._newsAutoVu = Date.now();
     this.chargerNews(false);
   }
-  // Dates FOMC et BCE annoncées par les banques centrales ; à prolonger chaque année.
-  // Le jour du PIB américain (estimation avancée) est fixe : fin janvier, avril, juillet, octobre.
-  DATES_FOMC = ['2026-09-16', '2026-11-04', '2026-12-16',
+  // ————— LE CALENDRIER DES RENDEZ-VOUS : la provenance d'abord —————
+  //
+  // Une date fausse est pire que pas de date. Chaque rendez-vous porte donc sa
+  // provenance : 'annoncee' (publiée par l'institution), 'regle' (déduite d'une règle
+  // fixe), 'estimee' (approchée — étiquetée partout, jamais de bandeau).
+  //
+  // Les dates FOMC et BCE passées sont recopiées des calendriers publics pour que
+  // l'impact se MESURE sur l'historique ; une date fausse ne pèse qu'une occurrence
+  // de la médiane. Réunions d'urgence exclues (mars 2020) : hors calendrier.
+  DATES_FOMC = [
+    '2019-01-30', '2019-03-20', '2019-05-01', '2019-06-19', '2019-07-31', '2019-09-18', '2019-10-30', '2019-12-11',
+    '2020-01-29', '2020-04-29', '2020-06-10', '2020-07-29', '2020-09-16', '2020-11-05', '2020-12-16',
+    '2021-01-27', '2021-03-17', '2021-04-28', '2021-06-16', '2021-07-28', '2021-09-22', '2021-11-03', '2021-12-15',
+    '2022-01-26', '2022-03-16', '2022-05-04', '2022-06-15', '2022-07-27', '2022-09-21', '2022-11-02', '2022-12-14',
+    '2023-02-01', '2023-03-22', '2023-05-03', '2023-06-14', '2023-07-26', '2023-09-20', '2023-11-01', '2023-12-13',
+    '2024-01-31', '2024-03-20', '2024-05-01', '2024-06-12', '2024-07-31', '2024-09-18', '2024-11-07', '2024-12-18',
+    '2025-01-29', '2025-03-19', '2025-05-07', '2025-06-18', '2025-07-30', '2025-09-17', '2025-10-29', '2025-12-10',
+    '2026-01-28', '2026-03-18', '2026-04-29', '2026-06-17', '2026-07-29',
+    '2026-09-16', '2026-11-04', '2026-12-16',
     '2027-01-27', '2027-03-17', '2027-04-28', '2027-06-16', '2027-07-28', '2027-09-22', '2027-11-03', '2027-12-15'];
-  DATES_BCE = ['2026-09-10', '2026-10-29', '2026-12-17',
+  DATES_BCE = [
+    '2019-01-24', '2019-03-07', '2019-04-10', '2019-06-06', '2019-07-25', '2019-09-12', '2019-10-24', '2019-12-12',
+    '2020-01-23', '2020-03-12', '2020-04-30', '2020-06-04', '2020-07-16', '2020-09-10', '2020-10-29', '2020-12-10',
+    '2021-01-21', '2021-03-11', '2021-04-22', '2021-06-10', '2021-07-22', '2021-09-09', '2021-10-28', '2021-12-16',
+    '2022-02-03', '2022-03-10', '2022-04-14', '2022-06-09', '2022-07-21', '2022-09-08', '2022-10-27', '2022-12-15',
+    '2023-02-02', '2023-03-16', '2023-05-04', '2023-06-15', '2023-07-27', '2023-09-14', '2023-10-26', '2023-12-14',
+    '2024-01-25', '2024-03-07', '2024-04-11', '2024-06-06', '2024-07-18', '2024-09-12', '2024-10-17', '2024-12-12',
+    '2025-01-30', '2025-03-06', '2025-04-17', '2025-06-05', '2025-07-24', '2025-09-11', '2025-10-30', '2025-12-18',
+    '2026-09-10', '2026-10-29', '2026-12-17',
     '2027-02-04', '2027-03-18', '2027-04-29', '2027-06-10', '2027-07-22', '2027-09-09', '2027-10-28', '2027-12-16'];
   // premier vendredi du mois : emploi américain, 14 h 30 à Paris
   premierVendredi(an, mois) {
@@ -11309,30 +11478,272 @@ GROUPES = {
     else if (n === 0) j.setUTCDate(j.getUTCDate() - 2);
     return j;
   }
+  troisiemeVendredi(an, mois) {
+    const d = new Date(Date.UTC(an, mois, 15));
+    while (d.getUTCDay() !== 5) d.setUTCDate(d.getUTCDate() + 1);
+    return d;
+  }
+  // Pâques (Meeus) : Vendredi saint et lundi de Pâques ferment les places européennes
+  paques(an) {
+    const a = an % 19, b = Math.floor(an / 100), c = an % 100;
+    const d2 = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d2 - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const mois = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+    const jour = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(Date.UTC(an, mois, jour));
+  }
+  // Les douze rendez-vous suivis. `h` : heure de publication à PARIS, convertie à
+  // l'horloge de la série par le décalage retrouvé dans les données (decalageSerie) —
+  // jamais une constante. `h: null` : pas d'instant unique, donc pas d'impact mesuré.
+  EVTS = {
+    nfp: { nom: 'Emploi américain (NFP)', src: 'regle', srcTxt: 'règle fixe · premier vendredi, 14 h 30 à Paris', h: [14, 30],
+      ecrit: 'Indices et dollar : mouvement brutal à 14 h 30.' },
+    cpi: { nom: 'Inflation américaine (CPI)', src: 'estimee', srcTxt: 'estimée · retenue au 12 du mois, à vérifier', h: [14, 30],
+      ecrit: 'Attendu vers le 12 — vérifiez la date exacte. Même effet que le NFP.' },
+    pib: { nom: 'PIB américain (estimation)', src: 'estimee', srcTxt: 'estimée · fin de trimestre', h: [14, 30],
+      ecrit: 'Publication trimestrielle, effet plus modéré.' },
+    fomc: { nom: 'Décision de taux — Fed (FOMC)', src: 'annoncee', srcTxt: 'annoncée · calendrier publié par la Fed', h: [20, 0],
+      ecrit: 'Le rendez-vous le plus violent pour les indices et le dollar.' },
+    bce: { nom: 'Décision de taux — BCE', src: 'annoncee', srcTxt: 'annoncée · calendrier publié par la BCE', h: [14, 15],
+      ecrit: 'Euro et indices européens.' },
+    eurz: { nom: 'Emploi et inflation zone euro (Eurostat)', src: 'estimee', srcTxt: 'estimée · début de mois, 11 h à Paris', h: [11, 0],
+      ecrit: 'Publications Eurostat en début de mois : euro et indices européens.' },
+    bojboe: { nom: 'Réunions BoJ et BoE', src: 'estimee', srcTxt: 'estimée · autour de chaque FOMC, à vérifier', h: [13, 0],
+      ecrit: 'Yen, livre et indices locaux ; les deux banques se réunissent la semaine du FOMC.' },
+    eia: { nom: 'Stocks pétroliers (EIA)', src: 'regle', srcTxt: 'règle fixe · mercredi, 16 h 30 à Paris', h: [16, 30],
+      ecrit: 'Publication hebdomadaire des stocks américains : le pétrole bouge fort dans la demi-heure.' },
+    earn: { nom: 'Résultats de mes actions', src: 'annoncee', srcTxt: 'annoncée · clé Finnhub, par symbole', h: null,
+      ecrit: 'Un écart de cours à la publication n\u2019a rien à voir avec ce que la configuration a mesuré.' },
+    roll: { nom: 'Roulement des contrats à terme', src: 'regle', srcTxt: 'règle fixe · avant l\u2019échéance trimestrielle', h: null,
+      ecrit: 'La série change de contrat : l\u2019écart de prix est un artefact, pas un mouvement.' },
+    opt: { nom: 'Échéances d\u2019options', src: 'regle', srcTxt: 'règle fixe · troisième vendredi', h: [15, 30],
+      ecrit: 'Volume anormal autour de l\u2019échéance ; l\u2019amplitude reste à mesurer chez vous.' },
+    ferie: { nom: 'Jours fériés de mes places', src: 'regle', srcTxt: 'table locale · par place', h: null,
+      ecrit: 'Place fermée ou séance écourtée : liquidité réduite, spreads plus larges.' },
+  };
+  MACRO_DEFAUT = ['nfp', 'fomc', 'cpi', 'bce', 'pib', 'eurz', 'bojboe', 'eia', 'earn', 'roll', 'opt', 'ferie'];
+  // clés dont l'impact se MESURE (un instant de publication existe)
+  MESURABLES = ['nfp', 'cpi', 'pib', 'fomc', 'bce', 'eurz', 'bojboe', 'eia', 'opt'];
+  SEUIL_IMPACT = 0.8;
+
+  // les JOURS d'une clé sur [deb, fin], en Date UTC à minuit
+  joursEvenement(cle, debMs, finMs) {
+    const jours = [];
+    const pousserJ = (d) => {
+      const ms = d instanceof Date ? d.getTime() : Date.parse(d + 'T00:00:00Z');
+      if (Number.isFinite(ms) && ms >= debMs - 86400000 && ms <= finMs + 86400000) jours.push(new Date(ms));
+    };
+    if (cle === 'fomc') { for (const d of this.DATES_FOMC) pousserJ(d); return jours; }
+    if (cle === 'bce') { for (const d of this.DATES_BCE) pousserJ(d); return jours; }
+    if (cle === 'bojboe') {
+      // approximation ESTIMÉE : le jeudi qui suit chaque FOMC — les deux banques se
+      // réunissent la même quinzaine. À vérifier avant d'en tirer une décision.
+      for (const d of this.DATES_FOMC) {
+        const f = new Date(Date.parse(d + 'T00:00:00Z'));
+        const j = new Date(f); j.setUTCDate(j.getUTCDate() + (((11 - f.getUTCDay()) % 7) || 7));
+        pousserJ(j);
+      }
+      return jours;
+    }
+    if (cle === 'eia') {
+      const d = new Date(Math.max(0, debMs - 86400000));
+      d.setUTCHours(0, 0, 0, 0);
+      while (d.getTime() <= finMs + 86400000) {
+        if (d.getUTCDay() === 3) pousserJ(new Date(d.getTime()));
+        d.setUTCDate(d.getUTCDate() + 1);
+      }
+      return jours;
+    }
+    const a0 = new Date(debMs).getUTCFullYear(), a1 = new Date(finMs).getUTCFullYear();
+    for (let an = a0; an <= a1; an++) {
+      if (cle === 'ferie') {
+        const p = this.paques(an);
+        const vs = new Date(p.getTime() - 2 * 86400000);
+        const lp = new Date(p.getTime() + 86400000);
+        const th = new Date(Date.UTC(an, 10, 22));
+        while (th.getUTCDay() !== 4) th.setUTCDate(th.getUTCDate() + 1);
+        for (const d of [new Date(Date.UTC(an, 0, 1)), vs, lp, new Date(Date.UTC(an, 4, 1)),
+          new Date(Date.UTC(an, 6, 4)), th, new Date(Date.UTC(an, 11, 25)), new Date(Date.UTC(an, 11, 26))]) pousserJ(d);
+        continue;
+      }
+      for (let mo = 0; mo < 12; mo++) {
+        if (cle === 'nfp') pousserJ(this.premierVendredi(an, mo));
+        else if (cle === 'cpi') pousserJ(this.jourOuvre(this.jourCPI(an, mo)));
+        else if (cle === 'pib' && mo % 3 === 0) pousserJ(this.jourOuvre(new Date(Date.UTC(an, mo, 30))));
+        else if (cle === 'eurz') pousserJ(this.jourOuvre(new Date(Date.UTC(an, mo, 2))));
+        else if (cle === 'opt') pousserJ(this.troisiemeVendredi(an, mo));
+        else if (cle === 'roll' && mo % 3 === 2) pousserJ(new Date(this.troisiemeVendredi(an, mo).getTime() - 8 * 86400000));
+      }
+    }
+    return jours;
+  }
+  // les INSTANTS UTC d'une clé : le jour + l'heure de Paris (msParis gère l'heure d'été)
+  instantsEvenement(cle, debMs, finMs) {
+    const h = (this.EVTS[cle] || {}).h || [12, 0];
+    return this.joursEvenement(cle, debMs, finMs).map((d) =>
+      this.M.msParis(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), h[0], h[1]));
+  }
+
   agendaMacro() {
-    const choisis = this.state.macroSuivis || ['nfp', 'fomc', 'cpi', 'bce', 'pib'];
+    const choisis = this.state.macroSuivis || this.MACRO_DEFAUT;
     const out = [];
     const auj = Date.now();
-    const pousser = (cle, nom, quoi, d) => {
-      if (!choisis.includes(cle)) return;
-      const brut = d instanceof Date ? d : new Date(d + 'T12:00:00Z');
-      const ms = this.jourOuvre(brut).getTime();
-      const jours = Math.round((ms - auj) / 86400000);
-      if (jours < 0 || jours > 90) return;
-      out.push({ cle, nom, quoi, ms, jours });
-    };
-    const now = new Date();
-    for (let m = 0; m < 4; m++) {
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + m, 1));
-      const an = d.getUTCFullYear(), mo = d.getUTCMonth();
-      pousser('nfp', 'Emploi américain (NFP)', 'Indices et dollar : mouvement brutal à 14 h 30.', this.premierVendredi(an, mo));
-      pousser('cpi', 'Inflation américaine (CPI)', 'Attendu vers le 12 — vérifiez la date exacte. Même effet que le NFP.', this.jourCPI(an, mo));
-      if (mo % 3 === 0) pousser('pib', 'PIB américain (estimation)', 'Publication trimestrielle, effet plus modéré.', new Date(Date.UTC(an, mo, 30)));
+    for (const cle of Object.keys(this.EVTS)) {
+      if (!choisis.includes(cle)) continue;
+      const def = this.EVTS[cle];
+      if (cle === 'earn') {
+        // les résultats trimestriels des actions du portefeuille : dates Finnhub déjà
+        // chargées par la page Portefeuille — aucune date inventée sans clé
+        for (const sym of this.symsLivre()) {
+          const n = (this.state.news || {})[sym];
+          if (!n || !n.resultats) continue;
+          const ms = this.jourOuvre(new Date(n.resultats + 'T12:00:00Z')).getTime();
+          const jours = Math.round((ms - auj) / 86400000);
+          if (jours < 0 || jours > 90) continue;
+          out.push({ cle, nom: 'Résultats — ' + this.nomComplet(sym), quoi: def.ecrit,
+            ms, jours, src: def.src, estimee: false, sym });
+        }
+        continue;
+      }
+      for (const d of this.joursEvenement(cle, auj - 86400000, auj + 91 * 86400000)) {
+        const ms = this.jourOuvre(d).getTime() + 12 * 3600000;
+        const jours = Math.round((ms - auj) / 86400000);
+        if (jours < 0 || jours > 90) continue;
+        out.push({ cle, nom: def.nom, quoi: def.ecrit, ms, jours,
+          src: def.src, estimee: def.src === 'estimee' });
+      }
     }
-    for (const d of this.DATES_FOMC) pousser('fomc', 'Décision de taux — Fed (FOMC)', 'Le rendez-vous le plus violent pour les indices et le dollar.', d);
-    for (const d of this.DATES_BCE) pousser('bce', 'Décision de taux — BCE', 'Euro et indices européens.', d);
     out.sort((a, b) => a.ms - b.ms);
     return out;
+  }
+
+  // ————— L'IMPACT MESURÉ, et son cache —————
+  //
+  // Mis en cache par (symbole, clé, règle du moteur, bornes de la série) : déposer un
+  // CSV change les bornes, invalide la mesure et déclenche le recalcul. Aucun chiffre
+  // écrit en dur : tout sort de impactEvenement, sur les bougies déposées.
+  CLE_IMPACT = 'simula.impactEvts.v1';
+  lireImpacts() {
+    try { return JSON.parse(localStorage.getItem(this.cle(this.CLE_IMPACT)) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  ecrireImpacts(m) {
+    try { localStorage.setItem(this.cle(this.CLE_IMPACT), JSON.stringify(m || {})); } catch (e) {}
+  }
+  symsLivre() {
+    return [...new Set([...(this.state.pfs || []).flatMap((p) => p.syms || []),
+      ...this.normValides(this.state.valides).map((x) => x.ticker || x.sym)])].filter(Boolean);
+  }
+  impactsAuto() {
+    if (this.state.vue !== 'marche') return;
+    if (this._impVu && Date.now() - this._impVu < 300000) return;
+    this._impVu = Date.now();
+    this.assurerImpacts();
+  }
+  async assurerImpacts() {
+    if (this._impEnCours || !this.M) return;
+    this._impEnCours = true;
+    try {
+      const cache = this.lireImpacts();
+      let neuf = false;
+      const bornesVues = {};
+      for (const sym of this.symsLivre().slice(0, 24)) {
+        try { await this.charger(sym); } catch (e) { continue; }
+        const df = this.base(sym);
+        if (!df || df.n < 500) continue;
+        const borne = df.t[0] + '|' + df.t[df.n - 1];
+        bornesVues[sym] = borne;
+        // le décalage série ↔ UTC, retrouvé UNE fois par série sur les ancres les plus
+        // violentes (NFP + CPI) — même démarche que le comparateur MT5, pas une constante
+        const cleDec = ['dec', sym, this.MOTEUR_V, borne].join('|');
+        if (!(cleDec in cache)) {
+          const ancres = [...this.instantsEvenement('nfp', df.t[0], df.t[df.n - 1]),
+            ...this.instantsEvenement('cpi', df.t[0], df.t[df.n - 1])];
+          cache[cleDec] = this.M.decalageSerie(df, ancres);
+          neuf = true;
+        }
+        const dec = cache[cleDec] && Number.isFinite(cache[cleDec].dec) ? cache[cleDec].dec : 1;
+        for (const cle of this.MESURABLES) {
+          const k = [sym, cle, this.MOTEUR_V, borne].join('|');
+          if (k in cache) continue;
+          const insts = this.instantsEvenement(cle, df.t[0] - 12 * 3600000, df.t[df.n - 1]);
+          const stopPct = Number(this.stopDe(sym)) || 1;
+          cache[k] = { ...this.M.impactEvenement(df, insts, { dec, stopPct }), stopPct, dec };
+          neuf = true;
+          await new Promise((z) => setTimeout(z, 0));
+        }
+      }
+      if (neuf) {
+        // ménage : les mesures d'anciennes bornes d'un symbole re-mesuré partent
+        for (const k of Object.keys(cache)) {
+          const p = k.split('|');
+          const sym = p[0] === 'dec' ? p[1] : p[0];
+          const borne = p.slice(-2).join('|');
+          if (bornesVues[sym] && bornesVues[sym] !== borne) delete cache[k];
+        }
+        this.ecrireImpacts(cache);
+        this.setState({ impactRev: (this.state.impactRev || 0) + 1 });
+      }
+    } finally { this._impEnCours = false; }
+  }
+  // l'impact en cache pour (symbole, clé), quelles que soient les bornes courantes
+  impactDe(cache, sym, cle) {
+    const pref = sym + '|' + cle + '|' + this.MOTEUR_V + '|';
+    for (const k of Object.keys(cache)) if (k.startsWith(pref)) return cache[k];
+    return null;
+  }
+  // les instants d'événements à l'horloge de la SÉRIE — pour les marques de traversée
+  // et le filtre « mesurer avec / sans »
+  evenementsSerie(sym, df) {
+    if (!df || !df.n) return [];
+    const cache = this.lireImpacts();
+    const d0 = cache[['dec', sym, this.MOTEUR_V, df.t[0] + '|' + df.t[df.n - 1]].join('|')];
+    const dec = (d0 && Number.isFinite(d0.dec) ? d0.dec : 1) * 3600000;
+    const out = [];
+    for (const cle of this.MESURABLES) {
+      for (const u of this.instantsEvenement(cle, df.t[0], df.t[df.n - 1])) out.push({ cle, ms: u + dec });
+    }
+    return out.sort((a, b) => a.ms - b.ms);
+  }
+  // ————— MESURER AVEC / SANS : la même configuration, rejouée deux fois —————
+  async mesurerAvecSans() {
+    if (this._avsEnCours || !this.M) return;
+    this._avsEnCours = true;
+    this.setState({ avecSans: { enCours: true, lignes: [] } });
+    try {
+      const lignes = this.normValides(this.state.valides).filter((v) => v.periode != null).slice(0, 3);
+      const out = [];
+      for (const v of lignes) {
+        const sym = v.ticker || v.sym;
+        try { await this.charger(sym); } catch (e) { continue; }
+        const df = this.base(sym);
+        if (!df || df.n < 500) continue;
+        const vr = { ...v, _sid: v.sid || v._sid };
+        const cfg = this.cfgDeLigne(vr)
+          || this.cfgCourante(sym, v.periode, v.sl, v.rr, undefined, { entree: v.entree, ligne: v.ligne });
+        const ut = v.ut || 'H1';
+        const dfU = ut !== 'H1' ? this.M.resampler(df, ut) : df;
+        if (!dfU) continue;
+        const instants = this.evenementsSerie(sym, df).map((x) => x.ms);
+        let sans = [], avec = [];
+        try {
+          sans = this.mesurer(sym, cfg, ut, dfU);
+          avec = this.mesurer(sym, { ...cfg, sauter_evenements: { heures: 2, instants } }, ut, dfU);
+        } catch (e) { continue; }
+        if (!sans.length) continue;
+        const rs = this.M.resume(sans), ra = this.M.resume(avec.length ? avec : sans);
+        const dTr = Math.abs(rs.n - ra.n);
+        const dPf = Math.abs((Number.isFinite(rs.pf) ? rs.pf : 0) - (Number.isFinite(ra.pf) ? ra.pf : 0));
+        out.push({ sym, dTr, dPf, sans: rs, avec: ra,
+          reglages: (v.entree || '?') + ' · ' + (v.ligne || '?') + ' ' + v.periode
+            + ' · SL ' + v.sl + ' % · RR ' + v.rr,
+          concluant: dTr >= 20 && dPf >= 0.1 });
+        await new Promise((z) => setTimeout(z, 0));
+      }
+      this.setState({ avecSans: { enCours: false, lignes: out, fait: true } });
+    } finally { this._avsEnCours = false; }
   }
   // Pourquoi ce scan s'est arrêté. Trois causes sont notées à la source ; la quatrième
   // se déduit du silence — aucune marque de départ, et une dernière écriture ancienne.
@@ -11585,6 +11996,9 @@ GROUPES = {
         : this.cfgCourante(r.sym, r.periode, r.sl, r.rr));
     const trades = this.mesurer(r.sym, cfgFiche, this.state.ut, df);
     if (!trades.length) return false;
+    // la marque des rendez-vous traversés, posée à la clôture de chaque trade : les
+    // clés tombées entre l'entrée et la sortie — annotation pure, aucun chiffre ne bouge
+    try { this.M.marquerEvenements(trades, this.evenementsSerie(r.sym, df)); } catch (e) {}
     const res = this.M.resume(trades), sg = this.M.segments(trades, 5);
     const sup = this.mesuresSup(trades, res);
     const c = this.M.courbe(trades);
@@ -11608,7 +12022,8 @@ GROUPES = {
     const journal = trades.map((x, i) => {
       eq += R(x);
       return { i: i + 1, e: x.entree_t, s: x.sortie_t, r: R(x), brut: x.R,
-        motif: x.motif, bougies: x.bougies, ambigu: !!x.ambigu, cum: eq };
+        motif: x.motif, bougies: x.bougies, ambigu: !!x.ambigu, cum: eq,
+        evts: x.evTraverses || null };
     });
     this.setState({ ficheMsg: null, fenMotifOuvert: null,
       detail: { ...r, ...sup, res, seg: sg, courbe: c, marche, an, tiers, journal,
@@ -20027,24 +20442,52 @@ GROUPES = {
           aJournal: true,
           dJournal: vus.map((x) => {
             const m = MOTIFS[x.motif] || [x.motif, 'tag tag-outline'];
+            const NOMS_EV2 = { nfp: 'NFP', cpi: 'CPI', pib: 'PIB', fomc: 'FOMC', bce: 'BCE',
+              eurz: 'Eurostat', bojboe: 'BoJ/BoE', eia: 'EIA', opt: 'options' };
             return { i: x.i, entree: dt(x.e), sortie: dt(x.s), motif: m[0] + (x.ambigu ? ' ?' : ''),
               cls: m[1], duree: dur(x.e, x.s), r: sg(x.r, 2),
               couleur: x.r > 0 ? 'var(--color-accent-700)' : 'var(--color-text)',
+              aEvts: !!(x.evts && x.evts.length),
+              evtsTxt: x.evts && x.evts.length
+                ? 'a traversé ' + x.evts.map((c2) => NOMS_EV2[c2] || c2).join(' + ') : '',
               cum: sg(x.cum, 1) };
           }),
           dJournalResume: j.length + (j.length > 1 ? ' trades' : ' trade')
             + (j.length > 300 ? ' — 300 affichés' : ''),
+          // ————— LES TRADES À CHEVAL sur un rendez-vous : marque et agrégat —————
+          ...(() => {
+            const NOMS_EV = { nfp: 'NFP', cpi: 'CPI', pib: 'PIB', fomc: 'FOMC', bce: 'BCE',
+              eurz: 'Eurostat', bojboe: 'BoJ/BoE', eia: 'EIA', opt: 'options' };
+            const cheval = j.filter((x) => x.evts && x.evts.length);
+            const autres = j.filter((x) => !x.evts || !x.evts.length);
+            const pfDe = (l) => {
+              let g = 0, p2 = 0;
+              for (const x of l) { if (x.r > 0) g += x.r; else p2 += -x.r; }
+              return p2 > 0 ? g / p2 : (g > 0 ? Infinity : NaN);
+            };
+            const pfTxt = (x) => (Number.isFinite(x) ? fr(x, 2) : x === Infinity ? '∞' : '—');
+            return {
+              aEvCheval: cheval.length > 0,
+              dEvChevalPf: pfTxt(pfDe(cheval)),
+              dEvChevalN: 'PF · ' + this.pl(cheval.length, 'trade à cheval', 'trades à cheval'),
+              dEvAutresPf: pfTxt(pfDe(autres)),
+              dEvAutresN: 'PF · les ' + autres.length + ' autres',
+              dEvNote: cheval.length < 40
+                ? cheval.length + ' trades à cheval, c\u2019est peu : sous 40, l\u2019écart ne conclut pas — la marque sert à accumuler, pas à trancher aujourd\u2019hui.'
+                : 'La marque est posée à la clôture : les clés des rendez-vous tombés entre l\u2019entrée et la sortie.',
+            };
+          })(),
           ...this.clesComparaison(j, 'cmp'),
           // la question que la liste sert à trancher : concentration ou régularité
           dJournalNote: 'Les 3 plus gros trades pèsent ' + Math.round(partGros)
             + ' % du mouvement total. Au-delà de 40 %, le résultat tient à une poignée de coups : '
             + 'il ne se reproduira pas à volonté. « ? » signale un trade tranché par une bougie ambiguë.',
           exporterJournal: () => {
-            const l = ['n;entree;sortie;motif;bougies;R_brut;R_net;cumul'];
+            const l = ['n;entree;sortie;motif;bougies;R_brut;R_net;cumul;evenements'];
             for (const x of j) {
               l.push([x.i, new Date(x.e).toISOString(), new Date(x.s).toISOString(), x.motif,
                 x.bougies, String(x.brut ?? '').replace('.', ','), String(x.r).replace('.', ','),
-                String(x.cum).replace('.', ',')].join(';'));
+                String(x.cum).replace('.', ','), (x.evts || []).join('+')].join(';'));
             }
             const nom = (d.sym || 'trades') + '-' + (d.periode || '') + '-' + (d.sl || '') + '-' + (d.rr || '') + '.csv';
             const a = document.createElement('a');
@@ -20178,22 +20621,151 @@ GROUPES = {
       ...(() => {
         const ag = this.agendaMacro();
         const jour = (ms) => new Date(ms).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-        const imminents = ag.filter((x) => x.jours <= 1);
-        return {
-          aMacro: ag.length > 0,
-          // un événement dans les 24 h mérite un bandeau : c'est une raison de ne pas
-          // ouvrir de position aujourd'hui, pas une note de bas de page
-          aMacroAlerte: imminents.length > 0,
-          macroAlerteTxt: imminents.length
-            ? imminents.map((x) => x.nom + (x.jours === 0 ? ' — aujourd\u2019hui' : ' — demain')).join(' · ')
-              + '. Le mouvement des minutes qui suivent n\u2019a rien à voir avec ce que vos configurations ont mesuré : beaucoup de systèmes restent à l\u2019écart.'
-            : '',
-          macroLignes: ag.slice(0, 6).map((x) => ({
+        void s.impactRev;
+        const impacts = this.lireImpacts();
+        const seuil = this.SEUIL_IMPACT;
+        const syms = this.symsLivre();
+        const live = this.lireLive() || {};
+        const posParSym = {};
+        for (const k of Object.keys(live)) {
+          const j = live[k];
+          for (const o of (j && j.ouverts) || []) posParSym[j.sym] = (posParSym[j.sym] || []).concat([o]);
+        }
+        const dernier = (sym) => { const df = this.base(sym); return df && df.n ? df.c[df.n - 1] : null; };
+        const x1 = (v) => '\u00d7' + v.toFixed(1).replace('.', ',');
+        const lignes = ag.slice(0, 12).map((x) => {
+          const id = x.cle + '|' + x.ms + '|' + (x.sym || '');
+          const mesurable = this.MESURABLES.includes(x.cle);
+          const exposes = [], sous = [];
+          if (mesurable) {
+            for (const sym of syms) {
+              const r = this.impactDe(impacts, sym, x.cle);
+              if (!r) continue;
+              if (!r.n) {
+                sous.push({ sym: this.nomComplet(sym), ampli: '\u2014',
+                  detail: r.fermees ? 'place fermée à cette heure' : 'aucune occurrence dans la série' });
+                continue;
+              }
+              const det = this.pl(r.n, 'occurrence', 'occurrences')
+                + (r.n < 12 ? ' — trop peu d\u2019occurrences' : '')
+                + (Number.isFinite(r.efface4h) ? ' · effacé en 4 h ' + Math.round(r.efface4h * 10) + ' fois sur 10' : '');
+              if (r.ampli >= seuil && r.rapport >= 1.2) {
+                exposes.push({ sym: this.nomComplet(sym), brutSym: sym, vAmpli: r.ampli,
+                  ampli: x1(r.ampli), detail: 'de votre stop · ' + det });
+              } else {
+                sous.push({ sym: this.nomComplet(sym), ampli: x1(r.ampli),
+                  detail: det + (r.rapport < 1.2 ? ' — indiscernable d\u2019une séance ordinaire' : '') });
+              }
+            }
+            exposes.sort((a, b) => b.vAmpli - a.vAmpli);
+            const max = exposes.length ? exposes[0].vAmpli : 1;
+            for (const e of exposes) e.larg = Math.round(Math.max(6, Math.min(100, e.vAmpli / max * 100))) + '%';
+          }
+          const aMesure = exposes.length > 0 || sous.length > 0;
+          const livre = [];
+          for (const e of exposes) {
+            for (const o of posParSym[e.brutSym] || []) {
+              const px = dernier(e.brutSym);
+              const slv = Number(String(o.sl).replace(/\s/g, '').replace(',', '.'));
+              const stopPct = (Number(this.stopDe(e.brutSym)) || 1) / 100;
+              const dist = px && Number.isFinite(slv) && stopPct > 0 ? Math.abs(px - slv) / (stopPct * px) : null;
+              livre.push({ quoi: 'position', cls: 'tag ' + (dist !== null && dist < 1 ? 'tag-accent' : 'tag-outline'),
+                txt: e.sym + ' — position ouverte, '
+                  + (dist === null ? 'distance du stop non chiffrable ici'
+                    : 'stop à ' + dist.toFixed(1).replace('.', ',') + ' stop du prix'
+                      + (dist < 1 ? ' — emportable sur un écart d\u2019ouverture' : '')) });
+            }
+          }
+          const nPos = livre.length;
+          if (!nPos) livre.push({ quoi: 'position', cls: 'tag tag-neutral',
+            txt: exposes.length ? 'Aucune position ouverte sur les symboles exposés.'
+              : 'Aucun symbole exposé, aucune position concernée : rien à décider ici.' });
+          if (x.estimee) livre.push({ quoi: 'date', cls: 'tag tag-outline',
+            txt: 'Date estimée : pas de bandeau, même à 24 h — vérifiez-la avant d\u2019en tirer une décision.' });
+          const ouvert = s.evOuvert === id;
+          const chezVous = exposes.length
+            ? this.pl(exposes.length, 'symbole exposé', 'symboles exposés')
+              + (nPos ? ' · ' + this.pl(nPos, 'position ouverte', 'positions ouvertes') : '')
+            : aMesure ? 'aucun symbole exposé' : 'impact non mesuré — la ligne le dit dépliée';
+          return {
+            id, nom: x.nom, estimee: !!x.estimee, ouvert,
             quand: jour(x.ms),
             dans: x.jours === 0 ? 'aujourd\u2019hui' : x.jours === 1 ? 'demain' : 'dans ' + x.jours + ' j',
-            nom: x.nom, quoi: x.quoi,
-            cls: x.jours <= 1 ? 'tag tag-accent' : x.jours <= 7 ? 'tag tag-outline' : 'tag tag-neutral',
+            clsDelai: x.jours <= 1 ? 'tag tag-accent' : x.jours <= 7 ? 'tag tag-outline' : 'tag tag-neutral',
+            fleche: ouvert ? '\u25be' : '\u25b8',
+            chezVous,
+            aMesure, sansMesure: !aMesure,
+            exposes, aSous: sous.length > 0, sansEffet: sous,
+            sansOuvert: !!(s.evSans || {})[id],
+            sansExpose: aMesure && !exposes.length,
+            sansExposeTxt: 'Aucun symbole au-dessus du seuil de \u00d7' + String(seuil).replace('.', ',') + ' du stop : les mesures sont dans le bloc replié, avec leur raison.',
+            txtSans: (s.evSans || {})[id]
+              ? 'Replier les ' + sous.length + ' symboles sous le seuil'
+              : sous.length + (sous.length > 1 ? ' symboles' : ' symbole') + ' sous le seuil de \u00d7'
+                + String(seuil).replace('.', ',') + ' — repliés, avec leur raison',
+            quoiEcrit: x.quoi || '',
+            manque: mesurable
+              ? 'Aucune série chargée pour vos symboles : l\u2019impact n\u2019est pas mesuré, la phrase ci-dessus est écrite à la main. Déposez le CSV H1 de l\u2019instrument (par exemple GOLD_H1.csv, page Mes instruments) pour la remplacer par un chiffre.'
+              : 'Ce rendez-vous n\u2019a pas d\u2019instant de publication unique : rien à mesurer sur une bougie H1 — la phrase ci-dessus restera écrite à la main.',
+            source: (this.EVTS[x.cle] || {}).srcTxt || '',
+            livre, expose: exposes.length > 0, nPos,
+            basculer: () => this.setState({ evOuvert: this.state.evOuvert === id ? '' : id }),
+            basculerSans: () => this.setState({ evSans: { ...(this.state.evSans || {}), [id]: !(this.state.evSans || {})[id] } }),
+          };
+        });
+        // ————— LE BANDEAU DES 24 H : une date sûre ET une conséquence réelle —————
+        // Les dates estimées ne le déclenchent jamais (réglage bandeauEstimees, éteint
+        // par défaut) ; un événement sans symbole exposé et sans position non plus.
+        // Et la phrase « beaucoup de systèmes… » a disparu : elle n'était pas mesurée.
+        const bandeau = lignes.filter((l2) => {
+          const x = ag.find((y) => y.cle + '|' + y.ms + '|' + (y.sym || '') === l2.id);
+          return x && x.jours <= 1 && (!x.estimee || s.bandeauEstimees) && (l2.expose || l2.nPos > 0);
+        });
+        const choisis = s.macroSuivis || this.MACRO_DEFAUT;
+        const a2 = s.avecSans || {};
+        return {
+          // la section vit même sans rendez-vous coché : c'est là qu'on les recoche
+          aMacro: true,
+          macroNote: 'Fenêtre de 90 jours · impact et exposition calculés sur vos séries, aucun appel réseau.',
+          aMacroAlerte: bandeau.length > 0,
+          macroAlerteTxt: bandeau.map((l2) => l2.nom + ' — ' + l2.dans + ' · ' + l2.chezVous).join(' · '),
+          evLignes: lignes,
+          aAvs: !!(a2.lignes && a2.lignes.length),
+          avsOccupe: a2.enCours ? true : undefined,
+          avsBoutonTxt: a2.enCours ? 'Mesure en cours\u2026' : 'Mesurer avec / sans',
+          avsNote: a2.fait && !(a2.lignes || []).length
+            ? 'Aucune ligne validée avec une série chargée dans ce navigateur : déposez le CSV de l\u2019instrument, la comparaison se fera dessus.'
+            : 'Rejoue vos configurations validées (trois au plus) deux fois. Rien n\u2019est modifié : le filtre reste éteint par défaut.',
+          avsLignes: (a2.lignes || []).map((l2) => ({
+            sym: this.nomComplet(l2.sym), cfg: l2.reglages,
+            avant: 'PF ' + fr(l2.sans.pf, 2),
+            avantN: l2.sans.n + ' trades · ' + sg(l2.sans.total, 1) + ' R',
+            apres: 'PF ' + fr(l2.avec.pf, 2),
+            apresN: l2.avec.n + ' trades · ' + sg(l2.avec.total, 1) + ' R',
+            dit: !l2.concluant
+              ? l2.dTr + (l2.dTr > 1 ? ' trades' : ' trade') + ' et ' + fr(l2.dPf, 2)
+                + ' de PF d\u2019écart : ne conclut rien, dans un sens comme dans l\u2019autre.'
+              : (l2.avec.pf > l2.sans.pf
+                ? 'Gain réel : PF ' + fr(l2.sans.pf, 2) + ' \u2192 ' + fr(l2.avec.pf, 2)
+                  + ' en écartant ' + l2.dTr + ' trades.'
+                : l2.dTr + ' trades écartés pour ' + fr(l2.dPf, 2)
+                  + ' de PF perdu : le filtre coûte plus qu\u2019il ne protège.'),
           })),
+          lancerAvecSans: () => this.mesurerAvecSans(),
+          macroChoix: Object.keys(this.EVTS).map((cle) => {
+            const actif = choisis.includes(cle);
+            return { cle, nom: this.EVTS[cle].nom, srcTxt: this.EVTS[cle].srcTxt,
+              coche: actif ? '\u2611' : '\u2610',
+              bord: actif ? 'var(--color-accent)' : 'var(--color-divider)',
+              basculer: () => {
+                const av = this.state.macroSuivis || this.MACRO_DEFAUT;
+                const suite = actif ? av.filter((x) => x !== cle) : [...av, cle];
+                this.setState({ macroSuivis: suite }, () => this.ecrireSession());
+              } };
+          }),
+          bandeauEstimeesVal: !!s.bandeauEstimees,
+          basculerBandeauEstimees: () => this.setState({ bandeauEstimees: !this.state.bandeauEstimees }, () => this.ecrireSession()),
+          _impAuto: this.impactsAuto(),
         };
       })(),
       // fil unique : tous les titres de tous les portefeuilles, du plus récent au plus ancien
