@@ -261,13 +261,13 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         </sc-for>
       </nav>
     </sc-if>
-    <nav style="display:flex;gap:24px;align-items:center;margin-inline-start:auto">
-      <sc-if value="{{ aPastille }}" hint-placeholder-val="{{ false }}">
-        <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg)">
-          <span style="width:7px;height:7px;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
-        </button>
-      </sc-if>
-    </nav>
+    <!-- la pastille tient DANS le rang des onglets : un bloc à elle faisait un
+         second rang de bandeau bleu pour une seule information -->
+    <sc-if value="{{ aPastille }}" hint-placeholder-val="{{ false }}">
+      <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg);margin-inline-start:auto;align-self:center;white-space:nowrap">
+        <span style="width:7px;height:7px;flex:none;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
+      </button>
+    </sc-if>
   </header>
   </div>
 
@@ -2797,7 +2797,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           </sc-for>
         </div>
         <div style="padding:6px 15px 8px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px">
-          <span style="font-size:11px;line-height:1.5;color:var(--color-accent-700)">{{ bsPhraseBH }}</span>
           <span style="font-size:10px;line-height:1.45" class="text-muted">{{ resumeConditions }}</span>
         </div>
 
@@ -16713,7 +16712,7 @@ GROUPES = {
         }
         const etatCourt = this.essai ? 'séries de démonstration'
           : plein ? 'mémoire presque pleine'
-          : !auto ? 'dans ce navigateur seulement'
+          : !auto ? 'ce navigateur'
           : (s.autoHeure ? 'enregistré à ' + s.autoHeure : 'enregistrement auto');
         return {
           espacesTiroir,
@@ -17997,7 +17996,6 @@ GROUPES = {
         const fs2 = this.facteursScan(s);
         const fCond = fs2.find((f) => f.cle === 'conditions');
         const nCond = fCond ? fCond.n : 1;
-        const produit = fs2.reduce((a, f) => a * Math.max(1, f.n), 1);
         const nBal = gf.filter((k) => k !== 'aucun' && this.VARIANTES_FILTRE[k]).length;
         const nTot = Object.keys(this.VARIANTES_FILTRE).length - 1;
         const per = this.nombres(s.gPeriodes, [26]).length;
@@ -18473,17 +18471,9 @@ GROUPES = {
               }, () => this.ecrireSession()),
             };
           })(),
-          // LE VRAI COÛT D'UN FILTRE BALAYÉ, écrit : plus de conditions, c'est plus de
-          // configurations qui passeront le tri par hasard — la correction de
-          // Benjamini-Hochberg du contrôle se durcit, la stratégie ne s'améliore pas.
-          bsPhraseBH: nBal
-            ? nBal + ' filtre' + (nBal > 1 ? 's' : '') + ' balayé' + (nBal > 1 ? 's' : '')
-              + (nBal > 1 ? ' font' : ' fait') + ' \u00d7' + nCond + ' des '
-              + produit.toLocaleString('fr-FR') + ' réglages par instrument, référence « sans filtre » comprise. '
-              + 'Chaque valeur testée en plus multiplie aussi le nombre de configurations qui passeront le tri par hasard — '
-              + 'c\u2019est la correction de Benjamini-Hochberg qui se durcit, pas la stratégie qui s\u2019améliore.'
-            : 'Aucun filtre balayé : chaque configuration est mesurée sans condition d\u2019entrée. '
-              + 'Cocher une case la met dans la comparaison — et multiplie le calcul d\u2019autant.',
+          // la mécanique de la correction n'est plus écrite ici : le rail de
+          // combinaisons dit le coût du balayage en chiffres, et l'explication de
+          // Benjamini-Hochberg vit dans l'aide, à la colonne Verdict qui l'applique
         };
       })(),
       nCombis: (() => {
