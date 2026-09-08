@@ -2363,7 +2363,7 @@
           Chaque panneau est celui d’avant, réutilisé tel quel : la forme change,
           pas un producteur du devis — le produit des pastilles reste le chiffre du rail.
         -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:9px 14px;padding:11px 15px;border-bottom:1px solid var(--color-divider)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:9px 14px;padding:11px 15px;border-bottom:1px solid var(--color-divider)">
             <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZInstr }};min-width:0">
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Instruments</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous." onClick="{{ bsOuvreInstr }}">
@@ -2602,30 +2602,6 @@
                 </div>
               </sc-if>
             </div>
-            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZSecuC }};min-width:0">
-              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sécurisation</span>
-              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai." onClick="{{ bsOuvreSecuC }}">
-                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSecuGros }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span>
-              </button>
-              <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
-                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sur une bougie qui touche le stop ET l’objectif, l’ordre des deux est indécidable en H1. Les deux lectures encadrent le résultat vrai.</span>
-                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
-                    <sc-for list="{{ bsCellLectures }}" as="cle2" hint-placeholder-count="2">
-                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ cle2.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ cle2.basculer }}">
-                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ cle2.marque }}</span>
-                        <strong style="font-size:12px;width:12ch">{{ cle2.nom }}</strong>
-                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ cle2.aide }}</span>
-                      </button>
-                    </sc-for>
-                  </div>
-                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsSecuAvert }}</span>
-                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs.">sécurisation & seuils complets…</button>
-                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
-                </div>
-              </sc-if>
-            </div>
             <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZSens }};min-width:0">
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sens</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Achat, vente, ou les deux — balayer les deux sens double le calcul." onClick="{{ bsOuvreSens }}">
@@ -2671,7 +2647,7 @@
               </sc-if>
             </div>
             <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZDuree }};min-width:0">
-              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée maximale</span>
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée max</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés." onClick="{{ bsOuvreDuree }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsDureeGros }}</span>
                 <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span>
@@ -2692,6 +2668,33 @@
             <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Risque %</span>
               <input class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;width:100%" type="number" step="0.1" min="0.1" value="{{ risquePct }}" onChange="{{ setRisque }}" title="Ne multiplie rien : fixe la taille de 1 R en euros.">
+            </div>
+            <!-- champ propre au Scan, placé APRÈS le tronc commun au Backtest :
+                 un réglage présent des deux côtés se trouve à la même place, et la
+                 position devient le signal de ce qui n'existe qu'ici -->
+            <div style="position:relative;display:flex;flex-direction:column;gap:2px;z-index:{{ bsZSecuC }};min-width:0">
+              <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sécurisation</span>
+              <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai." onClick="{{ bsOuvreSecuC }}">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSecuGros }}</span>
+                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span>
+              </button>
+              <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
+                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                  <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Sur une bougie qui touche le stop ET l’objectif, l’ordre des deux est indécidable en H1. Les deux lectures encadrent le résultat vrai.</span>
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ bsCellLectures }}" as="cle2" hint-placeholder-count="2">
+                      <button type="button" style="cursor:pointer;border:none;border-bottom:1px solid var(--color-divider);background:{{ cle2.fond }};padding:6px 4px;font:inherit;display:flex;align-items:center;gap:9px;text-align:left" onClick="{{ cle2.basculer }}">
+                        <span style="width:12px;font-size:12px;color:var(--color-accent-700)">{{ cle2.marque }}</span>
+                        <strong style="font-size:12px;width:12ch">{{ cle2.nom }}</strong>
+                        <span style="font-size:10px;flex:1;min-width:0;line-height:1.4;color:var(--color-neutral-600)">{{ cle2.aide }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ bsSecuAvert }}</span>
+                  <button type="button" class="lien" style="align-self:flex-start" onClick="{{ bsOuvreMesure }}" title="Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs.">sécurisation & seuils complets…</button>
+                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                </div>
+              </sc-if>
             </div>
         </div>
         <div style="display:flex;align-items:baseline;gap:12px;padding:8px 15px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
@@ -3480,7 +3483,7 @@
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start">
           <div>
-            <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Fiche instrument</div>
+            <div style="margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Fiche instrument</div>
             <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">{{ dSym }}</h3>
             <p class="card-body" style="margin:6px 0 0;max-width:70ch">{{ dConfig }}</p>
           </div>
@@ -4078,7 +4081,7 @@
 
       <div style="border:1px solid var(--color-divider);background:var(--color-bg);display:flex;flex-direction:column">
 
-        <div style="padding:10px 15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px 16px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider)">
+        <div style="padding:10px 15px;display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:9px 16px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider)">
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Instrument</span>
             <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ btSym }}" onChange="{{ setSym }}">
               <sc-for list="{{ symboles }}" as="sy" hint-placeholder-count="6"><option value="{{ sy.nom }}">{{ sy.etiq }}</option></sc-for>
@@ -4139,7 +4142,7 @@
             </span></label>
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Stop %<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.">?</span></span>
             <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" value="{{ btSL }}" step="0.1" min="0.1" onChange="{{ setSL }}"></label>
-          <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Objectif<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.">?</span></span>
+          <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Objectif ×R<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.">?</span></span>
             <input class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" type="number" value="{{ btRR }}" step="0.1" min="0.1" onChange="{{ setRR }}"></label>
           <label style="display:flex;flex-direction:column;gap:2px"><span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sens</span>
             <select class="input" style="min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 6px" value="{{ btSensVal }}" onChange="{{ setSensSel }}" title="Achat : on gagne si le prix monte. Vente à découvert : l\u2019entrée et les conditions se lisent en miroir — croisement vers le bas, prix sous la moyenne, pente baissière.">
@@ -22803,7 +22806,7 @@ GROUPES = {
       // n'entrent pas dans la grille, et rien ne le disait
       ...(() => {
         const NOMS = { gPeriodes: 'Période de la ligne', gSls: 'Distance du stop',
-          gRrs: 'Objectif', gTrailing: 'Stop suiveur', gDurees: 'Durée maximale',
+          gRrs: 'Objectif ×R', gTrailing: 'Stop suiveur', gDurees: 'Durée max',
           gPeriodeMa: 'Période de moyenne mobile', gPeriodeMtf: 'Période de tendance',
           gPenteRecul: 'Recul de pente' };
         const att = Object.entries(s.attentes || {})

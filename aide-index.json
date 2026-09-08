@@ -380,6 +380,13 @@
    ]
   },
   {
+   "terme": "fermer Risque Sécurisation",
+   "texte": "La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "fermer Unité",
    "texte": "Choisir la taille des bougies balayées",
    "vues": [
@@ -485,7 +492,7 @@
    ]
   },
   {
-   "terme": "Objectif",
+   "terme": "Objectif R",
    "texte": "Combien de fois votre risque vous visez en gain. 2 veut dire : je risque 100 € pour tenter d'en gagner 200. Plus l'objectif est haut, moins souvent il est atteint.",
    "vues": [
     "Backtest"
@@ -562,7 +569,7 @@
    ]
   },
   {
-   "terme": "réglage fin… fermer Durée maximale",
+   "terme": "réglage fin… fermer Durée max",
    "texte": "Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés.",
    "vues": [
     "Nouveau scan"
@@ -683,13 +690,6 @@
   {
    "terme": "Sécurisation comparée",
    "texte": "Comment le stop bouge pendant le trade. Chaque option cochée est essayée sur toute la grille : le scan vous dit si sécuriser rapporte vraiment, au lieu de le supposer.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "sécurisation seuils complets… fermer Sens",
-   "texte": "Achat, vente, ou les deux — balayer les deux sens double le calcul.",
    "vues": [
     "Nouveau scan"
    ]
@@ -835,8 +835,8 @@
    ]
   },
   {
-   "terme": "virgule est admise fermer Sécurisation",
-   "texte": "La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai.",
+   "terme": "virgule est admise fermer Sens",
+   "texte": "Achat, vente, ou les deux — balayer les deux sens double le calcul.",
    "vues": [
     "Nouveau scan"
    ]
