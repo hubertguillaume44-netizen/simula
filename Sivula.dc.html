@@ -150,19 +150,6 @@
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:{{ sansSauvPad }}">
 
   <div id="om-sticky" style="position:sticky;top:0;z-index:45">
-  <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
-  <div style="background:var(--color-accent-900);color:var(--color-bg);padding:6px 32px;display:flex;align-items:center;gap:14px;flex-wrap:nowrap;overflow:hidden">
-    <span style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;flex:none">Scan en cours</span>
-    <div style="flex:0 1 200px;min-width:60px;height:6px;background:color-mix(in srgb,var(--color-bg) 25%,transparent)">
-      <div style="height:6px;width:{{ scanPct }};background:var(--color-bg)"></div>
-    </div>
-    <span style="font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ scanEtatTxt }}">{{ scanEtatTxt }}</span>
-    <div style="display:flex;gap:8px;flex-wrap:nowrap;flex:none">
-      <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 12px;background:none;color:var(--color-bg);border:1px solid var(--color-bg)" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
-      <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 12px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent)" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
-    </div>
-  </div>
-  </sc-if>
   <sc-if value="{{ scanFini }}" hint-placeholder-val="{{ false }}">
   <div style="background:var(--color-accent);color:var(--color-bg);padding:7px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <span style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em;text-transform:uppercase">Scan terminé</span>
@@ -200,7 +187,14 @@
       </div>
     </div>
   </sc-if>
-  <header style="background:var(--color-accent-900);color:var(--color-bg);padding:0 32px;display:flex;align-items:stretch;gap:28px;flex-wrap:wrap;min-height:46px">
+  <!--
+    UN SEUL RANG, TOUJOURS. Le bandeau du scan était une rangée de plus au-dessus :
+    le bloc bleu doublait de hauteur dès qu'un scan tournait, et poussait la page.
+    L'état du scan vit maintenant DANS ce rang, à droite, et sa progression est le
+    filet de 3 px au bas du bandeau — qui ne prend aucune hauteur. `nowrap` : ce qui
+    ne tient pas se tronque, il ne passe plus à la ligne.
+  -->
+  <header style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:0 32px;display:flex;align-items:stretch;gap:28px;flex-wrap:nowrap;min-height:46px">
     <div style="display:flex;align-items:center;gap:12px">
       <button type="button" onClick="{{ goAccueil }}" style="background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès">SIVULA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
@@ -233,6 +227,14 @@
         </sc-for>
       </nav>
     </sc-if>
+    <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
+      <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0">
+        <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;opacity:.92" title="{{ scanEtatTxt }}">{{ scanCourtTxt }}</span>
+        <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap;flex:none" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
+        <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent);white-space:nowrap;flex:none" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+      </span>
+      <span style="position:absolute;left:0;bottom:0;height:3px;width:{{ scanPct }};background:var(--color-bg);opacity:.85"></span>
+    </sc-if>
     <!-- l'accueil n'a pas d'onglets : la place à droite reçoit ses deux entrées.
          Pas de troisième, et aucun « créer un compte » — le compte naît de l'achat. -->
     <sc-if value="{{ isAccueil }}" hint-placeholder-val="{{ false }}">
@@ -244,7 +246,7 @@
     <!-- la pastille tient DANS le rang des onglets : un bloc à elle faisait un
          second rang de bandeau bleu pour une seule information -->
     <sc-if value="{{ aPastille }}" hint-placeholder-val="{{ false }}">
-      <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg);margin-inline-start:auto;align-self:center;white-space:nowrap">
+      <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg);margin-inline-start:auto;align-self:center;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis">
         <span style="width:7px;height:7px;flex:none;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;flex:none;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
       </button>
     </sc-if>
@@ -6204,7 +6206,10 @@ class Component extends DCLogic {
     // doit dire tout seul sur quoi il a été mesuré : c'est là que l'étiquette compte
     // vraiment, parce que plus rien autour ne la porte.
     const marque = this.fenMarque(this.fenetreDeLigne(v));
-    const nomFichier = mod.nomRobot(v, stamp) + (marque ? '_' + marque : '') + '.mq5';
+    // le compte, juste après « Sivula » : c'est la première chose qu'on lit dans
+    // MQL5\\Experts quand deux courtiers ont reçu la même configuration
+    const nomFichier = mod.nomRobot(v, stamp).replace(/^Sivula_/, 'Sivula_' + this.etiquetteCompte() + '_')
+      + (marque ? '_' + marque : '') + '.mq5';
     {
       const m = this.lireLive();
       const k = String(magic);
@@ -7181,7 +7186,8 @@ GROUPES = {
       btSym: ajoutes.length ? ajoutes[0] : p.btSym,
       depotEnCours: null,
       ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
-      messageDepot: (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) : '
+      messageDepot: (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) dans '
+          + this.libelleCompteActif() + ' : '
           + ajoutes.map((x) => { const f = this.fluxDe(x); return f.label ? x + ' (flux ' + f.label + ', frais ' + f.label + ')' : x; }).join(', ') : '')
         + (infosMoments.length ? (ajoutes.length ? ' — ' : '') + infosMoments.join(', ') : '')
         + (infosM1.length ? ((ajoutes.length) ? ' — ' : '') + 'M1 rangé à part pour ' + infosM1.join(', ')
@@ -7198,6 +7204,29 @@ GROUPES = {
               ? noms.length + ' fichiers ignorés — ' + motif + '. ' + noms.join(', ')
               : 'Ignoré : ' + noms[0] + ' (' + motif + ')').join(' — ');
           })() : '')
+        // LE DOUTE SUR LE COMPTE, DIT AU MOMENT DU DÉPÔT. Deux terminaux MT5
+        // écrivent au même endroit : déposer un export d'un courtier pendant qu'un
+        // autre compte est actif range tout au mauvais endroit, et applique les
+        // mauvais frais. Le signal est mesurable : le symbole est absent du relevé
+        // du compte actif, mais présent dans celui d'un autre.
+        + (() => {
+          const ici = this.compteDesFichiers();
+          if (!ajoutes.length || !((this.baremes || {})[ici])) return '';
+          const ailleurs = [];
+          for (const sym of ajoutes) {
+            if (this.ligneCourtier(ici, sym)) continue;
+            for (const [k4] of this.COURTIERS) {
+              if (k4 === ici || !((this.baremes || {})[k4])) continue;
+              if (this.ligneCourtier(k4, sym)) { ailleurs.push(sym + ' \u2192 ' + this.nomCourtier(k4)); break; }
+            }
+          }
+          return ailleurs.length
+            ? ' — ATTENTION : ' + this.pl(ailleurs.length, 'série vient', 'séries viennent')
+              + ' peut-être d\u2019un autre compte (absente du relevé de ' + this.nomCourtier(ici)
+              + ', présente dans un autre) : ' + ailleurs.join(', ')
+              + '. Changez de compte et redéposez si c\u2019est le cas — les frais appliqués sont ceux du compte actif.'
+            : '';
+        })()
         + (nonGardes.length ? ' — ATTENTION : ' + nonGardes.length + ' série(s) n\u2019ont pas pu être enregistrées '
           + '(mémoire du navigateur pleine). Elles fonctionnent jusqu\u2019à la fermeture de l\u2019onglet, puis seront perdues. '
           + 'Supprimez des bougies dont vous n\u2019avez plus besoin (colonne Bougies de l\u2019onglet Symboles dispos), puis redéposez celles-ci : '
@@ -14207,7 +14236,7 @@ GROUPES = {
   // écarts différents pour la même ligne. `null` = rien à comparer.
   ecartLiveDe(v) {
     if (!v) return null;
-    const j = (this.lireLive() || {})[this.magicDe(v)];
+    const j = this.journalDe(v);
     const fermes = (j && j.trades) || [];
     if (!fermes.length) return null;
     const rReel = fermes.reduce((a, x) => a + (Number(x.r) || 0), 0);
@@ -14223,11 +14252,43 @@ GROUPES = {
   }
   // Le magique d'une ligne : la MÊME formule que l'export du robot, sans quoi le
   // rattachement ne peut pas tomber juste. Écrite une fois, appelée aux deux endroits.
-  magicDe(v) {
-    const cle = [v.sym, v.entree, v.ligne, v.periode, v.sl, v.rr, v.sens].join('|');
+  // ————— LE COMPTE ENTRE DANS LE NUMÉRO MAGIQUE —————
+  //
+  // Le robot écrit son journal dans Common\Files\SIV_trades_<SYM>_<MAGIC>.csv —
+  // « Common », c'est-à-dire le dossier PARTAGÉ par tous les terminaux MT5 de la
+  // machine. Sans le compte dans le magic, la même configuration exportée pour
+  // deux courtiers portait le même numéro : les deux robots écrivaient dans le
+  // MÊME fichier, et les trades des deux comptes se mélangeaient dans un seul
+  // journal. L'ancien numéro reste lu (magicAncien) pour que les robots déjà
+  // exportés gardent leur rattachement.
+  cleMagic(v) { return [v.sym, v.entree, v.ligne, v.periode, v.sl, v.rr, v.sens].join('|'); }
+  hachMagic(cle) {
     let h = 0;
     for (let i = 0; i < cle.length; i++) h = ((h * 31 + cle.charCodeAt(i)) >>> 0) % 900000000;
     return String(20000000000 + h);
+  }
+  // la même normalisation que `cle()` : la vue comparative travaille dans le compte nº 1
+  compteDesFichiers() {
+    return this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+  }
+  magicDe(v) { return this.hachMagic(this.cleMagic(v) + '|' + this.compteDesFichiers()); }
+  magicAncien(v) { return this.hachMagic(this.cleMagic(v)); }
+  // le journal d'une ligne : le magic du compte d'abord, l'ancien ensuite
+  journalDe(v) {
+    const m = this.lireLive() || {};
+    return m[this.magicDe(v)] || m[this.magicAncien(v)] || null;
+  }
+  // L'ÉTIQUETTE DU COMPTE DANS LES NOMS DE FICHIERS. Deux terminaux MT5 déposent
+  // dans le même dossier : sans elle, deux robots pour deux courtiers ne diffèrent
+  // que par leur horodatage, et on ne sait plus lequel va où.
+  etiquetteCompte() {
+    const cle = this.compteDesFichiers();
+    // le nom du courtier quand il est court et distinctif (« FxPro MT5 » → FxProMT5,
+    // « FTMO » → FTMO) ; sinon la clé du compte, qui est unique par construction —
+    // « Compte démo — données fictives » ne fait pas une étiquette de fichier
+    const nom = String(this.nomCourtier(cle) || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]/g, '');
+    return (nom && nom.length <= 12 ? nom : String(cle).toUpperCase()).slice(0, 12);
   }
   // ————— CE QUE COUVRENT VRAIMENT LES BOUGIES —————
   //
@@ -16653,13 +16714,14 @@ GROUPES = {
       // vide alors qu'un autre porte des données : c'est précisément l'écran où un
       // basculement d'espace se lit comme une perte totale — le cas vécu, verrou
       // propriétaire posé, atterrit ici
-      aPastille: tab !== 'accueil' || (() => {
+      // une seule chose à droite du rang : le scan quand il tourne, l'espace sinon
+      aPastille: !s.scanEnCours && (tab !== 'accueil' || (() => {
         const pe2 = s.poidsEspaces;
         if (!pe2 || this.essai) return false;
         const e2 = this.cleGlobale('').slice(1);
         return (pe2[e2] || 0) < 16384
           && Object.entries(pe2).some(([k3, v3]) => k3 !== e2 && v3 > 65536);
-      })(),
+      })()),
       tiroirOuvert: !!s.tiroir,
       // toujours sur « Vos données » : l'onglet mémorisé faisait retomber chaque
       // réouverture sur le Journal, sans chemin de retour évident
@@ -17499,10 +17561,10 @@ GROUPES = {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([entete + noms.join('\n') + '\n'],
               { type: 'text/plain;charset=utf-8' }));
-            a.download = 'symboles.txt';
+            a.download = 'symboles_' + this.etiquetteCompte() + '.txt';
             a.click();
             setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-            this.setState({ mt5Copie: 'symboles.txt écrit — ' + noms.length
+            this.setState({ mt5Copie: 'symboles_' + this.etiquetteCompte() + '.txt écrit — ' + noms.length
               + ' instrument(s). Placez-le dans MQL5\\Files\\Sivula\\ (MT5 : Fichier > Ouvrir le dossier de données).' });
           },
           // Les scripts sont servis TELS QUELS depuis le dépôt : aucune valeur n'y est
@@ -17592,6 +17654,10 @@ GROUPES = {
           + (reste !== null && reste > 1 ? ' \u00b7 reste ~' + this.duree(reste) : '');
         return {
           scanEtatTxt: coeur + ' \u00b7 gardez cet onglet au premier plan',
+          // la version courte, pour le rang de l'en-tête : le compte et le reste à
+          // attendre. Le texte complet reste en infobulle, il n'est pas perdu.
+          scanCourtTxt: Math.min(fait + 1, n) + ' / ' + n
+            + (reste !== null && reste > 1 ? ' \u00b7 reste ~' + this.duree(reste) : ''),
           progression: s.scanEnCours ? coeur : (s.progression || ''),
           aProgression: !!(s.scanEnCours || s.progression),
         };
@@ -21226,7 +21292,7 @@ GROUPES = {
           // sans elle on ne distingue pas « jamais exporté » de « exporté, pas lancé ».
           ...(() => {
             const mg = this.magicDe(v);
-            const j = (this.lireLive() || {})[mg] || null;
+            const j = this.journalDe(v);
             const jour = (ms) => new Date(ms).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
             const fermes = (j && j.trades) || [];
             const ouverts = (j && j.ouverts) || [];
@@ -21320,7 +21386,7 @@ GROUPES = {
             const vr = { ...v, _sid: v.sid || v._sid };
             const h = this.verdictHasard(vr);
             const mg = this.magicDe(v);
-            const j = (this.lireLive() || {})[mg] || null;
+            const j = this.journalDe(v);
             const fermes = (j && j.trades) || [];
             const t = Math.max(200, Number(s.nTirages) || 200);
             const f = this.meilleurHasardFait(v);

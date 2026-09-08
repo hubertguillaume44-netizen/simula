@@ -681,13 +681,6 @@
    ]
   },
   {
-   "terme": "Scan en cours",
-   "texte": "Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Scanner",
    "texte": "Ouvre le scanner avec cet instrument seul dans l’univers.",
    "vues": [
