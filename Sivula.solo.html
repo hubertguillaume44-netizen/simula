@@ -16657,7 +16657,12 @@ GROUPES = {
         const aPerdre = (this.lignesScan || []).length > 0
           || ((s.deposes || []).length > 0)
           || ((s.valides || []).length > 0);
-        const montrer = !auto && aPerdre && !this.essai && this.compteActif !== 'demo';
+        // JAMAIS SUR L'ACCUEIL : cette page présente l'outil et reçoit le code
+        // d'accès. Un bandeau qui date le dernier export et compte les séries y
+        // parle d'un travail en cours à quelqu'un qui n'a pas encore commencé —
+        // et il occupait le bas de la page de vente.
+        const montrer = tab !== 'accueil'
+          && !auto && aPerdre && !this.essai && this.compteActif !== 'demo';
         const integre = this.dansIframe();
         const info = this.lireSauvInfo();
         const t = Math.max(info.t, s.sauvDate || 0);
