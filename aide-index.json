@@ -338,6 +338,13 @@
    ]
   },
   {
+   "terme": "Fermer",
+   "texte": "Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "fermer Déclencheur",
    "texte": "Ce qui déclenche l’entrée — chaque déclencheur coché est essayé sur toute la grille.",
    "vues": [

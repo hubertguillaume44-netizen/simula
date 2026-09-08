@@ -186,16 +186,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:{{ sansSauvPad }}">
 
   <div id="om-sticky" style="position:sticky;top:0;z-index:45">
-  <sc-if value="{{ scanFini }}" hint-placeholder-val="{{ false }}">
-  <div style="background:var(--color-accent);color:var(--color-bg);padding:7px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-    <span style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em;text-transform:uppercase">Scan terminé</span>
-    <span style="font-size:13px;flex:1">{{ scanFiniTxt }}</span>
-    <sc-if value="{{ aEchecs }}" hint-placeholder-val="{{ false }}">
-      <span style="font-size:12px;max-width:60ch">{{ echecsTxt }}</span>
-    </sc-if>
-    <button type="button" onClick="{{ fermerBandeau }}" style="cursor:pointer;background:none;border:1px solid var(--color-bg);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:2px 10px">Fermer</button>
-  </div>
-  </sc-if>
   <sc-if value="{{ aSauvEtat }}" hint-placeholder-val="{{ false }}">
   <div style="background:var(--color-neutral-200);padding:6px 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--color-divider)">
     <span style="font-size:12px;flex:1;min-width:220px">{{ sauvEtat }}</span>
@@ -262,6 +252,15 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           </span>
         </sc-for>
       </nav>
+    </sc-if>
+    <sc-if value="{{ scanFini }}" hint-placeholder-val="{{ false }}">
+      <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0" title="{{ scanFiniTitre }}">
+        <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ scanFiniCourtTxt }}</span>
+        <sc-if value="{{ aEchecs }}" hint-placeholder-val="{{ false }}">
+          <span class="tag tag-accent" style="font-size:10px;white-space:nowrap;flex:none">{{ echecsCourtTxt }}</span>
+        </sc-if>
+        <button type="button" onClick="{{ fermerBandeau }}" style="cursor:pointer;background:none;border:1px solid var(--color-bg);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap;flex:none">Fermer</button>
+      </span>
     </sc-if>
     <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
       <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0">
@@ -16751,7 +16750,8 @@ GROUPES = {
       // basculement d'espace se lit comme une perte totale — le cas vécu, verrou
       // propriétaire posé, atterrit ici
       // une seule chose à droite du rang : le scan quand il tourne, l'espace sinon
-      aPastille: !s.scanEnCours && (tab !== 'accueil' || (() => {
+      aPastille: !s.scanEnCours && !(!!s.scanDuree && !s.bandeauFerme)
+        && (tab !== 'accueil' || (() => {
         const pe2 = s.poidsEspaces;
         if (!pe2 || this.essai) return false;
         const e2 = this.cleGlobale('').slice(1);
@@ -17709,6 +17709,22 @@ GROUPES = {
           + this.pl(s.scanTestes || 0, 'combinaison test\u00e9e', 'combinaisons test\u00e9es') + ' en '
           + this.duree(s.scanDuree / 1000) + ' \u00b7 r\u00e9sultats dans le TOP et dans l\u2019historique du scanner'
         : '',
+      // le rang de l'en-tête ne peut pas porter la phrase entière : elle passe en
+      // infobulle, MAIS le compte des non-testés reste à l'écran — il ne vivait que
+      // dans ce bandeau, et un instrument sauté qu'on ne voit pas est un trou muet
+      scanFiniCourtTxt: s.scanDuree
+        ? 'Scan terminé \u00b7 ' + (s.scanTestes || 0).toLocaleString('fr-FR')
+          + ' combinaisons en ' + this.duree(s.scanDuree / 1000) : '',
+      echecsCourtTxt: (s.scanEchecs && s.scanEchecs.length)
+        ? s.scanEchecs.length + ' non testé' + (s.scanEchecs.length > 1 ? 's' : '') : '',
+      scanFiniTitre: (s.scanDuree
+        ? this.pl(s.scanNbSym || 0, 'instrument', 'instruments') + ' \u00b7 '
+          + this.pl(s.scanTestes || 0, 'combinaison test\u00e9e', 'combinaisons test\u00e9es') + ' en '
+          + this.duree(s.scanDuree / 1000)
+          + ' \u00b7 r\u00e9sultats dans le TOP et dans l\u2019historique du scanner.' : '')
+        + ((s.scanEchecs && s.scanEchecs.length)
+          ? ' ' + s.scanEchecs.length + ' instrument(s) ou configuration(s) n\u2019ont pas pu être testés : '
+            + s.scanEchecs.join(' \u00b7 ') + '. Le reste du scan est complet.' : ''),
       fermerBandeau: () => this.setState({ bandeauFerme: true }),
       reglagesRejoues: s.reglagesRejoues || '',
       aReglagesRejoues: !!s.reglagesRejoues,
