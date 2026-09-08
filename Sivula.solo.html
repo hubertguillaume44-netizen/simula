@@ -1098,6 +1098,9 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
             <strong style="font-size:13px;line-height:1.4">Déposer les bougies H1</strong>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls, dans <code>MQL5\Files</code>. Déposez-les ici — le scan devient possible.</span>
+            <sc-if value="{{ aPalierCompteur }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}</span>
+            </sc-if>
           </div>
           <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
             Déposer des bougies H1
@@ -6930,6 +6933,12 @@ GROUPES = {
   async accepterFichiers(liste) {
     if (!this.M || !liste || !liste.length) return;
     const ajoutes = [], refuses = [], nonGardes = [], infosM1 = [], infosMoments = [];
+    // un refus = { nom, motif } : les motifs identiques se regroupent à l'affichage.
+    // Douze refus du palier se disaient douze fois, phrase complète répétée — un
+    // pavé où l'on ne pouvait ni compter ses fichiers ni lire la règle. Le nom perd
+    // son _H1.csv, identique partout donc muet.
+    const refuser = (nom, motif) => refuses.push({
+      nom: String(nom).replace(/\.csv$/i, '').replace(/_H1$/i, ''), motif });
     // lecture + validation : plusieurs secondes par fichier sur un gros historique.
     // Sans indicateur, l'utilisateur ne sait pas si son dépôt a été pris.
     const nTot = liste.length;
@@ -6953,7 +6962,7 @@ GROUPES = {
       this.setState({ depotEnCours: { fait: iF, total: nTot, nom: f.name } });
       await new Promise((r) => setTimeout(r, 0));
       iF++;
-      if (!/\.csv$/i.test(f.name)) { refuses.push(f.name + ' (pas un CSV — exportez en CSV, pas en Excel)'); continue; }
+      if (!/\.csv$/i.test(f.name)) { refuser(f.name, 'pas un CSV — exportez en CSV, pas en Excel'); continue; }
       // LE JOURNAL DES TRADES RÉELS passe ici, avant le chargeur de bougies : il porte un
       // nom réservé, et le confondre avec un historique produirait une série de seize
       // colonnes que le lecteur de bougies refuserait sans expliquer pourquoi.
@@ -6961,7 +6970,7 @@ GROUPES = {
         try {
           const n = await this.lireJournalLive(await f.text(), f.name);
           ajoutes.push(f.name + ' — ' + this.pl(n, 'trade réel lu', 'trades réels lus'));
-        } catch (e) { refuses.push(f.name + ' (journal de trades illisible : ' + (e && e.message) + ')'); }
+        } catch (e) { refuser(f.name, 'journal de trades illisible : ' + (e && e.message)); }
         continue;
       }
       // un export dans la mauvaise unité de temps est l'erreur nº 1 des premiers dépôts
@@ -6972,11 +6981,11 @@ GROUPES = {
         try {
           const r2 = await this.garderM1(symM, await f.text());
           if (r2.ok) infosM1.push(symM);
-          else refuses.push(f.name + ' (' + r2.motif + ')');
-        } catch (e) { refuses.push(f.name + ' (illisible)'); }
+          else refuser(f.name, r2.motif);
+        } catch (e) { refuser(f.name, 'illisible'); }
         continue;
       }
-      if (utNom) { refuses.push(f.name + ' (unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste)'); continue; }
+      if (utNom) { refuser(f.name, 'unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste'); continue; }
       const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
       // ————— LE PALIER GRATUIT : trois instruments personnels —————
       // La licence signée (ou le verrou propriétaire) l'ouvre. À l'expiration d'un
@@ -6988,13 +6997,12 @@ GROUPES = {
           .filter((x) => !this.SYM_DEMO.includes(x)));
         if (!this.SYM_DEMO.includes(sym) && !persos.has(sym) && persos.size >= this.PALIER_GRATUIT) {
           const lm = this.state.lic;
-          refuses.push(f.name + ' (palier gratuit : ' + this.PALIER_GRATUIT
+          refuser(f.name, 'palier gratuit : ' + this.PALIER_GRATUIT
             + ' instruments personnels — '
             + (lm && lm.motif === 'expire'
               ? 'votre code a expiré' + (lm.fin ? ' le ' + lm.fin.split('-').reverse().join('/') : '')
                 + ', vos mesures restent en place ; reprenez un abonnement'
-              : 'un code d\u2019accès l\u2019ouvre sans limite, page d\u2019accueil')
-            + ')');
+              : 'un code d\u2019accès l\u2019ouvre sans limite, page d\u2019accueil'));
           continue;
         }
       }
@@ -7006,7 +7014,7 @@ GROUPES = {
         if (/moments/i.test(f.name) || /^sym;moment;/i.test(txt.slice(0, 30))) {
           const r4 = this.garderMoments(txt);
           if (r4.ok) infosMoments.push(f.name + ' — moments d\u2019exécution de ' + r4.nSym + ' instrument(s), le gagnant mesuré devient le défaut (verdicts nets seulement)');
-          else refuses.push(f.name + ' (' + r4.motif + ')');
+          else refuser(f.name, r4.motif);
           continue;
         }
         // ————— GARDE-FOU MT4 : date et heure en deux colonnes —————
@@ -7020,13 +7028,13 @@ GROUPES = {
             && /^\d{1,2}:\d{2}/.test((p2[1] || '').trim());
         });
         if (estMT4) {
-          refuses.push(f.name + ' (fichier au format MT4 — date et heure en deux colonnes. '
-            + 'Sivula attend un export MT5 produit par le script Export_H1_Sivula)');
+          refuser(f.name, 'fichier au format MT4 — date et heure en deux colonnes. '
+            + 'Sivula attend un export MT5 produit par le script Export_H1_Sivula');
           continue;
         }
         const brut = this.M.texteVersDf(txt);
-        if (!brut.n) { refuses.push(f.name + ' (aucune bougie lisible : il faut les colonnes date, ouverture, haut, bas, clôture)'); continue; }
-        if (brut.n < 300) { refuses.push(f.name + ' (' + brut.n + ' bougies seulement : il en faut 300 au minimum — remontez l\u2019historique avant d\u2019exporter)'); continue; }
+        if (!brut.n) { refuser(f.name, 'aucune bougie lisible : il faut les colonnes date, ouverture, haut, bas, clôture'); continue; }
+        if (brut.n < 300) { refuser(f.name, brut.n + ' bougies seulement : il en faut 300 au minimum — remontez l\u2019historique avant d\u2019exporter'); continue; }
         this.dfs = this.dfs || {};
         this.diag = this.diag || {};
         this.diag[sym] = { session: brut.heuresSession, ecartees: brut.ecartees };
@@ -7037,7 +7045,7 @@ GROUPES = {
         if (!(await this.garderSerie(sym, brut))) nonGardes.push(sym);
         else if (this.state.ecritureRefusee) this.setState({ ecritureRefusee: false });
         ajoutes.push(sym);
-      } catch (e) { refuses.push(f.name + ' (illisible)'); }
+      } catch (e) { refuser(f.name, 'illisible'); }
     }
     this.setState((p) => ({
       deposes: [...new Set([...(p.deposes || []), ...ajoutes])],
@@ -7049,7 +7057,18 @@ GROUPES = {
         + (infosMoments.length ? (ajoutes.length ? ' — ' : '') + infosMoments.join(', ') : '')
         + (infosM1.length ? ((ajoutes.length) ? ' — ' : '') + 'M1 rangé à part pour ' + infosM1.join(', ')
           + ' (départage robot : jamais dans le scan ni le backtest)' : '')
-        + (refuses.length ? (ajoutes.length || infosM1.length || infosMoments.length ? ' — ' : '') + 'Ignoré(s) : ' + refuses.join(', ') : '')
+        + (refuses.length ? (ajoutes.length || infosM1.length || infosMoments.length ? ' — ' : '')
+          + (() => {
+            // un motif, une phrase, la liste nue des noms
+            const parMotif = new Map();
+            for (const r of refuses) {
+              if (!parMotif.has(r.motif)) parMotif.set(r.motif, []);
+              parMotif.get(r.motif).push(r.nom);
+            }
+            return [...parMotif.entries()].map(([motif, noms]) => noms.length > 1
+              ? noms.length + ' fichiers ignorés — ' + motif + '. ' + noms.join(', ')
+              : 'Ignoré : ' + noms[0] + ' (' + motif + ')').join(' — ');
+          })() : '')
         + (nonGardes.length ? ' — ATTENTION : ' + nonGardes.length + ' série(s) n\u2019ont pas pu être enregistrées '
           + '(mémoire du navigateur pleine). Elles fonctionnent jusqu\u2019à la fermeture de l\u2019onglet, puis seront perdues. '
           + 'Supprimez des bougies dont vous n\u2019avez plus besoin (colonne Bougies de l\u2019onglet Symboles dispos), puis redéposez celles-ci : '
@@ -16871,6 +16890,20 @@ GROUPES = {
         this.accepterFichiers([...(e.dataTransfer.files || [])]);
       },
       surChoix: (e) => this.accepterFichiers([...(e.target.files || [])]),
+      // le palier gratuit, dit AVANT le dépôt : « 3 sur 3 instruments personnels »
+      // évite de préparer douze fichiers pour se les voir refuser en bloc
+      ...(() => {
+        if (this.state.deverrouille || this.licenceActive) {
+          return { aPalierCompteur: false, palierCompteur: '', palierCouleur: '' };
+        }
+        const persos = new Set((s.deposes || []).filter((x) => !this.SYM_DEMO.includes(x)));
+        const plein2 = persos.size >= this.PALIER_GRATUIT;
+        return { aPalierCompteur: true,
+          palierCompteur: Math.min(persos.size, this.PALIER_GRATUIT) + ' sur '
+            + this.PALIER_GRATUIT + ' instruments personnels du palier gratuit'
+            + (plein2 ? ' — un instrument de plus sera refusé ; un code d\u2019accès l\u2019ouvre sans limite (page d\u2019accueil).' : '.'),
+          palierCouleur: plein2 ? 'var(--color-accent-700)' : 'var(--color-neutral-700)' };
+      })(),
       surChoixM1: (e) => this.deposerBougiesM1([...(e.target.files || [])]),
       survol: s.survol,
       // La zone de dépôt n'occupe plus le haut de la page : le glisser-déposer couvre
