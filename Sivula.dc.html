@@ -387,13 +387,6 @@
       <div style="display:flex;flex-direction:column;gap:9px">
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
         <p style="margin:0;font-size:12px;line-height:1.55"><strong>Vos données ne quittent pas votre navigateur.</strong> <span class="text-muted">Séries, scans, portefeuilles et réglages sont lus et calculés sur votre machine, et enregistrés sur cet appareil seulement. Les seules sorties possibles sont déclenchées par vous et décrites ici : les trois portes ci-dessous, et — si vous saisissez une clé — les tickers envoyés à Finnhub et les titres de presse envoyés au traducteur. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
-            Importer un fichier
-            <input type="file" accept="application/json,.json" onChange="{{ choisirImport }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-          </label>
-        <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.">{{ exporterManquantsTxt }}</button>
-        </div>
         <!-- la réponse de l'import (« Ce fichier ne vient pas de Sivula », « N blocs
              réimportés ») ne s'affichait que sur Mes décisions : ici, le bouton avait
              l'air de ne rien faire -->
@@ -438,7 +431,13 @@
         <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
           <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sauvegarde chiffrée, transportable</span>
           <span style="font-size:11px;line-height:1.55" class="text-muted">Un fichier unique, chiffré ici même avec une phrase que vous choisissez et détenez seul (AES-GCM, clé dérivée par PBKDF2). Déposez-le où vous voulez — disque, clé USB, cloud — et rouvrez-le sur un autre poste par « Importer un fichier ». Ni clé ni copie nulle part : personne d’autre que vous ne peut le déchiffrer.</span>
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ basculerChiffrePan }}">{{ chiffreBoutonTxt }}</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ basculerChiffrePan }}">{{ chiffreBoutonTxt }}</button>
+            <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:14px">
+              Importer un fichier
+              <input type="file" accept="application/json,.json" onChange="{{ choisirImport }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
+          </div>
           <sc-if value="{{ aChiffrePan }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:7px">
               <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)"><strong>Perdre la phrase, c’est perdre le fichier.</strong> Aucune récupération n’est possible, par personne — c’est le prix du chiffrement de bout en bout. Notez-la ailleurs que dans ce navigateur.</span>
@@ -535,6 +534,7 @@
           </div>
         </sc-if>
         <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
+        <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.">{{ exporterManquantsTxt }}</button>
       <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ false }}">
         <div style="height:1px;background:var(--color-divider)"></div>
         <div style="display:flex;flex-direction:column;gap:9px">
@@ -552,9 +552,6 @@
             <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:8px">
               <span class="{{ persistCls }}" style="font-size:10px;white-space:nowrap">{{ persistTxt }}</span>
               <span style="font-size:11px;line-height:1.5;flex:1;min-width:22ch" class="text-muted">{{ persistPhrase }}</span>
-              <sc-if value="{{ aRedemander }}" hint-placeholder-val="{{ false }}">
-                <button class="btn btn-ghost" type="button" style="min-height:1.7rem;font-size:11px;padding-inline:9px" onClick="{{ redemanderPersist }}">Demander la protection</button>
-              </sc-if>
             </div>
           </sc-if>
           <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
@@ -2700,9 +2697,6 @@
         <div style="display:flex;align-items:baseline;gap:12px;padding:8px 15px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
           <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ bsFiltresTitre }}</span>
           <span style="font-size:11px;line-height:1.45;flex:1;min-width:28ch" class="text-muted">Balayée, chaque condition s’ajoute à la comparaison — chaque réglage coché est essayé sur toute la grille.</span>
-          <button type="button" class="lien" onClick="{{ ouvrirConditions }}" title="Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.">régler finement…</button>
-          <button type="button" class="lien" onClick="{{ bsGrilleDefaut }}" title="Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.">grille au défaut</button>
-          <button type="button" class="lien" onClick="{{ bsToutSortir }}" title="Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.">tout sortir du scan</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:0;border-bottom:1px solid var(--color-divider)">
           <div style="position:relative;border-inline-end:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);border-inline-start:{{ bsRefFilet }};background:{{ bsRefFond }};min-height:46px;display:flex">
@@ -3084,60 +3078,6 @@
             </div>
           </div>
         </div>
-            </sc-if>
-            <sc-if value="{{ aPanCond }}" hint-placeholder-val="{{ false }}">
-        <div class="field">
-          <label>Conditions comparées<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.">?</span></label>
-          <div class="input" style="min-height:2.6rem;height:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 8px">
-            <button type="button" class="tag tag-outline" style="cursor:pointer;border-style:dashed;font-family:var(--font-body)" onClick="{{ toutesConditions }}" title="Coche toutes les conditions d'un coup : le scan les compare toutes et vous dit laquelle gagne. Attention, le temps de calcul est multiplié par leur nombre.">{{ toutesConditionsTxt }}</button>
-            <sc-for list="{{ choixFiltres }}" as="cf" hint-placeholder-count="8">
-              <button type="button" class="{{ cf.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);display:inline-flex;align-items:center;gap:5px" onClick="{{ cf.basculer }}" title="{{ cf.expl }}">{{ cf.nom }}<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.65" title="{{ cf.expl }}">?</span></button>
-            </sc-for>
-          </div>
-        </div>
-        <sc-if value="{{ aCondReglages }}" hint-placeholder-val="{{ false }}">
-        <div style="display:flex;flex-direction:column;gap:8px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--color-text) 14%,transparent)">
-          <div style="display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
-            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Chiffres balayés</span>
-            <span style="font-size:11px" class="text-muted">{{ nSousConditions }}</span>
-          </div>
-          <div style="display:grid;grid-template-columns:max-content max-content minmax(0,auto) max-content minmax(0,auto) max-content minmax(0,1fr);gap:7px 9px;align-items:center">
-            <sc-for list="{{ condReglages }}" as="cg" hint-placeholder-count="2">
-              <span style="font-size:12px">{{ cg.nom }}</span>
-              <sc-for list="{{ cg.champs }}" as="ch" hint-placeholder-count="3">
-                <span style="font-size:11px;text-align:right" class="text-muted">{{ ch.lab }}</span>
-                <span style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-                  <sc-if value="{{ ch.estUt }}" hint-placeholder-val="{{ false }}">
-                    <select class="input" style="min-height:1.6rem;height:1.6rem;font-size:12px;padding:0 5px;width:auto" value="{{ ch.val }}" onChange="{{ ch.maj }}">
-                      <sc-for list="{{ uts }}" as="cu" hint-placeholder-count="3"><option value="{{ cu.v }}">{{ cu.nom }}</option></sc-for>
-                    </select>
-                  </sc-if>
-                  <sc-if value="{{ ch.estNum }}" hint-placeholder-val="{{ false }}">
-                    <input class="input" type="number" style="min-height:1.6rem;height:1.6rem;font-size:12px;padding:0 4px;width:9ch;appearance:textfield;-moz-appearance:textfield;text-align:center" min="{{ ch.min }}" max="{{ ch.max }}" value="{{ ch.val }}" onChange="{{ ch.maj }}">
-                  </sc-if>
-                  <sc-if value="{{ ch.estNums }}" hint-placeholder-val="{{ false }}">
-                    <sc-for list="{{ ch.chipsNums }}" as="cn" hint-placeholder-count="3">
-                      <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;display:inline-flex;gap:4px;align-items:center" onClick="{{ cn.retirer }}" title="Cliquez pour retirer cette valeur">{{ cn.texte }} ×</button>
-                    </sc-for>
-                    <input type="text" value="{{ ch.saisieVal }}" onKeyDown="{{ ch.ajoutNum }}" onInput="{{ ch.saisieNum }}" placeholder="+ ajouter" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:66px;color:inherit">
-                  </sc-if>
-                  <sc-if value="{{ ch.estEchelles }}" hint-placeholder-val="{{ false }}">
-                    <sc-for list="{{ ch.chipsEchelles }}" as="ce2" hint-placeholder-count="2">
-                      <button type="button" class="tag tag-accent" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;display:inline-flex;gap:4px;align-items:center" onClick="{{ ce2.retirer }}" title="Un escalier = un trade, avec ses paliers dans l'ordre. Cliquez pour le retirer.">{{ ce2.texte }} ×</button>
-                    </sc-for>
-                    <input type="text" onKeyDown="{{ ch.ajoutEchelle }}" placeholder="+ ex. 25&gt;0 50&gt;25 75&gt;50" style="border:none;outline:none;background:transparent;font-family:var(--font-body);font-size:12px;width:170px;color:inherit">
-                  </sc-if>
-                  <sc-if value="{{ ch.estLignes }}" hint-placeholder-val="{{ false }}">
-                    <sc-for list="{{ ch.chips }}" as="lc" hint-placeholder-count="3">
-                      <button type="button" class="{{ lc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px" onClick="{{ lc.basculer }}">{{ lc.nom }}</button>
-                    </sc-for>
-                  </sc-if>
-                </span>
-              </sc-for>
-            </sc-for>
-          </div>
-        </div>
-        </sc-if>
             </sc-if>
             <sc-if value="{{ aPanSecu2 }}" hint-placeholder-val="{{ false }}">
         <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:9px">
@@ -5149,7 +5089,7 @@
     </sc-if>
     <sc-if value="{{ sansSauvPlein }}" hint-placeholder-val="{{ false }}">
       <strong style="font-size:13px;line-height:1.35;max-width:24ch;flex:none">Aucune sauvegarde hors de ce navigateur</strong>
-      <span style="font-size:11.5px;flex:1;min-width:38ch;line-height:1.5;opacity:.9">{{ sansSauvTxt }}</span>
+      <span style="font-size:11.5px;flex:1;min-width:52ch;line-height:1.45;opacity:.9">{{ sansSauvTxt }}</span>
     </sc-if>
     <sc-if value="{{ sansSauvReduit }}" hint-placeholder-val="{{ false }}">
       <span style="font-size:12px;flex:1;min-width:38ch;line-height:1.4"><strong>{{ sauvExpTxt }}{{ sauvExpQuand }}</strong>{{ sauvExpSuite }}</span>
@@ -16584,13 +16524,11 @@ GROUPES = {
           // avec un défaut plausible tant que l'observateur n'a pas rendu sa mesure
           bsPiedBas: (montrer ? (s.hSauv || (reduit ? 38 : 64)) : 0) + 'px',
           sansSauvTxt: integre
-            ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur, '
-              + 'pour cette adresse — et un navigateur peut le vider, notamment au redémarrage de la '
-              + 'machine. Dans une vue intégrée comme celle-ci, le navigateur interdit l\u2019écriture '
-              + 'directe dans un fichier : la sauvegarde automatique ne peut pas être activée. '
+            ? 'Rien de ce qui est ici n\u2019existe ailleurs que dans ce navigateur, et il peut le vider. '
+              + 'Une vue intégrée interdit la sauvegarde automatique : '
               + (this.state.ongletKO
-                ? 'Exportez maintenant ; pour l\u2019activer, ouvrez votre fichier Sivula.solo.html directement dans le navigateur.'
-                : 'Exportez maintenant, et rouvrez Sivula dans un onglet à lui pour l\u2019activer.')
+                ? 'exportez, ou ouvrez Sivula.solo.html directement dans le navigateur.'
+                : 'exportez, ou rouvrez Sivula dans un onglet à lui.')
             : 'Rien de ce qui est ici n\u2019existe ailleurs que dans le stockage de ce navigateur. '
               + 'Un navigateur qui vide son espace emporte les scans, les portefeuilles et les bougies. '
               + 'Choisissez un fichier de sauvegarde automatique : il s\u2019écrit sur votre disque à '
@@ -17512,16 +17450,13 @@ GROUPES = {
             while (cases.length < 3) cases.push({ lab: '', vide: true, chips: [], chipsNums: [] });
             return { v, nom, champs: cases };
           });
-        const cond = bati(this.VARIANTES_FILTRE, s.gFiltres, 'aucun');
         const secu = [...bati(this.SECU_VARIANTES, s.gSecus, 'aucune'),
           ...bati(this.TEMPS_VARIANTES, s.gTemps, 'jamais')];
-        const nTot = this.conditionsBalayees(s).length;
         const nSecu = this.developper(s, this.SECU_VARIANTES, s.gSecus, 'aucune').length
           * this.developper(s, this.TEMPS_VARIANTES, s.gTemps, 'jamais').length;
         return {
-          condReglages: cond, secuReglages: secu,
-          aCondReglages: cond.length > 0, aSecuReglages: secu.length > 0,
-          nSousConditions: nTot + (nTot > 1 ? ' variantes au total' : ' variante au total'),
+          secuReglages: secu,
+          aSecuReglages: secu.length > 0,
           nSecuVariantes: nSecu + (nSecu > 1 ? ' combinaisons sécurisation × durée' : ' combinaison sécurisation × durée'),
         };
       })(),
@@ -17953,21 +17888,6 @@ GROUPES = {
           return { gSecus: suite.length ? suite : l };
         }, () => this.ecrireSession()),
       })),
-      toutesConditionsTxt: (s.gFiltres || []).length >= Object.keys(this.VARIANTES_FILTRE).length
-        ? 'Ne garder que « sans filtre »' : 'Tout comparer',
-      toutesConditions: () => this.setState((p) => ({
-        gFiltres: (p.gFiltres || []).length >= Object.keys(this.VARIANTES_FILTRE).length
-          ? ['aucun'] : Object.keys(this.VARIANTES_FILTRE),
-      }), () => this.ecrireSession()),
-      choixFiltres: Object.entries(this.VARIANTES_FILTRE).map(([v, [nom, , expl]]) => ({
-        v, nom, expl: expl || nom,
-        cls: (s.gFiltres || []).includes(v) ? 'tag tag-accent' : 'tag tag-outline',
-        basculer: () => this.setState((p) => {
-          const l = p.gFiltres || [];
-          const suite = l.includes(v) ? l.filter((x) => x !== v) : [...l, v];
-          return { gFiltres: suite.length ? suite : l };
-        }, () => this.ecrireSession()),
-      })),
       // ————— LE BANDEAU DU SCAN : champs, cases de conditions, panneaux dépliés —————
       //
       // Sur le scan, un filtre n'est PAS un interrupteur : c'est une CONDITION COMPARÉE.
@@ -18078,12 +17998,7 @@ GROUPES = {
           bsCasesF,
           bsFiltresTitre: 'Filtres · ' + (nBal ? nBal + ' balayé' + (nBal > 1 ? 's' : '') : 'aucun balayé')
             + ' sur ' + nTot + ' \u2192 \u00d7' + nCond + (nCond > 1 ? ' conditions comparées' : ' condition comparée'),
-          bsToutSortir: () => this.setState({ gFiltres: ['aucun'] }, () => this.ecrireSession()),
           bsRailGrille: frB(railN),
-          bsGrilleDefaut: () => this.maj({ ut: 'H1', gPeriodes: this.GRILLE_V2.gPeriodes,
-            gSls: this.GRILLE_V2.gSls, gRrs: this.GRILLE_V2.gRrs,
-            gLignes: ['ema'], gEntrees: ['croisement_ou_rebond'], gSens: ['achat'],
-            gSecus: ['aucune'], gTemps: ['jamais'], gLectures: ['favorable', 'prudente'] }),
           bsPerX: '\u00d7' + per,
           bsPerListe: this.nombres(s.gPeriodes, [26]).join(' · '),
           bsSlX: '\u00d7' + sls,
@@ -18771,18 +18686,16 @@ GROUPES = {
       aPanScan: !!s.panScan,
       aPanInstr: s.panScan === 'instruments',
       aPanNombres: s.panScan === 'nombres',
-      aPanCond: s.panScan === 'conditions',
       aPanSecu2: s.panScan === 'secu',
       aPanSeuils: s.panScan === 'seuils',
       panScanTitre: { instruments: 'Les instruments à scanner', nombres: 'Longueurs, stops et objectifs',
-        conditions: 'Les conditions comparées', secu: 'Sécurisation, lecture et durée',
+        secu: 'Sécurisation, lecture et durée',
         seuils: 'Seuils d’affichage' }[s.panScan] || '',
       panScanSous: s.panScan === 'seuils'
         ? 'Ces seuils ne changent rien au calcul du scan : ils décident lesquelles de ses configurations s’affichent. Ce sont exactement ceux de l’entonnoir de l’Historique — il n’en existe qu’un jeu.'
         : 'Ce que vous cochez ici multiplie le temps de calcul annoncé en haut de la page.',
       ouvrirInstruments: () => this.setState({ panScan: 'instruments' }),
       ouvrirNombres: () => this.setState({ panScan: 'nombres' }),
-      ouvrirConditions: () => this.setState({ panScan: 'conditions' }),
       ouvrirSecu2: () => this.setState({ panScan: 'secu' }),
       ouvrirSeuils: () => this.setState({ panScan: 'seuils' }),
       fermerPanScan: () => this.setState({ panScan: '' }),

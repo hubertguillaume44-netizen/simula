@@ -155,17 +155,17 @@
    ]
   },
   {
-   "terme": "Conditions comparées",
-   "texte": "Chaque condition cochée est essayée sur toute la grille, en plus de « Sans filtre ». Le scan vous dit ensuite laquelle gagne, au lieu de vous laisser supposer.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "configs validées Tirages par configuration",
    "texte": "Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "Contenu réel du stockage",
+   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -215,13 +215,6 @@
    "texte": "Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.",
    "vues": [
     "Backtest"
-   ]
-  },
-  {
-   "terme": "défaut tout sortir du scan",
-   "texte": "Dans la comparaison, comme référence : toute condition doit faire mieux que « sans filtre » pour valoir la peine. Un clic la sort — le classement perd alors sa ligne de référence.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -394,13 +387,6 @@
    ]
   },
   {
-   "terme": "grille au défaut",
-   "texte": "Remet longueurs, stops, objectifs, lignes, entrée, sens, sécurisation et lecture à la grille de référence. Les conditions d’entrée ne bougent pas.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "grille Lancer quand même SIVULA",
    "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
    "vues": [
@@ -426,13 +412,6 @@
    "texte": "On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.",
    "vues": [
     "Historique"
-   ]
-  },
-  {
-   "terme": "Importer un fichier",
-   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
-   "vues": [
-    "Toutes les pages"
    ]
   },
   {
@@ -578,13 +557,6 @@
   {
    "terme": "réglage fin… fermer Durée maximale",
    "texte": "Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "régler finement…",
-   "texte": "Le tableau complet : unités de temps, périodes, seuils et lignes de chaque condition.",
    "vues": [
     "Nouveau scan"
    ]
@@ -811,13 +783,6 @@
    "texte": "Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.",
    "vues": [
     "Portefeuille"
-   ]
-  },
-  {
-   "terme": "tout sortir du scan",
-   "texte": "Ne garder que la référence « sans filtre » : aucune condition d’entrée balayée.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
