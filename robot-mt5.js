@@ -715,7 +715,7 @@ void LivOuvrir()
    FileSeek(g_livFic, 0, SEEK_END);
    if(neuf)
       FileWriteString(g_livFic, "ticket;symbole;sens;ouverture;entree;stop_initial;objectif;"
-                      + "fermeture;sortie;motif;volume;profit_devise;profit_R;frais;magic;build\r\n");
+                      + "fermeture;sortie;motif;volume;profit_devise;profit_R;frais;magic;build\\r\\n");
    Print("Journal des trades : Common/Files/", nom);
 }
 
@@ -728,7 +728,7 @@ void LivFermer()
 
 void Liv(string ligne)
 {
-   if(g_livFic != INVALID_HANDLE) FileWriteString(g_livFic, ligne + "\r\n");
+   if(g_livFic != INVALID_HANDLE) FileWriteString(g_livFic, ligne + "\\r\\n");
    else Print("SIVTRADE;", ligne);
 }
 // dates en yyyy.MM.dd HH:mm, décimale « . » : le lecteur du site n'a pas à deviner
@@ -849,7 +849,7 @@ void SpOuvAmorcer()
    int nmT = CopyTime(_Symbol, PERIOD_M1, hT[0], hT[n - 1] + 3599, mT);
    int nm = MathMin(nmS, nmT);
    if(nm < 1)
-      Print("Amorçage du plafond de spread : pas de M1 sur la fenêtre — repli sur "
+      Print("Amorçage du plafond de spread : pas de M1 sur la fenêtre — repli sur ",
             "l'agrégat H1, le plafond sera plus serré que celui du moteur.");
 
    double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
@@ -1715,7 +1715,7 @@ bool Entrer()
       // distance, le côté, ou un pas de cotation non respecté. Sans eux, le journal
       // nomme le refus sans permettre de le reproduire.
       g_confRefus = StringFormat("ordre refusé %d %s : prix=%s stop=%s objectif=%s lots=%s "
-                    "minCourtier=%s pasVolume=%s",
+                    + "minCourtier=%s pasVolume=%s",
                     trade.ResultRetcode(), trade.ResultRetcodeDescription(),
                     DoubleToString(prix, _Digits), DoubleToString(stop, _Digits),
                     DoubleToString(objectif, _Digits), DoubleToString(lots, 2),

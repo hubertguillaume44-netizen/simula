@@ -2651,7 +2651,7 @@
                 <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span>
               </button>
               <sc-if value="{{ bsPanPal }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
+                <div class="pan" style="left:-1px;right:auto;max-width:min(460px,92vw)">
                   <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">Comment le stop est porté en cours de route. Chaque jeu coché est essayé sur toute la grille — c’est le réglage qui change le plus les creux. Les valeurs exactes restent réglables dans le réglage fin : ces trois jeux sont des raccourcis, pas un remplacement.</span>
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
                     <sc-for list="{{ bsJeuxPal }}" as="jp" hint-placeholder-count="3">
@@ -9682,7 +9682,25 @@ GROUPES = {
     // sa hauteur sert d'assise au pied d'acier du scan, qui se pose au-dessus
     suivre('pied-sauv', 'hSauv');
   }
+  // Un panneau ancré peut sortir de la fenêtre : la grille du bandeau est en
+  // auto-fit, la colonne d'un champ dépend donc de la largeur, et aucun réglage
+  // gauche/droite écrit à la main n'est juste à toutes les largeurs — le panneau
+  // des Paliers se faisait couper quand son champ tombait en première colonne.
+  // Après chaque rendu, chaque panneau ouvert est mesuré et rabattu dans la
+  // fenêtre ; max-width ≤ 92vw garantit qu'un seul rabat suffit. Sous 900 px la
+  // media query le met en statique : rien à faire, on le laisse.
+  caserPanneaux() {
+    for (const p of document.querySelectorAll('.pan')) {
+      p.style.transform = '';
+      if (getComputedStyle(p).position !== 'absolute') continue;
+      const r = p.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const d = r.left < 1 ? 1 - r.left : r.right > vw - 1 ? (vw - 1) - r.right : 0;
+      if (d) p.style.transform = 'translateX(' + Math.round(d) + 'px)';
+    }
+  }
   componentDidUpdate() {
+    this.caserPanneaux();
     // Les barres sont RECRÉÉES quand la vue change : l'observateur de hauteurs suivait
     // alors un nœud détaché, et hEntete/hFil restaient figés sur la mesure du premier
     // rendu — le bandeau collant des instruments s'épinglait trop haut ou trop bas,
@@ -9713,11 +9731,15 @@ GROUPES = {
     try { for (const ro of this._roEntete || []) ro.disconnect(); } catch (e) {}
     clearInterval(this._autoI);
     try { window.removeEventListener('beforeunload', this.quitter); } catch (e) {}
+    try { window.removeEventListener('resize', this._caserPan); } catch (e) {}
     if (this._battement) clearInterval(this._battement);
   }
   async componentDidMount() {
     window.addEventListener('beforeunload', this.quitter);
     this.suivreHauteurEntete();
+    // un redimensionnement peut faire sortir un panneau déjà ouvert
+    this._caserPan = () => this.caserPanneaux();
+    window.addEventListener('resize', this._caserPan);
     this.sonderOnglet();
     // L'estimation « reste ~ » est calculée au rendu, et le scan ne déclenche un rendu
     // qu'à chaque changement d'instrument. Sans ce battement, l'affichage restait figé sur
