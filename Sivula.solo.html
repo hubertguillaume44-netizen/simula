@@ -5098,10 +5098,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       <span style="font-size:12px;flex:1;min-width:38ch;line-height:1.4"><strong>{{ sauvExpTxt }}{{ sauvExpQuand }}</strong>{{ sauvExpSuite }}</span>
     </sc-if>
     <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ sansSauvAgir }}">{{ sansSauvBouton }}</button>
-    <label style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap;display:inline-flex;align-items:center;position:relative">
-      Fichier à importer
-      <input type="file" accept="application/json,.json" onChange="{{ choisirImportPied }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-    </label>
     <span style="width:1px;align-self:stretch;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
     <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
     <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
@@ -16219,22 +16215,10 @@ GROUPES = {
               bouton: 'Comparer',
               go: () => this.versBacktest({ ...vPire, _sid: vPire.sid || vPire._sid }) };
           }
-        } else if (groupe === 'cherche') {
-          // un scan vieilli ne compte que si des séries ont été COMPLÉTÉES depuis :
-          // sans données neuves, relancer redonnerait exactement le même résultat, et la
-          // barre proposerait une tâche inventée
-          const arch = (s.archives || [])[0];
-          const t0 = arch && arch.date ? new Date(arch.date).getTime() : 0;
-          const h = t0 ? (Date.now() - t0) / 3600000 : 0;
-          let neuves = 0;
-          if (t0) { const cv = this.lireCouv();
-            for (const k of Object.keys(cv)) if (cv[k] && cv[k].date > t0) neuves++; }
-          if (t0 && neuves > 0) {
-            tache = { txt: 'Votre dernier scan a ' + (h < 44 ? Math.round(h) + ' h' : Math.round(h / 24) + ' j')
-                + ' — ' + this.pl(neuves, 'série a été complétée', 'séries ont été complétées') + ' depuis',
-              bouton: 'Relancer', go: aller('scan', 'lancerScan') };
-          }
         }
+        // plus de tâche « votre dernier scan a N h » sur les onglets de scan :
+        // l'Historique date chaque scan et le Journal en tient le registre —
+        // la barre dit « tout est à jour » plutôt que de répéter l'information
         return {
           // La phrase de gauche porte « tout est à jour » quand il n'y a pas de tâche :
           // le filet et le bouton disparaissent, mais la barre ne se vide pas à moitié.
@@ -16585,16 +16569,9 @@ GROUPES = {
                     + (delta > 1 ? 'existent' : 'existe') + ' qu\u2019ici.'
                   : 'Rien de mesuré depuis.')
             : 'Jamais exporté — rien de ce qui est ici n\u2019existe ailleurs que dans ce navigateur.',
-          // « Fichier à importer » : le même gestionnaire que l'import du tiroir,
-          // mais le dialogue « Ce fichier contient / Fusionner / Remplacer » VIT dans
-          // le tiroir — il faut donc l'ouvrir, sinon le geste a l'air de ne rien faire
-          choisirImportPied: (e) => {
-            const f = e.target.files && e.target.files[0];
-            e.target.value = '';
-            if (!f) return;
-            this.setState({ tiroir: true, tiroirOnglet: 'donnees' });
-            this.examinerImport(f);
-          },
+          // pas de « Fichier à importer » ici : n'acceptant que le JSON de sauvegarde,
+          // il grisait les CSV qu'on tend à cet endroit — l'import vit dans le tiroir,
+          // à côté de la sauvegarde chiffrée, où son voisinage dit ce qu'il attend
         };
       })(),
       ...(() => {
