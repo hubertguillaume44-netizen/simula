@@ -5083,7 +5083,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
     l'avertissement supportable, pas sa fermeture.
   -->
   <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
-  <div id="pied-sauv" style="position:sticky;bottom:0;z-index:60;background:{{ sauvFondPied }};color:var(--color-bg);border-top:2px solid {{ sauvBordPied }};padding:{{ sansSauvPadIn }} 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+  <div id="pied-sauv" style="position:fixed;left:0;right:0;bottom:0;z-index:60;background:{{ sauvFondPied }};color:var(--color-bg);border-top:2px solid {{ sauvBordPied }};padding:{{ sansSauvPadIn }} 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
       <span style="flex-basis:100%;font-size:10px;line-height:1.4;opacity:.8">{{ licPiedTxt }}</span>
     </sc-if>
@@ -5098,12 +5098,13 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       <span style="font-size:12px;flex:1;min-width:38ch;line-height:1.4"><strong>{{ sauvExpTxt }}{{ sauvExpQuand }}</strong>{{ sauvExpSuite }}</span>
     </sc-if>
     <button type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:5px 12px;white-space:nowrap" onClick="{{ sansSauvAgir }}">{{ sansSauvBouton }}</button>
-    <sc-if value="{{ aSauvBtn2 }}" hint-placeholder-val="{{ false }}">
-      <button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ sauvBtn2Agir }}">{{ sauvBtn2Txt }}</button>
-    </sc-if>
+    <label style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap;display:inline-flex;align-items:center;position:relative">
+      Fichier à importer
+      <input type="file" accept="application/json,.json" onChange="{{ choisirImportPied }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+    </label>
     <span style="width:1px;align-self:stretch;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
-    <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
     <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
+    <button type="button" style="cursor:pointer;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
     <sc-if value="{{ aOngletMsg }}" hint-placeholder-val="{{ false }}">
       <span style="flex-basis:100%;font-size:11px;line-height:1.5;opacity:.92">{{ ongletMsg }}</span>
     </sc-if>
@@ -16519,7 +16520,6 @@ GROUPES = {
             ? nb(delta, 'configuration mesurée', 'configurations mesurées') + ' depuis n\u2019'
               + (delta > 1 ? 'existent' : 'existe') + ' que dans ce navigateur.'
             : 'Aucune configuration mesurée depuis.';
-        const ouvrirOnglet = () => this.ouvrirEnOnglet();
         // ————— LA PURGE SILENCIEUSE : la seule alerte qui protège d'une perte
         // irréversible, elle a le droit d'être visible. Accent SEULEMENT quand la
         // protection n'existe pas ET qu'une mesure n'a pas été exportée depuis.
@@ -16585,9 +16585,16 @@ GROUPES = {
                     + (delta > 1 ? 'existent' : 'existe') + ' qu\u2019ici.'
                   : 'Rien de mesuré depuis.')
             : 'Jamais exporté — rien de ce qui est ici n\u2019existe ailleurs que dans ce navigateur.',
-          aSauvBtn2: integre || !reduit,
-          sauvBtn2Txt: integre ? 'Ouvrir dans un onglet' : 'Exporter mes données',
-          sauvBtn2Agir: integre ? ouvrirOnglet : () => this.exporterTout(),
+          // « Fichier à importer » : le même gestionnaire que l'import du tiroir,
+          // mais le dialogue « Ce fichier contient / Fusionner / Remplacer » VIT dans
+          // le tiroir — il faut donc l'ouvrir, sinon le geste a l'air de ne rien faire
+          choisirImportPied: (e) => {
+            const f = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!f) return;
+            this.setState({ tiroir: true, tiroirOnglet: 'donnees' });
+            this.examinerImport(f);
+          },
         };
       })(),
       ...(() => {
