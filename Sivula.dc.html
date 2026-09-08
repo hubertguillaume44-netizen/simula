@@ -60,6 +60,16 @@
            width: 100%; min-width: 0; max-width: none !important;
            box-shadow: none; margin-top: 4px; }
   }
+  /* La liste plate des instruments du scan : une ligne cliquable par instrument,
+     sa case et son rang au coût. Le survol ne s'écrit pas en style en ligne. */
+  .rin { cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 5px 12px;
+         border: none; background: none; font: inherit; font-size: 12px; text-align: left;
+         width: 100%; color: inherit;
+         border-top: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent); }
+  .rin:hover { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .cin { width: 13px; height: 13px; flex: none; border: 1px solid var(--color-neutral-500);
+         display: grid; place-items: center; font-size: 10px; line-height: 1;
+         color: var(--color-bg); }
   /* Portefeuille : champ d'hypothèse (grammaire du Backtest), rangée dépliable
      et titre-question — leur survol ne peut pas s'écrire en style en ligne. */
   .champ { cursor: pointer; width: 100%; font: inherit; text-align: left;
@@ -2357,57 +2367,43 @@
                 <span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevInstr }}</span>
               </button>
               <sc-if value="{{ bsPanInstr }}" hint-placeholder-val="{{ false }}">
-                <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
-                <sc-if value="{{ aChoisis }}" hint-placeholder-val="{{ true }}">
-                  <div style="display:flex;flex-direction:column;gap:5px">
-                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
-                      <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase" class="text-muted">Choisis</span>
-                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700)" title="Décocher tous les instruments d’un coup" onClick="{{ toutDecocher }}">tout décocher</button>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
-                      <sc-for list="{{ choisisListe }}" as="ch" hint-placeholder-count="3">
-                        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--color-divider)">
-                          <strong style="font-size:12px;line-height:1.3;flex:1;min-width:0">{{ ch.nom }}</strong>
-                          <span style="font-size:10px;white-space:nowrap" class="text-muted">{{ ch.cout }}</span>
-                          <button type="button" style="cursor:pointer;border:none;background:none;padding:0 2px;font:inherit;font-size:12px;line-height:1;color:var(--color-neutral-500)" title="{{ ch.retirerAide }}" onClick="{{ ch.retirer }}">×</button>
-                        </div>
-                      </sc-for>
+                <div class="pan" style="left:-1px;max-width:min(460px,92vw);padding:0;gap:0">
+                  <div style="padding:9px 10px;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:7px">
+                    <input class="input" style="min-height:2rem;height:2rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Filtrer — nom ou ticker…">
+                    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                      <span style="font-size:11px;flex:1;min-width:14ch" class="text-muted">{{ instrCompteTxt }}</span>
+                      <button type="button" class="lien" title="Décocher tous les instruments d’un coup" onClick="{{ toutDecocher }}">tout décocher</button>
                     </div>
                   </div>
-                </sc-if>
-
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <input class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;padding:0 8px" type="text" value="{{ recherche }}" onChange="{{ setRecherche }}" placeholder="Ajouter — nom ou ticker…">
-                  <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;text-align:left;color:var(--color-accent-700);align-self:flex-start" onClick="{{ ouvrirInstruments }}">Ouvrir la liste des {{ nbTotal }} →</button>
-                  <!--
-                    LES NEUF PASTILLES DEVIENNENT UNE LISTE. « Stocks · United States-0/55 » :
-                    le tiret du nom se collait au décompte, et le décompte devenait illisible.
-                    Le nom à gauche, « 2 / 15 » à droite, « + tout » explicite — au lieu d'une
-                    pastille entière qui bascule au moindre clic sans dire ce qu'elle fait.
-                  -->
-                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--color-divider)">
-                    <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="4">
-                      <sc-if value="{{ gr.montre }}" hint-placeholder-val="{{ true }}">
-                        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--color-divider)">
-                          <span style="font-size:12px;line-height:1.3;flex:1;min-width:0">{{ gr.nom }}</span>
-                          <span style="font-size:11px;white-space:nowrap;font-weight:{{ gr.choisisGras }};color:{{ gr.choisisCouleur }}">{{ gr.choisisTxt }}</span>
-                          <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;white-space:nowrap;color:var(--color-accent-700)" title="{{ gr.toutAide }}" onClick="{{ gr.basculerGroupe }}">{{ gr.toutTxt }}</button>
+                  <!-- la liste plate : l'ordre est celui du sélecteur du Backtest et ne
+                       bouge jamais quand on coche — une liste qui se réordonne sous le
+                       doigt fait cocher le mauvais instrument -->
+                  <div style="max-height:min(58vh,470px);overflow:auto">
+                    <sc-for list="{{ instrFamilles }}" as="fa" hint-placeholder-count="4">
+                      <div>
+                        <div style="position:sticky;top:0;z-index:1;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);padding:5px 11px;display:flex;align-items:baseline;gap:9px">
+                          <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;flex:1;min-width:0" class="text-muted">{{ fa.nom }}</span>
+                          <span style="font-size:11px;font-variant-numeric:tabular-nums" class="text-muted">{{ fa.compte }}</span>
+                          <button type="button" class="lien" title="{{ fa.toutAide }}" onClick="{{ fa.tout }}">{{ fa.toutTxt }}</button>
                         </div>
-                      </sc-if>
+                        <sc-for list="{{ fa.lignes }}" as="it" hint-placeholder-count="5">
+                          <button class="rin" type="button" title="{{ it.aide }}" onClick="{{ it.basculer }}">
+                            <span class="cin" style="background:{{ it.fond }};border-color:{{ it.bord }}">{{ it.coche }}</span>
+                            <strong style="font-size:12px;min-width:11ch">{{ it.sym }}</strong>
+                            <span style="font-size:11px;flex:1;min-width:0;line-height:1.35" class="text-muted">{{ it.nom }}</span>
+                            <span style="font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums;color:{{ it.coutCouleur }}">{{ it.cout }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
                     </sc-for>
-                    <sc-if value="{{ aGroupesCaches }}" hint-placeholder-val="{{ true }}">
-                      <button type="button" style="cursor:pointer;border:none;background:none;text-align:left;padding:5px 0;font:inherit;font-size:12px;border-bottom:1px solid var(--color-divider);display:flex;align-items:baseline;gap:8px" title="{{ groupesCachesAide }}" onClick="{{ deployerGroupes }}">
-                        <span style="flex:1;min-width:0" class="text-muted">{{ groupesCachesTxt }}</span>
-                        <span style="font-size:11px;opacity:.55">▸</span>
-                      </button>
-                    </sc-if>
-                    <sc-if value="{{ aGroupesReplier }}" hint-placeholder-val="{{ false }}">
-                      <button type="button" style="cursor:pointer;border:none;background:none;text-align:left;padding:5px 0;font:inherit;font-size:11px;color:var(--color-accent-700);align-self:flex-start" onClick="{{ replierGroupes }}">▾ replier les groupes vides</button>
+                    <sc-if value="{{ instrVide }}" hint-placeholder-val="{{ false }}">
+                      <p style="margin:0;padding:16px 12px;font-size:12px;line-height:1.5" class="text-muted">{{ instrVideTxt }}</p>
                     </sc-if>
                   </div>
-                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ prixInstrument }}</span>
-                </div>
-                  <button type="button" class="lien" style="align-self:flex-end" onClick="{{ bsFermePan }}">fermer</button>
+                  <div style="padding:9px 11px;border-top:1px solid var(--color-divider);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                    <span style="font-size:11px;line-height:1.45;flex:1;min-width:22ch;color:var(--color-accent-700)">{{ instrDevis }}</span>
+                    <button type="button" class="lien" onClick="{{ bsFermePan }}">fermer</button>
+                  </div>
                 </div>
               </sc-if>
             </div>
@@ -3015,39 +3011,6 @@
               <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:12px" onClick="{{ fermerPanScan }}">Fermer</button>
             </div>
             <span style="font-size:12px" class="text-muted">{{ panScanSous }}</span>
-            <sc-if value="{{ aPanInstr }}" hint-placeholder-val="{{ true }}">
-        <div class="field">
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
-            <label style="margin:0">Instruments à scanner — {{ nbUnivers }} sélectionnés sur {{ nbTotal }}</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-ghost" type="button" onClick="{{ toutUnivers }}">Tout sélectionner</button>
-              <button class="btn btn-ghost" type="button" onClick="{{ viderUnivers }}">Tout désélectionner</button>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
-            <sc-for list="{{ groupes }}" as="gr" hint-placeholder-count="11">
-              <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
-                  <div style="display:flex;gap:10px;align-items:baseline">
-                    <span style="font-family:var(--font-heading);font-size:15px">{{ gr.nom }}</span>
-                    <span style="font-size:12px" class="text-muted">{{ gr.choisis }} / {{ gr.n }}</span>
-                  </div>
-                  <button class="btn btn-ghost" type="button" onClick="{{ gr.basculerGroupe }}">Tout le groupe</button>
-                </div>
-                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <sc-for list="{{ gr.symboles }}" as="u" hint-placeholder-count="12">
-                    <button type="button" class="{{ u.cls }}" style="cursor:pointer;border:1px solid var(--color-divider);font-family:var(--font-body);display:inline-flex;flex-direction:column;align-items:flex-start;gap:0;line-height:1.3" title="{{ u.dispoAide }}" onClick="{{ u.basculer }}">{{ u.nom }}<span style="font-size:9px;letter-spacing:.05em;opacity:.75">{{ u.dispoTxt }}</span></button>
-                  </sc-for>
-                </div>
-              </div>
-            </sc-for>
-          </div>
-          <sc-if value="{{ aFicheMsg }}" hint-placeholder-val="{{ false }}">
-            <p style="margin:8px 0 0;font-size:13px" class="text-muted">{{ ficheMsg }}</p>
-          </sc-if>
-        </div>
-            </sc-if>
             <sc-if value="{{ aPanNombres }}" hint-placeholder-val="{{ false }}">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <div class="field">
@@ -6866,27 +6829,6 @@ GROUPES = {
   get SYMBOLES() { return [...new Set(Object.values(this.GROUPES_ACTIFS).flat())]; }
   // les fichiers déposés SONT le catalogue : plus de groupe séparé qui les répète
   get GROUPES_AFFICHES() { return this.GROUPES_ACTIFS; }
-  // ————— QUELS GROUPES L'ÉTAPE « SUR QUOI » MONTRE —————
-  //
-  // Neuf lignes, dont six à « 0 / N », repoussaient la période et l'unité de temps hors de
-  // l'écran. Les groupes entamés restent visibles ; les autres tiennent sur une ligne
-  // dépliable. Une recherche en cours montre tout : sinon elle cacherait ce qu'elle vient
-  // de trouver. Trois lignes minimum, pour que le bloc ne se réduise pas à rien.
-  groupesEtape(s) {
-    const q = (s.recherche || '').trim().toLowerCase();
-    const tous = Object.entries(this.GROUPES_AFFICHES).map(([nom, t]) => {
-      const liste = q ? t.filter((x) => x.toLowerCase().includes(q)) : t;
-      return { nom, n: liste.length, choisis: liste.filter((x) => (s.univers || []).includes(x)).length };
-    }).filter((g) => g.n > 0);
-    const ouverts = !!s.groupesTous || !!q;
-    const vifs = tous.filter((g) => g.choisis > 0);
-    const mornes = tous.filter((g) => g.choisis === 0).sort((a, b) => b.n - a.n);
-    const place = Math.max(0, 3 - vifs.length);
-    const caches = ouverts ? [] : mornes.slice(place);
-    const nomsCaches = new Set(caches.map((g) => g.nom));
-    return { tous, caches, ouverts, qActive: !!q,
-      montre: (nom) => !nomsCaches.has(nom) };
-  }
   // seul `demo/` est publié : `data/` n'est plus lu (voir chargerSerie)
   dossier() { return 'demo/'; }
   // toutes les séries chargées qui partagent le même sous-jacent
@@ -9732,6 +9674,8 @@ GROUPES = {
     clearInterval(this._autoI);
     try { window.removeEventListener('beforeunload', this.quitter); } catch (e) {}
     try { window.removeEventListener('resize', this._caserPan); } catch (e) {}
+    try { document.removeEventListener('mousedown', this._panDehors, true); } catch (e) {}
+    try { document.removeEventListener('keydown', this._panEchap); } catch (e) {}
     if (this._battement) clearInterval(this._battement);
   }
   async componentDidMount() {
@@ -9740,6 +9684,26 @@ GROUPES = {
     // un redimensionnement peut faire sortir un panneau déjà ouvert
     this._caserPan = () => this.caserPanneaux();
     window.addEventListener('resize', this._caserPan);
+    // Un panneau du bandeau (et les cellules de conditions) se ferme au clic en
+    // dehors et à la touche Échap — le lien « fermer » reste pour qui le cherche.
+    // Le clic DANS la cellule du panneau ouvert (son champ compris) est ignoré :
+    // le champ bascule déjà son panneau, l'écouteur fermerait avant lui et le
+    // clic rouvrirait ce qu'il vient de fermer.
+    this._panDehors = (e) => {
+      if (!this.state.bsPanneau && !this.state.bsCondOuverte) return;
+      for (const p of document.querySelectorAll('.pan')) {
+        if (p.parentElement && p.parentElement.contains(e.target)) return;
+      }
+      this.setState({ bsPanneau: '', bsCondOuverte: '' });
+    };
+    this._panEchap = (e) => {
+      if (e.key !== 'Escape') return;
+      if (this.state.bsPanneau || this.state.bsCondOuverte) {
+        this.setState({ bsPanneau: '', bsCondOuverte: '' });
+      } else if (this.state.panScan) this.setState({ panScan: '' });
+    };
+    document.addEventListener('mousedown', this._panDehors, true);
+    document.addEventListener('keydown', this._panEchap);
     this.sonderOnglet();
     // L'estimation « reste ~ » est calculée au rendu, et le scan ne déclenche un rendu
     // qu'à chaque changement d'instrument. Sans ce battement, l'affichage restait figé sur
@@ -17110,62 +17074,6 @@ GROUPES = {
         : 'Six étapes, à faire une seule fois par instrument.',
       basculerGuide: () => this.setState((p) => ({ guideDepot: !p.guideDepot })),
       nbDeposes: (s.deposes || []).length,
-      groupes: ((vus) => Object.entries(this.GROUPES_AFFICHES).map(([nom, tous]) => {
-        const q = (s.recherche || '').trim().toLowerCase();
-        const liste = q ? tous.filter((x) => x.toLowerCase().includes(q)) : tous;
-        return {
-        nom, n: liste.length,
-        choisis: liste.filter((x) => s.univers.includes(x)).length,
-        tousChoisis: liste.every((x) => s.univers.includes(x)),
-        // la pastille de groupe de la colonne : pleine dès qu'un instrument du groupe est
-        // coché, pour qu'un groupe entamé se distingue d'un groupe vide au premier coup d'œil
-        cls: 'tag ' + (liste.some((x) => s.univers.includes(x)) ? 'tag-accent' : 'tag-outline'),
-        basculerGroupe: () => this.setState((p) => ({
-          univers: liste.every((x) => p.univers.includes(x))
-            ? p.univers.filter((x) => !liste.includes(x))
-            : [...new Set([...p.univers, ...liste])],
-        })),
-        symboles: liste.map((x) => ({
-          nom: x,
-          dispoTxt: this.comptesDe(x).a ? this.comptesDe(x).txt : (this.comptesDe(x).attente ? 'prix indisponible' : 'aucun compte'),
-          dispoAide: this.comptesDe(x).aide,
-          cls: s.univers.includes(x) ? 'tag tag-accent' : 'tag tag-outline',
-          basculer: () => this.setState((p) => ({ univers: p.univers.includes(x) ? p.univers.filter((y) => y !== x) : [...p.univers, x] })),
-          voir: (e) => { e.stopPropagation(); this.ouvrirFiche(x); },
-        })),
-        // ————— UNE LISTE, PAS UNE PASTILLE —————
-        // « Stocks · United States-0/55 » : le tiret se collait au décompte, et le
-        // décompte devenait illisible. Le nom à gauche, le compte à droite, gras
-        // seulement quand il compte pour quelque chose.
-        choisisTxt: liste.filter((x) => s.univers.includes(x)).length + ' / ' + liste.length,
-        choisisGras: liste.some((x) => s.univers.includes(x)) ? '600' : '400',
-        choisisCouleur: liste.some((x) => s.univers.includes(x))
-          ? 'var(--color-text)' : 'var(--color-neutral-500)',
-        toutTxt: liste.every((x) => s.univers.includes(x)) ? '\u2212 aucun' : '+ tout',
-        toutAide: liste.every((x) => s.univers.includes(x))
-          ? 'Décocher les ' + liste.length + ' instruments de ce groupe'
-          : 'Cocher les ' + liste.length + ' instruments de ce groupe',
-        montre: vus.montre(nom),
-        vide: liste.length === 0,
-      }; }).filter((g) => !g.vide))(this.groupesEtape(s)),
-      // ————— LES GROUPES VIDES SE REPLIENT —————
-      // Neuf lignes dont six à « 0 / N » repoussent la période et l'unité hors de l'écran.
-      // Les groupes entamés restent visibles, les autres tiennent sur une ligne — et une
-      // recherche en cours montre tout, sinon elle cacherait ce qu'elle vient de trouver.
-      ...(() => {
-        const { tous, caches, ouverts, qActive } = this.groupesEtape(s);
-        return {
-          aGroupesCaches: caches.length > 0,
-          groupesCachesTxt: caches.length + (caches.length > 1 ? ' autres groupes \u00b7 ' : ' autre groupe \u00b7 ')
-            + '0 / ' + caches.reduce((a, g) => a + g.n, 0),
-          groupesCachesAide: 'Groupes dont aucun instrument n\u2019est coché : '
-            + caches.map((g) => g.nom).join(', ') + '. Cliquez pour les déployer.',
-          aGroupesReplier: ouverts && !qActive && tous.length > 3,
-          replierGroupes: () => this.setState({ groupesTous: false }),
-          deployerGroupes: () => this.setState({ groupesTous: true }),
-        };
-      })(),
-      nbUnivers: this.universDuCompte(s.univers).length,
       scanImpossible: this.universDuCompte(s.univers).length ? undefined : true,
       scanImpossibleAide: this.universDuCompte(s.univers).length
         ? 'Balaye la grille sur les instruments cochés.'
@@ -17303,8 +17211,6 @@ GROUPES = {
       })(),
       mt5Copie: s.mt5Copie || '',
       aMt5Copie: !!s.mt5Copie,
-      viderUnivers: () => this.setState({ univers: [], mt5Copie: '' }),
-      toutUnivers: () => this.setState({ univers: [...this.SYMBOLES] }),
       sauvEtat: s.sauvEtat || '',
       aSauvEtat: !!s.sauvEtat && !!s.sauvKo,
       etatMemoire: this.etatMemoire(),
@@ -18616,32 +18522,62 @@ GROUPES = {
           devisEncre: nU ? 'var(--color-bg)' : 'var(--color-text)',
           devisBoutonEncre: nU ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
           devisVideTxt: '0 combinaison \u2014 choisissez au moins un instrument',
-          // LE PRIX D'UNE CASE COCHÉE, en clair. C'est ce qui manquait : une case peut
-          // tripler une heure de calcul sans que rien ne l'annonce.
-          prixInstrument: 'Chaque instrument coché ajoute ' + parInstr.toLocaleString('fr-FR')
-            + ' combinaisons, soit ' + this.duree(parInstr / cps) + ' de calcul.',
-          // ————— CE QUI EST COCHÉ, NOMMÉ —————
+          // ————— LA LISTE DU BACKTEST, COCHABLE —————
           //
-          // L'étape affichait « 0 / 148 » et neuf pastilles de groupe : pour savoir
-          // LESQUELS étaient cochés il fallait ouvrir la liste des 148 et y chercher les
-          // cases. La sélection est la première chose que l'étape doit dire.
-          choisisListe: this.universDuCompte(s.univers).map((sym) => ({
-            sym, nom: this.nomComplet(sym),
-            // le rang au coût et le coût en R par trade — l'application les calcule
-            // déjà pour la liste complète : les taire ici faisait cocher à l'aveugle
-            cout: (() => {
-              const rg = this.rangCout(sym);
-              const o = this.coutEnR(sym, this.stopDe(sym),
-                this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif);
-              const r = o && Number.isFinite((o.achatR + o.venteR) / 2) ? (o.achatR + o.venteR) / 2 : null;
-              return [rg ? 'n° ' + rg + ' au coût' : '',
-                r !== null && r > 0 ? String(Math.round(r * 100) / 100).replace('.', ',') + ' R par trade' : '']
-                .filter(Boolean).join(' · ') || coutUn;
-            })(),
-            retirerAide: 'Retirer ' + this.nomComplet(sym) + ' de la sélection',
-            retirer: () => this.setState((p) => ({ univers: (p.univers || []).filter((x) => x !== sym) })),
-          })),
-          aChoisis: nU > 0,
+          // Une ligne par instrument, dans l'ordre du sélecteur du Backtest, avec son
+          // rang au coût : cocher sans savoir qu'un instrument est n° 40, c'est mesurer
+          // une stratégie que les frais ont déjà tranchée. Le seuil « cher » est celui
+          // du classement des coûts — la moitié haute, comme partout ailleurs — et la
+          // disponibilité prend la place du rang quand aucun compte ne chiffre le prix.
+          instrCompteTxt: nU
+            ? nU + (nU > 1 ? ' instruments cochés' : ' instrument coché')
+            : 'Aucun instrument coché',
+          instrDevis: nU
+            ? (nU * parInstr).toLocaleString('fr-FR') + ' combinaisons demandées · '
+              + this.duree(nU * parInstr / cps) + ' de calcul'
+            : 'Cochez au moins un instrument pour lancer le scan.',
+          instrVideTxt: 'Aucun instrument ne porte « ' + (s.recherche || '').trim()
+            + ' ». Le filtre lit le ticker et le nom.',
+          ...(() => {
+            const q = (s.recherche || '').trim().toLowerCase();
+            const seuil = Math.ceil(this.rangsCout().size / 2) || null;
+            const familles = Object.entries(this.GROUPES_AFFICHES).map(([nom, tous]) => {
+              const visibles = q ? tous.filter((x) => x.toLowerCase().includes(q)
+                || this.nomComplet(x).toLowerCase().includes(q)) : tous;
+              const nFam = tous.filter((x) => (s.univers || []).includes(x)).length;
+              const complet = tous.length > 0 && nFam === tous.length;
+              return {
+                nom, compte: nFam + ' / ' + tous.length,
+                toutTxt: complet ? '\u2212 tout' : '+ tout',
+                toutAide: (complet ? 'Décocher les ' : 'Cocher les ') + tous.length
+                  + ' instruments de ce groupe',
+                tout: () => this.setState((p) => ({ univers: complet
+                  ? (p.univers || []).filter((x) => !tous.includes(x))
+                  : [...new Set([...(p.univers || []), ...tous])] })),
+                lignes: visibles.map((x) => {
+                  const pris = (s.univers || []).includes(x);
+                  const d = this.comptesDe(x);
+                  const rg = this.rangCout(x);
+                  return {
+                    sym: x, nom: this.nomComplet(x), aide: d.aide,
+                    cout: d.a ? (rg ? 'n° ' + rg + ' au coût' : 'coût non classé')
+                      : (d.attente ? 'prix indisponible' : 'aucun compte'),
+                    coutCouleur: d.a && rg && seuil && rg > seuil
+                      ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+                    coche: pris ? '\u2713' : '',
+                    fond: pris ? 'var(--color-accent)' : 'transparent',
+                    bord: pris ? 'var(--color-accent)' : 'var(--color-neutral-500)',
+                    // l'ordre est celui de la liste, jamais celui des clics
+                    basculer: () => this.setState((p) => ({
+                      univers: (p.univers || []).includes(x)
+                        ? (p.univers || []).filter((y) => y !== x)
+                        : [...(p.univers || []), x] })),
+                  };
+                }),
+              };
+            }).filter((f) => f.lignes.length > 0);
+            return { instrFamilles: familles, instrVide: familles.length === 0 };
+          })(),
           toutDecocher: () => this.setState({ univers: [] }),
         };
       })(),
@@ -18706,17 +18642,15 @@ GROUPES = {
       scanEnCoursTitre: 'Scan en cours',
       // ————— LES PANNEAUX DE LA PAGE SCAN —————
       aPanScan: !!s.panScan,
-      aPanInstr: s.panScan === 'instruments',
       aPanNombres: s.panScan === 'nombres',
       aPanSecu2: s.panScan === 'secu',
       aPanSeuils: s.panScan === 'seuils',
-      panScanTitre: { instruments: 'Les instruments à scanner', nombres: 'Longueurs, stops et objectifs',
+      panScanTitre: { nombres: 'Longueurs, stops et objectifs',
         secu: 'Sécurisation, lecture et durée',
         seuils: 'Seuils d’affichage' }[s.panScan] || '',
       panScanSous: s.panScan === 'seuils'
         ? 'Ces seuils ne changent rien au calcul du scan : ils décident lesquelles de ses configurations s’affichent. Ce sont exactement ceux de l’entonnoir de l’Historique — il n’en existe qu’un jeu.'
         : 'Ce que vous cochez ici multiplie le temps de calcul annoncé en haut de la page.',
-      ouvrirInstruments: () => this.setState({ panScan: 'instruments' }),
       ouvrirNombres: () => this.setState({ panScan: 'nombres' }),
       ouvrirSecu2: () => this.setState({ panScan: 'secu' }),
       ouvrirSeuils: () => this.setState({ panScan: 'seuils' }),

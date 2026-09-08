@@ -331,6 +331,13 @@
    ]
   },
   {
+   "terme": "fermer Depuis",
+   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
    "terme": "fermer Ligne périodes",
    "texte": "La ligne que le prix doit franchir, et ses longueurs en bougies de l’unité — chaque valeur cochée multiplie le calcul.",
    "vues": [
@@ -347,6 +354,13 @@
   {
    "terme": "fermer Paliers",
    "texte": "Comment le stop est porté en cours de route — chaque jeu coché est essayé sur toute la grille.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "Fermer Périodes de la ligne",
+   "texte": "Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.",
    "vues": [
     "Nouveau scan"
    ]
@@ -401,13 +415,6 @@
    ]
   },
   {
-   "terme": "groupe Périodes de la ligne",
-   "texte": "Sur combien de bougies la ligne est calculée. 9 réagit vite et donne beaucoup de signaux ; 26 est plus lente et plus sélective.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "hasard qui font aussi bien",
    "texte": "On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.",
    "vues": [
@@ -440,13 +447,6 @@
    "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
    "vues": [
     "Mes instruments"
-   ]
-  },
-  {
-   "terme": "les groupes vides fermer Depuis",
-   "texte": "La période mesurée. Réduite avant de voir le résultat, une fenêtre sert à tester ; après, elle sert à se tromper.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
