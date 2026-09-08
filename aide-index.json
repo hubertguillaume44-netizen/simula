@@ -120,6 +120,13 @@
    ]
   },
   {
+   "terme": "Ce qu'il fallait encaisser aucun",
+   "texte": "Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.",
+   "vues": [
+    "Portefeuille"
+   ]
+  },
+  {
    "terme": "Ce que ça rend en tout",
    "texte": "Ce que le capital devient sur toute la période, gains réinvestis.",
    "vues": [
@@ -187,13 +194,6 @@
    "texte": "Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.",
    "vues": [
     "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "Coût réel",
-   "texte": "Spread, commission et portage tels que votre relevé les chiffre, ramenés à la part de risque qu'ils emportent.",
-   "vues": [
-    "Portefeuille"
    ]
   },
   {
@@ -323,18 +323,18 @@
    ]
   },
   {
-   "terme": "Et si j'avais simplement détenu ?",
-   "texte": "Ce que les mêmes instruments auraient rendu si vous les aviez simplement achetés au début de la période et gardés jusqu'au bout, sans jamais rien faire.",
-   "vues": [
-    "Portefeuille"
-   ]
-  },
-  {
    "terme": "États-Unis Europe Asie Mettre jour",
    "texte": "Replier ou déplier cette section",
    "vues": [
     "Marché",
     "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Exporter",
+   "texte": "Télécharge l'Expert Advisor MQL5 de cette configuration.",
+   "vues": [
+    "Portefeuille"
    ]
   },
   {
@@ -590,13 +590,6 @@
    ]
   },
   {
-   "terme": "Rendement par unité de creux",
-   "texte": "Rendement annuel divisé par le pire creux, en moyenne simple pour toutes les colonnes — c'est la ligne qui les compare entre elles, elle ne peut pas mélanger deux conventions. Au-dessus de 1, vous gagnez plus par an que ce que vous risquez de perdre en chemin.",
-   "vues": [
-    "Portefeuille"
-   ]
-  },
-  {
    "terme": "Replier la fiche",
    "texte": "Replie le détail : le bandeau du bas continue de résumer l’instrument sélectionné.",
    "vues": [
@@ -651,13 +644,6 @@
    "texte": "Part du capital engagée sur un trade. C’est elle qui fixe la valeur de 1 R.",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "Risque par trade",
-   "texte": "C'est ce réglage qui convertit les R en pourcentages : à mise fixe, 1 R vaut ce pourcentage du capital de départ, sur chaque trade et sans jamais être réévalué.",
-   "vues": [
-    "Portefeuille"
    ]
   },
   {
@@ -731,20 +717,6 @@
    ]
   },
   {
-   "terme": "Simple détention Reste faire",
-   "texte": "Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.",
-   "vues": [
-    "Portefeuille"
-   ]
-  },
-  {
-   "terme": "Simple détention Reste faire",
-   "texte": "Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter : c'est pour cela qu'ils ne sont plus dans le tableau.",
-   "vues": [
-    "Portefeuille"
-   ]
-  },
-  {
    "terme": "Stop",
    "texte": "À combien de pourcent sous votre prix d'achat vous coupez la perte. Plus c'est serré, plus vous sortez souvent pour rien ; plus c'est large, plus chaque perte coûte cher.",
    "vues": [
@@ -777,13 +749,6 @@
    "texte": "Combien de fois la configuration est rejouée avec des entrées au hasard. Plus il y en a, plus le pourcentage est précis.",
    "vues": [
     "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "tirages au hasard",
-   "texte": "Combien d'entrées au hasard sont rejouées pour juger une configuration. Le test ne peut pas descendre sous « une chance sur ce nombre » : 200 tirages ne distinguent rien de plus fin que 0,5 %. Montez-le pour trancher les cas serrés — le calcul est proportionnel, dix fois plus de tirages, dix fois plus de temps. C'est le même nombre partout dans la page.",
-   "vues": [
-    "Portefeuille"
    ]
   },
   {
@@ -854,6 +819,20 @@
    "texte": "Les entrées candidates sont les bougies où le déclencheur a marqué un signal hors position ; les filtres actifs en ont écarté ce nombre.",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "unité de creux reste faire",
+   "texte": "Les onze diagnostics — UT, trades, R net, PF, segments, durée moyenne, état, frais. Ils ont servi à VALIDER la ligne, pas à la piloter.",
+   "vues": [
+    "Portefeuille"
+   ]
+  },
+  {
+   "terme": "unité de creux reste faire",
+   "texte": "Télécharge un Expert Advisor MQL5 par ligne de ce portefeuille. Les fichiers arrivent un par un — autorisez les téléchargements multiples si le navigateur les bloque.",
+   "vues": [
+    "Portefeuille"
    ]
   },
   {
