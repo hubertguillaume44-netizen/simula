@@ -92,13 +92,6 @@
    ]
   },
   {
-   "terme": "Capital alloué au court terme",
-   "texte": "La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».",
-   "vues": [
-    "Journal"
-   ]
-  },
-  {
    "terme": "Capital du compte",
    "texte": "Le capital sur lequel le pourcentage de risque s’applique.",
    "vues": [
@@ -218,13 +211,6 @@
    ]
   },
   {
-   "terme": "de votre patrimoine patrimoine total",
-   "texte": "Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.",
-   "vues": [
-    "Journal"
-   ]
-  },
-  {
    "terme": "défaut",
    "texte": "Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.",
    "vues": [
@@ -288,7 +274,7 @@
    ]
   },
   {
-   "terme": "Effacer les séries gardées",
+   "terme": "effacer les séries gardées",
    "texte": "Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.",
    "vues": [
     "Journal"
@@ -384,6 +370,13 @@
    "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "fichier de diagnostic",
+   "texte": "Prépare un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.",
+   "vues": [
+    "Journal"
    ]
   },
   {
@@ -534,6 +527,13 @@
    ]
   },
   {
+   "terme": "Patrimoine total",
+   "texte": "Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Période mesurée",
    "texte": "Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.",
    "vues": [
@@ -635,8 +635,7 @@
    "terme": "Risque",
    "texte": "Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.",
    "vues": [
-    "Backtest",
-    "Journal"
+    "Backtest"
    ]
   },
   {
@@ -651,6 +650,13 @@
    "texte": "Le rendement d'un placement sans risque sur la même durée — le plancher que tout le reste doit battre.",
    "vues": [
     "Portefeuille"
+   ]
+  },
+  {
+   "terme": "Sauvegarde chiffrée",
+   "texte": "Ouvre l'Intendance, où la sauvegarde chiffrée se prépare : phrase secrète, séries incluses ou non.",
+   "vues": [
+    "Journal"
    ]
   },
   {

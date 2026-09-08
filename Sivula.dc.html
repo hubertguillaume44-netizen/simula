@@ -891,11 +891,16 @@
                 <span style="font-size:12px;flex:1;min-width:0" title="Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.">Portage sur la détention</span>
                 <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="0.5" min="0" placeholder="mesurée" value="{{ p1Nuits }}" onChange="{{ setP1Nuits }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">nuits</span></span>
               </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span style="font-size:12px;flex:1;min-width:0" title="Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste.">Patrimoine total</span>
+                <span style="display:flex;align-items:center;gap:5px;flex:none"><input class="input" type="number" step="10000" min="0" value="{{ patrimoine }}" onChange="{{ setPatrimoine }}" style="min-height:1.7rem;height:1.7rem;font-size:12px;width:82px;padding:0 6px;text-align:right"><span style="font-size:12px;min-width:3.4ch" class="text-muted">€</span></span>
+              </div>
             </div>
             <div style="display:flex;align-items:baseline;gap:9px;padding-top:8px;border-top:1px solid var(--color-divider)">
               <strong style="font-family:var(--font-heading);font-size:26px;line-height:1">{{ p1Euro }}</strong>
               <span style="font-size:12px">en jeu à chaque trade</span>
             </div>
+            <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ partPatrimoine }} de votre patrimoine — {{ verdictPart }}</span>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button type="button" class="btn btn-primary" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ appliquer1R }}">Appliquer partout</button>
               <button type="button" class="btn btn-ghost" style="min-height:1.9rem;font-size:11px;padding-inline:10px" onClick="{{ fermer1R }}">Annuler</button>
@@ -4568,213 +4573,196 @@
     <sc-if value="{{ vueJournal }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:34px">
 
-      <section class="card blueprint" style="padding:22px 24px;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <span style="margin:0;font-family:var(--font-heading);font-size:27px;line-height:1.05">Journal</span>
+        <span style="font-size:12px;line-height:1.55;flex:1;min-width:32ch;color:var(--color-neutral-700)">Tout ce que vous avez fait, du plus récent au plus ancien : chaque mesure, chaque scan, chaque robot exporté, chaque sauvegarde. Une entrée se déplie sur sa signature complète — c'est elle qui rend la mesure reproductible six mois plus tard.</span>
+      </div>
+
+      <!--
+        LE REGISTRE. Une seule liste chronologique, lue depuis ce que l'application
+        enregistre déjà : les runs sauvegardés (mesures et scans), les exports de robot
+        (leur date est notée au clic), la trace du dernier export de sauvegarde. Une
+        catégorie sans trace enregistrée n'apparaît pas dans les filtres — jamais
+        d'entrée inventée. Une seule entrée dépliée à la fois.
+      -->
+      <section class="card blueprint" style="padding:0;gap:0">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Sauvegarde</div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <p class="card-body" style="margin:0;max-width:72ch">Tout ce que vous accumulez — scans, journal, portefeuilles, réglages, mesures de marché — vit dans ce navigateur. Un nettoyage de cache, un autre ordinateur, et c'est perdu. Exportez un fichier : il contient tout, et se réimporte tel quel.</p>
-          <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:9px;align-self:stretch">
-            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap">
-              <span style="margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Enregistrement automatique</span>
-              <span style="font-size:11px;display:inline-flex;align-items:center;gap:7px"><span style="width:7px;height:7px;background:var(--color-accent)"></span>{{ autoEtat }}</span>
-            </div>
-            <p class="card-body" style="margin:0;font-size:12px;max-width:80ch">Vos scans, portefeuilles, validés et réglages sont réenregistrés dans ce navigateur chaque minute, sans rien à activer. Ce qui reste à faire vous-même : une copie <strong>hors</strong> du navigateur, avec « Exporter mes données » ci-dessous — c'est la seule protection contre un vidage du navigateur ou un changement d'ordinateur.</p>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <button class="btn btn-primary" type="button" onClick="{{ exporterTout }}">Exporter mes données</button>
-              <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center">
-                Réimporter
-                <input type="file" accept="application/json,.json" onChange="{{ importerTout }}" style="display:none">
-              </label>
-              <button class="btn btn-ghost" type="button" onClick="{{ oublierSeries }}" title="Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.">Effacer les séries gardées</button>
-            </div>
-            <p style="margin:0;font-size:12px" class="text-muted">Gardé dans ce navigateur : {{ contenuStockage }}. Un export contient tout cela en un seul fichier — barèmes de courtier et bougies comprises — et le réimport le remet en place à l'identique.</p>
-          </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
+          <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">Filtrer</span>
+          <sc-for list="{{ regFiltres }}" as="rf" hint-placeholder-count="4">
+            <button type="button" class="{{ rf.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px" onClick="{{ rf.basculer }}">{{ rf.nom }} · {{ rf.n }}</button>
+          </sc-for>
+          <sc-if value="{{ aRegFiltre }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="lien" style="font-size:11px" onClick="{{ regToutAfficher }}">tout afficher</button>
+          </sc-if>
+          <span style="font-size:11px;color:var(--color-neutral-700);margin-inline-start:auto">{{ regResume }}</span>
         </div>
-        <sc-if value="{{ aSauvMsg }}" hint-placeholder-val="{{ false }}">
-          <p style="margin:0;font-size:13px" class="text-muted">{{ sauvMsg }}</p>
+        <sc-if value="{{ aRegVide }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;padding:14px;font-size:13px;color:var(--color-neutral-700)">Rien encore : le registre se remplit tout seul — sauvegardez un backtest ou un scan, exportez un robot ou vos données, et chaque geste laissera sa ligne ici.</p>
+        </sc-if>
+        <sc-for list="{{ regFil }}" as="e" hint-placeholder-count="8">
+          <div style="border-bottom:1px solid var(--color-divider);background:{{ e.fond }}">
+            <button type="button" class="rang" style="width:100%;font:inherit;text-align:left;border:none;background:none;grid-template-columns:14px 108px 84px minmax(0,1fr) 112px;padding:10px 14px" onClick="{{ e.ouvrir }}">
+              <span style="font-size:9px;color:var(--color-neutral-700)">{{ e.chev }}</span>
+              <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:12px;color:var(--color-neutral-700)">{{ e.quand }}</span>
+              <span class="tag {{ e.cls }}" style="font-size:10px;justify-self:start">{{ e.type }}</span>
+              <span style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                <strong style="font-size:13px">{{ e.titre }}</strong>
+                <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.sous }}</span>
+              </span>
+              <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:14px;text-align:right;color:{{ e.encre }}">{{ e.chiffre }}</span>
+            </button>
+            <sc-if value="{{ e.ouvert }}" hint-placeholder-val="{{ false }}">
+              <div style="border-top:1px solid var(--color-divider);background:var(--color-neutral-100);padding:12px 14px 13px 40px;display:flex;flex-direction:column;gap:11px">
+                <span style="display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">Signature — ce qui est parti au moteur</span>
+                  <span style="font-size:12px;line-height:1.6;font-family:var(--font-heading);letter-spacing:.01em;max-width:104ch">{{ e.signature }}</span>
+                </span>
+                <sc-if value="{{ e.aChiffres }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 16px">
+                    <sc-for list="{{ e.chiffres }}" as="ch" hint-placeholder-count="5">
+                      <span style="display:flex;flex-direction:column;gap:1px">
+                        <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">{{ ch.nom }}</span>
+                        <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:14px">{{ ch.val }}</span>
+                      </span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ e.aNote }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11px;line-height:1.55;color:var(--color-neutral-700);max-width:92ch">{{ e.note }}</span>
+                </sc-if>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <sc-if value="{{ e.aAction }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" class="btn btn-secondary" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ e.action }}">{{ e.actionTxt }}</button>
+                  </sc-if>
+                  <sc-if value="{{ e.aRecalcul }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" class="btn btn-secondary" style="min-height:1.8rem;font-size:11px;padding-inline:11px" onClick="{{ e.recalculer }}">Recalculer avec le moteur actuel</button>
+                    <sc-if value="{{ e.enCours }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:12px"><strong>Recalcul en cours…</strong></span>
+                    </sc-if>
+                    <sc-if value="{{ e.aRecalculTxt }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:11px;color:{{ e.recalculEncre }}">{{ e.recalculTxt }}</span>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ e.aSuppr }}" hint-placeholder-val="{{ false }}">
+                    <button type="button" class="lien" style="margin-inline-start:auto;font-size:11px;color:var(--color-neutral-700)" onClick="{{ e.supprimer }}">supprimer cette entrée</button>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 14px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--color-neutral-700);flex:1;min-width:26ch">{{ regPied }}</span>
+        </div>
+      </section>
+
+      <!--
+        LA PREUVE DE REPRODUCTIBILITÉ, repliée sous le registre : la réponse vit dans
+        le titre. Les verdicts viennent des recalculs réellement faits (cette session) —
+        rien n'est affirmé sans avoir été recalculé.
+      -->
+      <section class="card blueprint" style="padding:0;gap:0">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <button type="button" class="tete" onClick="{{ basculerPreuve }}">
+          <span style="font-size:9px;color:var(--color-neutral-700)">{{ chevPreuve }}</span>
+          <span style="font-family:var(--font-heading);font-size:19px">Mes mesures tiennent-elles encore ?</span>
+          <span style="font-size:12px;line-height:1.5;color:var(--color-accent-700);flex:1;min-width:24ch">{{ preuveResume }}</span>
+        </button>
+        <sc-if value="{{ oPreuve }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid var(--color-divider);display:flex;flex-direction:column">
+            <sc-if value="{{ aPreuves }}" hint-placeholder-val="{{ false }}">
+              <div style="overflow-x:auto">
+                <div style="min-width:780px">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px 110px 88px 126px;gap:12px;padding:8px 14px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider)">
+                    <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700)">Mesure &amp; signature</span>
+                    <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700);text-align:center">Enregistré</span>
+                    <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700);text-align:center">Recalculé</span>
+                    <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700);text-align:center">Écart</span>
+                    <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-700);text-align:center">Verdict</span>
+                  </div>
+                  <sc-for list="{{ preuves }}" as="pv" hint-placeholder-count="4">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px 110px 88px 126px;gap:12px;padding:11px 14px;border-bottom:1px solid var(--color-divider);align-items:center">
+                      <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                        <strong style="font-size:13px">{{ pv.titre }}</strong>
+                        <span style="font-size:10px;line-height:1.45;color:var(--color-neutral-700)">{{ pv.signature }}</span>
+                      </span>
+                      <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:13px;text-align:center">{{ pv.avant }}</span>
+                      <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:13px;text-align:center">{{ pv.apres }}</span>
+                      <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:13px;text-align:center;color:{{ pv.encre }}">{{ pv.ecart }}</span>
+                      <span style="text-align:center"><span class="tag {{ pv.cls }}" style="font-size:10px">{{ pv.verdict }}</span></span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;flex-wrap:wrap">
+              <span style="font-size:11px;line-height:1.55;flex:1;min-width:34ch;color:var(--color-neutral-700)">Un écart nul veut dire que le moteur d'aujourd'hui redonne le chiffre de l'époque : la mesure est reproductible et le robot exporté exécute la même règle. Un écart non nul n'est pas une erreur — c'est une correction du moteur, à relire avant de redéployer.</span>
+              <button type="button" class="btn btn-secondary" style="min-height:1.9rem;font-size:11px;padding-inline:11px" onClick="{{ toutRecalculer }}" disabled="{{ preuveOccupe }}">{{ preuveBoutonTxt }}</button>
+            </div>
+          </div>
         </sc-if>
       </section>
 
-
-    <section style="display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
-        <div>
-          <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Résultats sauvegardés</h4>
-          <p style="margin:4px 0 0;font-size:13px;max-width:74ch" class="text-muted">{{ nbRuns }} enregistrements conservés sur cet ordinateur. Un backtest se recharge avec tous ses réglages : vous retrouvez la configuration exacte, pas seulement son chiffre.</p>
-        </div>
-      </div>
-      <sc-if value="{{ aRuns }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <sc-for list="{{ runs }}" as="run" hint-placeholder-count="3">
-            <div class="card blueprint" style="padding:18px 20px;gap:12px">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <div style="display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:baseline">
-                <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
-                  <span class="tag {{ run.tag }}">{{ run.typeLabel }}</span>
-                  <span style="font-family:var(--font-heading);font-size:17px">{{ run.titre }}</span>
-                  <span style="font-size:12px" class="text-muted">{{ run.quand }}</span>
-                </div>
-                <div style="font-family:var(--font-heading);font-weight:600;font-size:22px;line-height:1">{{ run.chiffre }}</div>
-              </div>
-              <div style="font-size:13px" class="text-muted">{{ run.detail }}</div>
-              <div style="font-size:13px" class="text-muted">{{ run.second }}</div>
-              <sc-if value="{{ run.aRunFen }}" hint-placeholder-val="{{ false }}">
-                <div style="font-size:12px;color:var(--color-accent-700)">{{ run.runFen }}</div>
-              </sc-if>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                <button class="btn btn-secondary" type="button" onClick="{{ run.recharger }}">{{ run.libelleRecharger }}</button>
-                <button class="btn btn-secondary" type="button" onClick="{{ run.recalculer }}">Recalculer avec le moteur actuel</button>
-                <button class="btn btn-ghost" type="button" onClick="{{ run.supprimer }}">Supprimer</button>
-                <sc-if value="{{ run.enCours }}" hint-placeholder-val="{{ false }}">
-                  <span style="font-size:13px"><strong>Recalcul en cours…</strong></span>
-                </sc-if>
-              </div>
-              <sc-if value="{{ run.aRecalcul }}" hint-placeholder-val="{{ false }}">
-                <div style="display:flex;flex-direction:column;gap:8px">
-                  <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Recalcul — {{ run.verdictRecalcul }}</div>
-                  <div style="overflow-x:auto">
-                  <table class="table" style="font-size:13px">
-                    <thead><tr><th>Instrument</th><th style="text-align:right">Enregistré</th><th style="text-align:right">Recalculé</th><th style="text-align:right">Écart</th><th style="text-align:right">Espérance</th><th style="text-align:right">Hors éch.</th><th style="text-align:right">Tenue</th><th style="text-align:right">Segments +</th></tr></thead>
-                    <tbody>
-                      <sc-for list="{{ run.lignesRecalcul }}" as="rl" hint-placeholder-count="4">
-                        <tr>
-                          <td><strong>{{ rl.sym }}</strong></td>
-                          <td style="text-align:right">{{ rl.avant }}</td>
-                          <td style="text-align:right">{{ rl.apres }}</td>
-                          <td style="text-align:right">{{ rl.ecart }}</td>
-                          <td style="text-align:right">{{ rl.esp }}</td>
-                          <td style="text-align:right">{{ rl.oos }}</td>
-                          <td style="text-align:right">{{ rl.tenue }}</td>
-                          <td style="text-align:right">{{ rl.segs }}</td>
-                        </tr>
-                      </sc-for>
-                    </tbody>
-                  </table>
-                  </div>
-                  <p style="margin:0;font-size:12px" class="text-muted">{{ run.noteRecalcul }}</p>
-                </div>
-              </sc-if>
-            </div>
-          </sc-for>
-        </div>
-      </sc-if>
-      <sc-if value="{{ aucunRun }}" hint-placeholder-val="{{ false }}">
-        <div class="card blueprint" style="padding:20px 22px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <p class="card-body" style="margin:0">Rien encore. Lancez un test ou un scan, puis cliquez sur « Sauvegarder » — les résultats reviennent ici à votre prochaine visite.</p>
-        </div>
-      </sc-if>
-    </section>
-
-    <section class="card blueprint" style="padding:24px 26px;gap:20px">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
-        <div>
-          <div style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Traduire vos tests en euros</div>
-          <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Combien vaut 1 R sur votre compte</h3>
-          <p class="card-body" style="margin:6px 0 0;max-width:56ch">Vos tests sont exprimés en R — l'unité de risque, indépendante de la taille du compte. Deux réglages suffisent à passer en euros.</p>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-          <div class="field" style="width:190px">
-            <label>Capital alloué au court terme<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="La somme que vous consacrez à cette activité. Elle sert à traduire les résultats en euros au lieu de « fois le risque ».">?</span></label>
-            <input class="input" type="number" step="1000" style="width:100%;min-width:0" value="{{ capital }}" onChange="{{ setCapital }}">
-          </div>
-          <div class="field" style="width:150px">
-            <label>Risque par trade (%)<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Quelle part de votre capital vous acceptez de perdre sur un seul trade. Au-delà de 2 %, une mauvaise série devient difficile à encaisser.">?</span></label>
-            <input class="input" type="number" step="0.1" style="width:100%;min-width:0" value="{{ risquePct }}" onChange="{{ setRisque }}">
-          </div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
-        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">1 R vaut</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15">{{ euroParR }}</div>
-        </div>
-        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Gain attendu par an</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15;color:var(--color-accent-700)">{{ gainAn }}</div>
-          <div style="font-size:12px" class="text-muted">{{ gainAnBase }}</div>
-        </div>
-        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Pire creux à prévoir</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15">{{ creuxEuro }}</div>
-          <div style="font-size:12px" class="text-muted">{{ creuxBase }}</div>
-        </div>
-        <div class="blueprint" style="padding:16px 18px;display:flex;flex-direction:column;gap:5px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Part de votre patrimoine</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:28px;line-height:1.15">{{ partPatrimoine }}</div>
-          <div style="font-size:12px" class="text-muted">{{ verdictPart }}</div>
-          <label style="display:flex;align-items:center;gap:7px;font-size:11px;margin-top:2px" class="text-muted">patrimoine total<input class="input" type="number" step="10000" min="0" style="width:100%;min-width:0;min-height:1.8rem;height:1.8rem;font-size:12px;padding:0 7px" value="{{ patrimoine }}" onChange="{{ setPatrimoine }}" title="Votre patrimoine total, pour situer le capital alloué au court terme. Il reste sur cet appareil, comme tout le reste."></label>
-        </div>
-      </div>
-      <p class="card-body" style="margin:0;max-width:80ch">Ce creux est ce que vous devez pouvoir traverser sans changer d'avis. S'il vous paraît insupportable, baissez le risque par trade avant de toucher à la stratégie.</p>
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;flex-wrap:wrap">
-        <h4 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Vos stratégies testées</h4>
-        <span style="font-size:12px" class="text-muted">Triées par taux de confirmation hors période, jamais par performance brute</span>
-      </div>
-      <table class="table">
-        <thead><tr><th>Instrument</th><th>Entrée</th><th style="text-align:right">Période</th><th style="text-align:right">SL / R-R</th><th style="text-align:right">Total</th><th style="text-align:right">Par an</th><th style="text-align:right">% gagnants</th><th style="text-align:right">Gain / perte</th><th style="text-align:right">Pire creux</th><th style="text-align:right">Segments +</th><th>Verdict</th></tr></thead>
-        <tbody>
-          <sc-for list="{{ scanRows }}" as="j" hint-placeholder-count="6">
-            <tr>
-              <td><strong>{{ j.sym }}</strong></td>
-              <td>{{ j.entree }}</td>
-              <td style="text-align:right">{{ j.periode }}</td>
-              <td style="text-align:right">{{ j.slrr }}</td>
-              <td style="text-align:right">{{ j.total }}</td>
-              <td style="text-align:right">{{ j.rAn }}</td>
-              <td style="text-align:right">{{ j.win }}</td>
-              <td style="text-align:right">{{ j.pf }}</td>
-              <td style="text-align:right">{{ j.dd }}</td>
-              <td style="text-align:right">{{ j.segs }}</td>
-              <td><span class="tag {{ j.tagClass }}">{{ j.etat }}</span></td>
-            </tr>
-          </sc-for>
-        </tbody>
-      </table>
-      <p style="margin:0;font-size:13px;max-width:88ch" class="text-muted">Vide jusqu'à votre premier scan — lancez-le depuis l'onglet Scan. Les lignes viennent du balayage réel de vos CSV, pas d'un fichier de résultats importé.</p>
-    </section>
-
-    <section style="display:grid;grid-template-columns:2fr 1fr;gap:30px">
-      <div class="card blueprint" style="padding:22px 24px;gap:16px">
+      <!--
+        LA SAUVEGARDE, en deux colonnes en pied de page : à gauche ce qui est gardé
+        et les trois états à points, à droite les actions. Le bandeau collant en pied
+        d'écran ne bouge pas.
+      -->
+      <section class="card blueprint" style="padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div class="card-kicker">Courbe cumulée en R — US NASDAQ 100</div>
-        <svg viewBox="0 0 900 210" preserveAspectRatio="none" style="width:100%;height:200px;display:block">
-          <line x1="0" y1="40" x2="900" y2="40" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="100" x2="900" y2="100" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="160" x2="900" y2="160" stroke="var(--color-divider)"></line>
-          <line x1="0" y1="200" x2="900" y2="200" stroke="var(--color-divider)"></line>
-          <path d="M0,196 L64,182 L128,190 L192,164 L256,172 L320,142 L384,150 L448,120 L512,132 L576,98 L640,110 L704,76 L768,84 L832,54 L900,38" fill="none" stroke="var(--color-accent)" stroke-width="2"></path>
-          <rect x="576" y="98" width="64" height="12" fill="var(--color-accent)" fill-opacity="0.18"></rect>
-        </svg>
-        <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">
-          <span>2019</span><span>2021</span><span>2023</span><span>2025</span><span>Juil. 26</span>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:9px;border-inline-end:1px solid var(--color-divider)">
+          <span style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <span style="font-family:var(--font-heading);font-size:17px">Ce qui est gardé ici</span>
+            <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;color:var(--color-accent-900)">{{ stockTaille }}</span>
+          </span>
+          <span style="font-size:11px;line-height:1.55;color:var(--color-neutral-700)">{{ contenuStockage }} — plus vos barèmes de courtier et vos réglages. Un export contient tout cela en un seul fichier et se réimporte à l'identique.</span>
+          <span style="display:flex;align-items:baseline;gap:9px">
+            <span style="width:7px;height:7px;background:var(--color-accent);flex:none;margin-top:5px"></span>
+            <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+              <span style="font-size:12px;font-weight:600">Enregistrement automatique — {{ autoEtat }}</span>
+              <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">scans, portefeuilles, validés et réglages, réenregistrés dans ce navigateur chaque minute, rien à activer</span>
+            </span>
+          </span>
+          <span style="display:flex;align-items:baseline;gap:9px">
+            <span style="width:7px;height:7px;background:{{ persistPoint }};flex:none;margin-top:5px"></span>
+            <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+              <span style="font-size:12px;font-weight:600">{{ persistNom }}</span>
+              <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">{{ persistSous }}</span>
+            </span>
+          </span>
+          <span style="display:flex;align-items:baseline;gap:9px">
+            <span style="width:7px;height:7px;background:{{ copiePoint }};flex:none;margin-top:5px"></span>
+            <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+              <span style="font-size:12px;font-weight:600">{{ copieNom }}</span>
+              <span style="font-size:11px;line-height:1.45;color:var(--color-neutral-700)">{{ copieSous }}</span>
+            </span>
+          </span>
         </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:20px">
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Écart Python / MT4 vérifié</div>
-          <p class="card-body" style="margin:0">Checksum identique des deux côtés, 355 trades comparés, 2 écarts résiduels sur stop serré. Testé le 12 août.</p>
-          <button class="btn btn-secondary" type="button" style="align-self:flex-start">Voir le rapport</button>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:9px">
+          <span style="font-family:var(--font-heading);font-size:17px">Emporter ou remettre</span>
+          <span style="font-size:11px;line-height:1.55;color:var(--color-neutral-700)">Rien ne sort de ce navigateur sans que vous le demandiez. La sauvegarde chiffrée se dépose où vous voulez — disque, clé, cloud — et ne s'ouvre qu'avec votre phrase secrète, qui n'est ni transmise ni récupérable.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:13px" onClick="{{ exporterTout }}">Exporter mes données</button>
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:11px" onClick="{{ ouvrirTiroir }}" title="Ouvre l'Intendance, où la sauvegarde chiffrée se prépare : phrase secrète, séries incluses ou non.">Sauvegarde chiffrée</button>
+            <label class="btn btn-secondary" style="cursor:pointer;display:inline-flex;align-items:center;min-height:2rem;font-size:12px;padding-inline:11px">
+              Réimporter
+              <input type="file" accept="application/json,.json,.sivula" onChange="{{ importerTout }}" style="display:none">
+            </label>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="lien" style="font-size:11px;color:var(--color-neutral-700)" onClick="{{ oublierSeries }}" title="Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.">effacer les séries gardées</button>
+            <button type="button" class="lien" style="font-size:11px;color:var(--color-neutral-700)" onClick="{{ preparerDiagnosticClic }}" title="Prépare un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.">fichier de diagnostic</button>
+          </div>
+          <sc-if value="{{ aSauvMsg }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ sauvMsg }}</span>
+          </sc-if>
         </div>
-        <div class="card blueprint" style="padding:16px 18px;gap:8px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-title">Plafond de risque respecté</div>
-          <p class="card-body" style="margin:0">Le court terme reste sous 10 % de votre patrimoine. Au-delà, un mauvais trimestre déplacerait vos objectifs long terme.</p>
-        </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Une fonction déplacée sans mot d'explication est vécue comme une fonction supprimée. -->
+      <span style="font-size:11px;line-height:1.55;color:var(--color-neutral-700);max-width:104ch">Le convertisseur « combien vaut 1 R » a quitté cette page : il vit dans l'en-tête — <button type="button" class="lien" style="font-size:11px" onClick="{{ ouvrir1R }}">1 R = {{ teteEuroR }}</button> — où il s'applique à toutes les pages, patrimoine compris ; deux endroits auraient fini par porter deux valeurs différentes. Le classement des configurations testées reste sur la page <button type="button" class="lien" style="font-size:11px" onClick="{{ setVueScan }}">Nouveau scan</button>, qui en est la seule source.</span>
+
     </div>
     </sc-if>
   </main>
@@ -5948,20 +5936,25 @@ class Component extends DCLogic {
     }
     // La DATE D'EXPORT, seule chose que le déploiement demande de mémoriser : sans elle
     // on ne distingue pas « robot jamais exporté » de « exporté mais pas encore lancé ».
+    // LA FENÊTRE ENTRE DANS LE NOM DU FICHIER. Dans six mois, un .mq5 posé sur un disque
+    // doit dire tout seul sur quoi il a été mesuré : c'est là que l'étiquette compte
+    // vraiment, parce que plus rien autour ne la porte.
+    const marque = this.fenMarque(this.fenetreDeLigne(v));
+    const nomFichier = mod.nomRobot(v, stamp) + (marque ? '_' + marque : '') + '.mq5';
     {
       const m = this.lireLive();
       const k = String(magic);
-      m[k] = { ...(m[k] || {}), magic: k, sym: v.sym, exporte: Date.now(), stamp };
+      // le registre du Journal relit cette trace : le nom du fichier et la licence en
+      // font partie — c'est ce qui dit si le .mq5 compilé sur le poste correspond encore
+      m[k] = { ...(m[k] || {}), magic: k, sym: v.sym, exporte: Date.now(), stamp,
+        fichier: nomFichier,
+        lic: (this.state.lic && this.state.lic.ok && this.state.lic.email) || null };
       this.ecrireLive(m);
       this.setState({ liveRev: (this.state.liveRev || 0) + 1 });
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
-    // LA FENÊTRE ENTRE DANS LE NOM DU FICHIER. Dans six mois, un .mq5 posé sur un disque
-    // doit dire tout seul sur quoi il a été mesuré : c'est là que l'étiquette compte
-    // vraiment, parce que plus rien autour ne la porte.
-    const marque = this.fenMarque(this.fenetreDeLigne(v));
-    a.download = mod.nomRobot(v, stamp) + (marque ? '_' + marque : '') + '.mq5';
+    a.download = nomFichier;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     return true;
@@ -12549,7 +12542,11 @@ GROUPES = {
     } catch (e) { return []; }
   }
   ecrireRuns(runs) {
-    try { localStorage.setItem(this.cle(this.CLE), JSON.stringify(runs.slice(0, 60))); } catch (e) { /* quota */ }
+    // Rien ne s'efface tout seul : l'ancien plafond de 60 entrées jetait les plus
+    // anciennes en silence — exactement ce que le registre promet de ne jamais faire.
+    try { localStorage.setItem(this.cle(this.CLE), JSON.stringify(runs)); } catch (e) {
+      this.setState({ sauvMsg: 'Le journal n\u2019a pas pu être réenregistré : stockage plein. Exportez vos données, puis supprimez des entrées.' });
+    }
     this.setState({ runs });
   }
   // tout ce qui change un résultat : sauvegardé et restauré en bloc, jamais champ par champ
@@ -13219,8 +13216,10 @@ GROUPES = {
         brut: sup.brut, frais: sup.frais, winRate: res.winRate, pf: res.pf, rAn: res.rAn });
       await new Promise((z) => setTimeout(z, 0));
     }
-    this.setState({ recalcul: { id: run.id, encours: false, lignes,
-      partiel: !run.reglages } });
+    this.setState({ recalcul: { id: run.id, encours: false, lignes, partiel: !run.reglages },
+      // la carte des recalculs de la session : le registre et la preuve de
+      // reproductibilité du Journal la lisent — rien n'est écrit dans le stockage
+      recalculs: { ...(this.state.recalculs || {}), [String(run.id)]: { lignes, partiel: !run.reglages } } });
   }
   supprimerRun(id) { this.ecrireRuns(this.lireRuns().filter((r) => r.id !== id)); }
   rechargerRun(run) {
@@ -14946,6 +14945,16 @@ GROUPES = {
         + ' — fichier daté du ' + (d.date || '?') + '.'
         + (nSeries ? ' ' + nSeries + ' séries de bougies remises en place.' : ''),
     }, () => this.lancerTest());
+  }
+  // l'heure d'une entrée du registre : courte, du plus près au plus loin
+  quandCourt(t) {
+    const d = new Date(t);
+    const hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const jours = Math.floor((Date.now() - new Date(t).setHours(0, 0, 0, 0)) / 86400000);
+    if (jours === 0) return 'auj. ' + hh;
+    if (jours === 1) return 'hier ' + hh;
+    const jm = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+    return d.getFullYear() === new Date().getFullYear() ? jm + ' ' + hh : jm + '/' + String(d.getFullYear()).slice(2);
   }
   CLE_SAUV = 'simula.derniereSauvegarde.v1';
   // La trace du dernier export : QUAND, et CE QU'IL CONTENAIT. C'est précisément ce
@@ -21913,6 +21922,270 @@ GROUPES = {
         + (s.autoHeure ? ' — dernier enregistrement à ' + s.autoHeure : '')
         + ' (' + this.etatMemoire() + '). Pour une copie hors du navigateur, utilisez « Exporter mes données ».',
       autoEtat: s.autoHeure ? 'Enregistré à ' + s.autoHeure : 'en veille',
+      // ————— LE REGISTRE DU JOURNAL : la liste chronologique de ce qui a laissé une trace —————
+      // Construit UNIQUEMENT depuis ce que l'application enregistre déjà. Une catégorie
+      // sans trace n'apparaît pas ; rien n'est inventé, rien n'est recalculé ici.
+      ...(() => {
+        const filtresDe = (g) => {
+          const acts = [];
+          if (g.btMtf) acts.push('tendance ' + (g.utMtf || '?') + ' ' + (LIGNES_TXT[g.ligneMtf] || '') + ' ' + (g.periodeMtf ?? ''));
+          if (g.fPente) acts.push('pente ' + (g.utPente || '?') + ' recul ' + g.fPenteRecul);
+          if (g.fRsi) acts.push('RSI ' + (g.utRsi || '?') + ' ' + (g.periodeRsi ?? '') + ' > ' + g.fRsiSeuil);
+          if (g.fAdx) acts.push('ADX ' + (g.utAdx || '?') + ' ' + (g.periodeAdx ?? '') + ' > ' + g.fAdxSeuil);
+          if (g.fNuage) acts.push('nuage ' + (g.utNuage || '?'));
+          if (g.fPivot) acts.push('pivot ' + (g.utPivot || '?'));
+          if (g.fResist) acts.push('sous résistance ' + (g.utResist || '?') + ' ' + g.resistLookback + ' barres, marge ' + g.resistMarge + ' %');
+          if (g.fZone) acts.push('zones ' + (g.utZone || '?') + ' ' + g.zoneTouches + ' touches');
+          if (g.btBE) acts.push(g.typeSecu === 'trailing' ? 'stop suiveur' : 'paliers');
+          if (g.secuPrudent) acts.push('lecture basse');
+          if (Number(g.btDelai) > 0) acts.push('délai ' + g.btDelai);
+          if (Number(g.btFenDeb) || Number(g.btFenFin)) acts.push('fenêtre ' + g.btFenDeb + ' \u2013 ' + g.btFenFin + ' h UTC');
+          return acts;
+        };
+        const sigRun = (g) => {
+          if (!g || !g.btSym) return null;
+          try {
+            const f = this.fenetre(g);
+            const jeu = this.jeuPaliers(g);
+            const duree = Number(g.btDureeMax) || 0;
+            const acts = filtresDe(g);
+            const mo = (g.ut || 'H1') !== 'H1'
+              ? (() => { try { const m2 = this.momentResolu(g.btSym, g);
+                  return 'moment : ' + m2.type + (m2.type === 'heure' ? ' ' + m2.heure + ' h' : ''); } catch (e) { return null; } })()
+              : null;
+            return [this.nomComplet(g.btSym), 'unité ' + (g.ut || 'H1'),
+              (ENTREES_TXT[g.btEntree] || g.btEntree || 'entrée ?'),
+              (LIGNES_TXT[g.btLigne] || g.btLigne || '?') + ' ' + (g.btPeriode ?? '?'),
+              'SL ' + g.btSL + ' %', 'RR ' + g.btRR,
+              (g.btSens === 'vente' ? 'vente' : 'achat'),
+              acts.length ? acts.join(' · ') : 'aucun filtre',
+              'paliers : ' + (jeu && jeu.txt ? jeu.txt.split(' \u2014 ')[0].toLowerCase() : '?'),
+              'durée max : ' + (duree ? duree + ' bougies H1' : 'sans limite'),
+              (g.btFrais === false ? 'sans frais' : 'frais réels'),
+              'risque ' + (g.risquePct ?? '?') + ' %',
+              'fenêtre : ' + this.fenLibelle(f),
+              mo].filter(Boolean).join(' · ');
+          } catch (e) { return null; }
+        };
+        const regValide = (x) => [(ENTREES_TXT[x.entree] || x.entree || '?'),
+          (LIGNES_TXT[x.ligne] || x.ligne || '?') + ' ' + (x.periode ?? '?'),
+          'SL ' + x.sl + ' %', 'RR ' + x.rr, (x.sens === 'vente' ? 'vente' : 'achat'),
+          x.ut || 'H1', x.filtres || null, x.secu || null].filter(Boolean).join(' · ');
+        const entrees = [];
+        for (const r of (s.runs || [])) {
+          const t = Date.parse(r.date) || Number(r.id) || 0;
+          if (r.type === 'backtest') {
+            const g = r.reglages || {};
+            entrees.push({ id: 'run' + r.id, t, type: 'mesure', cls: 'tag-outline',
+              titre: 'Backtest — ' + this.nomComplet(g.btSym || '?'),
+              sous: (r.n ?? '?') + ' trades'
+                + (Number.isFinite(r.winRate) ? ' · ' + fr(r.winRate, 0) + ' % gagnants' : '')
+                + (Number.isFinite(r.pf) ? ' · facteur ' + fr(r.pf, 2) : ''),
+              chiffre: Number.isFinite(r.total) ? sg(r.total, 1) + ' R' : '—',
+              encre: 'var(--color-accent-900)',
+              signature: sigRun(g) || 'réglages non enregistrés avec cette mesure — rouvrez-la pour les relire à l\u2019écran',
+              chiffres: [['Trades', r.n ?? '—'],
+                ['Réussite', Number.isFinite(r.winRate) ? fr(r.winRate, 0) + ' %' : '—'],
+                ['Facteur', Number.isFinite(r.pf) ? fr(r.pf, 2) : '—'],
+                ['Pire creux', Number.isFinite(r.dd) ? sg(r.dd, 1) + ' R' : '—'],
+                ['R / an', Number.isFinite(r.rAn) ? sg(r.rAn, 1) : '—'],
+                ['Segments +', r.positifs != null ? r.positifs + ' / ' + (r.segTotal || 5) : '—']],
+              note: (r.mv || 'e1') === this.MOTEUR_V
+                ? 'Mesurée sous la règle actuelle du moteur : un recalcul doit redonner exactement ce chiffre.'
+                : 'Mesurée sous une règle antérieure du moteur : un écart au recalcul est une correction, pas une erreur — à relire avant de redéployer.',
+              aAction: true, actionTxt: 'Rouvrir tel quel', action: () => this.rechargerRun(r),
+              aRecalcul: true, recalculer: () => this.recalculerRun(r), run: r,
+              aSuppr: true, supprimer: () => this.supprimerRun(r.id) });
+          } else {
+            const fi = r.fiche || {};
+            entrees.push({ id: 'run' + r.id, t, type: 'scan', cls: 'tag-neutral',
+              titre: 'Scan — ' + (fi.instruments ?? '?') + ' instruments · ' + (fi.ut || '?'),
+              sous: (r.testees ?? '?') + ' combinaisons testées · ' + (r.retenues ?? 0) + ' retenues',
+              chiffre: (r.retenues ?? 0) + ' retenues',
+              encre: 'var(--color-text)',
+              signature: [fi.grille, fi.symboles, fi.entree, fi.ligne,
+                fi.seuils ? 'seuils ' + fi.seuils : null].filter(Boolean).join(' · ') || 'fiche non enregistrée',
+              chiffres: [['Combinaisons', (r.testees ?? 0).toLocaleString('fr-FR')],
+                ['Retenues', r.retenues ?? 0],
+                ['Meilleures gardées', (r.top || []).length]],
+              note: 'Le scan garde ses meilleures lignes et son plan de balayage : « Rouvrir le classement » remet la grille et le tableau en place.',
+              aAction: true, actionTxt: 'Rouvrir le classement', action: () => this.rechargerRun(r),
+              aRecalcul: true, recalculer: () => this.recalculerRun(r), run: r,
+              aSuppr: true, supprimer: () => this.supprimerRun(r.id) });
+          }
+        }
+        // les robots exportés — leur date est notée au clic sur « Robot MT5 »
+        const live = this.lireLive() || {};
+        for (const k of Object.keys(live)) {
+          const j = live[k];
+          if (!j || !j.exporte) continue;
+          const v = this.normValides(s.valides).find((x) => String(this.magicDe(x)) === String(j.magic || k));
+          entrees.push({ id: 'rob' + k, t: j.exporte, type: 'robot', cls: 'tag-accent',
+            titre: 'Robot MT5 exporté — ' + this.nomComplet(j.sym),
+            sous: v ? regValide(v) : 'magique ' + (j.magic || k),
+            chiffre: v && Number.isFinite(Number(v.rAn)) ? sg(Number(v.rAn), 1) + ' R/an' : '—',
+            encre: 'var(--color-accent-900)',
+            signature: [j.fichier || (j.stamp ? 'fichier horodaté ' + j.stamp : null),
+              'magique ' + (j.magic || k),
+              j.lic ? 'licence : ' + j.lic : null,
+              v ? regValide(v) : 'configuration retirée depuis — le fichier compilé, lui, la porte dans son en-tête'].filter(Boolean).join(' · '),
+            chiffres: [['Fichier', j.fichier || '—'], ['Magique', j.magic || k],
+              ['Licence', j.lic || '—'],
+              ['R / an mesuré', v && Number.isFinite(Number(v.rAn)) ? sg(Number(v.rAn), 1) : '—']],
+            note: 'Le robot porte sa signature dans son en-tête et dans son journal de conformité : si le fichier compilé sur le poste ne correspond plus à cette ligne, c\u2019est qu\u2019il a été réexporté depuis. Cette trace sert aussi au suivi du déploiement : elle ne se supprime pas d\u2019ici.',
+            aAction: !!v, actionTxt: 'Réexporter le robot',
+            action: v ? (() => this.exporterRobot(v)) : (() => {}),
+            aRecalcul: false, aSuppr: false });
+        }
+        const info = this.lireSauvInfo();
+        if (info.t) {
+          entrees.push({ id: 'exp', t: info.t, type: 'export', cls: 'tag-accent',
+            titre: 'Sauvegarde exportée',
+            sous: info.nC !== null ? info.nC + ' configurations · ' + (info.nS ?? '?') + ' séries'
+              : 'contenu non détaillé (ancien format de trace)',
+            chiffre: info.nC !== null ? info.nC + ' conf.' : '—',
+            encre: 'var(--color-text)',
+            signature: 'simula-sauvegarde-' + new Date(info.t).toISOString().slice(0, 10)
+              + '.json · ' + this.nomCompteActif() + ' · réimportable tel quel',
+            chiffres: [],
+            note: 'Le fichier est chez vous, hors du navigateur : c\u2019est la seule copie qu\u2019un vidage de cache ne peut pas atteindre. Seul le dernier export laisse une trace datée.',
+            aAction: true, actionTxt: 'Exporter à nouveau', action: () => this.exporterTout(),
+            aRecalcul: false, aSuppr: false });
+        }
+        entrees.sort((a2, b2) => b2.t - a2.t);
+        const actifs = s.regFiltres || [];
+        const presents = ['mesure', 'scan', 'robot', 'export'].filter((n) => entrees.some((e) => e.type === n));
+        const visibles = entrees.filter((e) => !actifs.length || actifs.includes(e.type));
+        const rc = s.recalculs || {};
+        return {
+          regFiltres: presents.map((nom) => ({ nom,
+            n: entrees.filter((e) => e.type === nom).length,
+            cls: 'tag ' + (actifs.includes(nom) ? 'tag-accent' : 'tag-outline'),
+            basculer: () => this.setState((p) => ({ regFiltres: (p.regFiltres || []).includes(nom)
+              ? (p.regFiltres || []).filter((x) => x !== nom) : [...(p.regFiltres || []), nom] })) })),
+          aRegFiltre: actifs.length > 0,
+          regToutAfficher: () => this.setState({ regFiltres: [] }),
+          regResume: actifs.length
+            ? this.pl(visibles.length, 'entrée', 'entrées') + ' sur ' + entrees.length
+            : this.pl(entrees.length, 'entrée', 'entrées') + ' · tout est affiché',
+          aRegVide: entrees.length === 0,
+          regPied: 'Rien ne s\u2019efface tout seul, quelle que soit l\u2019ancienneté : une entrée ne part que si vous la supprimez vous-même. '
+            + this.pl(entrees.length, 'entrée', 'entrées') + ' dans cet espace, ' + this.nomCompteActif() + '.',
+          regFil: visibles.map((e) => {
+            const ouvert = s.regOuvert === e.id;
+            const r = e.run ? rc[String(e.run.id)] : null;
+            const rTxt = (() => {
+              if (!e.aRecalcul || !r) return '';
+              const l = (r.lignes || []).filter((x) => x.apres !== null && x.avant != null);
+              if (!l.length) return 'recalcul fait — série absente de ce navigateur, rien à comparer';
+              const max = l.reduce((a2, x) => Math.max(a2, Math.abs(x.ecart)), 0);
+              return max <= 0.05 ? 'écart nul au dernier recalcul'
+                : 'écart maximum ' + sg(max, 1) + ' R au dernier recalcul'
+                  + (r.partiel ? ' (réglages incomplets)' : '');
+            })();
+            return { ...e, ouvert,
+              quand: this.quandCourt(e.t),
+              chev: ouvert ? '\u25be' : '\u25b8',
+              fond: ouvert ? 'color-mix(in srgb,var(--color-accent) 6%,transparent)' : 'transparent',
+              aChiffres: (e.chiffres || []).length > 0,
+              chiffres: (e.chiffres || []).map(([nom, val]) => ({ nom, val })),
+              aNote: !!e.note,
+              aRecalculTxt: !!rTxt, recalculTxt: rTxt,
+              recalculEncre: /écart nul/.test(rTxt) ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+              enCours: !!(s.recalcul && e.run && s.recalcul.id === e.run.id && s.recalcul.encours),
+              ouvrir: () => this.setState((p) => ({ regOuvert: p.regOuvert === e.id ? '' : e.id })) };
+          }),
+        };
+      })(),
+      // ————— LA PREUVE : mes mesures tiennent-elles encore ? —————
+      // Les verdicts viennent des recalculs réellement faits (cette session) : rien
+      // n'est affirmé sans avoir été recalculé, et la réponse vit dans le titre.
+      ...(() => {
+        const mesures = (s.runs || []).filter((r) => r.type === 'backtest');
+        const rc = s.recalculs || {};
+        const rows = mesures.map((r) => {
+          const g = r.reglages || {};
+          const v = rc[String(r.id)];
+          const l = v ? (v.lignes || []).filter((x) => x.apres !== null && x.avant != null) : [];
+          const apres = l.length ? l.reduce((a2, x) => a2 + x.apres, 0) : null;
+          const avant = Number.isFinite(r.total) ? r.total : null;
+          const ecart = v && l.length && avant !== null ? apres - avant : null;
+          const etat = !v ? 'jamais' : (!l.length ? 'sans' : (Math.abs(ecart) <= 0.05 ? 'ok' : 'corrige'));
+          return { etat,
+            titre: this.nomComplet(g.btSym || '?')
+              + (g.btLigne ? ' — ' + (LIGNES_TXT[g.btLigne] || g.btLigne) + ' ' + (g.btPeriode ?? '') : ''),
+            signature: [(g.ut || 'H1'), g.btSL != null ? 'SL ' + g.btSL + ' %' : null,
+              g.btRR != null ? 'RR ' + g.btRR : null,
+              'enregistrée le ' + new Date(r.date).toLocaleDateString('fr-FR')].filter(Boolean).join(' · '),
+            avant: avant === null ? '—' : sg(avant, 1) + ' R',
+            apres: !v ? '—' : (!l.length ? 'série absente' : sg(apres, 1) + ' R'),
+            ecart: etat === 'ok' ? '0,0' : etat === 'corrige' ? sg(ecart, 1) : etat === 'sans' ? '—' : 'à faire',
+            encre: etat === 'corrige' ? 'var(--color-accent-900)'
+              : etat === 'ok' ? 'var(--color-accent-700)' : 'var(--color-neutral-700)',
+            verdict: etat === 'ok' ? 'reproductible' : etat === 'corrige' ? 'moteur corrigé'
+              : etat === 'sans' ? 'invérifiable ici' : 'jamais recalculée',
+            cls: etat === 'ok' ? 'tag-accent' : etat === 'corrige' ? 'tag-outline' : 'tag-neutral' };
+        });
+        const nOk = rows.filter((x) => x.etat === 'ok').length;
+        const nCor = rows.filter((x) => x.etat === 'corrige').length;
+        const nJam = rows.length - nOk - nCor;
+        return {
+          aPreuves: rows.length > 0,
+          preuves: rows,
+          preuveResume: !rows.length
+            ? 'Aucune mesure enregistrée pour l\u2019instant : sauvegardez un backtest, et la question se posera.'
+            : (nOk + nCor === 0
+              ? this.pl(rows.length, 'mesure enregistrée', 'mesures enregistrées')
+                + ' — aucune n\u2019a encore été recalculée depuis l\u2019ouverture de la page : « Tout recalculer » le dit en une passe.'
+              : nOk + ' sur ' + rows.length + ' redonnent exactement le même chiffre avec le moteur d\u2019aujourd\u2019hui'
+                + (nCor ? ' · ' + nCor + (nCor > 1 ? ' ont bougé' : ' a bougé') + ' après une correction' : '')
+                + (nJam ? ' · ' + nJam + ' reste' + (nJam > 1 ? 'nt' : '') + ' à recalculer' : '') + '.'),
+          oPreuve: !!s.preuveOuverte,
+          chevPreuve: s.preuveOuverte ? '\u25be' : '\u25b8',
+          basculerPreuve: () => this.setState({ preuveOuverte: !this.state.preuveOuverte }),
+          preuveOccupe: s.preuveEnCours ? true : undefined,
+          preuveBoutonTxt: s.preuveEnCours ? 'Recalcul en cours\u2026' : 'Tout recalculer',
+          toutRecalculer: async () => {
+            if (this.state.preuveEnCours) return;
+            this.setState({ preuveEnCours: true });
+            try {
+              for (const r of (this.state.runs || []).filter((x) => x.type === 'backtest')) {
+                await this.recalculerRun(r);
+              }
+            } finally { this.setState({ preuveEnCours: false }); }
+          },
+        };
+      })(),
+      // ————— LES TROIS ÉTATS À POINTS de la sauvegarde, et sa taille réelle —————
+      ...(() => {
+        const pe = s.persistEtat;
+        const info = this.lireSauvInfo();
+        const t = Math.max(info.t || 0, s.sauvDate || 0);
+        return {
+          persistPoint: pe === 'accordee' ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+          persistNom: pe === 'accordee' ? 'Le navigateur ne purgera pas ce site'
+            : pe === 'indisponible' ? 'Protection du stockage indisponible'
+            : pe === 'refusee' ? 'Persistance refusée par le navigateur'
+            : 'Persistance non demandée pour l\u2019instant',
+          persistSous: pe === 'accordee' ? 'persistance accordée — vos données survivent à la fermeture'
+            : pe === 'indisponible' ? 'ce navigateur peut effacer le site après plusieurs jours sans visite — l\u2019export est l\u2019unique parade'
+            : pe === 'refusee' ? 'la demande a été refusée — l\u2019export reste la seule protection'
+            : 'elle est demandée au premier vrai travail, pas au chargement',
+          copiePoint: t ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+          copieNom: t ? 'Copie hors du navigateur : ' + this.quandCourt(t) : 'Aucune copie hors du navigateur',
+          copieSous: t
+            ? (info.nC !== null ? info.nC + ' configurations et ' + (info.nS ?? '?') + ' séries au moment de l\u2019export'
+              : 'contenu de l\u2019export non détaillé (trace à l\u2019ancien format)')
+            : 'exportez un fichier : c\u2019est la seule copie qu\u2019un vidage du navigateur ne peut pas atteindre',
+          stockTaille: (() => {
+            const p = s.place;
+            const oct = p && Number.isFinite(p.aNous) ? p.aNous
+              : (p && Number.isFinite(p.utilise) ? p.utilise : null);
+            if (oct !== null) return oct >= 1048576 ? Math.round(oct / 1048576) + ' Mo' : Math.round(oct / 1024) + ' Ko';
+            return this.etatMemoire();
+          })(),
+        };
+      })(),
       oublierSeries: () => this.oublierSeries(),
       contenuStockage: (() => {
         let nSeries = 0;
@@ -23317,7 +23590,7 @@ GROUPES = {
             : 'mesuré sur vos lignes validées, quand il y en aura',
           partPatrimoine: part === null ? '\u2014' : (part * 100).toFixed(1).replace('.', ',') + ' %',
           verdictPart: part === null
-            ? 'Renseignez votre patrimoine ci-dessous pour situer ce capital.'
+            ? 'Renseignez votre patrimoine dans le panneau 1 R, en haut, pour situer ce capital.'
             : (part > 0.1 ? 'Au-dessus du plafond usuel de 10 %' : 'Sous le plafond usuel de 10 %'),
           patrimoine: this.state.patrimoine || '',
           setPatrimoine: (e) => this.setState({ patrimoine: Number(e.target.value) || 0 },
