@@ -414,6 +414,13 @@
            jamais pouvoir se lire comme un effacement : chaque espace est nommé avec
            son poids réel. Étanchéité voulue — aucun transfert automatique. -->
       <div style="display:flex;flex-direction:column;gap:6px">
+        <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--color-divider)">
+            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Votre licence</span>
+            <span style="font-size:12px;line-height:1.55">{{ licPiedTxt }}</span>
+            <button type="button" class="lien" style="align-self:flex-start;font-size:11px" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
+          </div>
+        </sc-if>
         <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Espaces de données</span>
         <div style="display:flex;flex-direction:column">
           <sc-for list="{{ espacesTiroir }}" as="ed" hint-placeholder-count="3">
@@ -5152,9 +5159,15 @@
   -->
   <sc-if value="{{ aSansSauv }}" hint-placeholder-val="{{ false }}">
   <div id="pied-sauv" style="position:fixed;left:0;right:0;bottom:0;z-index:60;background:{{ sauvFondPied }};color:var(--color-bg);border-top:2px solid {{ sauvBordPied }};padding:{{ sansSauvPadIn }} 32px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-    <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
-      <span style="flex-basis:100%;font-size:10px;line-height:1.4;opacity:.8">{{ licPiedTxt }}</span>
-    </sc-if>
+    <!--
+      PAS DE MENTION NOMINATIVE ICI. Ce pied est en position:fixed : une adresse de
+      courriel affichée en permanence en bas de l'écran part dans toutes les captures
+      et tous les partages d'écran, sans que personne y pense. Elle décourage le
+      partage du CODE, donc elle doit voyager avec ce qui SORT — en-tête des .mq5,
+      exports JSON et CSV — et se consulter dans le tiroir de l'espace, pas encombrer
+      l'écran. Le pied de l'intendance, lui, la garde : il n'est visible que dans ce
+      tiroir.
+    -->
     <sc-if value="{{ aPurgeLigne }}" hint-placeholder-val="{{ false }}">
       <span style="flex-basis:100%;font-size:12px;line-height:1.5;display:flex;gap:12px;align-items:baseline"><strong style="flex:1;min-width:30ch">{{ purgeLigneTxt }}</strong><button type="button" style="cursor:pointer;background:none;border:1px solid currentColor;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:2px 9px;white-space:nowrap" onClick="{{ fermerPurge }}">compris</button></span>
     </sc-if>
@@ -16845,7 +16858,8 @@ GROUPES = {
           sansSauvPad: !montrer ? '72px' : reduit ? '116px' : '150px',
           // « ? Aide / Donner mon avis » vivent DANS le pied dès qu'il est là : deux
           // blocs empilés au même coin finissaient toujours par se recouvrir.
-          aideFlotte: !montrer,
+          // pas sur la page de vente : elle n'a rien à voir avec l'outil ouvert
+          aideFlotte: !montrer && tab !== 'accueil',
           // l'assise du pied d'acier du scan : la hauteur mesurée du pied de sauvegarde,
           // avec un défaut plausible tant que l'observateur n'a pas rendu sa mesure
           bsPiedBas: (montrer ? (s.hSauv || (reduit ? 38 : 64)) : 0) + 'px',
@@ -16939,7 +16953,8 @@ GROUPES = {
             tiroirAide: 'L\u2019espace actif (' + esp + ') ne contient rien, mais '
               + NOMS_BAS[ailleurs[0]] + ' porte ' + mo2(ailleurs[1]) + ' de données intactes. '
               + 'Un basculement d\u2019espace n\u2019efface rien : les espaces sont étanches. '
-              + 'Ouvrez ce tiroir — le poids de chaque espace y est affiché.',
+              + 'Ouvrez ce tiroir — le poids de chaque espace y est affiché.'
+              + (this.licenceMention() ? ' \u2014 L' + this.licenceMention().slice(1) + '.' : ''),
           };
         }
         const etatCourt = this.essai ? 'séries de démonstration'
@@ -16960,7 +16975,10 @@ GROUPES = {
                 + 'les bougies. Ouvrez ce tiroir et choisissez un fichier de sauvegarde automatique : '
                 + 'il s\u2019écrit sur votre disque à chaque modification, sans clic.'
               : 'Le fichier de sauvegarde est à jour'
-                + (s.autoHeure ? ' — dernière écriture à ' + s.autoHeure + '.' : '.')),
+                + (s.autoHeure ? ' — dernière écriture à ' + s.autoHeure + '.' : '.'))
+            // la mention nominative se consulte SANS clic et n'apparaît sur aucune
+            // capture : c'est le seul endroit de l'écran où elle a sa place
+            + (this.licenceMention() ? ' \u2014 L' + this.licenceMention().slice(1) + '.' : ''),
         };
       })(),
       aEnTetePage: false,
