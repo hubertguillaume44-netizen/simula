@@ -95,7 +95,7 @@
    "terme": "BE",
    "texte": "Sorties sur stop déplacé ; entre parenthèses les stops sautés par un écart de cotation",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -200,7 +200,7 @@
    "terme": "Creux",
    "texte": "Pire creux de l'année, en R",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -263,7 +263,7 @@
    "terme": "écartée est inexploitable, pas décevante",
    "texte": "Contrat courtier modifié, taille de contrat changée, bougies aberrantes en début de série. Une période simplement mauvaise n’est pas inexploitable : c’est une information, pas un défaut de données.",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -313,7 +313,7 @@
    "texte": "Replier ou déplier cette section",
    "vues": [
     "Marché",
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -327,7 +327,7 @@
    "terme": "Exporter en CSV",
    "texte": "Enregistre la liste complète en CSV, ouvrable dans un tableur",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -430,7 +430,7 @@
   },
   {
    "terme": "La fiche",
-   "texte": "Ouvrir la fiche détaillée de cet instrument, sous la grille",
+   "texte": "Ouvrir la fiche détaillée de cet instrument, sous sa carte — un second clic la referme.",
    "vues": [
     "Historique"
    ]
@@ -537,7 +537,7 @@
    "terme": "Poids du meilleur",
    "texte": "Part du meilleur trade dans le gain de l'année : au-delà de 25 %, l'année tient sur un coup",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -747,7 +747,7 @@
    "terme": "Tolérance",
    "texte": "Deux entrées sont considérées comme la même si elles tombent dans cet intervalle. Une bougie H1 = 1 h : au-delà, ce n'est plus le même signal.",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {
@@ -796,7 +796,7 @@
    "terme": "TP",
    "texte": "Sorties sur objectif atteint",
    "vues": [
-    "Toutes les pages"
+    "Historique"
    ]
   },
   {

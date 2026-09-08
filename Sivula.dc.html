@@ -3462,166 +3462,20 @@
                       <button type="button" class="{{ tr2.agirCls }}" style="min-height:1.8rem;font-size:11px;padding-inline:10px" disabled="{{ tr2.agirBloque }}" title="{{ tr2.agirAide }}" onClick="{{ tr2.agir }}">{{ tr2.agirTxt }}</button>
                     </sc-if>
                     <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Charger cette configuration dans le Backtest et la relancer" onClick="{{ tr2.auBacktest }}">Backtest</button>
-                    <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px" title="Ouvrir la fiche détaillée de cet instrument, sous la grille" onClick="{{ tr2.ouvrir }}">La fiche</button>
+                    <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;padding-inline:10px;display:inline-flex;align-items:center;gap:5px" title="Ouvrir la fiche détaillée de cet instrument, sous sa carte — un second clic la referme." onClick="{{ tr2.ouvrir }}">La fiche<span style="font-size:9px">{{ tr2.ficheChev }}</span></button>
                   </div>
 
                 </div>
 
                 <!--
-                  LES AUTRES CONFIGURATIONS DE L'INSTRUMENT, SUR TOUTE LA LARGEUR.
-
-                  Le dépli est un FRÈRE de la fiche dans la grille, pas un bloc à
-                  l'intérieur d'elle : `sc-for` rend ses enfants dans un fragment, donc
-                  les deux éléments sont bien deux enfants de la grille, et `grid-column:
-                  1/-1` fait traverser le second. Une fiche fait 330 px ; six colonnes de
-                  mesures n'y tiennent pas, et une colonne étroite aurait rendu le tableau
-                  illisible au moment précis où il sert à comparer.
-
-                  Une seule fiche dépliée à la fois — c'est `symOuvert` qui le garantit.
+                  LA FICHE, SOUS SA CARTE. Même patron que le dépli ci-dessous : un
+                  FRÈRE de la carte dans la grille, en pleine largeur (grid-column:
+                  1/-1) — la carte voisine descend d'une ligne, c'est le prix de la
+                  proximité. Une seule fiche ouverte à la fois : s.detail est unique.
+                  Les producteurs (dSym, dTotal…) sont globaux et se résolvent ici.
                 -->
-                <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
-                  <section class="blueprint" style="grid-column:1/-1;padding:13px 15px;display:flex;flex-direction:column;gap:9px">
-                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
-                      <span style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;min-width:0">
-                        <span style="font-size:11px;letter-spacing:.05em;text-transform:uppercase">{{ tr2.titreDepli }}</span>
-                        <span style="font-size:11px" class="text-muted">{{ tr2.sousTitreDepli }}</span>
-                      </span>
-                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.basculer }}">Replier</button>
-                    </div>
-                    <div style="overflow-x:auto">
-                      <table class="table" style="font-size:12px;width:100%">
-                        <thead><tr>
-                          <th>Réglages</th>
-                          <th style="text-align:right;width:1%">R net</th>
-                          <th style="text-align:right;width:1%">Creux</th>
-                          <th style="text-align:right;width:1%">Trades</th>
-                          <th style="width:1%">Hasard</th>
-                          <th style="width:1%"></th>
-                        </tr></thead>
-                        <tbody>
-                          <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="6">
-                            <tr style="background:{{ cb.fond }}">
-                              <td>
-                                <strong style="font-size:12px;line-height:1.3">{{ cb.reglages }}</strong>
-                                <span style="display:block;font-size:10px;line-height:1.4" class="text-muted">{{ cb.souLigne }}</span>
-                              </td>
-                              <td style="text-align:right;width:1%;white-space:nowrap"><strong style="font-family:var(--font-heading)">{{ cb.total }}</strong></td>
-                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.dd }}</td>
-                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.n }}</td>
-                              <td style="width:1%;white-space:nowrap"><span style="font-size:11px;color:{{ cb.hasCouleur }}" title="{{ cb.hasTousAide }}">{{ cb.hasChiffre }}</span></td>
-                              <td style="text-align:right;width:1%;white-space:nowrap">
-                                <sc-if value="{{ cb.estAffichee }}" hint-placeholder-val="{{ true }}">
-                                  <span style="font-size:10px" class="text-muted" title="{{ cb.voirAide }}">affichée</span>
-                                </sc-if>
-                                <sc-if value="{{ cb.aVoir }}" hint-placeholder-val="{{ false }}">
-                                  <button type="button" class="btn btn-ghost" style="min-height:1.5rem;font-size:10px;padding-inline:9px" title="{{ cb.voirAide }}" onClick="{{ cb.voir }}">Voir</button>
-                                </sc-if>
-                              </td>
-                            </tr>
-                          </sc-for>
-                        </tbody>
-                      </table>
-                    </div>
-                    <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
-                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;align-self:flex-start;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
-                    </sc-if>
-                    <!--
-                      LA PHRASE QUI DONNE LE SENS DU DÉPLI. Sans elle, le tableau est une
-                      liste de chiffres ; avec elle, il répond à la question qui compte —
-                      la meilleure est-elle un pic dans le bruit, ou le sommet d'un plateau.
-                    -->
-                    <p class="card-body" style="margin:0;font-size:12px;line-height:1.6;max-width:96ch">{{ tr2.voisPhrase }}</p>
-                  </section>
-                </sc-if>
-              </sc-for>
-            </div>
-
-            <sc-if value="{{ aSansConfig }}" hint-placeholder-val="{{ false }}">
-              <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
-            </sc-if>
-            <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
-        </div>
-
-        <sc-if value="{{ aPanneauHasard }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Contrôle du hasard<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.">?</span></span>
-            <span style="font-size:12px;max-width:92ch" class="text-muted">Votre scan garde le meilleur de milliers d'essais. Le hasard aussi produit un meilleur. Ce cadre compare les deux.</span>
-            <button type="button" onClick="{{ basculerH4 }}" title="Replier ou déplier ce cadre" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;margin-inline-start:auto;white-space:nowrap;color:inherit">{{ chevronH4 }}</button>
-          </div>
-          <sc-if value="{{ ouvH4 }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-            <button class="btn btn-primary" type="button" onClick="{{ controlerHasard }}" disabled="{{ hasardEnCours }}">{{ hasardBouton }}</button>
-            <div class="field" style="width:210px">
-              <label>Contrôler<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.">?</span></label>
-              <select class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" value="{{ hasardInstr }}" onChange="{{ setHasardInstr }}">
-                <sc-for list="{{ hasardInstrs }}" as="hi" hint-placeholder-count="3">
-                  <option value="{{ hi.v }}">{{ hi.nom }}</option>
-                </sc-for>
-              </select>
-            </div>
-            <label style="display:flex;gap:7px;align-items:flex-start;font-size:12px;line-height:1.4;max-width:32ch;cursor:pointer">
-              <input type="checkbox" style="margin-top:2px" checked="{{ hasardVariantes }}" onChange="{{ setHasardVariantes }}">
-              <span>Tester aussi les 10 premières variantes de mes configs validées<span style="display:block" class="text-muted">{{ hasardVariantesAide }}</span></span>
-            </label>
-            <div class="field" style="width:150px">
-              <label>Tirages par configuration<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.">?</span></label>
-              <input class="input" type="number" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" min="200" max="20000" step="100" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}">
-            </div>
-            <span style="font-size:12px;max-width:60ch;line-height:1.5" class="text-muted">{{ hasardPorte }} {{ tiragesPortee }}</span>
-          </div>
-          <sc-if value="{{ aHasardMsg }}" hint-placeholder-val="{{ false }}">
-            <span style="font-size:12px;color:var(--color-accent-700)">{{ hasardMsg }}</span>
-          </sc-if>
-          <sc-if value="{{ aHasard }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.25">{{ hasardVerdict }}</strong>
-            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-              <span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Classer par</span>
-              <sc-for list="{{ hasardCols }}" as="hc" hint-placeholder-count="4">
-                <button type="button" class="{{ hc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="Classer les lignes par ce critère" onClick="{{ hc.trier }}">{{ hc.nom }}</button>
-              </sc-for>
-            </div>
-            <div style="overflow-x:auto">
-            <table class="table" style="font-size:12px">
-              <thead><tr>
-                <th>Instrument</th>
-                <th style="text-align:right">Votre résultat</th>
-                <th style="text-align:left">Part des tirages au hasard qui font aussi bien<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.">?</span></th>
-                <th style="text-align:left">Verdict<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.">?</span></th>
-              </tr></thead>
-              <tbody>
-                <sc-for list="{{ hasardRows }}" as="hz" hint-placeholder-count="4">
-                  <tr>
-                    <td style="padding-inline-start:{{ hz.decalage }}"><strong>{{ hz.sym }}</strong><span class="{{ hz.roleCls }}" style="margin-inline-start:6px;font-size:9px;letter-spacing:.04em" title="{{ hz.roleAide }}">{{ hz.roleTxt }}</span><span style="display:block;font-size:11px;line-height:1.4;font-weight:600;color:var(--color-accent-700)">{{ hz.reglages }}</span><span class="text-muted" style="display:block;font-size:10px;line-height:1.4">{{ hz.nom }}</span></td>
-                    <td style="text-align:right;white-space:nowrap"><strong>{{ hz.total }}</strong><span style="display:block;font-size:10px;opacity:.75">{{ hz.totalParTrade }}</span></td>
-                    <td style="min-width:200px" title="{{ hz.aide }}">
-                      <div style="display:flex;gap:10px;align-items:baseline">
-                        <strong style="font-family:var(--font-heading);font-size:22px;line-height:1;min-width:5.5ch">{{ hz.taux }}</strong>
-                        <span style="font-size:12px;line-height:1.35">{{ hz.lecture }}<span class="text-muted" style="display:block;font-size:10px">{{ hz.tauxDetail }}</span></span>
-                      </div>
-                      <div style="margin-top:6px;height:4px;background:var(--color-neutral-200)">
-                        <div style="height:4px;width:{{ hz.barre }};background:{{ hz.barreCouleur }}"></div>
-                      </div>
-                    </td>
-                    <td style="min-width:150px"><span class="{{ hz.tag }}">{{ hz.verdict }}</span><span class="{{ hz.etatCls }}" style="margin-inline-start:5px;font-size:9px;letter-spacing:.03em" title="{{ hz.etatMotif }}">{{ hz.etat }}</span><sc-if value="{{ hz.aCroisement }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;margin-top:4px" title="{{ hz.croisementAide }}">{{ hz.croisement }}</span></sc-if><span class="{{ hz.corrCls }}" style="display:block;font-size:10px;line-height:1.4;margin-top:3px">{{ hz.corrTxt }}</span><span class="text-muted" style="display:block;font-size:10px;line-height:1.4;margin-top:2px">{{ hz.selTxt }}</span></td>
-                  </tr>
-                </sc-for>
-              </tbody>
-            </table>
-            </div>
-            <p class="card-body" style="margin:0;font-size:12px">Les conditions d'entrée ne sont pas appliquées aux tirages : une entrée au hasard ne peut pas, par définition, respecter une condition. Ce qui est comparé, c'est la valeur du <strong>moment</strong> d'entrée choisi par votre règle.</p>
-          </div>
-          </sc-if>
-          </sc-if>
-        </div>
-        </sc-if>
-      </section>
-    </div>
-    </sc-if>
-      <sc-if value="{{ aDetailVu }}" hint-placeholder-val="{{ false }}">
+                <sc-if value="{{ tr2.ficheIci }}" hint-placeholder-val="{{ false }}">
+                <div style="grid-column:1/-1">
       <section class="card blueprint" style="padding:24px 26px;gap:20px">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start">
@@ -3995,7 +3849,163 @@
         </div>
         </sc-if>
       </section>
-      </sc-if>
+                </div>
+                </sc-if>
+
+                <!--
+                  LES AUTRES CONFIGURATIONS DE L'INSTRUMENT, SUR TOUTE LA LARGEUR.
+
+                  Le dépli est un FRÈRE de la fiche dans la grille, pas un bloc à
+                  l'intérieur d'elle : `sc-for` rend ses enfants dans un fragment, donc
+                  les deux éléments sont bien deux enfants de la grille, et `grid-column:
+                  1/-1` fait traverser le second. Une fiche fait 330 px ; six colonnes de
+                  mesures n'y tiennent pas, et une colonne étroite aurait rendu le tableau
+                  illisible au moment précis où il sert à comparer.
+
+                  Une seule fiche dépliée à la fois — c'est `symOuvert` qui le garantit.
+                -->
+                <sc-if value="{{ tr2.ouvert }}" hint-placeholder-val="{{ false }}">
+                  <section class="blueprint" style="grid-column:1/-1;padding:13px 15px;display:flex;flex-direction:column;gap:9px">
+                    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                      <span style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;min-width:0">
+                        <span style="font-size:11px;letter-spacing:.05em;text-transform:uppercase">{{ tr2.titreDepli }}</span>
+                        <span style="font-size:11px" class="text-muted">{{ tr2.sousTitreDepli }}</span>
+                      </span>
+                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.basculer }}">Replier</button>
+                    </div>
+                    <div style="overflow-x:auto">
+                      <table class="table" style="font-size:12px;width:100%">
+                        <thead><tr>
+                          <th>Réglages</th>
+                          <th style="text-align:right;width:1%">R net</th>
+                          <th style="text-align:right;width:1%">Creux</th>
+                          <th style="text-align:right;width:1%">Trades</th>
+                          <th style="width:1%">Hasard</th>
+                          <th style="width:1%"></th>
+                        </tr></thead>
+                        <tbody>
+                          <sc-for list="{{ tr2.combis }}" as="cb" hint-placeholder-count="6">
+                            <tr style="background:{{ cb.fond }}">
+                              <td>
+                                <strong style="font-size:12px;line-height:1.3">{{ cb.reglages }}</strong>
+                                <span style="display:block;font-size:10px;line-height:1.4" class="text-muted">{{ cb.souLigne }}</span>
+                              </td>
+                              <td style="text-align:right;width:1%;white-space:nowrap"><strong style="font-family:var(--font-heading)">{{ cb.total }}</strong></td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.dd }}</td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">{{ cb.n }}</td>
+                              <td style="width:1%;white-space:nowrap"><span style="font-size:11px;color:{{ cb.hasCouleur }}" title="{{ cb.hasTousAide }}">{{ cb.hasChiffre }}</span></td>
+                              <td style="text-align:right;width:1%;white-space:nowrap">
+                                <sc-if value="{{ cb.estAffichee }}" hint-placeholder-val="{{ true }}">
+                                  <span style="font-size:10px" class="text-muted" title="{{ cb.voirAide }}">affichée</span>
+                                </sc-if>
+                                <sc-if value="{{ cb.aVoir }}" hint-placeholder-val="{{ false }}">
+                                  <button type="button" class="btn btn-ghost" style="min-height:1.5rem;font-size:10px;padding-inline:9px" title="{{ cb.voirAide }}" onClick="{{ cb.voir }}">Voir</button>
+                                </sc-if>
+                              </td>
+                            </tr>
+                          </sc-for>
+                        </tbody>
+                      </table>
+                    </div>
+                    <sc-if value="{{ tr2.aReste }}" hint-placeholder-val="{{ false }}">
+                      <button type="button" style="cursor:pointer;border:none;background:none;padding:0;align-self:flex-start;font:inherit;font-size:11px;color:var(--color-accent-700);text-decoration:underline;text-underline-offset:2px" onClick="{{ tr2.toutAfficher }}">{{ tr2.resteTxt }}</button>
+                    </sc-if>
+                    <!--
+                      LA PHRASE QUI DONNE LE SENS DU DÉPLI. Sans elle, le tableau est une
+                      liste de chiffres ; avec elle, il répond à la question qui compte —
+                      la meilleure est-elle un pic dans le bruit, ou le sommet d'un plateau.
+                    -->
+                    <p class="card-body" style="margin:0;font-size:12px;line-height:1.6;max-width:96ch">{{ tr2.voisPhrase }}</p>
+                  </section>
+                </sc-if>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ aSansConfig }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:13px" class="text-muted">Aucune configuration retenue sur : {{ sansConfig }}. Ces instruments ont bien été mesurés : ce sont les seuils du scan (trades minimum, segments positifs) qui écartent toutes leurs lignes, ou leur historique qui est absent ou trop grossier.</p>
+            </sc-if>
+            <p style="margin:0;font-size:12px" class="text-muted">{{ ficheLigneUnique }}</p>
+        </div>
+
+        <sc-if value="{{ aPanneauHasard }}" hint-placeholder-val="{{ false }}">
+        <div class="blueprint" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Contrôle du hasard<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.">?</span></span>
+            <span style="font-size:12px;max-width:92ch" class="text-muted">Votre scan garde le meilleur de milliers d'essais. Le hasard aussi produit un meilleur. Ce cadre compare les deux.</span>
+            <button type="button" onClick="{{ basculerH4 }}" title="Replier ou déplier ce cadre" style="cursor:pointer;border:none;background:none;padding:0;font:inherit;font-size:11px;opacity:.55;margin-inline-start:auto;white-space:nowrap;color:inherit">{{ chevronH4 }}</button>
+          </div>
+          <sc-if value="{{ ouvH4 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <button class="btn btn-primary" type="button" onClick="{{ controlerHasard }}" disabled="{{ hasardEnCours }}">{{ hasardBouton }}</button>
+            <div class="field" style="width:210px">
+              <label>Contrôler<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.">?</span></label>
+              <select class="input" style="min-height:1.7rem;height:1.7rem;font-size:12px;padding:0 6px" value="{{ hasardInstr }}" onChange="{{ setHasardInstr }}">
+                <sc-for list="{{ hasardInstrs }}" as="hi" hint-placeholder-count="3">
+                  <option value="{{ hi.v }}">{{ hi.nom }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <label style="display:flex;gap:7px;align-items:flex-start;font-size:12px;line-height:1.4;max-width:32ch;cursor:pointer">
+              <input type="checkbox" style="margin-top:2px" checked="{{ hasardVariantes }}" onChange="{{ setHasardVariantes }}">
+              <span>Tester aussi les 10 premières variantes de mes configs validées<span style="display:block" class="text-muted">{{ hasardVariantesAide }}</span></span>
+            </label>
+            <div class="field" style="width:150px">
+              <label>Tirages par configuration<span style="display:block;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:11px;text-align:center;opacity:.55;margin:2px auto 0;cursor:help" title="Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.">?</span></label>
+              <input class="input" type="number" style="min-height:1.9rem;height:1.9rem;font-size:13px;padding:0 6px;width:11ch" min="200" max="20000" step="100" value="{{ nTiragesVal }}" onChange="{{ setNTirages }}" onBlur="{{ finNTirages }}" title="{{ aideTirages }}">
+            </div>
+            <span style="font-size:12px;max-width:60ch;line-height:1.5" class="text-muted">{{ hasardPorte }} {{ tiragesPortee }}</span>
+          </div>
+          <sc-if value="{{ aHasardMsg }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12px;color:var(--color-accent-700)">{{ hasardMsg }}</span>
+          </sc-if>
+          <sc-if value="{{ aHasard }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <strong style="font-family:var(--font-heading);font-size:17px;line-height:1.25">{{ hasardVerdict }}</strong>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Classer par</span>
+              <sc-for list="{{ hasardCols }}" as="hc" hint-placeholder-count="4">
+                <button type="button" class="{{ hc.cls }}" style="cursor:pointer;border:none;font-family:var(--font-body)" title="Classer les lignes par ce critère" onClick="{{ hc.trier }}">{{ hc.nom }}</button>
+              </sc-for>
+            </div>
+            <div style="overflow-x:auto">
+            <table class="table" style="font-size:12px">
+              <thead><tr>
+                <th>Instrument</th>
+                <th style="text-align:right">Votre résultat</th>
+                <th style="text-align:left">Part des tirages au hasard qui font aussi bien<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.">?</span></th>
+                <th style="text-align:left">Verdict<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:1px solid currentColor;font-size:9px;line-height:1;opacity:.55;margin-inline-start:4px;vertical-align:middle;cursor:help" title="Corrigé du nombre de tests effectués (Benjamini-Hochberg) : sur les configurations contrôlées ici, on trie les p-value et on ne retient que celles qui passent un seuil resserré, en tolérant 5 % de fausses découvertes parmi les retenues. Attention : cette correction porte sur les lignes contrôlées, pas sur les milliers de configurations du scan parmi lesquelles vous avez cueilli celles-ci — ce risque de sélection reste entier, et il est rappelé sous chaque verdict.">?</span></th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ hasardRows }}" as="hz" hint-placeholder-count="4">
+                  <tr>
+                    <td style="padding-inline-start:{{ hz.decalage }}"><strong>{{ hz.sym }}</strong><span class="{{ hz.roleCls }}" style="margin-inline-start:6px;font-size:9px;letter-spacing:.04em" title="{{ hz.roleAide }}">{{ hz.roleTxt }}</span><span style="display:block;font-size:11px;line-height:1.4;font-weight:600;color:var(--color-accent-700)">{{ hz.reglages }}</span><span class="text-muted" style="display:block;font-size:10px;line-height:1.4">{{ hz.nom }}</span></td>
+                    <td style="text-align:right;white-space:nowrap"><strong>{{ hz.total }}</strong><span style="display:block;font-size:10px;opacity:.75">{{ hz.totalParTrade }}</span></td>
+                    <td style="min-width:200px" title="{{ hz.aide }}">
+                      <div style="display:flex;gap:10px;align-items:baseline">
+                        <strong style="font-family:var(--font-heading);font-size:22px;line-height:1;min-width:5.5ch">{{ hz.taux }}</strong>
+                        <span style="font-size:12px;line-height:1.35">{{ hz.lecture }}<span class="text-muted" style="display:block;font-size:10px">{{ hz.tauxDetail }}</span></span>
+                      </div>
+                      <div style="margin-top:6px;height:4px;background:var(--color-neutral-200)">
+                        <div style="height:4px;width:{{ hz.barre }};background:{{ hz.barreCouleur }}"></div>
+                      </div>
+                    </td>
+                    <td style="min-width:150px"><span class="{{ hz.tag }}">{{ hz.verdict }}</span><span class="{{ hz.etatCls }}" style="margin-inline-start:5px;font-size:9px;letter-spacing:.03em" title="{{ hz.etatMotif }}">{{ hz.etat }}</span><sc-if value="{{ hz.aCroisement }}" hint-placeholder-val="{{ true }}"><span style="display:block;font-size:11px;line-height:1.45;margin-top:4px" title="{{ hz.croisementAide }}">{{ hz.croisement }}</span></sc-if><span class="{{ hz.corrCls }}" style="display:block;font-size:10px;line-height:1.4;margin-top:3px">{{ hz.corrTxt }}</span><span class="text-muted" style="display:block;font-size:10px;line-height:1.4;margin-top:2px">{{ hz.selTxt }}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+            </div>
+            <p class="card-body" style="margin:0;font-size:12px">Les conditions d'entrée ne sont pas appliquées aux tirages : une entrée au hasard ne peut pas, par définition, respecter une condition. Ce qui est comparé, c'est la valeur du <strong>moment</strong> d'entrée choisi par votre règle.</p>
+          </div>
+          </sc-if>
+          </sc-if>
+        </div>
+        </sc-if>
+      </section>
+    </div>
+    </sc-if>
 
     <sc-if value="{{ vueBacktest }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;flex-direction:column;gap:14px">
@@ -11954,7 +11964,10 @@ GROUPES = {
         motif: x.motif, bougies: x.bougies, ambigu: !!x.ambigu, cum: eq,
         evts: x.evTraverses || null };
     });
+    // le panneau ne vit plus que dans la grille de l'Historique : une fiche
+    // ouverte depuis la vue Scan (sous-entrées du bandeau, exemple guidé) y bascule
     this.setState({ ficheMsg: null, fenMotifOuvert: null,
+      ...(this.state.vue === 'scan' ? { vue: 'historique' } : {}),
       detail: { ...r, ...sup, res, seg: sg, courbe: c, marche, an, tiers, journal,
         part: trades.length ? sup.coupe / trades.length : 0.7 } });
     // une ligne ouverte est une ligne affichée : son résultat sur la partie écartée se
@@ -20263,7 +20276,6 @@ GROUPES = {
       // lance un vrai scan et ouvre une configuration à la fin
       lancerExemple: () => this.voirExemple(),
       aDetail: !!d,
-      aDetailVu: !!d && (s.vue === 'scan' || s.vue === 'historique'),
       fermerDetail: () => this.setState({ detail: null, fenMotifOuvert: null }),
       dSym: d ? d.sym : '',
       dConfig: d ? (ENTREES_TXT[s.btEntree] || s.btEntree) + ' · ' + (LIGNES_TXT[s.btLigne] || s.btLigne)
@@ -23534,7 +23546,13 @@ GROUPES = {
                 + String(r.bruitPct ?? '?').replace('.', ',') + ' %, ou testez en H4 où les bougies sont plus larges.'
               : '',
             partielAide: 'Le balayage de cet instrument a été interrompu : seules les combinaisons déjà calculées sont là. Son meilleur résultat n\u2019est pas comparable à celui d\u2019un instrument balayé en entier — relancez le scan pour le compléter.',
-            ouvrir: () => this.ouvrirFiche(r.sym, r),
+            // la fiche s'ouvre SOUS SA CARTE — le bouton est un interrupteur :
+            // recliquer la referme, en ouvrir une autre la remplace (s.detail est unique)
+            ficheIci: !!(s.detail && s.detail.sym === r.sym),
+            ficheChev: s.detail && s.detail.sym === r.sym ? '\u25be' : '\u25b8',
+            ouvrir: () => (this.state.detail && this.state.detail.sym === r.sym)
+              ? this.setState({ detail: null, fenMotifOuvert: null })
+              : this.ouvrirFiche(r.sym, r),
             auBacktest: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.versBacktest(r); },
             ...this.verdictDe(r),
             // les scans déjà enregistrés ont perdu leurs jumelles à l'élagage : ce bouton
