@@ -9,6 +9,13 @@
   },
   {
    "terme": "×",
+   "texte": "Écarter cette ligne seule — les autres lignes et le contenu des portefeuilles ne bougent pas.",
+   "vues": [
+    "Portefeuille"
+   ]
+  },
+  {
+   "terme": "×",
    "texte": "Cliquez pour retirer cette valeur",
    "vues": [
     "Nouveau scan"

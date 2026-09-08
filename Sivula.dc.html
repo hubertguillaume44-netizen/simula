@@ -1730,6 +1730,9 @@
                 <td style="text-align:right;width:1%">
                   <button type="button" class="{{ vl.faireCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;white-space:nowrap" title="{{ vl.faireAide }}" onClick="{{ vl.faire }}">{{ vl.faireTxt }}</button>
                 </td>
+                <td style="text-align:right;width:1%">
+                  <button type="button" class="lien" style="font-size:12px;padding:0 3px;color:var(--color-neutral-500)" title="Écarter cette ligne seule — les autres lignes et le contenu des portefeuilles ne bougent pas." onClick="{{ vl.retirer }}">×</button>
+                </td>
               </tr>
             </sc-for>
           </tbody>
@@ -1858,7 +1861,7 @@
                 <sc-for list="{{ ps.lignes }}" as="vl" hint-placeholder-count="5">
                   <div style="border-bottom:1px solid var(--color-divider);background:{{ vl.fondSel }}" draggable="true" onDragStart="{{ vl.dragStart }}" onDragEnd="{{ vl.dragEnd }}">
                     <div style="display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center">
-                      <div class="rang" style="grid-template-columns:14px minmax(0,1fr) 80px 84px 88px 100px 96px;font-size:13px" onClick="{{ vl.deplier }}" title="{{ vl.deplierAide }}">
+                      <div class="rang" style="grid-template-columns:14px minmax(0,1fr) 80px 84px 88px 100px 96px max-content;font-size:13px" onClick="{{ vl.deplier }}" title="{{ vl.deplierAide }}">
                         <span style="font-size:9px" class="text-muted">{{ vl.chevDepli }}</span>
                         <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
                           <strong>{{ vl.nom }}</strong>
@@ -1887,6 +1890,7 @@
                           <span>{{ vl.partTxt }}</span>
                           <span style="width:100%;height:3px;background:var(--color-neutral-300)"><span style="display:block;height:3px;width:{{ vl.partRemplie }};background:var(--color-accent)"></span></span>
                         </span>
+                        <button type="button" class="lien" style="font-size:12px;justify-self:end;padding:0 3px;color:{{ vl.retirerPfCouleur }}" title="{{ vl.retirerPfAide }}" onClick="{{ vl.retirerPf }}">{{ vl.retirerPfTxt }}</button>
                       </div>
                       <span style="padding:9px 14px;display:flex;flex-direction:column;gap:3px;align-items:center">
                         <button class="btn btn-primary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:10px;width:100%" onClick="{{ vl.exporterRobot }}" title="Télécharge l'Expert Advisor MQL5 de cette configuration.">Exporter</button>
@@ -1911,7 +1915,7 @@
                           <button class="btn btn-secondary" type="button" style="min-height:1.85rem;font-size:11px;padding-inline:11px" onClick="{{ vl.auBacktest }}">Rouvrir en Backtest</button>
                           <button class="btn btn-secondary" type="button" style="min-height:1.85rem;font-size:11px;padding-inline:11px" onClick="{{ basculerMesures }}">{{ mesuresTxt }}</button>
                           <button type="button" class="{{ vl.faireCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;white-space:nowrap" title="{{ vl.faireAide }}" onClick="{{ vl.faire }}">{{ vl.faireTxt }}</button>
-                          <button type="button" class="lien" style="margin-inline-start:auto;font-size:11px;color:var(--color-neutral-700)" onClick="{{ vl.retirer }}">retirer du portefeuille</button>
+                          <button type="button" class="lien" style="margin-inline-start:auto;font-size:11px;color:var(--color-neutral-700)" title="{{ vl.retirerPfAide }}" onClick="{{ vl.retirerPf }}">{{ vl.retirerPfLien }}</button>
                         </div>
                       </div>
                     </sc-if>
@@ -5360,7 +5364,9 @@ class Component extends DCLogic {
   // une entrée sans configuration (validée avant cette version) est complétée
   // par la meilleure ligne connue de l'historique pour ce symbole
   normValides(l) {
-    return (l || []).map((x) => {
+    // une entrée nulle — liste abîmée, écriture interrompue — ne doit pas
+    // emporter tout le rendu : elle est ignorée, pas normalisée
+    return (l || []).filter(Boolean).map((x) => {
       const v = typeof x === 'string' ? { sym: x, reprise: true } : x;
       const e = (this._parSym || new Map()).get(v.sym);
       const best = e && e.best;
@@ -20896,10 +20902,12 @@ GROUPES = {
             const fermes = (j && j.trades) || [];
             const ouverts = (j && j.ouverts) || [];
             if (!fermes.length && !ouverts.length) {
+              // plus d'étiquette d'état avant le premier export : le bouton Exporter
+              // fait déjà l'action, l'état n'apportait rien — la colonne ne garde que
+              // le bouton tant que rien n'est exporté
               return !j || !j.exporte
-                ? { deployTxt: 'robot à exporter', deployCls: 'tag tag-outline', deployDetail: '',
-                    deployAide: 'Aucun robot exporté pour cette configuration, et aucun journal déposé.',
-                    deployEtat: 'aExporter', deployEcart: null }
+                ? { deployTxt: '', deployCls: '', deployDetail: '', deployAide: '',
+                    deployEtat: '', deployEcart: null }
                 : { deployTxt: 'à tester dans MT5', deployCls: 'tag tag-outline',
                     deployDetail: 'robot exporté le ' + jour(j.exporte),
                     deployAide: 'Le robot a été exporté mais aucun trade n’est encore remonté. Lancez-le dans MT5, '
@@ -21096,19 +21104,17 @@ GROUPES = {
             const pireCreux = lignes.reduce((a, x) => Math.max(a, Math.abs(nombre(x.dd))), 0);
             const euroR2 = (Number(s.capital) || 0) * (Number(s.risquePct) || 0) / 100;
             // « Reste à faire » : la page s'ouvre sur une tâche, pas sur un rappel de mesures.
-            const aFaire = { aTester: 0, aExporter: 0, aControler: 0, ecart: 0 };
+            const aFaire = { aTester: 0, aControler: 0, ecart: 0 };
             for (const x of lignes) {
               if (x.deployEtat === 'aTester') aFaire.aTester++;
-              else if (x.deployEtat === 'aExporter') aFaire.aExporter++;
               else if (x.deployEtat === 'ecart') aFaire.ecart++;
               if (/Contrôler|Pousser/.test(x.faireTxt || '')) aFaire.aControler++;
             }
             const bouts = [];
             if (aFaire.aTester) bouts.push(aFaire.aTester + ' à tester');
-            if (aFaire.aExporter) bouts.push(aFaire.aExporter + ' à exporter');
             if (aFaire.aControler) bouts.push(aFaire.aControler + ' à contrôler');
             if (aFaire.ecart) bouts.push(aFaire.ecart + ' en écart');
-            const nAFaire = aFaire.aTester + aFaire.aExporter + aFaire.aControler + aFaire.ecart;
+            const nAFaire = aFaire.aTester + aFaire.aControler + aFaire.ecart;
             // La PART DU PORTEFEUILLE que porte chaque ligne : une ligne à 55 % et une à
             // 12 % ne se surveillent pas pareil, et aucune des dix-sept colonnes ne le disait.
             const maxAn = Math.max(1e-9, ...rAns.map((x) => Math.abs(x)));
@@ -21122,6 +21128,34 @@ GROUPES = {
                 // une longueur CSS toujours valide : une part à « — » dessine une barre VIDE
                 partRemplie: sommeAn > 0 ? Math.round(Math.max(0, Math.min(100, part))) + '%' : '0%',
                 depliee,
+                // retirer CETTE ligne du portefeuille : la configuration retourne
+                // dans « À ranger », rien d'autre ne bouge. Deux clics seulement quand
+                // c'est la dernière ligne — le premier dit ce qui va disparaître.
+                ...(() => {
+                  const symL = x.ticker || x.sym;
+                  const nomPf = p.nom || 'Portefeuille ' + (k + 1);
+                  const derniere = lignes.length === 1;
+                  const arme = s.pfLigneSuppr === cleL;
+                  return {
+                    retirerPfTxt: arme ? 'confirmer' : '\u00d7',
+                    retirerPfLien: arme
+                      ? 'confirmer : dernière ligne de ' + nomPf
+                      : 'retirer du portefeuille',
+                    retirerPfCouleur: arme ? 'var(--color-accent-700)' : 'var(--color-neutral-500)',
+                    retirerPfAide: !derniere
+                      ? 'Retirer ' + symL + ' de ' + nomPf + ' — la configuration retourne dans « À ranger ».'
+                      : arme
+                        ? 'Cliquez à nouveau : ' + nomPf + ' restera vide — son R par an, son pire creux et sa couverture disparaissent de cette page. La configuration retourne dans « À ranger ».'
+                        : 'Dernière ligne de ' + nomPf + ' : deux clics — le premier dit ce qui disparaît.',
+                    retirerPf: (e) => {
+                      if (e && e.stopPropagation) e.stopPropagation();
+                      if (derniere && !arme) { this.setState({ pfLigneSuppr: cleL }); return; }
+                      this.setState({ pfLigneSuppr: null });
+                      this.majPf(pfListe.map((q, j) => (j === k
+                        ? { ...q, syms: (q.syms || []).filter((y) => y !== symL) } : q)));
+                    },
+                  };
+                })(),
                 chevDepli: depliee ? '\u25be' : '\u25b8',
                 reussiteTxt: x._r && Number.isFinite(Number(x._r.winRate))
                   ? Number(x._r.winRate).toFixed(1).replace('.', ',') + ' %' : '—',
