@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 import { createHmac } from "node:crypto";
 import { signerCode, verifierCode, finDePlan, genererCles, empreinteEmail } from "./licence-noyau.mjs";
 import { traiter, signatureRevolutValide } from "../../netlify/functions/licence.mjs";
-import { CLE_DEMO_PRIVEE, CLE_DEMO_PUBLIQUE } from "./cle-demo.mjs";
+import { CLE_DEMO_PRIVEE } from "./cle-demo.mjs";
 
 const CLES = genererCles();
 const EMAIL = "client@exemple.fr";
@@ -148,15 +148,25 @@ test("plan inconnu 400 · événement non-paiement ignoré · clé de démonstra
 
 test("la clé privée n'est ni dans la page, ni dans le fichier livré ; la page porte le miroir", () => {
   const morceau = CLE_DEMO_PRIVEE.slice(20, 44);
+  // La clé publique n'est PAS figée sur celle de démonstration : le jour où
+  // generer-cles.mjs pose la vraie paire, ce test doit continuer à protéger sans
+  // qu'on ait à le rouvrir. Ce qu'il garantit : les deux fichiers portent une clé
+  // publique bien formée, et c'est la MÊME — un solo régénéré après la rotation,
+  // sinon l'application livrée refuserait tous les codes émis.
+  const cles = new Set();
   for (const f of ["Sivula.dc.html", "Sivula.solo.html"]) {
     const txt = readFileSync(new URL("../../" + f, import.meta.url), "utf8");
     assert.ok(!txt.includes(morceau), "la clé privée de démonstration est dans " + f);
-    assert.ok(txt.includes(CLE_DEMO_PUBLIQUE), "la clé publique manque dans " + f);
+    const m = /CLE_PUB_LICENCE = '([A-Za-z0-9_-]{43})'/.exec(txt);
+    assert.ok(m, "la clé publique manque, ou est mal formée, dans " + f);
+    cles.add(m[1]);
     // le miroir WebCrypto : même préfixe de format, même algorithme, mêmes motifs
     for (const attendu of ["SIV1\\.", "Ed25519", "'expire'", "'email'", "'signature'"]) {
       assert.ok(txt.includes(attendu), f + " ne porte plus « " + attendu + " »");
     }
   }
+  assert.equal(cles.size, 1,
+    "la page et le fichier livré ne portent pas la même clé publique : régénérez le solo");
   // l'empreinte du jeton n'est pas réversible : 16 octets de SHA-256, pas l'e-mail
   assert.equal(empreinteEmail("a@b.c").length, 22);
 });

@@ -194,7 +194,7 @@
   </sc-if>
   <header style="background:var(--color-accent-900);color:var(--color-bg);padding:0 32px;display:flex;align-items:stretch;gap:28px;flex-wrap:wrap;min-height:46px">
     <div style="display:flex;align-items:center;gap:12px">
-      <button type="button" onClick="{{ goAccueil }}" style="background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Revenir à l'accueil">SIVULA</button>
+      <button type="button" onClick="{{ goAccueil }}" style="background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès">SIVULA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
         <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
         <select style="cursor:pointer;font:inherit;font-size:13px;appearance:none;-webkit-appearance:none;background:color-mix(in srgb,var(--color-bg) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-bg) 34%,transparent);border-radius:0;padding:4px 26px 4px 9px;color:var(--color-bg);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) center,calc(100% - 9px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat" value="{{ compteChoisi }}" onChange="{{ changerDeCompte }}" title="Bougies, tarifs, scans et réglages sont propres au compte choisi.">
@@ -1063,7 +1063,7 @@
             <strong style="font-size:13px;line-height:1.4">Déposer les bougies H1</strong>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls, dans <code>MQL5\Files</code>. Déposez-les ici — le scan devient possible.</span>
             <sc-if value="{{ aPalierCompteur }}" hint-placeholder-val="{{ false }}">
-              <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}</span>
+              <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}<sc-if value="{{ aPalierLien }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ goAccueil }}">page d'accueil</button>{{ palierCompteurFin }}</sc-if></span>
             </sc-if>
           </div>
           <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
@@ -1119,7 +1119,7 @@
       <sc-if value="{{ aMessageDepot }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;width:100%">
           <sc-if value="{{ listeDepotVisible }}" hint-placeholder-val="{{ true }}">
-            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}</span>
+            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}<sc-if value="{{ aLienAccueil }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ goAccueil }}">page d'accueil</button>{{ messageDepotSuite }}</sc-if></span>
           </sc-if>
           <sc-if value="{{ listeDepotMasquee }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline" style="font-size:11px">{{ resumeDepot }}</span>
@@ -5104,6 +5104,93 @@
   </sc-if>
 </div></x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;essai&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;codeAcces&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2580&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Version publique&quot;},&quot;montantDefaut&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5000,&quot;tsType&quot;:&quot;number&quot;,&quot;unit&quot;:&quot;€&quot;,&quot;min&quot;:500,&quot;max&quot;:50000,&quot;step&quot;:500,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;horizonAns&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:10,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:3,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot; ans&quot;,&quot;section&quot;:&quot;Sivulateur&quot;},&quot;vueParDefaut&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;compacte&quot;,&quot;options&quot;:[&quot;compacte&quot;,&quot;deroulee&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mise en page&quot;}}">
+// ————— DÉBUT Ed25519 EN CLAIR —————
+//
+// Beaucoup de navigateurs n'exposent pas Ed25519 dans crypto.subtle : le code
+// d'accès y était refusé par « mettez votre navigateur à jour », c'est-à-dire
+// qu'un client payant ne pouvait pas activer la licence qu'il venait de payer.
+// La vérification est donc refaite ici, en clair : l'arithmétique de la courbe en
+// BigInt, et SHA-512 par crypto.subtle.digest — celui-là est partout. Ce repli ne
+// sert QUE si le navigateur ne sait pas le faire lui-même : il ne peut rien casser
+// là où ça marchait déjà. RFC 8032, vérification sans cofacteur : [S]B − [k]A = R.
+// Verrouillé sur node:crypto par scripts/licence/ed25519-navigateur.test.mjs.
+const ED_P = (1n << 255n) - 19n;
+const ED_L = (1n << 252n) + 27742317777372353535851937790883648493n;
+const ED_D = 37095705934669439343138083508754565189542113879843219016388785533085940283555n;
+const ED_RAC = 19681161376707505956807079304988542015446066515923890162744021073123829784752n;
+const ED_BX = 15112221349535400772501151409588531511454012693041857206046113283949847762202n;
+const ED_BY = 46316835694926478169428394003475163141307993866256225615783033603165251855960n;
+
+function edMod(a) { const r = a % ED_P; return r < 0n ? r + ED_P : r; }
+function edPuis(b, e) {
+  let r = 1n; b = edMod(b);
+  while (e > 0n) { if (e & 1n) r = edMod(r * b); b = edMod(b * b); e >>= 1n; }
+  return r;
+}
+// points en coordonnées étendues (X, Y, Z, T) : une seule formule sert à
+// l'addition ET au doublement, donc un seul chemin à vérifier
+function edAjoute(P, Q) {
+  const A = edMod((P[1] - P[0]) * (Q[1] - Q[0]));
+  const B = edMod((P[1] + P[0]) * (Q[1] + Q[0]));
+  const C = edMod(P[3] * 2n * ED_D * Q[3]);
+  const D = edMod(P[2] * 2n * Q[2]);
+  const E = B - A, F = D - C, G = D + C, H = B + A;
+  return [edMod(E * F), edMod(G * H), edMod(F * G), edMod(E * H)];
+}
+function edMul(P, n) {
+  let R = [0n, 1n, 1n, 0n], Q = P;
+  while (n > 0n) { if (n & 1n) R = edAjoute(R, Q); Q = edAjoute(Q, Q); n >>= 1n; }
+  return R;
+}
+function edEncode(P) {
+  const zi = edPuis(P[2], ED_P - 2n);
+  const x = edMod(P[0] * zi);
+  let y = edMod(P[1] * zi);
+  const u = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) { u[i] = Number(y & 255n); y >>= 8n; }
+  u[31] |= Number(x & 1n) << 7;
+  return u;
+}
+function edDecode(u8) {
+  let y = 0n;
+  for (let i = 31; i >= 0; i--) y = (y << 8n) | BigInt(u8[i]);
+  const signe = (y >> 255n) & 1n;
+  y &= (1n << 255n) - 1n;
+  if (y >= ED_P) return null;
+  const y2 = edMod(y * y);
+  const u = edMod(y2 - 1n), v = edMod(ED_D * y2 + 1n);
+  let x = edMod(u * edPuis(v, 3n) * edPuis(edMod(u * edPuis(v, 7n)), (ED_P - 5n) / 8n));
+  const vx2 = edMod(v * x * x);
+  if (vx2 !== u) {
+    if (vx2 === edMod(-u)) x = edMod(x * ED_RAC);
+    else return null;
+  }
+  if (x === 0n && signe === 1n) return null;
+  if ((x & 1n) !== signe) x = edMod(-x);
+  return [x, y, 1n, edMod(x * y)];
+}
+async function ed25519Verifie(sig, msg, pub) {
+  if (sig.length !== 64 || pub.length !== 32) return false;
+  let S = 0n;
+  for (let i = 63; i >= 32; i--) S = (S << 8n) | BigInt(sig[i]);
+  if (S >= ED_L) return false;                 // signature non canonique : refusée
+  const A = edDecode(pub);
+  if (!A) return false;
+  const aHacher = new Uint8Array(64 + msg.length);
+  aHacher.set(sig.subarray(0, 32), 0);
+  aHacher.set(pub, 32);
+  aHacher.set(msg, 64);
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-512', aHacher));
+  let k = 0n;
+  for (let i = 63; i >= 0; i--) k = (k << 8n) | BigInt(h[i]);
+  k %= ED_L;
+  const moinsA = [edMod(-A[0]), A[1], A[2], edMod(-A[3])];
+  const gauche = edAjoute(edMul([ED_BX, ED_BY, 1n, edMod(ED_BX * ED_BY)], S), edMul(moinsA, k));
+  const enc = edEncode(gauche);
+  for (let i = 0; i < 32; i++) if (enc[i] !== sig[i]) return false;
+  return true;
+}
+// ————— FIN Ed25519 EN CLAIR —————
 const EUR = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const ENTREES_TXT = { croisement_ou_rebond: 'Croisement et Rebond', croisement_prix: 'Uniquement croisement' };
 const LIGNES_TXT = { ema: 'MME (EMA)', ma: 'MM (SMA)', mediane: 'Médiane' };
@@ -5231,7 +5318,12 @@ class Component extends DCLogic {
       const cle = await crypto.subtle.importKey('raw', deB64u(this.CLE_PUB_LICENCE),
         { name: 'Ed25519' }, false, ['verify']);
       valide = await crypto.subtle.verify({ name: 'Ed25519' }, cle, sig, payload);
-    } catch (e) { return { ok: false, motif: 'navigateur' }; }
+    } catch (e) {
+      // ce navigateur n'a pas Ed25519 : on le vérifie nous-mêmes, même résultat.
+      // Le motif « navigateur » ne reste que si même SHA-512 est hors de portée.
+      try { valide = await ed25519Verifie(sig, payload, deB64u(this.CLE_PUB_LICENCE)); }
+      catch (e2) { return { ok: false, motif: 'navigateur' }; }
+    }
     if (!valide) return { ok: false, motif: 'signature' };
     const norme = String(email || '').trim().toLowerCase();
     // v2 : l'e-mail est EN CLAIR dans le jeton — la licence est nominative, et le nom
@@ -6965,7 +7057,9 @@ GROUPES = {
             + (lm && lm.motif === 'expire'
               ? 'votre code a expiré' + (lm.fin ? ' le ' + lm.fin.split('-').reverse().join('/') : '')
                 + ', vos mesures restent en place ; reprenez un abonnement'
-              : 'un code d\u2019accès l\u2019ouvre sans limite, page d\u2019accueil'));
+              // \u0001 marque l'endroit où « page d'accueil » devient cliquable :
+              // le message est du texte, le rendu le coupe ici et y pose le lien
+              : 'un code d\u2019accès l\u2019ouvre sans limite, \u0001'));
           continue;
         }
       }
@@ -16864,7 +16958,9 @@ GROUPES = {
         return { aPalierCompteur: true,
           palierCompteur: Math.min(persos.size, this.PALIER_GRATUIT) + ' sur '
             + this.PALIER_GRATUIT + ' instruments personnels du palier gratuit'
-            + (plein2 ? ' — un instrument de plus sera refusé ; un code d\u2019accès l\u2019ouvre sans limite (page d\u2019accueil).' : '.'),
+            + (plein2 ? ' — un instrument de plus sera refusé ; un code d\u2019accès l\u2019ouvre sans limite (' : '.'),
+          aPalierLien: plein2,
+          palierCompteurFin: plein2 ? ').' : '',
           palierCouleur: plein2 ? 'var(--color-accent-700)' : 'var(--color-neutral-700)' };
       })(),
       surChoixM1: (e) => this.deposerBougiesM1([...(e.target.files || [])]),
@@ -17190,7 +17286,14 @@ GROUPES = {
             + 'Vos données sont réenregistrées automatiquement chaque minute dans ce navigateur. '
             + 'Pour en garder une copie hors du navigateur, utilisez « Exporter mes données » ci-dessus.' };
       })(),
-      messageDepot: s.messageDepot, aMessageDepot: !!s.messageDepot,
+      // le renvoi vers l'accueil SE CLIQUE : « page d'accueil » n'était qu'un mot
+      // dans un message, alors que l'accueil n'est atteignable que par le logo —
+      // un renvoi qui ne se clique pas est une impasse
+      ...(() => {
+        const parts = String(s.messageDepot || '').split('\u0001');
+        return { messageDepot: parts[0], aMessageDepot: !!s.messageDepot,
+          aLienAccueil: parts.length > 1, messageDepotSuite: parts[1] || '' };
+      })(),
       // la liste des fichiers chargés fait dix lignes : elle se replie en un compteur
       listeDepotVisible: !s.depotReplie,
       listeDepotMasquee: !!s.depotReplie,
