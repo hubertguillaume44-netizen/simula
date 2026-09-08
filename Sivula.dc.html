@@ -226,7 +226,7 @@
       </nav>
     </sc-if>
     <nav style="display:flex;gap:24px;align-items:center;margin-inline-start:auto">
-      <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ aPastille }}" hint-placeholder-val="{{ false }}">
         <button type="button" onClick="{{ ouvrirTiroir }}" title="{{ tiroirAide }}" style="cursor:pointer;font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:5px 12px;color:var(--color-bg)">
           <span style="width:7px;height:7px;background:{{ tiroirPastille }}"></span>{{ tiroirEtat }}<span title="Une nouveauté n’a pas été lue" style="width:6px;height:6px;border-radius:50%;background:var(--color-accent);display:{{ affNouvPoint }}"></span>
         </button>
@@ -391,6 +391,23 @@
           <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ ongletMsg }}</span>
         </sc-if>
         <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ tirExportTxt }}</span>
+      </div>
+
+      <!-- LES TROIS ESPACES, NOMMÉS ET PESÉS. Un basculement d'espace ne doit
+           jamais pouvoir se lire comme un effacement : chaque espace est nommé avec
+           son poids réel. Étanchéité voulue — aucun transfert automatique. -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Espaces de données</span>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ espacesTiroir }}" as="ed" hint-placeholder-count="3">
+            <div style="display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--color-divider);padding:4px 0;font-size:12px">
+              <span style="flex:1;min-width:0;font-weight:{{ ed.gras }}">{{ ed.nom }}</span>
+              <span class="{{ ed.cls }}" style="font-size:10px;white-space:nowrap">{{ ed.tag }}</span>
+              <span style="font-variant-numeric:tabular-nums;white-space:nowrap" class="text-muted">{{ ed.poids }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size:10px;line-height:1.5" class="text-muted">Trois espaces étanches : rien ne passe de l'un à l'autre sans un export puis un import explicites.</span>
       </div>
 
       <!-- la promesse reste dépliée : une promesse repliée ne rassure personne -->
@@ -5292,6 +5309,25 @@ class Component extends DCLogic {
     return this.state.deverrouille ? base + '.perso' : base + '.client';
   }
 
+  // Le poids de chaque espace de données, en octets : les clés simula.* classées
+  // par le segment d'espace de leur nom. Peser relit toutes les valeurs, donc
+  // jamais à chaque rendu — au chargement et à l'ouverture du tiroir seulement.
+  // (simula.acces.perso.v1, la clé du verrou, tombe dans « perso » : trois
+  // octets, sans effet sur le verdict.)
+  peserEspaces() {
+    const p = { essai: 0, client: 0, perso: 0 };
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k || !k.startsWith('simula.')) continue;
+        const m = k.match(/\.(essai|client|perso)(\.|$)/);
+        if (m) p[m[1]] += (localStorage.getItem(k) || '').length + k.length;
+      }
+    } catch (e) {}
+    this.setState({ poidsEspaces: p });
+    return p;
+  }
+
   lirePf() {
     try {
       const b = JSON.parse(localStorage.getItem(this.cle(this.CLE_PF)));
@@ -9698,6 +9734,7 @@ GROUPES = {
     window.addEventListener('beforeunload', this.quitter);
     this.suivreHauteurEntete();
     // un redimensionnement peut faire sortir un panneau déjà ouvert
+    this.peserEspaces();
     this._caserPan = () => this.caserPanneaux();
     window.addEventListener('resize', this._caserPan);
     // Un panneau du bandeau (et les cellules de conditions) se ferme au clic en
@@ -16393,10 +16430,21 @@ GROUPES = {
       // Intendance dans un tiroir : une seule pastille d'état dans l'en-tête remplace
       // quatre bandeaux permanents au-dessus du contenu de travail.
       aBoutonTiroir: tab !== 'accueil',
+      // la pastille, elle, s'affiche AUSSI sur l'accueil quand l'espace actif est
+      // vide alors qu'un autre porte des données : c'est précisément l'écran où un
+      // basculement d'espace se lit comme une perte totale — le cas vécu, verrou
+      // propriétaire posé, atterrit ici
+      aPastille: tab !== 'accueil' || (() => {
+        const pe2 = s.poidsEspaces;
+        if (!pe2 || this.essai) return false;
+        const e2 = this.cleGlobale('').slice(1);
+        return (pe2[e2] || 0) < 16384
+          && Object.entries(pe2).some(([k3, v3]) => k3 !== e2 && v3 > 65536);
+      })(),
       tiroirOuvert: !!s.tiroir,
       // toujours sur « Vos données » : l'onglet mémorisé faisait retomber chaque
       // réouverture sur le Journal, sans chemin de retour évident
-      ouvrirTiroir: () => { this.setState({ tiroir: true, tiroirOnglet: 'donnees' }); this.diagnosticStockage(); },
+      ouvrirTiroir: () => { this.setState({ tiroir: true, tiroirOnglet: 'donnees' }); this.diagnosticStockage(); this.peserEspaces(); },
       aPriveMsg: !!s.priveMsg,
       fermerPrive: () => {
         try { sessionStorage.setItem('simula.prive.vu', '1'); } catch (e) {}
@@ -16568,12 +16616,56 @@ GROUPES = {
         //
         // Le calcul `auto` existait déjà ici, et n'était utilisé nulle part. La pastille
         // dit maintenant lequel des deux enregistrements a eu lieu.
+        // ————— L'ESPACE D'ABORD, L'ÉTAT ENSUITE —————
+        //
+        // L'application tient trois espaces étanches — essai, client, perso — et la
+        // pastille ne disait que l'état du stockage : un basculement d'espace se
+        // lisait comme une perte totale de données (le verrou propriétaire a basculé
+        // de client vers perso, vide — 3,2 Mo de scans intacts dans le tiroir d'à
+        // côté). Le libellé vient de cleGlobale, la fonction qui construit les clés,
+        // jamais d'une déduction sur la licence ou le compte choisi. Aucun transfert
+        // n'est proposé : on nomme, on pèse, on ne déplace rien sans geste explicite.
+        const esp = this.cleGlobale('').slice(1);
+        const NOMS_ESP = { essai: 'Essai', client: 'Espace client', perso: 'Espace personnel' };
+        const NOMS_BAS = { essai: 'l\u2019espace d\u2019essai', client: 'l\u2019espace client', perso: 'l\u2019espace personnel' };
+        const mo2 = (o) => (o > 1048576 ? (o / 1048576).toFixed(1).replace('.', ',') + ' Mo'
+          : Math.max(1, Math.round(o / 1024)) + ' Ko');
+        const pe = s.poidsEspaces || null;
+        // « vide » : moins de 16 Ko — des réglages, pas des mesures ; « porte des
+        // données » : plus de 64 Ko — une série ou un scan au moins
+        const actifVide = !!pe && (pe[esp] || 0) < 16384;
+        const ailleurs = pe ? (Object.entries(pe)
+          .filter(([k2, v]) => k2 !== esp && v > 65536)
+          .sort((a2, b2) => b2[1] - a2[1])[0] || null) : null;
+        const espacesTiroir = ['client', 'perso', 'essai'].map((k2) => {
+          const v = pe ? (pe[k2] || 0) : 0;
+          return { nom: NOMS_ESP[k2],
+            gras: k2 === esp ? '700' : '400',
+            tag: k2 === esp ? 'espace actif' : '',
+            cls: k2 === esp ? 'tag tag-accent' : '',
+            poids: v >= 16384 ? mo2(v) : (v > 0 ? '— quelques réglages' : '— vide') };
+        });
+        if (!this.essai && actifVide && ailleurs) {
+          return {
+            espacesTiroir,
+            tiroirPastille: 'var(--color-accent)',
+            tiroirEtat: NOMS_ESP[esp] + ' — vide. Vos mesures sont dans ' + NOMS_BAS[ailleurs[0]] + '.',
+            tiroirAide: 'L\u2019espace actif (' + esp + ') ne contient rien, mais '
+              + NOMS_BAS[ailleurs[0]] + ' porte ' + mo2(ailleurs[1]) + ' de données intactes. '
+              + 'Un basculement d\u2019espace n\u2019efface rien : les espaces sont étanches. '
+              + 'Ouvrez ce tiroir — le poids de chaque espace y est affiché.',
+          };
+        }
+        const etatCourt = this.essai ? 'séries de démonstration'
+          : plein ? 'mémoire presque pleine'
+          : !auto ? 'dans ce navigateur seulement'
+          : (s.autoHeure ? 'enregistré à ' + s.autoHeure : 'enregistrement auto');
         return {
+          espacesTiroir,
           tiroirPastille: (plein || !auto) ? 'var(--color-accent-900)' : 'var(--color-accent)',
-          tiroirEtat: plein ? 'Mémoire presque pleine'
-            : !auto ? 'Dans ce navigateur seulement'
-            : (s.autoHeure ? 'Enregistré à ' + s.autoHeure : 'Enregistrement auto'),
-          tiroirAide: plein
+          tiroirEtat: NOMS_ESP[esp] + ' \u00b7 ' + etatCourt,
+          tiroirAide: 'Espace de données : ' + NOMS_ESP[esp].toLowerCase() + '. '
+            + (plein
             ? 'Le stockage du navigateur est presque plein : les prochains scans risquent de ne pas tenir.'
             : !auto
               ? 'Aucun fichier de sauvegarde : tout ce qui est ici ne vit que dans le stockage de ce '
@@ -16582,7 +16674,7 @@ GROUPES = {
                 + 'les bougies. Ouvrez ce tiroir et choisissez un fichier de sauvegarde automatique : '
                 + 'il s\u2019écrit sur votre disque à chaque modification, sans clic.'
               : 'Le fichier de sauvegarde est à jour'
-                + (s.autoHeure ? ' — dernière écriture à ' + s.autoHeure + '.' : '.'),
+                + (s.autoHeure ? ' — dernière écriture à ' + s.autoHeure + '.' : '.')),
         };
       })(),
       aEnTetePage: false,
