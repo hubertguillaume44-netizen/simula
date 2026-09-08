@@ -48,6 +48,14 @@
          display: flex; align-items: baseline; gap: 8px; width: 100%; }
   .rep:hover { color: var(--color-accent-700); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
+  /* Les deux entrées de l'accueil : « J'ai une clé » et « Espace client ».
+     L'active s'inverse — fond clair sur bandeau bleu — parce qu'un simple filet
+     ne se distingue pas à cette taille. */
+  .hb { cursor: pointer; font-family: var(--font-body); font-size: 12.5px; white-space: nowrap;
+        padding: 5px 12px; border: 1px solid color-mix(in srgb, var(--color-bg) 45%, transparent);
+        background: none; color: var(--color-bg); }
+  .hb:hover { border-color: var(--color-bg); background: color-mix(in srgb, var(--color-bg) 12%, transparent); }
+  .hb.on { background: var(--color-bg); color: var(--color-accent-900); border-color: var(--color-bg); }
   /* Le panneau ancré d'un champ ou d'une carte. La media query est la SEULE raison
      d'en faire une classe : une règle responsive ne s'écrit pas en style en ligne.
      left/right et la largeur maximale restent portés par chaque panneau. */
@@ -224,6 +232,14 @@
           </span>
         </sc-for>
       </nav>
+    </sc-if>
+    <!-- l'accueil n'a pas d'onglets : la place à droite reçoit ses deux entrées.
+         Pas de troisième, et aucun « créer un compte » — le compte naît de l'achat. -->
+    <sc-if value="{{ isAccueil }}" hint-placeholder-val="{{ false }}">
+      <span style="margin-inline-start:auto;align-self:center;display:flex;gap:9px;align-items:center">
+        <button class="{{ clsEntreeCle }}" type="button" onClick="{{ versEntreeCle }}" title="Coller la clé reçue à l'achat : elle s'ouvre ici même, sans compte et sans réseau.">J'ai une clé</button>
+        <button class="{{ clsEntreeCompte }}" type="button" onClick="{{ versEntreeCompte }}" title="Retrouver sa clé, son échéance, ses factures.">Espace client</button>
+      </span>
     </sc-if>
     <!-- la pastille tient DANS le rang des onglets : un bloc à elle faisait un
          second rang de bandeau bleu pour une seule information -->
@@ -741,24 +757,79 @@
 
       </div>
 
-      <div class="blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:1060px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <strong style="font-family:var(--font-heading);font-size:17px">J'ai déjà un code</strong>
-        <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
-          <span style="font-size:13px;line-height:1.55">{{ licEtatTxt }}</span>
-          <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">retirer ce code de cet ordinateur</button>
-        </sc-if>
-        <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
-          <span style="font-size:12px;line-height:1.55;color:var(--color-neutral-700)">L'e-mail utilisé à l'achat, puis le code reçu par mail. La vérification se fait dans votre navigateur, avec la clé publique embarquée dans cette page : rien n'est envoyé nulle part.</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;width:240px" type="email" value="{{ licEmail }}" onChange="{{ setLicEmail }}" placeholder="e-mail d'achat">
-            <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;flex:1;min-width:260px;font-variant-numeric:tabular-nums" type="text" value="{{ licCode }}" onChange="{{ setLicCode }}" placeholder="SIV1.…">
-            <button class="btn btn-primary" type="button" style="min-height:2.1rem;padding-inline:16px" onClick="{{ licVerifier }}">Vérifier</button>
+      <div id="entree-client" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;width:100%;max-width:1060px;align-items:start">
+
+        <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:10px;border:1px solid {{ bordEntreeCle }}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+            <strong style="font-family:var(--font-heading);font-size:19px">J'ai une clé</strong>
+            <span class="tag tag-accent" style="font-size:9px">le plus rapide</span>
           </div>
-          <sc-if value="{{ aLicMsg }}" hint-placeholder-val="{{ false }}">
-            <span style="font-size:12px;line-height:1.55;color:{{ licMsgEncre }}">{{ licMsg }}</span>
+          <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:13px;line-height:1.55">{{ licEtatTxt }}</span>
+            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">retirer ce code de cet ordinateur</button>
           </sc-if>
-        </sc-if>
+          <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:12px;line-height:1.55;color:var(--color-neutral-700)">Collez la clé reçue par courriel, avec l'adresse utilisée à l'achat. Elle s'ouvre ici même, sans compte et sans réseau : elle est signée, l'application la vérifie seule avec la clé publique embarquée dans cette page.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;width:210px" type="email" value="{{ licEmail }}" onChange="{{ setLicEmail }}" placeholder="e-mail d'achat">
+              <input id="champCle" class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;flex:1;min-width:230px;font-variant-numeric:tabular-nums" type="text" value="{{ licCode }}" onChange="{{ setLicCode }}" placeholder="SIV1.…">
+              <button class="btn btn-primary" type="button" style="min-height:2.1rem;padding-inline:16px" onClick="{{ licVerifier }}">Ouvrir</button>
+            </div>
+            <sc-if value="{{ aLicMsg }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12px;line-height:1.55;color:{{ licMsgEncre }}">{{ licMsg }}</span>
+            </sc-if>
+            <span style="font-size:11px;line-height:1.5" class="text-muted">Elle se colle d'un bloc, sans espace. Perdue ? Voyez « Espace client », ci-contre.</span>
+          </sc-if>
+        </div>
+
+        <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:10px;border:1px solid {{ bordEntreeCompte }}">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <strong style="font-family:var(--font-heading);font-size:19px">Espace client</strong>
+          <p style="margin:0;font-size:12.5px;line-height:1.55" class="text-muted">Retrouver sa clé, voir son échéance, reprendre un abonnement.</p>
+          <!--
+            PAS DE FORMULAIRE QUI NE MÈNE NULLE PART. Il n'y a aujourd'hui aucun
+            serveur de comptes : Sivula est un fichier, et la page promet plus bas
+            que rien n'est stocké sur l'acheteur, pas même son achat. Un champ
+            « mot de passe » ici serait une porte peinte sur un mur. Ce qui EXISTE
+            est écrit à la place, et c'est déjà la réponse à « clé perdue ».
+          -->
+          <span style="font-size:12.5px;line-height:1.55">Il n'y a pas de compte à ouvrir : <strong>rien n'est conservé sur vous, pas même votre achat</strong> — c'est la contrepartie de la promesse ci-dessous.</span>
+          <span style="font-size:12.5px;line-height:1.55" class="text-muted">Clé perdue ou courriel égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>. Elle est re-signée à l'identique et renvoyée — une clé ne s'épuise pas et ne se révoque pas.</span>
+          <span style="font-size:11.5px;line-height:1.5;padding-top:8px;border-top:1px solid var(--color-divider)" class="text-muted">Pas encore client ? La clé s'obtient à l'achat, ci-dessus — rien à créer avant.</span>
+        </div>
+      </div>
+
+      <!--
+        LA PROMESSE RESTE SUR LA PAGE, pas dans les mentions légales : c'est
+        l'argument, il se lit avant l'achat ou il ne sert à rien.
+      -->
+      <div class="card blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;width:100%;max-width:1060px;border:1px solid var(--color-accent)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Ce qu'un compte ne contiendrait pas</span>
+        <p style="margin:0;font-size:13px;line-height:1.6;max-width:88ch"><strong>Une clé porte votre licence, rien d'autre.</strong> <span class="text-muted">Vos séries, vos scans et vos portefeuilles restent dans votre navigateur : ils ne montent jamais nulle part. L'application ne demande jamais de connexion pour mesurer, et une clé collée sans compte reste valable — elle se vérifie hors ligne.</span></p>
+      </div>
+
+      <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:12px;width:100%;max-width:1060px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <strong style="font-family:var(--font-heading);font-size:19px">Sans clé, l'application mesure quand même</strong>
+          <span class="tag tag-outline" style="font-size:9px">palier gratuit</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:var(--font-heading);font-size:29px;line-height:1;font-variant-numeric:tabular-nums">{{ palierN }}</span>
+            <span style="font-size:11.5px;line-height:1.45" class="text-muted">instruments à vous, sans limite de durée. Les séries de démonstration ne comptent pas.</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:var(--font-heading);font-size:29px;line-height:1;font-variant-numeric:tabular-nums">{{ palierAvecCle }}</span>
+            <span style="font-size:11.5px;line-height:1.45" class="text-muted">{{ palierAvecCleTxt }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <span style="font-family:var(--font-heading);font-size:29px;line-height:1">0</span>
+            <span style="font-size:11.5px;line-height:1.45" class="text-muted">donnée perdue à l'expiration : mesures, portefeuilles et journaux restent en place.</span>
+          </div>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
@@ -5265,7 +5336,8 @@ class Component extends DCLogic {
     // la colonne du scan : quelle étape est ouverte, quel facteur est déplié
     etapeScan: 2, facteurOuvert: '', fenDetail: false, grillesVues: false, bsPanneau: '',
     // la valeur de l'en-tête de « Mes instruments » qu'on est en train de corriger
-    champTete: '', nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null, deverrouille: false };
+    champTete: '', nouv: [], nouvLu: '', aideOuverte: false, aideQ: '', aideDirect: null,
+    entreeAccueil: 'cle', deverrouille: false };
 
   CLE_PF = 'simula.portefeuilles.v1';
   CLE_FAV = 'simula.favoris.v1';
@@ -16449,6 +16521,41 @@ GROUPES = {
         };
       })(),
       isAccueil: tab === 'accueil',
+      // ————— LES DEUX ENTRÉES DE L'ACCUEIL —————
+      //
+      // « J'ai une clé » d'abord : c'est le geste le plus fréquent, et le seul qui
+      // ouvre quelque chose aujourd'hui. Les entrées ne changent pas de page —
+      // elles déplacent la mise en avant entre les deux cartes, et amènent le
+      // curseur dans le champ quand on arrive par la clé.
+      ...(() => {
+        const surCle = (s.entreeAccueil || 'cle') === 'cle';
+        const aller = (v) => () => this.setState({ entreeAccueil: v }, () => {
+          const el = document.getElementById('entree-client');
+          if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+          if (v !== 'cle') return;
+          setTimeout(() => { const c = document.getElementById('champCle'); if (c) c.focus(); }, 400);
+        });
+        // le second chiffre n'a de sens que si un relevé de courtier est chargé :
+        // sinon c'est le catalogue de démonstration, et « 10 avec une clé » sur une
+        // page de vente est un chiffre faux — « tous » est vrai pour tout le monde
+        const nCat = (this.compteActif !== 'demo' && (this.baremes || {})[this.compteActif])
+          ? this.SYMBOLES.length : 0;
+        return {
+          clsEntreeCle: 'hb' + (surCle ? ' on' : ''),
+          clsEntreeCompte: 'hb' + (surCle ? '' : ' on'),
+          bordEntreeCle: surCle ? 'var(--color-accent)' : 'var(--color-divider)',
+          bordEntreeCompte: surCle ? 'var(--color-divider)' : 'var(--color-accent)',
+          versEntreeCle: aller('cle'),
+          versEntreeCompte: aller('compte'),
+          palierN: String(this.PALIER_GRATUIT),
+          // le second chiffre est le CATALOGUE RÉEL du compte, jamais un nombre écrit
+          // à la main : il change avec le relevé du courtier
+          palierAvecCle: nCat > this.PALIER_GRATUIT ? String(nCat) : 'tous',
+          palierAvecCleTxt: nCat > this.PALIER_GRATUIT
+            ? 'avec une clé — tout ce que votre courtier exporte.'
+            : 'les instruments avec une clé : tout ce que votre courtier exporte.',
+        };
+      })(),
       // ————— LE TARIF ET SES QUATRE LIENS REVOLUT, UN SEUL DRAPEAU —————
       // Créez chez Revolut les quatre plans (lancement mensuel/annuel, normal
       // mensuel/annuel) et collez les quatre URL d'avance. Quand le tableau de

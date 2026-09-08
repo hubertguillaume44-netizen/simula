@@ -295,6 +295,13 @@
    ]
   },
   {
+   "terme": "Espace client",
+   "texte": "Retrouver sa clé, son échéance, ses factures.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Essayer sans rien fournir",
    "texte": "Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.",
    "vues": [
@@ -433,6 +440,20 @@
    "texte": "On rejoue le même stop et la même sécurisation, mais en entrant à des dates tirées au sort. Cette part EST le p-value : sous 1 % la règle se distingue nettement, sous 5 % elle se distingue, jusqu'à 20 % c'est douteux, au-delà entrer au hasard aurait donné le même résultat.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "J'ai une clé",
+   "texte": "Coller la clé reçue à l'achat : elle s'ouvre ici même, sans compte et sans réseau.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "J'ai une clé Espace client",
+   "texte": "Une nouveauté n’a pas été lue",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
