@@ -59,7 +59,9 @@ for (const f of FICHIERS) {
     assert.match(txt, /const avance = this\.avancementScan\(s\);/,
       "l’avancement doit être calculé une fois par rendu");
     assert.match(txt, /scanPct: avance\.pct/, "la jauge doit lire la constante partagée");
-    assert.match(txt, /scanCourtTxt: avance\.pct \+ ' % /, "le bandeau doit lire la constante partagée");
+    assert.match(txt, /scanPctTxt: avance\.pct/, "le pourcentage du bandeau doit lire la constante partagée");
+    assert.match(txt, /scanResteTxt: avance\.resteTxt/, "le reste du bandeau doit lire la constante partagée");
+    assert.match(txt, /scanBandeauDetail: Number\(avance\.faites\)/, "le compte du bandeau doit lire la constante partagée");
     assert.match(txt, /barDroite: enCours \? avance\.resteTxt/, "la barre doit lire la constante partagée");
     assert.match(txt, /barGros: enCours \? Number\(avance\.faites\)/, "le grand nombre doit lire la constante partagée");
     // un seul appel dans le chemin de rendu : celui qui remplit la constante. Le second
@@ -84,14 +86,40 @@ for (const f of FICHIERS) {
 
   test(f + " : rien ne peut déloger le sélecteur de compte", () => {
     const txt = source(f);
-    const i = txt.indexOf('<header');
+    const i = txt.indexOf("<header");
     const entete = txt.slice(i, txt.indexOf("</header>", i));
     const rang = entete.slice(entete.indexOf('<div style="display:flex;align-items:center;gap:12px'));
     assert.match(rang.slice(0, 120), /flex:none/,
       "le rang qui porte le sélecteur de compte doit être insécable");
-    // l’avancement vit APRÈS les onglets, jamais à la place du sélecteur
-    assert.ok(entete.indexOf("{{ scanCourtTxt }}") > entete.indexOf("groupesNav"),
-      "l’annonce d’avancement doit se placer après les onglets");
+  });
+
+  test(f + " : un seul bandeau, hors du rang des onglets", () => {
+    const txt = source(f);
+    // UN seul nœud : deux, ce sont deux sources de vérité et deux durées à la
+    // première divergence
+    const n = (txt.match(/\{\{ scanActif \}\}/g) || []).length;
+    assert.equal(n, 1, "attendu un seul bandeau d’avancement, vu " + n);
+    const i = txt.indexOf("<header");
+    const finEntete = txt.indexOf("</header>", i);
+    const entete = txt.slice(i, finEntete);
+    // le rang des onglets est en `nowrap` : un bandeau posé dedans se comprime à zéro
+    assert.ok(!entete.includes("{{ scanActif }}"),
+      "le bandeau ne doit pas vivre dans le rang des onglets — il s’y comprime à zéro");
+    // il vit dans le bloc collant, entre les onglets et les sous-onglets
+    const apres = txt.slice(finEntete, txt.indexOf('id="om-fil"'));
+    assert.ok(apres.includes("{{ scanActif }}"),
+      "le bandeau doit se placer entre le rang des onglets et le rang des sous-onglets");
+    // et il porte ses valeurs en encre papier, jamais accent sur accent
+    const bloc = apres.slice(apres.indexOf("{{ scanActif }}"));
+    assert.match(bloc.slice(0, 2400), /background:var\(--color-accent-900\)/,
+      "le bandeau doit être posé sur le fond accent sombre");
+    assert.match(bloc.slice(0, 2400), /color:var\(--color-bg\)/,
+      "son contenu doit être en encre papier");
+    assert.match(bloc.slice(0, 2400), /min-height:\d+px/,
+      "le bandeau doit avoir une hauteur non nulle");
+    // les commandes seulement hors de la page du scan
+    assert.match(txt, /aCmdBandeau: !!s\.scanEnCours && \(s\.vue \|\| 'scan'\) !== 'scan'/,
+      "pas de boutons sur la page du scan, où la barre d’exécution les porte");
   });
 }
 

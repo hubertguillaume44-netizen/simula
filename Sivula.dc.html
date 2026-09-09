@@ -222,11 +222,11 @@
     </div>
   </sc-if>
   <!--
-    UN SEUL RANG, TOUJOURS. Le bandeau du scan était une rangée de plus au-dessus :
-    le bloc bleu doublait de hauteur dès qu'un scan tournait, et poussait la page.
-    L'état du scan vit maintenant DANS ce rang, à droite, et sa progression est le
-    filet de 3 px au bas du bandeau — qui ne prend aucune hauteur. `nowrap` : ce qui
-    ne tient pas se tronque, il ne passe plus à la ligne.
+    LE RANG DES ONGLETS ne porte que la navigation, le sélecteur de compte et la
+    pastille d'espace. L'avancement du scan a eu sa place ici, à droite : c'était une
+    erreur. Le rang est en `flex-wrap:nowrap` à côté d'un sélecteur insécable, donc
+    l'avancement se comprimait à zéro et disparaissait exactement quand il servait.
+    Il a maintenant son propre rang, juste dessous.
   -->
   <header style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:0 32px;display:flex;align-items:stretch;gap:28px;flex-wrap:nowrap;min-height:46px">
     <!-- `flex:none` : le sélecteur dit sur quel compte on travaille, c'est
@@ -273,19 +273,6 @@
       pastille n'en donnait qu'un extrait tronqué. Deux annonces de la même fin, dont
       une amputée : c'est l'amputée qui part.
     -->
-    <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
-      <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0">
-        <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;opacity:.92" title="{{ scanEtatTxt }}">{{ scanCourtTxt }}</span>
-        <!-- Les commandes vivent dans la barre d'exécution du Nouveau scan. Elles ne
-             restent ici que sur les AUTRES pages, où cette barre n'est pas à l'écran :
-             sans cela, un scan lancé puis quitté n'aurait plus de bouton d'arrêt. -->
-        <sc-if value="{{ aCmdBandeau }}" hint-placeholder-val="{{ false }}">
-          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap;flex:none" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
-          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent);white-space:nowrap;flex:none" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
-        </sc-if>
-      </span>
-      <span style="position:absolute;left:0;bottom:0;height:3px;width:{{ scanPct }};background:var(--color-bg);opacity:.85"></span>
-    </sc-if>
     <!-- l'accueil n'a pas d'onglets : la place à droite reçoit ses deux entrées.
          Pas de troisième, et aucun « créer un compte » — le compte naît de l'achat. -->
     <sc-if value="{{ isAccueil }}" hint-placeholder-val="{{ false }}">
@@ -302,6 +289,39 @@
       </button>
     </sc-if>
   </header>
+  <!--
+    LE BANDEAU D'AVANCEMENT, SUR SON PROPRE RANG.
+
+    Il vivait dans le rang des onglets, à droite, avec `min-width:0` — et le rang est
+    en `flex-wrap:nowrap` à côté d'un sélecteur de compte insécable. Résultat : le
+    bandeau était bien dans le document, mais comprimé à zéro pixel de large, donc
+    invisible exactement quand il servait. Un seul nœud, un rang à lui, pleine largeur.
+
+    Il s'affiche sur TOUTES les pages, celle du scan comprise : dire qu'un calcul
+    tourne est son seul rôle, et une page où il se tait ne le remplit pas. Ce sont les
+    COMMANDES qui varient — pas de boutons sur la page du scan, où la barre
+    d'exécution les porte ; Pause et Arrêter ailleurs.
+
+    Il est DANS `#om-sticky`, donc sa hauteur entre dans `hEntete` : le rang blanc des
+    sous-onglets se recale sous lui au lieu de passer dessous.
+
+    Tout est en `--color-bg` sur le fond accent sombre : jamais d'accent sur accent.
+  -->
+  <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px 9px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;min-height:34px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
+      <!-- la jauge, collée au bord haut du rang : elle ne prend aucune hauteur -->
+      <span style="position:absolute;left:0;top:0;height:3px;width:{{ scanPct }};background:var(--color-bg)"></span>
+      <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:15px;line-height:1;color:var(--color-bg);white-space:nowrap;flex:none">{{ scanPctTxt }}</span>
+      <span style="font-size:12.5px;line-height:1;color:var(--color-bg);white-space:nowrap;flex:none">{{ scanResteTxt }}</span>
+      <span style="font-size:12px;line-height:1.3;color:var(--color-bg);opacity:.85;flex:1;min-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ scanEtatTxt }}">{{ scanBandeauDetail }}</span>
+      <sc-if value="{{ aCmdBandeau }}" hint-placeholder-val="{{ false }}">
+        <span style="display:flex;gap:9px;flex:none;align-items:center">
+          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
+          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent);white-space:nowrap" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+        </span>
+      </sc-if>
+    </div>
+  </sc-if>
   </div>
 
 
@@ -17498,10 +17518,9 @@ GROUPES = {
       // basculement d'espace se lit comme une perte totale — le cas vécu, verrou
       // propriétaire posé, atterrit ici
       // une seule chose à droite du rang : le scan quand il tourne, l'espace sinon
-      // la pastille d'espace cède la place à l'avancement du scan, et à rien d'autre :
-      // l'annonce de fin qui la masquait aussi a disparu de l'en-tête
-      aPastille: !s.scanEnCours
-        && (tab !== 'accueil' || (() => {
+      // elle s'effaçait pendant un scan parce que l'avancement lui disputait la place
+      // dans ce rang. L'avancement a son propre rang : la pastille peut rester.
+      aPastille: (tab !== 'accueil' || (() => {
         const pe2 = s.poidsEspaces;
         if (!pe2 || this.essai) return false;
         const e2 = this.cleGlobale('').slice(1);
@@ -18531,7 +18550,14 @@ GROUPES = {
           // « 1 / 1 » ne disait rien : ni où on en est, ni combien de temps il reste.
           // Le pourcentage et le reste se lisent depuis n'importe quelle page, et
           // sortent du MÊME calcul que la barre — jamais un second.
-          scanCourtTxt: avance.pct + ' % \u00b7 ' + avance.resteTxt,
+          // les trois morceaux du rang d'avancement, tirés du MÊME calcul que la barre
+          // d'exécution : `avance` est calculé une fois par rendu, tout en haut.
+          scanPctTxt: avance.pct + ' %',
+          scanResteTxt: avance.resteTxt,
+          scanBandeauDetail: Number(avance.faites).toLocaleString('fr-FR') + ' sur '
+            + Number(avance.total).toLocaleString('fr-FR')
+            + ' \u00b7 instrument ' + Math.min(fait + 1, n) + ' sur ' + n
+            + (s.scanSymCourant ? ' \u2014 ' + this.nomComplet(s.scanSymCourant) : ''),
           progression: s.scanEnCours ? coeur : (s.progression || ''),
           aProgression: !!(s.scanEnCours || s.progression),
         };
