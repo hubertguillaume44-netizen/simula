@@ -51,7 +51,13 @@
   /* CE QUI REÇOIT UN FICHIER NE RESSEMBLE PLUS À CE QUI EN TÉLÉCHARGE UN.
      Un bouton plein sort quelque chose de Sivula ; une zone en pointillé attend
      qu'on y pose un fichier — le <input type="file"> la couvre entièrement, donc
-     toute la surface est cliquable, et le glisser-déposer marche dessus. */
+     toute la surface est cliquable, et le glisser-déposer marche dessus.
+
+     `align-self: stretch` et pas `flex-start` : une CIBLE doit être aussi grande
+     que la colonne le permet. Arrêtée à 26ch elle ressemblait à un bouton mal
+     dimensionné, et divisait par trois la surface visable à la souris. Le bouton
+     de téléchargement de l'étape 2 garde son `flex-start` : ce n'est pas une
+     cible, c'est une action. */
   /* Le rang de « Comment on mesure » : une pastille par réglage, sa valeur à droite.
      Carrée et filetée comme les cases de la grille — c'est la même famille d'objets.
      Le fond accent à 9 % dit laquelle est ouverte ; à 5 %, laquelle est survolée. */
@@ -62,8 +68,8 @@
                  background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
   .mpast:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   .zdep { position: relative; cursor: pointer; display: flex; flex-direction: column; gap: 2px;
-          border: 1px dashed var(--color-neutral-400); padding: 9px 14px; min-width: 26ch;
-          align-self: flex-start; background: none; }
+          border: 1px dashed var(--color-neutral-400); padding: 9px 14px;
+          align-self: stretch; background: none; }
   .zdep:hover { border-color: var(--color-accent);
                 background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
   .zdep:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
@@ -1146,13 +1152,19 @@
         <!--
           L'INSTALLATION SORT DE LA LISTE. On ne la fait qu'une fois : elle occupait
           la première place et le seul bouton plein du cadre, devant trois gestes
-          répétés chaque semaine. Elle devient un rang à part, refermé par un filet,
-          et son bouton s'efface une fois le travail fait.
+          répétés chaque semaine. Elle devient un rang à part, refermé par un filet.
+
+          Le LIBELLÉ du bouton ne bouge pas — « Les deux scripts MT5 » en toutes
+          circonstances. L'état sort du libellé et passe à côté, en pastille « fait »,
+          la variante fantôme portant le reste du signal. « Fait — retélécharger »
+          était un constat, pas une action ; et un libellé qui change prive `app:aide`
+          de son terme de recherche naturel.
         -->
         <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)">
           <span class="tag tag-neutral" style="font-size:10px;white-space:nowrap;flex:none">une seule fois</span>
           <span style="font-size:12.5px;line-height:1.5;flex:1;min-width:22ch">Les deux scripts dans <code>MQL5\Scripts</code>, compilés (F7)</span>
-          <button class="{{ scriptsCls }}" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.">{{ scriptsTxt }}</button>
+          <sc-if value="{{ aScriptsFait }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="font-size:10px;white-space:nowrap;flex:none">fait</span></sc-if>
+          <button class="{{ scriptsCls }}" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
         </div>
 
         <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:13px 0 2px" class="text-muted">À chaque mise à jour de vos données</span>
@@ -1211,7 +1223,20 @@
           </div>
         </div>
 
-        <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — ces boutons et ces zones ne sont là que si vous préférez cliquer.</span>
+        <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul.</span>
+        <!--
+          LA ZONE QUI TRIE. Elle remplace « le glisser-déposer marche sur toute la
+          page » : une phrase qui disait la même chose sans rien offrir. Le tri se
+          fait par la cadence mesurée et par les colonnes du relevé — jamais par le
+          nom du fichier — et il rend compte de ce qu'il a rangé.
+          Pas de nouvel identifiant : les trois champs nommés restent la cible du
+          glisser-déposer de la page, celui-ci n'a besoin que de son onChange.
+        -->
+        <label class="zdep" style="margin-top:11px">
+          <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Glissez ici tous vos CSV d’un coup</span>
+          <span style="font-size:11px;line-height:1.4" class="text-muted">Sivula reconnaît seul le relevé, le H1 et le M1</span>
+          <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoixTout }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+        </label>
         </div>
         </sc-if>
         <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
@@ -7172,8 +7197,11 @@ GROUPES = {
   }
 
   // lit un CSV déposé par l'utilisateur : rien n'est envoyé, tout reste dans le navigateur
-  async accepterFichiers(liste) {
-    if (!this.M || !liste || !liste.length) return;
+  // `muet` : le compte rendu est RENDU au lieu d'être affiché. La zone unique de
+  // dépôt appelle les trois chemins à la suite et n'a le droit qu'à un seul message
+  // à l'écran — trois setState successifs ne laisseraient voir que le dernier.
+  async accepterFichiers(liste, muet) {
+    if (!this.M || !liste || !liste.length) return '';
     const ajoutes = [], refuses = [], nonGardes = [], infosM1 = [], infosMoments = [];
     // un refus = { nom, motif } : les motifs identiques se regroupent à l'affichage.
     // Douze refus du palier se disaient douze fois, phrase complète répétée — un
@@ -7188,13 +7216,16 @@ GROUPES = {
     // seul un refus déjà constaté justifie de bloquer : le quota rapporté est gonflé
     if (place && this.state.ecritureRefusee && place.part > 0.98) {
       const libre = Math.max(0, place.quota - place.utilise);
-      this.setState({ messageDepot: 'Mémoire du navigateur pleine : '
+      // muet compris : cet avertissement-là ne doit pas être avalé par le compte
+      // rendu de la zone de tri, il doit y être recopié
+      const plein = 'Mémoire du navigateur pleine : '
         + Math.round(place.utilise / 1048576) + ' Mo enregistrés'
         + (libre > 1048576 ? ', il reste ' + Math.round(libre / 1048576) + ' Mo' : ', plus aucune place disponible')
         + '. Vos ' + nTot + ' fichiers ne pourront pas tous être enregistrés. '
         + 'Videz d\u2019abord l\u2019historique des scans (onglet Historique du scanner) ou libérez de la place dans le tiroir, '
-        + 'puis redéposez.' });
-      return;
+        + 'puis redéposez.';
+      if (!muet) this.setState({ messageDepot: plein });
+      return plein;
     }
     this.setState({ depotEnCours: { fait: 0, total: nTot, nom: liste[0].name },
       messageDepot: null, libLibere: 0 });
@@ -7219,7 +7250,7 @@ GROUPES = {
       const utNom = f.name.match(/_(M\d+|H4|D1|W1|MN1)\b/i);
       // le M1, lui, a sa place — À PART : il ne doit jamais entrer dans le moteur
       if (utNom && utNom[1].toUpperCase() === 'M1') {
-        const symM = f.name.replace(/\.csv$/i, '').replace(/_M1$/i, '').replace(/^#/, '');
+        const symM = f.name.replace(/\.csv$/i, '').replace(/[._-]M1$/i, '').replace(/^#/, '');
         try {
           const r2 = await this.garderM1(symM, await f.text());
           if (r2.ok) infosM1.push(symM);
@@ -7228,7 +7259,7 @@ GROUPES = {
         continue;
       }
       if (utNom) { refuser(f.name, 'unité ' + utNom[1].toUpperCase() + ' : Sivula attend du H1 et reconstruit le reste'); continue; }
-      const sym = f.name.replace(/\.csv$/i, '').replace(/_(H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
+      const sym = f.name.replace(/\.csv$/i, '').replace(/[._-](H1|H4|D1|M\d+)$/i, '').replace(/^#/, '');
       // ————— LE PALIER GRATUIT : trois instruments personnels —————
       // La licence signée (ou le verrou propriétaire) l'ouvre. À l'expiration d'un
       // code, on retombe exactement ici : rien n'est effacé — mesures, portefeuilles
@@ -7291,12 +7322,8 @@ GROUPES = {
         ajoutes.push(sym);
       } catch (e) { refuser(f.name, 'illisible'); }
     }
-    this.setState((p) => ({
-      deposes: [...new Set([...(p.deposes || []), ...ajoutes])],
-      btSym: ajoutes.length ? ajoutes[0] : p.btSym,
-      depotEnCours: null,
-      ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
-      messageDepot: (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) dans '
+    const compteRendu = (
+      (ajoutes.length ? ajoutes.length + ' fichier(s) chargé(s) dans '
           + this.libelleCompteActif() + ' : '
           + ajoutes.map((x) => { const f = this.fluxDe(x); return f.label ? x + ' (flux ' + f.label + ', frais ' + f.label + ')' : x; }).join(', ') : '')
         + (infosMoments.length ? (ajoutes.length ? ' — ' : '') + infosMoments.join(', ') : '')
@@ -7340,8 +7367,15 @@ GROUPES = {
         + (nonGardes.length ? ' — ATTENTION : ' + nonGardes.length + ' série(s) n\u2019ont pas pu être enregistrées '
           + '(mémoire du navigateur pleine). Elles fonctionnent jusqu\u2019à la fermeture de l\u2019onglet, puis seront perdues. '
           + 'Supprimez des bougies dont vous n\u2019avez plus besoin (colonne Bougies de l\u2019onglet Symboles dispos), puis redéposez celles-ci : '
-          + nonGardes.join(', ') : ''),
+          + nonGardes.join(', ') : ''));
+    this.setState((p) => ({
+      deposes: [...new Set([...(p.deposes || []), ...ajoutes])],
+      btSym: ajoutes.length ? ajoutes[0] : p.btSym,
+      depotEnCours: null,
+      ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
+      messageDepot: muet ? p.messageDepot : compteRendu,
     }), () => { if (ajoutes.length || infosMoments.length) this.lancerTest(); });
+    return compteRendu;
   }
   // portefeuille et indices de départ pris dans le catalogue réel du compte : les
   // noms du courtier ne sont pas devinables d'avance
@@ -14980,6 +15014,104 @@ GROUPES = {
   // backtest exige du H1 confirmé : une série M1 chargée comme série de mesure
   // ferait tomber tous ses invariants. D'où un stockage distinct, et une cadence
   // VÉRIFIÉE au dépôt — le nom du fichier ne suffit pas.
+  // ————— LE TRI PAR MESURE, PAS PAR NOM DE FICHIER —————
+  //
+  // Un nom de fichier est une déclaration d'intention, pas une preuve : « EURUSD.csv »
+  // ne dit pas s'il porte du H1 ou du M1, et « EURUSD_M1.csv » exporté au mauvais
+  // réglage ment. La CADENCE MÉDIANE, elle, se mesure — et le code la mesurait déjà
+  // pour refuser un dépôt M1 mal cadencé (voir `garderM1`). C'est la même mesure,
+  // employée pour ROUTER au lieu de refuser : aucune seconde mécanique de détection.
+  //
+  // Le relevé se reconnaît à ses colonnes, exactement celles que cherche
+  // `analyserBareme` : « Symbole », ou « Symbol » et « Point ».
+  //
+  // On ne lit que la TÊTE du fichier (64 Ko) : router un historique de 20 Mo ne doit
+  // pas coûter une seconde lecture entière — le fichier entier part ensuite au chemin
+  // qui le prend en charge.
+  async classerDepot(f) {
+    if (!/\.csv$/i.test(f.name)) return { ou: 'refus', motif: 'pas un CSV — exportez en CSV, pas en Excel' };
+    let tete = '';
+    try { tete = await f.slice(0, 65536).text(); } catch (e) { return { ou: 'refus', motif: 'illisible' }; }
+    const cols = (tete.split(/\r?\n/)[0] || '').replace(/^\uFEFF/, '').split(';').map((x) => x.trim());
+    if (cols.includes('Symbole') || (cols.includes('Symbol') && cols.includes('Point'))) {
+      return { ou: 'releve' };
+    }
+    // journal de trades réels et mesure des moments : `accepterFichiers` les reconnaît
+    // déjà, avant son chargeur de bougies. On les lui passe sans les mesurer.
+    if (/^SIV_trades_/i.test(f.name) || /moments/i.test(f.name)
+      || /^sym;moment;/i.test(tete.slice(0, 30))) return { ou: 'h1' };
+    let df = null;
+    try { df = this.M.texteVersDf(tete.split(/\r?\n/).slice(0, 400).join('\n')); } catch (e) { df = null; }
+    if (!df || !df.n || df.n < 10) {
+      return { ou: 'refus', motif: 'aucune bougie lisible : il faut les colonnes date, ouverture, haut, bas, clôture' };
+    }
+    const d = [];
+    for (let i = 1; i < Math.min(60, df.n); i++) d.push(df.t[i] - df.t[i - 1]);
+    d.sort((a, b) => a - b);
+    const med = d[d.length >> 1] || 0;
+    const min = Math.round(med / 60000);
+    // les mêmes bornes que le contrôle M1 : au-delà de deux minutes ce n'est pas du M1
+    if (med > 0 && med <= 120000) return { ou: 'm1', min };
+    if (med >= 1800000 && med <= 5400000) return { ou: 'h1', min };
+    return { ou: 'refus',
+      motif: 'cadence ' + (min || '?') + ' min : Sivula attend du H1 (60 min) ou du M1 (1 min)' };
+  }
+  // La zone unique : elle trie, elle range par les chemins qui existent, et elle DIT
+  // ce qu'elle a fait. Un tri silencieux sur treize fichiers est pire qu'un refus —
+  // on ne sait pas ce qui est entré.
+  async accepterTout(liste) {
+    if (!this.M || !liste || !liste.length) return;
+    const releves = [], h1 = [], m1 = [], refus = [];
+    this.setState({ depotEnCours: { fait: 0, total: liste.length, nom: liste[0].name },
+      messageDepot: null });
+    await new Promise((r) => setTimeout(r, 0));
+    let i = 0;
+    for (const f of liste) {
+      this.setState({ depotEnCours: { fait: i, total: liste.length, nom: f.name } });
+      await new Promise((r) => setTimeout(r, 0));
+      i++;
+      const c = await this.classerDepot(f);
+      if (c.ou === 'releve') releves.push(f);
+      else if (c.ou === 'h1') h1.push(f);
+      else if (c.ou === 'm1') m1.push(f);
+      else refus.push({ nom: String(f.name).replace(/\.csv$/i, ''), motif: c.motif });
+    }
+    // un seul relevé peut être confirmé à la fois : la boîte de confirmation est unique
+    for (const f of releves.slice(1)) {
+      refus.push({ nom: String(f.name).replace(/\.csv$/i, ''),
+        motif: 'un seul relevé à la fois — redéposez celui-ci après avoir confirmé le premier' });
+    }
+    this.setState({ depotEnCours: null });
+    const tete = liste.length + ' fichier' + (liste.length > 1 ? 's' : '') + ' reçu'
+      + (liste.length > 1 ? 's' : '')
+      + (releves.length || h1.length || m1.length
+        ? ' — ' + [releves.length ? this.pl(Math.min(1, releves.length), 'relevé', 'relevés') : '',
+            h1.length ? h1.length + ' en H1' : '',
+            m1.length ? m1.length + ' en M1' : ''].filter(Boolean).join(', ')
+        : ' — rien de reconnu');
+    // le même groupement que les refus d'import : un motif, une phrase, la liste des noms
+    const dit = (() => {
+      if (!refus.length) return '';
+      const parMotif = new Map();
+      for (const r of refus) {
+        if (!parMotif.has(r.motif)) parMotif.set(r.motif, []);
+        parMotif.get(r.motif).push(r.nom);
+      }
+      return ' — ' + [...parMotif.entries()].map(([motif, noms]) => noms.length > 1
+        ? noms.length + ' fichiers écartés — ' + motif + '. ' + noms.join(', ')
+        : 'Écarté : ' + noms[0] + ' (' + motif + ')').join(' — ');
+    })();
+    // chaque groupe repart dans le chemin qui existe, en silence : le compte rendu
+    // des trois est recomposé ici, sinon seul le dernier setState resterait à l'écran
+    const suites = [];
+    if (m1.length) suites.push(await this.deposerBougiesM1(m1, true));
+    if (h1.length) suites.push(await this.accepterFichiers(h1, true));
+    this.setState({ messageDepot: tete + dit
+      + suites.filter(Boolean).map((x) => ' — ' + x).join('') });
+    // le relevé passe en dernier : il ouvre une confirmation, qui doit rester la
+    // dernière chose demandée à l'écran
+    if (releves.length) await this.accepterBareme(this.compteDesFichiers(), releves[0]);
+  }
   CLE_M1 = 'simula.m1.v1';
   async garderM1(sym, txt) {
     const tete = (() => {
@@ -15002,21 +15134,26 @@ GROUPES = {
     } catch (e) {}
     return { ok: true };
   }
-  async deposerBougiesM1(liste) {
-    if (!this.M || !liste || !liste.length) return;
+  async deposerBougiesM1(liste, muet) {
+    if (!this.M || !liste || !liste.length) return '';
     const pris = [], refus = [];
     for (const f of liste) {
       if (!/\.csv$/i.test(f.name)) { refus.push(f.name + ' (pas un CSV)'); continue; }
-      const sym = f.name.replace(/\.csv$/i, '').replace(/_M1$/i, '').replace(/^#/, '');
+      // le tri par mesure amène des M1 sous n'importe quel nom : le suffixe se
+      // reconnaît avec ses trois séparateurs, sinon ESSAIB.M1.csv se range sous
+      // « ESSAIB.M1 » et ne rejoint jamais la série H1 qu'il doit départager
+      const sym = f.name.replace(/\.csv$/i, '').replace(/[._-]M1$/i, '').replace(/^#/, '');
       try {
         const r2 = await this.garderM1(sym, await f.text());
         if (r2.ok) pris.push(sym); else refus.push(f.name + ' (' + r2.motif + ')');
       } catch (e) { refus.push(f.name + ' (illisible)'); }
     }
-    this.setState({ messageDepot:
+    const compteRendu =
       (pris.length ? 'Bougies M1 enregistrées pour ' + pris.join(', ')
         + ' — elles ne servent qu\u2019à départager Sivula et le robot MT5 : elles n\u2019entrent jamais dans le scan ni le backtest.' : '')
-      + (refus.length ? (pris.length ? ' — ' : '') + 'Ignoré(s) : ' + refus.join(', ') : '') });
+      + (refus.length ? (pris.length ? ' — ' : '') + 'Ignoré(s) : ' + refus.join(', ') : '');
+    if (!muet) this.setState({ messageDepot: compteRendu });
+    return compteRendu;
   }
   async garderSerie(sym, brut) {
     this._serieSet = null;
@@ -17287,6 +17424,7 @@ GROUPES = {
           palierCouleur: plein2 ? 'var(--color-accent-700)' : 'var(--color-neutral-700)' };
       })(),
       surChoixM1: (e) => this.deposerBougiesM1([...(e.target.files || [])]),
+      surChoixTout: (e) => this.accepterTout([...(e.target.files || [])]),
       survol: s.survol,
       // La zone de dépôt n'occupe plus le haut de la page : le glisser-déposer couvre
       // toute la vue, et son cadre ne se dessine qu'au survol d'un fichier.
@@ -17677,10 +17815,9 @@ GROUPES = {
           nListeMt5: noms.length,
           // le rang d'installation s'efface une fois qu'il a servi : un relevé reçu
           // prouve que Sivula_Releve.mq5 a été compilé et lancé
+          aScriptsFait: !!((this.baremes || {})[this.compteDesFichiers()]),
           scriptsCls: ((this.baremes || {})[this.compteDesFichiers()])
             ? 'btn btn-ghost' : 'btn btn-secondary',
-          scriptsTxt: ((this.baremes || {})[this.compteDesFichiers()])
-            ? 'Fait — retélécharger' : 'Les deux scripts MT5',
           listeMt5Txt: noms.length
             ? 'Liste pour MT5 · ' + noms.length + (noms.length > 1 ? ' sélectionnés' : ' sélectionné')
             : 'Liste pour MT5 · cochez des instruments',

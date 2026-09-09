@@ -478,6 +478,13 @@
    ]
   },
   {
+   "terme": "Les deux scripts MT5",
+   "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "les plus chers tout décocher",
    "texte": "Coche tous les instruments que le filtre et la recherche laissent voir.",
    "vues": [
@@ -683,13 +690,6 @@
   {
    "terme": "Scanner",
    "texte": "Le détail complet — les trois courtiers, la barre de couverture avec ses trous, les quatre chiffres — se déplie au-dessus de ce bandeau.",
-   "vues": [
-    "Mes instruments"
-   ]
-  },
-  {
-   "terme": "scripts dans MQL5\\Scripts compilés (F7)",
-   "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
    "vues": [
     "Mes instruments"
    ]
