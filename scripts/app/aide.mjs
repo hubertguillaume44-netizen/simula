@@ -61,7 +61,27 @@ function termeDe(avant, dedans) {
       .trim();
   // une balise qui porte son propre libellé le donne : <button title="…">Relancer</button>
   const dedansPropre = propre(dedans || "");
-  if (dedansPropre && dedansPropre !== "?" && dedansPropre.length <= 60) return dedansPropre;
+  // ... sauf si ce libellé est un TROU : « {{ bsInstrNb }} sur {{ nbTotal }} » ne laissait
+  // que « sur », et « {{ fenLigne }} » ne laissait rien. Un reste de moins de huit
+  // caractères après un trou n'est pas un libellé, c'est une conjonction orpheline.
+  const aTrou = /\{\{/.test(dedans || "");
+  // un libellé qui introduit sa valeur garde son deux-points dans la page, pas dans l'index
+  const sansQueue = (t) => t.replace(/[\s:·—–-]+$/, "").trim();
+  if (dedansPropre && dedansPropre !== "?" && dedansPropre.length <= 60
+      && !(aTrou && dedansPropre.length < 8)) return sansQueue(dedansPropre);
+  // LE NOM DU GROUPE, quand la balise n'en porte pas. Chaque contrôle de cette page est
+  // coiffé d'une légende en capitales — « Instruments », « Unité », « Déclencheur ». Le
+  // grattage arrière qui servait ici traversait les balises voisines et ramassait le lien
+  // « fermer » du panneau précédent : dix entrées de l'index s'appelaient « fermer Unité »,
+  // « fermer Depuis », « fermer Paliers ». La légende est le nom du contrôle, sans grattage.
+  // La légende doit être PROCHE : au-delà, c'est celle d'un autre groupe. « Les secteurs »
+  // s'est ainsi retrouvé à nommer un bouton d'annulation situé bien plus bas.
+  const legendes = [...avant.matchAll(
+    /text-transform:uppercase[^>]*>([^<{]{2,40})<\/span>/g)];
+  if (legendes.length) {
+    const l = propre(legendes[legendes.length - 1][1]);
+    if (l && l.length >= 2) return l;
+  }
   // sinon, le point d'interrogation suit le mot qu'il explique. On coupe au premier « > »
   // pour ne pas partir du milieu d'une balise : le reste serait lu comme du texte, et le
   // terme récolterait des morceaux de style CSS.
