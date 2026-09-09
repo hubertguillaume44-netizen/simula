@@ -331,13 +331,6 @@
    ]
   },
   {
-   "terme": "Fermer",
-   "texte": "Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "fermer Déclencheur",
    "texte": "Ce qui déclenche l’entrée — chaque déclencheur coché est essayé sur toute la grille.",
    "vues": [
@@ -422,13 +415,6 @@
    ]
   },
   {
-   "terme": "grille Lancer quand même SIVULA",
-   "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Grilles enregistrées Sauver celle-ci",
    "texte": "Recharger cette grille dans les réglages ci-dessus",
    "vues": [
@@ -468,6 +454,13 @@
    "texte": "Éteint par défaut : une date estimée peut être fausse d'un jour ou deux, et un bandeau sur une date fausse est pire que pas de bandeau.",
    "vues": [
     "Marché"
+   ]
+  },
+  {
+   "terme": "Lancer quand même SIVULA",
+   "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {

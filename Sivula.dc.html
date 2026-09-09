@@ -222,7 +222,11 @@
     ne tient pas se tronque, il ne passe plus à la ligne.
   -->
   <header style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:0 32px;display:flex;align-items:stretch;gap:28px;flex-wrap:nowrap;min-height:46px">
-    <div style="display:flex;align-items:center;gap:12px">
+    <!-- `flex:none` : le sélecteur dit sur quel compte on travaille, c'est
+         l'information la plus structurante de l'écran. Aucune annonce temporaire ne
+         doit pouvoir le comprimer ni prendre sa place — les annonces vivent APRÈS
+         les onglets, et ce sont elles qui rétrécissent. -->
+    <div style="display:flex;align-items:center;gap:12px;flex:none">
       <button type="button" onClick="{{ goAccueil }}" style="background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès">SIVULA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
         <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
@@ -254,15 +258,14 @@
         </sc-for>
       </nav>
     </sc-if>
-    <sc-if value="{{ scanFini }}" hint-placeholder-val="{{ false }}">
-      <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0" title="{{ scanFiniTitre }}">
-        <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ scanFiniCourtTxt }}</span>
-        <sc-if value="{{ aEchecs }}" hint-placeholder-val="{{ false }}">
-          <span class="tag tag-accent" style="font-size:10px;white-space:nowrap;flex:none">{{ echecsCourtTxt }}</span>
-        </sc-if>
-        <button type="button" onClick="{{ fermerBandeau }}" style="cursor:pointer;background:none;border:1px solid var(--color-bg);color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:4px 11px;white-space:nowrap;flex:none">Fermer</button>
-      </span>
-    </sc-if>
+    <!--
+      La pastille « Scan terminé » a quitté l'en-tête. Elle datait de la version 61,
+      quand la barre d'exécution n'avait pas d'état terminé : elle annonçait la fin
+      parce que rien d'autre ne le faisait. Cet état existe maintenant dans la barre,
+      en entier — combinaisons mesurées, durée écoulée, nombre retenu — là où la
+      pastille n'en donnait qu'un extrait tronqué. Deux annonces de la même fin, dont
+      une amputée : c'est l'amputée qui part.
+    -->
     <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
       <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0">
         <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;opacity:.92" title="{{ scanEtatTxt }}">{{ scanCourtTxt }}</span>
@@ -11066,26 +11069,45 @@ GROUPES = {
       * dev(this.TEMPS_VARIANTES, s.gTemps, 'jamais')
       * dev(this.LECTURE_VARIANTES, s.gLectures, 'favorable');
   }
-  // Combinaisons déjà mesurées : le scan avance par INSTRUMENT, et chaque instrument
-  // coûte le même nombre de combinaisons — le compte est donc exact aux bornes, jamais
-  // interpolé à l'intérieur d'un instrument.
-  mesureesScan(etat) {
-    const s = etat || this.state;
-    const n = s.scanNbSym || 0;
-    if (!n) return 0;
-    return Math.round((s.scanTestes || 0) * ((s.scanFait || 0) / n));
+  // ————— UN SEUL CALCUL D'AVANCEMENT POUR TOUT L'ÉCRAN —————
+  //
+  // La barre d'exécution, la jauge, le bandeau du haut et le titre de l'onglet lisent
+  // TOUS cette méthode. Un second calcul quelque part et les deux se contrediraient —
+  // c'est exactement le défaut que la refonte de la barre avait corrigé.
+  //
+  // `faites` vient des lots revenus des workers, pas d'un compte d'instruments : sur un
+  // scan à un seul instrument, le compte d'instruments restait à 0 jusqu'à la fin.
+  avancerCombis(nLots) {
+    this._combisFaites = (this._combisFaites || 0) + nLots * (this._grilleLot || 1);
+    // au plus quatre rafraîchissements par seconde : le nombre avance à l'œil sans
+    // faire rendre la page à chaque lot revenu
+    const now = Date.now();
+    if (now - (this._combisMaj || 0) < 250) return;
+    this._combisMaj = now;
+    this.setState({ scanCombis: this._combisFaites });
+    // le titre de l'onglet suit le même chiffre : sur un scan à un instrument, appelé
+    // depuis la boucle des instruments il ne se serait affiché qu'une fois, à 0 %
+    this.majTitreScan(this.avancementScan({ ...this.state, scanCombis: this._combisFaites }).pct);
   }
-  // Le reste réel, tel que le bandeau l'affiche. Le producteur `barResteTxt` le calcule
-  // une fois pour les deux ; cette méthode n'est que son point d'entrée depuis la barre.
-  resteScan(etat) {
+  avancementScan(etat) {
     const s = etat || this.state;
+    const total = s.scanTestes || 0;
+    const faites = Math.min(total, s.scanCombis || 0);
     const ecoule = s.scanT0
       ? Math.max(0, (Date.now() - s.scanT0 - (this._pauseMs || 0)
         - (s.scanPause && this._pauseT0 ? Date.now() - this._pauseT0 : 0)) / 1000) : 0;
-    const fait = s.scanFait || 0, n = s.scanNbSym || 0;
-    const reste = fait > 0 ? ecoule / fait * (n - fait) : null;
-    return (reste !== null && reste > 1) ? 'reste \u2248 ' + this.duree(reste)
-      : (fait > 0 ? 'derniers instruments' : 'estimation en cours…');
+    // AVANT la première mesure revenue, la durée affichée est l'estimation du repos :
+    // celle que l'utilisateur venait de lire sous le bouton « Lancer ». Après, c'est le
+    // reste calculé sur la cadence observée. Jamais d'état sans durée.
+    const mesure = faites > 0 && ecoule > 0.5;
+    const resteSec = mesure ? ecoule / faites * (total - faites) : (Number(s.scanEstim) || 0);
+    return {
+      faites, total, ecoule, mesure,
+      pct: total ? Math.min(100, Math.round(faites / total * 100)) : 0,
+      resteSec,
+      resteTxt: mesure ? 'reste \u2248 ' + this.duree(resteSec)
+        : '\u2248 ' + this.duree(resteSec),
+    };
   }
   // Signature de la grille : ce qui, en changeant, rend un résultat de scan périmé.
   // Sert à faire retomber la barre « terminé » au repos dès qu'on touche un réglage.
@@ -13090,8 +13112,21 @@ GROUPES = {
     // premier jet sur disque dès le premier instrument fini : un scan de deux
     // instruments n'atteignait jamais la cadence des 2 minutes et n'était jamais écrit
     this._dernierJet = 0;
+    // ————— LA PROGRESSION SE COMPTE EN COMBINAISONS, PAS EN INSTRUMENTS —————
+    //
+    // Compter les instruments faisait avancer le grand nombre par bonds, et sur un scan
+    // à UN instrument il ne bougeait pas du tout : 0 jusqu'à la fin, puis tout. Les
+    // workers rapportent déjà par lots ; c'est ce compte-là qui remonte.
+    this._combisFaites = 0;
+    this._combisMaj = 0;
+    // la taille de la grille d'une variante : ce qu'un lot mesure vraiment
+    this._grilleLot = periodes.length * sls.length * rrs.length;
+    // L'ESTIMATION VUE AU REPOS, gardée telle quelle : tant qu'aucune mesure n'est
+    // revenue, c'est elle que la barre affiche. Il ne doit jamais y avoir d'état sans
+    // durée à l'écran — une attente indéfinie est pire que deux durées contradictoires.
     this.setState({ scanPause: false, scanArret: false, scanEnCours: true, scanT0: t0, scanTic: t0, scanDuree: null,
-      scanFait: 0, scanNbSym: univers.length, scanSymCourant: null, bandeauFerme: false,
+      scanFait: 0, scanNbSym: univers.length, scanSymCourant: null,
+      scanCombis: 0, scanEstim: this.devisScanSec(),
       scanTestes: univers.length * entrees.length * lignes.length * periodes.length * sls.length * rrs.length * variantes.length });
     // les filtres ne varient pas dans un scan : on les résume une fois et on
     // accroche l'étiquette à chaque ligne, pour qu'elle survive à la validation
@@ -13151,7 +13186,8 @@ GROUPES = {
         // sur la durée de l'instant où l'instrument a démarré
         fait++;
         this.setState({ scanFait: fait - 1, scanNbSym: univers.length, scanSymCourant: sym, progression: null });
-        this.majTitreScan(Math.round((fait - 1) / Math.max(1, univers.length) * 100));
+        // le titre suit les combinaisons, pas les instruments : il se rafraîchit
+        // depuis `avancerCombis`, à chaque lot revenu
       }
       repere = out.length;
       let df = null;
@@ -13272,10 +13308,12 @@ GROUPES = {
           if (this._stopScan) { if (faits < lots.length) partiels.add(sym); break; }
           faits = Math.min(lots.length, z + parTour);
           await this.attendreReprise();
-          const r = await this.mesurerTour(workers, lots.slice(z, z + parTour));
+          const paquet = lots.slice(z, z + parTour);
+          const r = await this.mesurerTour(workers, paquet);
           for (const x of r.out) out.push(x);
           for (const x of r.echecs) echecs.push(x);
           borner();
+          this.avancerCombis(paquet.length);
         }
       } else {
         // repli séquentiel : navigateur sans worker de module
@@ -13288,6 +13326,7 @@ GROUPES = {
           for (const x of r.out) out.push(x);
           for (const x of r.echecs) echecs.push(x);
           borner();
+          this.avancerCombis(1);
           await this.cederLeFil();
         }
       }
@@ -16496,6 +16535,11 @@ GROUPES = {
     const euroR = (Number(this.state.capital) || 0) * (Number(this.state.risquePct) || 0) / 100;
     const s = this.state;
     const fr = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(d).replace('.', ','));
+    // ————— L'AVANCEMENT, CALCULÉ UNE SEULE FOIS PAR RENDU —————
+    // La barre, la jauge et le bandeau le lisent tous. Appeler la méthode trois fois
+    // relirait l'horloge trois fois : mesuré, la barre affichait « reste ≈ 53 s »
+    // pendant que le bandeau affichait « 52 s », dans le même rendu.
+    const avance = this.avancementScan(s);
     const sg = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : (x >= 0 ? '+ ' : '− ') + Math.abs(x).toFixed(d).replace('.', ','));
     const res = s.res, seg = s.seg;
     // Les textes longs des filtres, partagés entre le panneau et les cases du bandeau :
@@ -17407,7 +17451,9 @@ GROUPES = {
       // basculement d'espace se lit comme une perte totale — le cas vécu, verrou
       // propriétaire posé, atterrit ici
       // une seule chose à droite du rang : le scan quand il tourne, l'espace sinon
-      aPastille: !s.scanEnCours && !(!!s.scanDuree && !s.bandeauFerme)
+      // la pastille d'espace cède la place à l'avancement du scan, et à rien d'autre :
+      // l'annonce de fin qui la masquait aussi a disparu de l'en-tête
+      aPastille: !s.scanEnCours
         && (tab !== 'accueil' || (() => {
         const pe2 = s.poidsEspaces;
         if (!pe2 || this.essai) return false;
@@ -18360,7 +18406,10 @@ GROUPES = {
           toggleSonScan: () => this.setState({ sonScan: !s.sonScan }),
         };
       })(),
-      scanPct: (s.scanNbSym ? Math.round(((s.scanFait || 0) / s.scanNbSym) * 100) : 0) + '%',
+      // la jauge suit le MÊME chiffre que le grand nombre : des combinaisons, pas des
+      // instruments. Sur un scan à un seul instrument, l'ancienne jauge restait à 0 %
+      // du début à la fin.
+      scanPct: avance.pct + '%',
       // Un seul calcul pour les deux affichages : le bandeau se recalculait à chaque
       // rendu tandis que la ligne du bas gardait le texte figé au début de l'instrument,
       // et le bandeau comptait en plus le temps passé en pause — d'où deux durées
@@ -18382,43 +18431,18 @@ GROUPES = {
           scanEtatTxt: coeur,
           // la version courte, pour le rang de l'en-tête : le compte et le reste à
           // attendre. Le texte complet reste en infobulle, il n'est pas perdu.
-          scanCourtTxt: Math.min(fait + 1, n) + ' / ' + n
-            + (reste !== null && reste > 1 ? ' \u00b7 reste ~' + this.duree(reste) : ''),
-          // la barre du bas lit le MÊME reste : deux calculs donnaient deux durées
-          barResteTxt: (reste !== null && reste > 1) ? 'reste \u2248 ' + this.duree(reste)
-            : (fait > 0 ? 'derniers instruments' : 'estimation en cours…'),
+          // « 1 / 1 » ne disait rien : ni où on en est, ni combien de temps il reste.
+          // Le pourcentage et le reste se lisent depuis n'importe quelle page, et
+          // sortent du MÊME calcul que la barre — jamais un second.
+          scanCourtTxt: avance.pct + ' % \u00b7 ' + avance.resteTxt,
           progression: s.scanEnCours ? coeur : (s.progression || ''),
           aProgression: !!(s.scanEnCours || s.progression),
         };
       })(),
-      scanFini: !s.scanEnCours && !!s.scanDuree && !s.bandeauFerme,
-      aEchecs: !!(s.scanEchecs && s.scanEchecs.length),
-      echecsTxt: (s.scanEchecs && s.scanEchecs.length)
-        ? s.scanEchecs.length + ' instrument(s) ou configuration(s) n\u2019ont pas pu être testés : '
-          + s.scanEchecs.join(' \u00b7 ') + '. Le reste du scan est complet.'
-        : '',
-      scanFiniTxt: s.scanDuree
-        ? this.pl(s.scanNbSym || 0, 'instrument', 'instruments') + ' \u00b7 '
-          + this.pl(s.scanTestes || 0, 'combinaison test\u00e9e', 'combinaisons test\u00e9es') + ' en '
-          + this.duree(s.scanDuree / 1000) + ' \u00b7 r\u00e9sultats dans le TOP et dans l\u2019historique du scanner'
-        : '',
-      // le rang de l'en-tête ne peut pas porter la phrase entière : elle passe en
-      // infobulle, MAIS le compte des non-testés reste à l'écran — il ne vivait que
-      // dans ce bandeau, et un instrument sauté qu'on ne voit pas est un trou muet
-      scanFiniCourtTxt: s.scanDuree
-        ? 'Scan terminé \u00b7 ' + (s.scanTestes || 0).toLocaleString('fr-FR')
-          + ' combinaisons en ' + this.duree(s.scanDuree / 1000) : '',
-      echecsCourtTxt: (s.scanEchecs && s.scanEchecs.length)
-        ? s.scanEchecs.length + ' non testé' + (s.scanEchecs.length > 1 ? 's' : '') : '',
-      scanFiniTitre: (s.scanDuree
-        ? this.pl(s.scanNbSym || 0, 'instrument', 'instruments') + ' \u00b7 '
-          + this.pl(s.scanTestes || 0, 'combinaison test\u00e9e', 'combinaisons test\u00e9es') + ' en '
-          + this.duree(s.scanDuree / 1000)
-          + ' \u00b7 r\u00e9sultats dans le TOP et dans l\u2019historique du scanner.' : '')
-        + ((s.scanEchecs && s.scanEchecs.length)
-          ? ' ' + s.scanEchecs.length + ' instrument(s) ou configuration(s) n\u2019ont pas pu être testés : '
-            + s.scanEchecs.join(' \u00b7 ') + '. Le reste du scan est complet.' : ''),
-      fermerBandeau: () => this.setState({ bandeauFerme: true }),
+      // Les producteurs de la pastille de fin sont partis avec elle : `scanFini`,
+      // ses trois textes, le compte des non-testés et `fermerBandeau`. L'état
+      // terminé vit dans la barre d'exécution, en entier, et le compte des
+      // non-testés y a suivi (voir `barDroiteSous`).
       reglagesRejoues: s.reglagesRejoues || '',
       aReglagesRejoues: !!s.reglagesRejoues,
       fermerRejoue: () => this.setState({ reglagesRejoues: null }),
@@ -21359,7 +21383,7 @@ GROUPES = {
               // un scan ARRÊTÉ n'a pas mesuré ce qu'il avait prévu : le grand nombre
               // suit les instruments réellement faits, sinon la barre annonçait
               // « 172 800 mesurées » juste au-dessus de « 7 instruments sur 10 »
-              barGros: enCours ? Number(this.mesureesScan(s)).toLocaleString('fr-FR')
+              barGros: enCours ? Number(avance.faites).toLocaleString('fr-FR')
                 : fini ? Number(faitesFin).toLocaleString('fr-FR')
                 : (nU * parInstr).toLocaleString('fr-FR'),
               barGrosSous: enCours
@@ -21368,7 +21392,7 @@ GROUPES = {
                   + (partiel ? ' \u00b7 scan arrêté' : '')
                 : 'combinaisons à mesurer',
               barADroite: !vide,
-              barDroite: enCours ? this.resteScan(s)
+              barDroite: enCours ? avance.resteTxt
                 : fini ? Number((derniere && derniere.n) || 0).toLocaleString('fr-FR') + ' retenues'
                 : '\u2248 ' + this.duree(secEst),
               barDroiteSous: enCours
@@ -21381,10 +21405,17 @@ GROUPES = {
                     + ((derniere && derniere.instruments) || 0) + ' instrument'
                     + (((derniere && derniere.instruments) || 0) > 1 ? 's' : '')
                     + ' sur ' + ((derniere && derniere.instrumentsTotal) || (s.scanNbSym || 0))
+                    // le compte des non-testés vivait dans la pastille de l'en-tête, qui
+                    // a disparu : un instrument sauté qu'on ne voit nulle part est un trou muet
+                    + ((s.scanEchecs && s.scanEchecs.length)
+                      ? ' \u00b7 ' + s.scanEchecs.length + ' non testé'
+                        + (s.scanEchecs.length > 1 ? 's' : '') : '')
                   : 'estimation \u00b7 ' + frN(railN2) + ' réglages \u00d7 ' + nU + ' instrument'
                     + (nU > 1 ? 's' : '') + ' \u00d7 ' + nCond2 + ' condition' + (nCond2 > 1 ? 's' : ''),
               barDroiteAide: enCours ? 'Le reste mesuré sur le temps déjà écoulé — le chiffre du bandeau.'
                 : fini ? 'Les configurations qui passent vos seuils d\u2019affichage.'
+                  + ((s.scanEchecs && s.scanEchecs.length)
+                    ? ' Non testés : ' + s.scanEchecs.join(' \u00b7 ') + '.' : '')
                 : this.pl(nU, 'instrument', 'instruments') + ' \u00d7 '
                   + parInstr.toLocaleString('fr-FR') + ' réglages \u00b7 '
                   + this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
