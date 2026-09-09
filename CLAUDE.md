@@ -131,6 +131,43 @@ recopie dans `dist/` tout seul.
 **React et React-DOM viennent d'unpkg.com**, chargés par le runtime DC au démarrage. Un
 réseau qui bloque unpkg laisse l'application vide.
 
+## L'application ne dépend de rien d'extérieur
+
+Une fois `/app` chargé, **aucune requête ne part vers un tiers**. Trois dépendances le
+mettaient en défaut ; les trois sont dans le dépôt.
+
+| Ce qui partait dehors | Où c'est maintenant |
+|---|---|
+| React et React-DOM, depuis unpkg.com | `vendor/react-18.3.1/` |
+| La feuille et le paquet du système de design | `public/_ds/industry-…/` |
+| Barlow et Barlow Condensed, importées par cette feuille | `public/_ds/industry-…/fonts/` |
+
+**React.** `support.js` porte « do not edit » ; on ne le modifie pas. Son
+`cdnScriptFor` lit `window.__resources` avant de retomber sur l'URL distante :
+`Vena.dc.html` pose cette table **avant** la balise du runtime, et `solo.mjs` la remplace
+par des Blob URL pour que le fichier unique reste autonome. Les deux URL unpkg qui
+subsistent dans le fichier livré sont les **clés** de cette table — ce que le runtime
+cherche, jamais ce qu'il charge.
+
+**Les versions sont épinglées à 18.3.1, pas à une plage.** Un produit qui se met à jour
+tout seul quand un tiers publie casse un matin sans qu'on ait rien touché. Les fichiers
+vendorés sont vérifiés **identiques aux empreintes SRI** que `support.js` attendrait du
+CDN : ce n'est pas « une version de React », c'est la même, octet pour octet.
+
+**Les polices** sont vendorées en latin et latin-ext seulement — l'application est en
+français. `node scripts/app/vendorer-polices.mjs` les rafraîchit à la main ; il ne tourne
+pas à la construction, qui ne doit pas dépendre d'un service tiers pour réussir.
+
+**Les seules adresses externes tolérées** dans le fichier livré sont les portes ouvertes
+sur demande : `finnhub.io` (actualités) et `api.mymemory.translated.net` (traduction).
+Elles ne partent qu'avec une clé posée par l'utilisateur, et le tiroir Intendance les
+affiche une par une.
+
+`scripts/app/autonomie.test.mjs` tient tout cela : empreintes SRI, ordre de la
+substitution, absence de chargement de tiers dans le fichier livré, présence des polices,
+et correspondance entre le chemin que l'application déclare et celui où le fichier est
+publié.
+
 ## Le test qui tient la convention
 
 `scripts/app/nom-vena.test.mjs` échoue si l'ancien nom réapparaît ailleurs que dans la

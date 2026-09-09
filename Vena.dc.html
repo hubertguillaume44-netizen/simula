@@ -4,6 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Véna</title>
+<!--
+  ————— REACT VIENT DU DÉPÔT, PAS D'UN CDN —————
+  `support.js` charge React et React-DOM depuis unpkg.com. Trois conséquences, toutes
+  inacceptables pour un produit payant : un réseau d'entreprise qui bloque le domaine
+  sert une page blanche — et beaucoup de gens qui s'intéressent au trading le font depuis
+  un poste de travail ; une panne d'un tiers rend le produit indisponible sans recours ;
+  et chaque ouverture signale une visite à ce tiers, ce que la promesse « rien ne sort de
+  votre navigateur » interdit.
+
+  Le runtime prévoit le point de substitution : `cdnScriptFor` lit `window.__resources`
+  avant de retomber sur l'URL distante. On le pose ICI, avant lui — pas dans le fichier
+  généré, qui porte « do not edit » et serait réécrit à la prochaine mise à jour.
+
+  Les versions sont ÉPINGLÉES à 18.3.1, et les fichiers de `vendor/` ont été vérifiés
+  identiques aux empreintes SRI que `support.js` attend. Une plage de versions ferait
+  d'une publication d'un tiers une panne un matin, sans qu'on ait rien touché.
+
+  Le fichier autonome (`Vena.solo.html`) remplace ces chemins par des Blob URL : voir
+  `scripts/app/solo.mjs`.
+-->
+<script>
+  window.__resources = {
+    "https://unpkg.com/react@18.3.1/umd/react.production.min.js":
+      "./vendor/react-18.3.1/react.production.min.js",
+    "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js":
+      "./vendor/react-18.3.1/react-dom.production.min.js",
+  };
+</script>
 <script src="./support.js"></script>
 </head>
 <body>

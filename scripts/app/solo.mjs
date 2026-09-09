@@ -62,6 +62,31 @@ html = remplacer(html, '<script src="./support.js"></script>',
     + Buffer.from(lire("support.js"), "utf8").toString("base64") + '"></script>',
   "Vena.dc.html");
 
+// ————— REACT VOYAGE DANS LE FICHIER —————
+// La source pointe `window.__resources` vers `./vendor/…` : des chemins voisins, qui ne
+// résolvent ni en « file:// » ni sous /app. Le fichier unique les remplace par des
+// Blob URL construites au chargement, à partir des sources intégrées en base64.
+// À partir de là il ne reste plus une seule requête vers un tiers.
+const REACT = {
+  "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "vendor/react-18.3.1/react.production.min.js",
+  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "vendor/react-18.3.1/react-dom.production.min.js",
+};
+const reactB64 = {};
+for (const [url, f] of Object.entries(REACT)) reactB64[url] = Buffer.from(lire(f), "utf8").toString("base64");
+
+const vieuxResources = html.slice(html.indexOf("  window.__resources = {"),
+  html.indexOf("};", html.indexOf("  window.__resources = {")) + 3);
+if (!vieuxResources.includes("unpkg.com/react")) {
+  throw new Error("solo.mjs : le bloc window.__resources de Vena.dc.html a changé de forme");
+}
+html = remplacer(html, vieuxResources, `  var __R = ${JSON.stringify(reactB64)};
+  window.__resources = {};
+  for (var __u in __R) {
+    window.__resources[__u] = URL.createObjectURL(new Blob(
+      [Uint8Array.from(atob(__R[__u]), function (c) { return c.charCodeAt(0); })],
+      { type: "text/javascript" }));
+  }`, "Vena.dc.html");
+
 // Les cinq points où la page nomme un fichier voisin.
 html = remplacer(html,
   "await import('./robot-mt5.js?v=' + (window.__venaRobotV || Date.now()))",
