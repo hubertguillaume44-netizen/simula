@@ -19,7 +19,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
         )}
       >
         <Link to="/" className="mr-auto flex items-baseline gap-3 no-underline text-ink">
-          <span className="font-display text-lg font-semibold tracking-wide">SIMULA</span>
+          <span className="font-display text-lg font-semibold tracking-wide">VÉNA</span>
           <span className="hidden text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             Simulateur de stratégies trading
           </span>
@@ -52,7 +52,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
 export function SiteFooter() {
   return (
     <footer className="border-t border-line px-5 py-8 text-center text-xs text-muted md:px-8">
-      Simula — simulateur de stratégies trading. Outil d’analyse, ni conseil en
+      Véna — simulateur de stratégies trading. Outil d’analyse, ni conseil en
       investissement ni service de gestion. Le trading fait perdre de l’argent à la majorité
       de ceux qui s’y essaient.{" "}
       <Link to="/visiteurs" className="text-ink/70 underline decoration-line underline-offset-2">

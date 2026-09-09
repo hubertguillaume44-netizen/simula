@@ -20,7 +20,7 @@
  *                           se déduit du PLAN, jamais du montant : un prix promotionnel
  *                           ne raccourcit pas une licence.
  *   RESEND_API_KEY          la clé de l'envoyeur transactionnel (un seul appel HTTP).
- *   LICENCE_EXPEDITEUR      l'adresse d'envoi, ex. "Sivula <code@votre-domaine.fr>".
+ *   LICENCE_EXPEDITEUR      l'adresse d'envoi, ex. "Véna <code@votre-domaine.fr>".
  *
  * Journal : le type d'événement et le plan, RIEN d'autre — ni e-mail, ni code, ni
  * clé. La promesse « aucune donnée client stockée » vaut aussi pour les logs.
@@ -120,12 +120,12 @@ export async function traiter(corpsBrut, entetes, env, envoyerMail) {
   const texte = [
     "Bonjour,",
     "",
-    "Voici votre code d'accès Sivula (" + NOMS[plan]
+    "Voici votre code d'accès Véna (" + NOMS[plan]
       + (fin ? ", valable jusqu'au " + fin.split("-").reverse().join("/") : ", sans date de fin") + ") :",
     "",
     code,
     "",
-    "Où le coller : dans Sivula, page d'accueil, cadre « J'ai déjà un code » —",
+    "Où le coller : dans Véna, page d'accueil, cadre « J'ai déjà un code » —",
     "votre e-mail d'achat puis le code. La vérification se fait dans votre",
     "navigateur, rien n'est envoyé nulle part.",
     "",
@@ -133,9 +133,9 @@ export async function traiter(corpsBrut, entetes, env, envoyerMail) {
     "s'affiche dans l'application et signe les robots et fichiers exportés.",
     "Il couvre vos machines personnelles — fixe et portable.",
     "",
-    "Sivula",
+    "Véna",
   ].join("\n");
-  const r = await envoyerMail({ a: email, sujet: "Votre code d'accès Sivula", texte });
+  const r = await envoyerMail({ a: email, sujet: "Votre code d'accès Véna", texte });
   if (!r || !r.ok) {
     // 502 : Revolut réessaiera, et la signature déterministe renverra LE MÊME code
     console.error("licence : envoi du mail refusé (" + ((r && r.statut) || "?") + ")");

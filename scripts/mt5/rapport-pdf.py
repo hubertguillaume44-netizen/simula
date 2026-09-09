@@ -74,7 +74,7 @@ def contexte(lignes):
     et la conclusion — à tort — qu'une correction récente avait tout cassé.
     """
     texte = "\n".join(lignes)
-    expert = re.search(r"Sivula_\S*?_\d{6}_\w+", texte)
+    expert = re.search(r"Véna_\S*?_\d{6}_\w+", texte)
     symbole = re.search(r"Symbole:\s*\n?\s*([A-Za-z#][\w#.]{1,24})", texte)
     if not expert or not symbole:
         return None

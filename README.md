@@ -1,6 +1,6 @@
-# Sivula — mesurer une règle de trading sur ses propres séries
+# Véna — mesurer une règle de trading sur ses propres séries
 
-Sivula rejoue une règle de trading sur un historique H1 exporté de MetaTrader 5,
+Véna rejoue une règle de trading sur un historique H1 exporté de MetaTrader 5,
 puis la juge : tranches, hors période, frais réels, robustesse, contrôle du hasard.
 C'est un outil de mesure, pas un conseil en investissement — il ne prédit rien,
 ne passe aucun ordre et ne détient aucun fonds.
@@ -11,8 +11,8 @@ Dépôt : [github.com/hubertguillaume44-netizen/simula](https://github.com/huber
 
 | Fichier | Rôle |
 |---|---|
-| `Sivula.dc.html` | **La source** de l'application (composant DC, rendu par `support.js`). C'est ici qu'on modifie. |
-| `Sivula.solo.html` | **Le livrable** : un seul fichier, aucun voisin requis. Ne jamais l'éditer à la main — il se régénère. |
+| `Vena.dc.html` | **La source** de l'application (composant DC, rendu par `support.js`). C'est ici qu'on modifie. |
+| `Vena.solo.html` | **Le livrable** : un seul fichier, aucun voisin requis. Ne jamais l'éditer à la main — il se régénère. |
 | `moteur.js` | Le moteur de référence (backtest H1, signaux, sécurisation, impact des événements). La spécification. |
 | `robot-mt5.js` | Le générateur d'Expert Advisor MQL5 — le robot exécute la même règle que le moteur. |
 | `scan-noyau.js` / `scan-worker.js` | Le balayage de configurations, hors du fil principal. |
@@ -20,7 +20,7 @@ Dépôt : [github.com/hubertguillaume44-netizen/simula](https://github.com/huber
 
 ```sh
 npm test              # node --test 'scripts/**/*.test.mjs' — moteur, conformité, licence, portes, événements
-npm run app:solo      # régénère Sivula.solo.html depuis Sivula.dc.html
+npm run app:solo      # régénère Vena.solo.html depuis Vena.dc.html
 npm run app:aide      # régénère l'index d'aide après un changement de title=
 ```
 

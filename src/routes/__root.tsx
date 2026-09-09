@@ -4,7 +4,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { VisitsBeacon } from "@/components/visits-beacon";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Simula — simulateur de stratégies trading";
+const APP_NAME = "Véna — simulateur de stratégies trading";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,7 +15,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Simulateur de stratégies trading. Testez une règle avant d’y mettre un euro : Simula rejoue vos stratégies et découpe l’historique pour vérifier si le résultat tient hors période.",
+          "Simulateur de stratégies trading. Testez une règle avant d’y mettre un euro : Véna rejoue vos stratégies et découpe l’historique pour vérifier si le résultat tient hors période.",
       },
       { name: "theme-color", content: "#ebeae6" },
     ],

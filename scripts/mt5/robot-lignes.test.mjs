@@ -336,7 +336,7 @@ test("cfg.fin arrête les ENTRÉES sans tronquer les positions ouvertes", () => 
 });
 
 test("la fenêtre horaire d'entrée voyage jusqu'au robot, et son refus porte un motif", () => {
-  // Un réglage qui existe dans Sivula et pas dans le MQL5 fait diverger les deux au
+  // Un réglage qui existe dans Véna et pas dans le MQL5 fait diverger les deux au
   // moment même où l'utilisateur croit les avoir alignés. La fenêtre doit donc arriver
   // dans les `input`, et le refus doit être NOMMÉ : un `return false` muet dans
   // ExecutionAutorisee() a déjà coûté 2 947 refus inexplicables sur GOLD.
@@ -396,6 +396,6 @@ test('le R du relevé se compte sur le risque INITIAL', () => {
   assert.match(txt, /g_livRisque\s*=\s*\(tv > 0\.0 && ts > 0\.0\)\s*\n?\s*\? MathAbs\(prix - stop\)/,
     'risque en devise mesuré sur la distance au stop INITIAL, à l’ouverture');
   assert.match(txt, /DoubleToString\(prof \/ g_livRisque, 3\)/,
-    'profit_R = profit devise ÷ risque initial — la définition de Sivula. Rapporté au '
+    'profit_R = profit devise ÷ risque initial — la définition de Véna. Rapporté au '
     + 'risque courant, un trade sorti sur palier vaudrait mécaniquement plus.');
 });

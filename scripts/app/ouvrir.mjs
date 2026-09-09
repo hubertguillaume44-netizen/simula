@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ouvre Sivula.dc.html dans un Chromium sans interface, pour pouvoir la TESTER
+ * Ouvre Vena.dc.html dans un Chromium sans interface, pour pouvoir la TESTER
  * et pas seulement la relire.
  *
  * Deux obstacles, tous deux contournés ici sans rien changer à l'application :
@@ -60,7 +60,7 @@ function binaire() {
   return undefined;
 }
 
-export async function ouvrirApp({ fichier = "Sivula.dc.html", attente = 5000, essai = true } = {}) {
+export async function ouvrirApp({ fichier = "Vena.dc.html", attente = 5000, essai = true } = {}) {
   const manquants = Object.values(CDN).filter((f) => !existsSync(path.join(RACINE, f)));
   if (manquants.length) {
     throw new Error(
@@ -107,6 +107,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await page.getByRole("button", { name: /Mes instruments/ }).first().click().catch(() => {});
   await page.waitForTimeout(2000);
   console.log("dépôt de CSV :", (await page.locator("input[type=file]").count()) + " champs");
-  if (capture) { await page.screenshot({ path: "sivula.png", fullPage: false }); console.log("capture      : sivula.png"); }
+  if (capture) { await page.screenshot({ path: "vena.png", fullPage: false }); console.log("capture      : vena.png"); }
   await fermer();
 }

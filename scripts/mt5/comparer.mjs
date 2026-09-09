@@ -1,11 +1,11 @@
 /**
- * Comparaison trade à trade entre la liste produite par le moteur Simula
+ * Comparaison trade à trade entre la liste produite par le moteur Véna
  * et celle lue dans un rapport du testeur MT5.
  *
  * Trois volets indépendants, volontairement séparés :
  *   1. ENTRÉES  — qui déclenche quand, au même prix ?
  *   2. SORTIES  — sur les entrées communes, on sort quand, où, pour quel motif ?
- *   3. FRAIS    — ce que Simula modélise contre ce que MT5 facture réellement.
+ *   3. FRAIS    — ce que Véna modélise contre ce que MT5 facture réellement.
  *
  * Aucun réglage du moteur n'est modifié ici : le module lit, aligne et chiffre.
  */
@@ -88,8 +88,8 @@ export function apparier(sim, mt5, decalageMs, toleranceMs) {
   return { paires, simSeule, mt5Seule };
 }
 
-/** Motif Simula ramené au vocabulaire MT5 (be/be2 sont des sorties au stop déplacé). */
-export function motifSimula(t) {
+/** Motif Véna ramené au vocabulaire MT5 (be/be2 sont des sorties au stop déplacé). */
+export function motifVena(t) {
   if (t.motif === "tp") return "tp";
   if (t.motif === "be" || t.motif === "be2") return "be";
   if (t.motif === "sl_gap") return "sl_gap";
@@ -97,7 +97,7 @@ export function motifSimula(t) {
 }
 
 /**
- * €/R : facteur d'échelle entre le R de Simula et l'euro de MT5.
+ * €/R : facteur d'échelle entre le R de Véna et l'euro de MT5.
  * On l'estime sur le P&L de prix seul (colonne « Profit »), commission et swap exclus :
  * sinon les frais se retrouveraient dans le facteur de conversion au lieu du poste frais.
  */
@@ -108,7 +108,7 @@ export function euroParR(paires, { impose, capital, risquePct }) {
     .filter((p) => Math.abs(rNet(p.sim) + 1) < 0.05 && p.mt5.profit < 0)
     .map((p) => Math.abs(p.mt5.profit));
   const parStop = stops.length >= 3 ? quantile(stops, 0.5) : NaN;
-  // b) pente d'une régression sans constante du profit MT5 sur le R net Simula
+  // b) pente d'une régression sans constante du profit MT5 sur le R net Véna
   const den = somme(paires.map((p) => rNet(p.sim) ** 2));
   const pente = den > 0 ? somme(paires.map((p) => rNet(p.sim) * p.mt5.profit)) / den : NaN;
   // c) la même sur le net (frais compris) : l'écart avec b) chiffre la traînée des frais
@@ -126,14 +126,14 @@ export function euroParR(paires, { impose, capital, risquePct }) {
       ? `médiane du profit des stops pleins MT5 (${stops.length} trades)`
       : Number.isFinite(pente) && pente > 0
         ? "régression profit € / R net"
-        : "capital × risque des réglages Simula";
+        : "capital × risque des réglages Véna";
   return { retenu, source, parStop, pente, penteNet, nominal, nStops: stops.length };
 }
 
 export const rNet = (t) => (t.R_net !== undefined ? t.R_net : t.R);
 
-/** Coût modélisé par Simula, recalculé avec la formule exacte du moteur (moteur.ts). */
-export function coutSimula(t, frais) {
+/** Coût modélisé par Véna, recalculé avec la formule exacte du moteur (moteur.ts). */
+export function coutVena(t, frais) {
   const slP = ((t.entree - t.sl_initial) / t.entree) * 100;
   const spread = (frais.spread_pct || 0) / slP;
   const comm = ((frais.commission_pct || 0) * 2) / slP;
@@ -172,10 +172,10 @@ export function comparer(sim, mt5, opts) {
   // ---- 2. SORTIES (sur les seules entrées communes) ----
   const matrice = new Map();
   for (const p of paires) {
-    const k = `${motifSimula(p.sim)} → ${p.mt5.motif || "?"}`;
+    const k = `${motifVena(p.sim)} → ${p.mt5.motif || "?"}`;
     matrice.set(k, (matrice.get(k) || 0) + 1);
   }
-  const memeMotif = paires.filter((p) => motifSimula(p.sim) === p.mt5.motif);
+  const memeMotif = paires.filter((p) => motifVena(p.sim) === p.mt5.motif);
   const signeOppose = paires.filter(
     (p) => Math.sign(rNet(p.sim)) !== 0 && Math.sign(rNet(p.sim)) !== Math.sign(p.mt5.net),
   );
@@ -198,7 +198,7 @@ export function comparer(sim, mt5, opts) {
   // ---- 3. FRAIS ----
   const eur = euroParR(paires, { impose: eurImpose, capital, risquePct });
   const k = eur.retenu;
-  const coutsSim = paires.map((p) => coutSimula(p.sim, frais));
+  const coutsSim = paires.map((p) => coutVena(p.sim, frais));
   const fraisBloc = {
     eur,
     simSpreadR: stats(coutsSim.map((c) => c.spread)),
@@ -212,7 +212,7 @@ export function comparer(sim, mt5, opts) {
     // Le prix d'entrée MT5 est à l'ask : l'écart avec l'open du CSV est le spread payé.
     spreadImpliqueR: stats(ecartsPrixR),
     spreadImpliquePrix: stats(ecartsPrix),
-    // Le swap MT5 rapporté à l'échelle R, pour être comparable au modèle Simula.
+    // Le swap MT5 rapporté à l'échelle R, pour être comparable au modèle Véna.
     mt5SwapR: stats(paires.map((p) => -p.mt5.swap / k)),
     mt5CommissionR: stats(paires.map((p) => -p.mt5.commission / k)),
   };
@@ -226,18 +226,18 @@ export function comparer(sim, mt5, opts) {
     mt5Seule: somme(mt5Seule.map((t) => t.net)),
     sortieDifferente: somme(
       paires
-        .filter((p) => motifSimula(p.sim) !== p.mt5.motif)
+        .filter((p) => motifVena(p.sim) !== p.mt5.motif)
         .map((p) => p.mt5.net - rNet(p.sim) * k),
     ),
     memeSortie: somme(
       paires
-        .filter((p) => motifSimula(p.sim) === p.mt5.motif)
+        .filter((p) => motifVena(p.sim) === p.mt5.motif)
         .map((p) => p.mt5.net - rNet(p.sim) * k),
     ),
   };
   // Sur les trades identiques (même entrée, même sortie), l'écart attendu est exactement
   // ce que le courtier prélève : commission + swap + spread payé à l'entrée.
-  const memes = paires.filter((p) => motifSimula(p.sim) === p.mt5.motif);
+  const memes = paires.filter((p) => motifVena(p.sim) === p.mt5.motif);
   const fraisAttendus =
     somme(memes.map((p) => p.mt5.commission + p.mt5.swap)) -
     somme(

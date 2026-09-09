@@ -1,6 +1,6 @@
 import { Blueprint } from "@/components/blueprint";
 import { Button } from "@/components/ui/button";
-import { Field, NumberInput } from "@/components/simula/fields";
+import { Field, NumberInput } from "@/components/vena/fields";
 import { frNum, signedR } from "@/lib/format";
 import { useSim } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -127,7 +127,7 @@ export function ScanPanel() {
                   const blob = new Blob([lines.join("\n")], { type: "text/csv" });
                   const a = document.createElement("a");
                   a.href = URL.createObjectURL(blob);
-                  a.download = "simula-top.csv";
+                  a.download = "vena-top.csv";
                   a.click();
                   URL.revokeObjectURL(a.href);
                 }}

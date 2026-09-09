@@ -19,8 +19,8 @@ const DEFAUTS = {
   commission: -7, // € par aller-retour
   swapParNuit: -1.2, // € par jour de détention
   eurParR: 250,
-  manquants: 3, // trades Simula que MT5 n'a pas pris
-  ajoutes: 2, // trades MT5 que Simula n'a pas vus
+  manquants: 3, // trades Véna que MT5 n'a pas pris
+  ajoutes: 2, // trades MT5 que Véna n'a pas vus
   divergents: 2, // sorties de motif différent
   forme: "deals", // 'deals' | 'positions'
 };
@@ -79,7 +79,7 @@ export async function fabriquer(options = {}) {
     let sortie_t = t.sortie_t;
     let motif = t.motif === "tp" ? "tp" : t.motif === "sl_gap" ? "sl" : t.motif;
     // Quelques sorties volontairement divergentes : MT5 encaisse le stop, plus tôt,
-    // là où Simula finit par prendre le gain.
+    // là où Véna finit par prendre le gain.
     if (flip < opt.divergents && motif === "tp" && t.sortie_t > t.entree_t + 3600000) {
       sortie = t.sl_initial;
       sortie_t = t.entree_t + 3600000;
@@ -101,7 +101,7 @@ export async function fabriquer(options = {}) {
       tp: t.entree + (t.entree - t.sl_initial) * reglages.rr,
     });
   }
-  // Trades que MT5 prend et que Simula n'a jamais vus : glissés dans un vrai trou,
+  // Trades que MT5 prend et que Véna n'a jamais vus : glissés dans un vrai trou,
   // pour qu'aucune position MT5 ne se chevauche (ce serait un artefact du gabarit).
   const ajoutes = [];
   const trous = [];

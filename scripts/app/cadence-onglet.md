@@ -11,7 +11,7 @@ fait ici, à la main.
 
 ## La manip
 
-1. Ouvrir Sivula dans **Chrome**, un onglet ordinaire (pas une fenêtre réduite :
+1. Ouvrir Véna dans **Chrome**, un onglet ordinaire (pas une fenêtre réduite :
    c'est `document.hidden` qui compte, et réduire la fenêtre ne le met pas toujours
    à `true` — il faut un AUTRE onglet devant, dans la même fenêtre).
 2. Ouvrir la console (⌥⌘J) et coller le bloc ci-dessous.

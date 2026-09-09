@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const FICHIERS = ["Sivula.dc.html", "Sivula.solo.html"];
+const FICHIERS = ["Vena.dc.html", "Vena.solo.html"];
 const cache = new Map();
 const source = (f) => {
   if (!cache.has(f)) cache.set(f, readFileSync(new URL("../../" + f, import.meta.url), "utf8"));
@@ -42,7 +42,7 @@ for (const f of FICHIERS) {
       "Mes instruments", "Mes scans", "Mes décisions",       // le rang des onglets
       "Portefeuille", "Marché", "Journal", "Backtest", "Historique", "Nouveau scan",
       "Bougies H1", "Bougies M1", "Relevé",                  // les zones de dépôt
-      "Barres",                                              // un onglet de MT5, pas de Sivula
+      "Barres",                                              // un onglet de MT5, pas de Véna
     ]);
     const vus = [...txt.matchAll(/(?:onglet|zone|bouton|colonne|cadre) <strong>([^<]+)<\/strong>/g)]
       .map((m) => m[1].trim());

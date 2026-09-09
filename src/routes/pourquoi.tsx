@@ -23,7 +23,7 @@ function Pourquoi() {
           Votre backtest est probablement faux.
         </h1>
         <p className="mt-6 max-w-prose text-lg text-ink/80">
-          Balayez assez de réglages et vous trouverez toujours une courbe qui monte. Simula
+          Balayez assez de réglages et vous trouverez toujours une courbe qui monte. Véna
           fait l’inverse du reste du marché : il calcule cette courbe, puis vous dit pourquoi
           il ne faut pas y croire.
         </p>
@@ -103,7 +103,7 @@ function Pourquoi() {
             </table>
           </div>
           <p className="max-w-prose text-panel/80">
-            Un outil de vente mettrait la première ligne en avant. Simula l’écarte si elle ne
+            Un outil de vente mettrait la première ligne en avant. Véna l’écarte si elle ne
             tient pas hors période — et garde une ligne moins spectaculaire qui gagne dans
             plusieurs tranches.
           </p>
@@ -139,7 +139,7 @@ function Pourquoi() {
       <section className="border-t border-line">
         <div className="mx-auto grid w-full max-w-5xl gap-10 px-5 py-16 md:grid-cols-2 md:px-8">
           <div>
-            <h3 className="font-display text-3xl">Ce que Simula ne fait pas</h3>
+            <h3 className="font-display text-3xl">Ce que Véna ne fait pas</h3>
             <div className="mt-5 flex flex-col text-sm leading-relaxed">
               {[
                 "Aucun signal d’achat. Le moteur teste des règles, il ne vous dit pas quoi acheter aujourd’hui.",

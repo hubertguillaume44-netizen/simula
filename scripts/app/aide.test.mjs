@@ -8,7 +8,7 @@ import path from "node:path";
 
 const RACINE = path.resolve(new URL("../../", import.meta.url).pathname);
 const index = JSON.parse(readFileSync(path.join(RACINE, "aide-index.json"), "utf8"));
-const page = readFileSync(path.join(RACINE, "Sivula.dc.html"), "utf8");
+const page = readFileSync(path.join(RACINE, "Vena.dc.html"), "utf8");
 
 test("l'index d'aide porte des explications", () => {
   assert.ok(Array.isArray(index.entrees));

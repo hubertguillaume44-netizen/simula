@@ -35,7 +35,7 @@ export function genererRobot(ref, stamp) {
   const cfg = {
     sym: ref.sym, sens: ref.sens || "achat", entree: ref.entree, ligne: ref.ligne,
     periode: ref.periode, sl: ref.sl, rr: ref.rr, ut: "D1",
-    n: ref.nSivula, total: ref.rSivula, rAn: ref.rSivula / 6.65, dd: 2,
+    n: ref.nVéna, total: ref.rVéna, rAn: ref.rVéna / 6.65, dd: 2,
   };
   const source = genererMQ5(cfg, {
     etat: etatDepuisReference(ref), stamp, magic: ref.magic,

@@ -19,7 +19,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const FICHIERS = ["Sivula.dc.html", "Sivula.solo.html"];
+const FICHIERS = ["Vena.dc.html", "Vena.solo.html"];
 const source = (f) => readFileSync(new URL("../../" + f, import.meta.url), "utf8");
 
 function methode(txt, entete) {
@@ -142,7 +142,7 @@ for (const f of FICHIERS) {
 
 /** `avancementScan`, extraite du fichier livré et rendue exécutable ici. */
 function fabriquer(etat) {
-  const corps = methode(source("Sivula.dc.html"), "  avancementScan(etat) {");
+  const corps = methode(source("Vena.dc.html"), "  avancementScan(etat) {");
   // eslint-disable-next-line no-new-func
   const f = new Function("return function avancementScan(etat) " + corps + ";")();
   return { avancementScan: f, state: etat,

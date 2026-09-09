@@ -14,7 +14,7 @@ function Home() {
           Testez une règle avant d’y mettre un euro.
         </h1>
         <p className="mt-6 max-w-prose text-lg leading-relaxed text-ink/80">
-          Simula rejoue vos stratégies sur vos propres exports horaires, puis découpe
+          Véna rejoue vos stratégies sur vos propres exports horaires, puis découpe
           l’historique pour vérifier si le résultat tient hors de la période où il a été
           trouvé.
         </p>

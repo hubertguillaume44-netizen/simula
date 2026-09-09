@@ -3,7 +3,7 @@
  *
  * Elle sert aux tests et au développement : n'importe qui peut signer des codes
  * avec. AVANT LA VENTE, exécutez `node scripts/licence/generer-cles.mjs` : il
- * fabrique une vraie paire, remplace la clé publique dans Sivula.dc.html et
+ * fabrique une vraie paire, remplace la clé publique dans Vena.dc.html et
  * affiche la clé privée UNE FOIS, à coller dans la variable d'environnement de la
  * fonction (LICENCE_CLE_PRIVEE) — jamais dans le dépôt.
  *

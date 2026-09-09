@@ -18,7 +18,7 @@ const CHAMPS = ["type", "combinaisons", "duree_s", "unite", "instruments", "filt
 export function filtrerCharge(brut) {
   let b;
   try { b = JSON.parse(brut); } catch (e) { return null; }
-  if (!b || b.outil !== "simula" || b.schema !== 1 || !Array.isArray(b.evenements)) return null;
+  if (!b || (b.outil !== "vena" && b.outil !== "simula") || b.schema !== 1 || !Array.isArray(b.evenements)) return null;
   const evenements = b.evenements.slice(0, 100).map((e) => {
     const p = {};
     for (const c of CHAMPS) {
@@ -29,7 +29,7 @@ export function filtrerCharge(brut) {
     }
     return p;
   });
-  return { outil: "simula", schema: 1, evenements };
+  return { outil: "vena", schema: 1, evenements };
 }
 
 export async function traiterUsage(corpsBrut, env, expedier) {

@@ -224,7 +224,7 @@ export function separerPointsMorts(trades, fraction = 0.25) {
  */
 export function contexteRapport(texte) {
   const t = String(texte);
-  const expert = (t.match(/Sivula_\S*?_\d{6}_\w+/) || [null])[0];
+  const expert = (t.match(/Véna_\S*?_\d{6}_\w+/) || [null])[0];
   let symbole = null;
   const i = t.search(/Symbole\s*:/);
   if (i >= 0) {
@@ -232,7 +232,7 @@ export function contexteRapport(texte) {
     const m = bout.match(/Symbole\s*:\s*\n*\s*([A-Za-z#][\w#.]{1,24})/);
     symbole = m ? m[1] : null;
   }
-  // le nom du robot porte l'instrument entre « Sivula_ » et le sens
+  // le nom du robot porte l'instrument entre « Véna_ » et le sens
   const attendu = expert ? expert.split("_")[1] : null;
   const norm = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]/g, "");
   const concorde = !expert || !symbole ? null : norm(symbole).includes(norm(attendu));

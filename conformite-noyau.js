@@ -4,7 +4,7 @@
  *
  * Il existait en un seul exemplaire, dans `scripts/mt5/conformite.mjs`, et n'était
  * atteignable qu'en console. La page ne pouvait donc pas montrer à son utilisateur ce
- * que le harnais mesurait — or c'est exactement la question que Sivula doit savoir
+ * que le harnais mesurait — or c'est exactement la question que Véna doit savoir
  * répondre : « ce chiffre, MT5 le rend-il aussi ? » Deux implémentations auraient
  * divergé, comme `src/lib/moteur.ts` a divergé de `moteur.js` ; il n'y en a qu'une, et
  * elle ne rend que des DONNÉES. La mise en forme appartient à chaque appelant.

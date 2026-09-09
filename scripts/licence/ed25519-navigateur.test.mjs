@@ -9,7 +9,7 @@
  * Ce repli DOIT dire exactement ce que dit node : oui sur une vraie signature, non
  * sur tout le reste. Un « non » de trop ferme la porte à un client légitime ; un
  * « oui » de trop laisse forger des codes. Le code testé n'est pas recopié ici : il
- * est EXTRAIT de Sivula.dc.html et de Sivula.solo.html entre ses deux marques, et
+ * est EXTRAIT de Vena.dc.html et de Vena.solo.html entre ses deux marques, et
  * exécuté tel quel — les deux fichiers doivent donc porter la même version.
  */
 import test from "node:test";
@@ -40,12 +40,12 @@ function paireNode() {
 }
 
 test("la page et le fichier livré portent le MÊME code de vérification", () => {
-  assert.equal(extraire("Sivula.dc.html").src, extraire("Sivula.solo.html").src,
-    "Sivula.solo.html n'a pas été régénéré après une modification du repli Ed25519");
+  assert.equal(extraire("Vena.dc.html").src, extraire("Vena.solo.html").src,
+    "Vena.solo.html n'a pas été régénéré après une modification du repli Ed25519");
 });
 
 test("il dit oui à 30 vraies signatures, sur des messages de toutes tailles", async () => {
-  const { ed25519Verifie } = extraire("Sivula.dc.html").fn;
+  const { ed25519Verifie } = extraire("Vena.dc.html").fn;
   for (let i = 0; i < 30; i++) {
     const { privee, publique } = paireNode();
     const msg = new Uint8Array(randomBytes(i === 0 ? 0 : i * 7 + 1));
@@ -56,7 +56,7 @@ test("il dit oui à 30 vraies signatures, sur des messages de toutes tailles", a
 });
 
 test("il dit non à tout le reste : signature, message, clé, canonicité", async () => {
-  const { ed25519Verifie } = extraire("Sivula.dc.html").fn;
+  const { ed25519Verifie } = extraire("Vena.dc.html").fn;
   const { privee, publique } = paireNode();
   const msg = new Uint8Array(Buffer.from("le message qui compte", "utf8"));
   const sig = new Uint8Array(signerNode(null, Buffer.from(msg), privee));
@@ -83,7 +83,7 @@ test("il dit non à tout le reste : signature, message, clé, canonicité", asyn
 });
 
 test("une clé publique qui n'est pas un point de la courbe est refusée", async () => {
-  const { ed25519Verifie, edDecode } = extraire("Sivula.dc.html").fn;
+  const { ed25519Verifie, edDecode } = extraire("Vena.dc.html").fn;
   let refusees = 0;
   for (let i = 0; i < 40; i++) {
     const brut = new Uint8Array(randomBytes(32));
@@ -95,8 +95,8 @@ test("une clé publique qui n'est pas un point de la courbe est refusée", async
   assert.ok(refusees > 5, "trop peu de clés hors courbe tirées : " + refusees + " sur 40");
 });
 
-test("un vrai code d'accès Sivula passe le repli, un code trafiqué non", async () => {
-  const { ed25519Verifie } = extraire("Sivula.dc.html").fn;
+test("un vrai code d'accès Véna passe le repli, un code trafiqué non", async () => {
+  const { ed25519Verifie } = extraire("Vena.dc.html").fn;
   const code = signerCode({ email: "client@exemple.fr", plan: "vie", fin: null }, CLE_DEMO_PRIVEE);
   const [, p, sg] = code.split(".");
   const pub = new Uint8Array(deB64u(CLE_DEMO_PUBLIQUE));
@@ -114,7 +114,7 @@ test("vecteur RFC 8032 : la référence publique, pas seulement nos propres tira
   const msg = h("72");
   const sig = h("92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da"
     + "085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00");
-  const { ed25519Verifie } = extraire("Sivula.dc.html").fn;
+  const { ed25519Verifie } = extraire("Vena.dc.html").fn;
   assert.equal(await ed25519Verifie(sig, msg, pub), true, "le vecteur de la RFC est refusé");
   const faux = sig.slice(); faux[0] ^= 0x80;
   assert.equal(await ed25519Verifie(faux, msg, pub), false);

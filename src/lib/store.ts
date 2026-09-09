@@ -31,8 +31,26 @@ import type {
   Vue,
 } from "@/lib/types";
 
-const RUNS_KEY = "simula.runs.v1";
-const ONB_KEY = "simula.onb.v1";
+const RUNS_KEY = "vena.runs.v1";
+const ONB_KEY = "vena.onb.v1";
+
+// ————— MIGRATION « simula. » → « vena. » —————
+// Le site garde les runs et l'onboarding dans le stockage du navigateur. Renommer la
+// clé sans recopier effacerait les runs de l'utilisateur au premier chargement, sans
+// rien dire. La clé neuve fait foi ; l'ancienne est recopiée si la neuve n'existe pas,
+// et RIEN n'est supprimé — l'ancien jeu reste au moins une version.
+function migrerCle(neuve: string, ancienne: string) {
+  try {
+    if (localStorage.getItem(neuve) !== null) return;
+    const v = localStorage.getItem(ancienne);
+    if (v === null) return;
+    localStorage.setItem(neuve, v);
+  } catch {
+    /* stockage indisponible : on repartira de zéro, sans perdre l'ancien */
+  }
+}
+migrerCle(RUNS_KEY, "simula.runs.v1");
+migrerCle(ONB_KEY, "simula.onb.v1");
 
 function loadRuns(): Run[] {
   try {

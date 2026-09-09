@@ -17,7 +17,7 @@ export default tseslint.config(
       // Runtime tiers, repris tel quel : le corriger reviendrait à en maintenir un fork.
       "support.js",
       // Artefact de `npm run app:solo` — construit, jamais édité.
-      "Sivula.solo.html",
+      "Vena.solo.html",
     ],
   },
   js.configs.recommended,

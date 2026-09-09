@@ -1,8 +1,8 @@
-# Passation à Claude Code — moteur Sivula
+# Passation à Claude Code — moteur Véna
 
 ## Ce que c'est
 
-Sivula est un moteur de backtest pour traders particuliers, écrit en JavaScript et tournant
+Véna est un moteur de backtest pour traders particuliers, écrit en JavaScript et tournant
 dans le navigateur, sans serveur. Il est la transposition fidèle d'un moteur Python
 d'origine (`Tradingmoteur` : `moteur.py` + `blocs.py`). Il balaie des dizaines de milliers
 de configurations sur les séries H1 déposées par l'utilisateur, en retient quelques
@@ -16,7 +16,7 @@ ne sont pas à copier tels quels, mais leur **logique de calcul est la spécific
 ## Ce qui bloque, et pourquoi cette passation existe
 
 La mise au point s'est faite en aller-retour manuel : l'assistant lit le code et raisonne,
-l'utilisateur lance un backtest dans Sivula puis un test dans le testeur MT5, fait une
+l'utilisateur lance un backtest dans Véna puis un test dans le testeur MT5, fait une
 capture d'écran, et l'assistant en déduit une cause. Ce cycle est lent et il a produit
 plusieurs diagnostics faux affirmés avec assurance.
 
@@ -54,21 +54,21 @@ sur la clôture H1 de décision, alors que tous les autres s'évaluent sur la cl
 propre unité de temps. Les deux évitent la fuite, mais ne répondent pas exactement à la
 même question. C'était un choix du moteur d'origine. À trancher.
 
-## Le point dur : accorder Sivula et MT5
+## Le point dur : accorder Véna et MT5
 
 C'est le sujet central, et il est mal compris. À clarifier avant tout développement.
 
-**Le fait brut : les chiffres de Sivula ne correspondent pas à ceux de MT5.** Deux exemples
+**Le fait brut : les chiffres de Véna ne correspondent pas à ceux de MT5.** Deux exemples
 mesurés le 02/09/2026, avec la même configuration des deux côtés :
 
-| Instrument | Sivula annonce | MT5 mesure |
+| Instrument | Véna annonce | MT5 mesure |
 |---|---|---|
 | AUDCAD, médiane 15, stop 0,5 %, R/R 2 | +14,2 R | **−2 863 €**, PF 0,45, 15,5 % de creux |
 | GOLD, MME 5, stop 0,6 %, R/R 3 | tête du classement | +4 519 €, PF 1,14 — **moitié moins** que MM 7 / 0,5 % / R/R 1,5, classée derrière |
 
-Le premier cas est un renversement de signe : Sivula donne gagnant ce que MT5 donne
+Le premier cas est un renversement de signe : Véna donne gagnant ce que MT5 donne
 nettement perdant. Le second est une **inversion de classement** : la configuration que
-Sivula met en tête vaut deux fois moins que celle qu'elle classe en dessous. Le second est
+Véna met en tête vaut deux fois moins que celle qu'elle classe en dessous. Le second est
 le plus grave — il rend le tri inutilisable, qui est la seule fonction du logiciel.
 
 Les causes identifiées à ce jour sont les bugs 1, 2 et 5 ci-dessous (spread placé au mauvais
@@ -79,12 +79,12 @@ chose à faire.
 
 **Une égalité exacte est impossible.** Les séries déposées contiennent quatre prix par
 heure ; MT5 modélise la minute. Quand une bougie contient à la fois de quoi toucher le stop
-et de quoi armer un palier, MT5 sait dans quel ordre, Sivula ne peut pas le savoir. Exiger
+et de quoi armer un palier, MT5 sait dans quel ordre, Véna ne peut pas le savoir. Exiger
 l'égalité, c'est exiger une information absente du fichier.
 
 **Ce qui est atteignable, et ce qu'il faut viser :**
 
-- le **classement** de Sivula doit être celui de MT5 ;
+- le **classement** de Véna doit être celui de MT5 ;
 - son chiffre doit être un **plancher** — jamais une promesse au-dessus du réel.
 
 **Ce qui a été vérifié le 02/09/2026 :** le portage MQL5 est fidèle. Sur AUDCAD, mêmes
@@ -113,7 +113,7 @@ peut-être pas dans `main`.
 **1. Le spread était déduit après coup au lieu d'être payé à l'entrée.**
 Le R moyen était juste, mais le stop et l'objectif étaient placés quelques pips à côté de
 ceux que le robot pose réellement chez le courtier. Certains trades étaient donc stoppés
-chez MT5 et pas dans Sivula, ce qui désynchronisait toute la suite. L'entrée porte
+chez MT5 et pas dans Véna, ce qui désynchronisait toute la suite. L'entrée porte
 maintenant le spread (`px = df.o[i] * (1 + d * spread)`), et le spread n'est plus retiré du
 R — l'y laisser doublerait le coût.
 
@@ -162,7 +162,7 @@ indéfiniment. Un drapeau `termine` distingue les deux cas.
 un champ `spread` par bougie. Sans lui, le moteur retombe sur le spread **moyen** du relevé,
 qui sous-estime l'heure du rollover — précisément celle où les entrées tombent, et où le
 spread vaut deux à trois fois sa moyenne (sur AUDCAD : 0,0251 % au relevé contre 0,070 %
-constatés face à MT5). Le script d'export MT5 est fourni (`Export_H1_Sivula.mq5`).
+constatés face à MT5). Le script d'export MT5 est fourni (`Export_H1_Vena.mq5`).
 **Point à vérifier par la mesure :** sur l'historique ancien importé par le courtier, ce
 champ vaut souvent 0. Il faut savoir sur quelle part de 2020-2022 il est renseigné avant de
 compter dessus.
@@ -170,7 +170,7 @@ compter dessus.
 **b. Le classement du TOP.** Il classe par R net et affiche le meilleur des deux lectures.
 Il propose donc la version optimiste de chaque configuration, et favorise celles qui font
 beaucoup de trades à avantage fin — précisément celles qui s'effondrent en réel. Exemple
-mesuré sur GOLD : `ema_5_SL0p6_RR3` (PF Sivula flatteur, PF réel 1,14) est classée devant
+mesuré sur GOLD : `ema_5_SL0p6_RR3` (PF Véna flatteur, PF réel 1,14) est classée devant
 `ma_7_SL0p5_RR1p5` (PF réel 1,43), alors que la seconde gagne presque deux fois plus dans
 MT5. **Proposition à valider par la mesure :** classer sur la lecture basse et sur le
 facteur de profit, avec un plancher de trades.
@@ -218,7 +218,7 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
   trois trades qui basculent déplacent son facteur de profit de plusieurs dixièmes.
 
 - Un contre-exemple aussi précieux : **AUDCAD `mediane_15_SL0p5_RR2`** → −2 863 €, PF 0,45,
-  15,5 % de creux, alors que Sivula la mesurait à +14,2 R. 66 trades, dont ~23 sorties au
+  15,5 % de creux, alors que Véna la mesurait à +14,2 R. 66 trades, dont ~23 sorties au
   prix d'entrée exact (palier armé puis prix revenu) et ~40 stops pleins. Le rapport MT5
   complet est reproductible ; c'est le meilleur cas de test d'un désaccord réel.
 
@@ -228,11 +228,11 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
 
 ## Contraintes de produit à respecter
 
-- **`Sivula.dc.html` est la SOURCE, et le seul fichier d'application côté prototype.**
-  Ne jamais créer de fichier « Essai » ou « Présentation » en double. `Sivula.solo.html`
+- **`Vena.dc.html` est la SOURCE, et le seul fichier d'application côté prototype.**
+  Ne jamais créer de fichier « Essai » ou « Présentation » en double. `Vena.solo.html`
   n'est pas un double : c'est l'artefact que `scripts/app/solo.mjs` régénère depuis la
   source à chaque changement — ne jamais l'éditer à la main, ne jamais supprimer la
-  source sous prétexte que « tout passe par le solo ». Supprimer `Sivula.dc.html`
+  source sous prétexte que « tout passe par le solo ». Supprimer `Vena.dc.html`
   jetterait le code pour garder le binaire : le build, `app:aide` et les tests headless
   (`ouvrir.mjs`) lisent tous la source.
 - **Aucun chiffre personnel écrit en dur.** Tout va dans `localStorage`, dans des espaces
@@ -250,12 +250,12 @@ Mesures sur 20 000 € et 6,6 ans, toutes en achat, paliers 25→0 / 50→25 / 7
 PUBLIC — les cinq pages (`/`, `/methode`, `/pourquoi`, `/simuler`, `/visiteurs`),
 l'authentification et le mur payant. C'est le canal de vente.
 
-`Sivula.dc.html` et ses quatre modules sont l'APPLICATION de mesure. Elle ne dépend en
+`Vena.dc.html` et ses quatre modules sont l'APPLICATION de mesure. Elle ne dépend en
 rien du site : aucun de ses modules n'importe quoi que ce soit de `src/`.
 
 Cette indépendance rend le site facile à décrire comme « inutilisé », et c'est un piège.
 Il a été supprimé une fois sur cette base, puis restauré : « aucun lien technique avec
-Sivula » ne veut pas dire « ne sert à rien ». Ce sont deux applications dans un dépôt,
+Véna » ne veut pas dire « ne sert à rien ». Ce sont deux applications dans un dépôt,
 pas une application et des résidus.
 
 Un seul fil les reliait : `scripts/mt5/fixture.mjs` chargeait `src/lib/demo.ts` à
@@ -279,9 +279,9 @@ est bon à garder : la vérité terrain du comparateur ne peut plus changer par 
   par `scripts/mt5/conformite.mjs` (ligne de commande) et par la page. Une seule
   implémentation : deux copies auraient divergé, et un « hors de la bande » mesuré d'un côté
   n'aurait plus voulu dire la même chose que de l'autre.
-- `Sivula.dc.html` — l'application : interface, cache, tamis, walk-forward, tirage au sort,
+- `Vena.dc.html` — l'application : interface, cache, tamis, walk-forward, tirage au sort,
   Benjamini-Hochberg, solveur de mélange, comparateur MT5, export des robots.
-- `Export_H1_Sivula.mq5` — le script d'export d'historique H1, à glisser sur chaque
+- `Export_H1_Vena.mq5` — le script d'export d'historique H1, à glisser sur chaque
   graphique. Quatorze colonnes : OHLC, volume, **spread d'ouverture** (celui de la première
   M1 de l'heure, pas l'agrégat), séance, **minute des deux extrêmes**, **extrêmes vus par la
   M1**, et **extrêmes atteints après le second extrême**. Les six dernières existent pour
@@ -289,19 +289,19 @@ est bon à garder : la vérité terrain du comparateur ne peut plus changer par 
 
 ### Pour faire tourner la page
 
-`Sivula.dc.html` importe `moteur.js`, `scan-noyau.js`, `robot-mt5.js` et
+`Vena.dc.html` importe `moteur.js`, `scan-noyau.js`, `robot-mt5.js` et
 `conformite-noyau.js` en modules ES. Elle ne fonctionne donc PAS en `file://` — le
 spécificateur relatif n'y résout pas et le moteur n'est jamais chargé, sans message
 d'erreur visible. Il faut servir le dossier en HTTP :
 
-    npx serve .        # puis ouvrir http://localhost:3000/Sivula.dc.html
+    npx serve .        # puis ouvrir http://localhost:3000/Vena.dc.html
 
 `node scripts/app/ouvrir.mjs` fait la même chose sans interface, pour vérifier que la page
 démarre après une modification.
 
 ### Le fichier unique
 
-`npm run app:solo` produit `Sivula.solo.html` : la même application, les cinq modules
+`npm run app:solo` produit `Vena.solo.html` : la même application, les cinq modules
 intégrés en Blob URL, **aucun voisin requis**. C'est le fichier à déposer là où l'on ne peut
 en fournir qu'un. Il fonctionne aussi bien en `file://`.
 

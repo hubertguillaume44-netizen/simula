@@ -82,7 +82,7 @@ const ENV = {
   LICENCE_CLE_PRIVEE: CLES.privee,
   REVOLUT_SIGNING_SECRET: "wsk_secret_de_test",
   PLAN_MENSUEL: "plan_m", PLAN_ANNUEL: "plan_a", PLAN_VIE: "plan_v",
-  RESEND_API_KEY: "x", LICENCE_EXPEDITEUR: "Sivula <code@exemple.fr>",
+  RESEND_API_KEY: "x", LICENCE_EXPEDITEUR: "Véna <code@exemple.fr>",
 };
 const corpsDe = (planId) => JSON.stringify({
   event: "ORDER_COMPLETED", order_id: "ord_1",
@@ -154,7 +154,7 @@ test("la clé privée n'est ni dans la page, ni dans le fichier livré ; la page
   // publique bien formée, et c'est la MÊME — un solo régénéré après la rotation,
   // sinon l'application livrée refuserait tous les codes émis.
   const cles = new Set();
-  for (const f of ["Sivula.dc.html", "Sivula.solo.html"]) {
+  for (const f of ["Vena.dc.html", "Vena.solo.html"]) {
     const txt = readFileSync(new URL("../../" + f, import.meta.url), "utf8");
     assert.ok(!txt.includes(morceau), "la clé privée de démonstration est dans " + f);
     const m = /CLE_PUB_LICENCE = '([A-Za-z0-9_-]{43})'/.exec(txt);

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Fabrique `Sivula.solo.html` : l'application ENTIÈRE dans un seul fichier.
+ * Fabrique `Vena.solo.html` : l'application ENTIÈRE dans un seul fichier.
  *
- * `Sivula.dc.html` importe quatre modules voisins et démarre un worker sur un
+ * `Vena.dc.html` importe quatre modules voisins et démarre un worker sur un
  * cinquième. C'est la bonne structure pour travailler — une seule source par module,
  * pas de copie qui dérive — mais elle interdit de déposer l'application quelque part
  * qui n'accepte qu'un fichier, et elle échoue en `file://` sans le moindre message.
@@ -48,7 +48,7 @@ const modules = {
 modules.scanNoyau = remplacer(modules.scanNoyau, "'./moteur.js'", "'__URL_MOTEUR__'", "scan-noyau.js");
 modules.worker = remplacer(modules.worker, "'./scan-noyau.js'", "'__URL_SCANNOYAU__'", "scan-worker.js");
 
-let html = lire("Sivula.dc.html");
+let html = lire("Vena.dc.html");
 
 // `support.js` — le runtime DC — est chargé par une balise voisine : on l'intègre.
 //
@@ -60,16 +60,16 @@ let html = lire("Sivula.dc.html");
 html = remplacer(html, '<script src="./support.js"></script>',
   '<script src="data:text/javascript;base64,'
     + Buffer.from(lire("support.js"), "utf8").toString("base64") + '"></script>',
-  "Sivula.dc.html");
+  "Vena.dc.html");
 
 // Les cinq points où la page nomme un fichier voisin.
 html = remplacer(html,
-  "await import('./robot-mt5.js?v=' + (window.__sivulaRobotV || Date.now()))",
-  "await import(window.__siv.robot)", "Sivula.dc.html");
-html = remplacer(html, "import('./conformite-noyau.js')", "import(window.__siv.conf)", "Sivula.dc.html");
-html = remplacer(html, "await import('./moteur.js')", "await import(window.__siv.moteur)", "Sivula.dc.html");
-html = remplacer(html, "await import('./scan-noyau.js')", "await import(window.__siv.scanNoyau)", "Sivula.dc.html");
-html = remplacer(html, "new URL('./scan-worker.js', location.href)", "window.__siv.worker", "Sivula.dc.html");
+  "await import('./robot-mt5.js?v=' + (window.__venaRobotV || Date.now()))",
+  "await import(window.__siv.robot)", "Vena.dc.html");
+html = remplacer(html, "import('./conformite-noyau.js')", "import(window.__siv.conf)", "Vena.dc.html");
+html = remplacer(html, "await import('./moteur.js')", "await import(window.__siv.moteur)", "Vena.dc.html");
+html = remplacer(html, "await import('./scan-noyau.js')", "await import(window.__siv.scanNoyau)", "Vena.dc.html");
+html = remplacer(html, "new URL('./scan-worker.js', location.href)", "window.__siv.worker", "Vena.dc.html");
 
 // Le préambule, en tête de <head> : il crée les Blob URL AVANT que quoi que ce soit ne
 // démarre. L'ordre compte — le moteur d'abord, puisque scan-noyau en dépend, et
@@ -113,9 +113,9 @@ window.__sivNouv = ${JSON.stringify(JSON.parse(lire("nouveautes.json")))};
 window.__sivAide = ${JSON.stringify(JSON.parse(lire("aide-index.json")))};
 </script>
 `;
-html = remplacer(html, "<head>", "<head>\n" + preambule, "Sivula.dc.html");
+html = remplacer(html, "<head>", "<head>\n" + preambule, "Vena.dc.html");
 
-const sortie = path.join(RACINE, "Sivula.solo.html");
+const sortie = path.join(RACINE, "Vena.solo.html");
 writeFileSync(sortie, html);
-console.log(`Sivula.solo.html écrit — ${(html.length / 1048576).toFixed(2)} Mo, un seul fichier, `
+console.log(`Vena.solo.html écrit — ${(html.length / 1048576).toFixed(2)} Mo, un seul fichier, `
   + "aucun voisin requis.");

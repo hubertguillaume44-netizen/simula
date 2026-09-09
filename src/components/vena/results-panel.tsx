@@ -1,11 +1,11 @@
 import { Bookmark } from "lucide-react";
 import { Blueprint } from "@/components/blueprint";
 import { Button } from "@/components/ui/button";
-import { EquityChart } from "@/components/simula/equity-chart";
-import { ControlesPanel, RobustessePanel } from "@/components/simula/controles";
-import { PriceChart } from "@/components/simula/price-chart";
-import { Stat } from "@/components/simula/stat";
-import { WalkForward } from "@/components/simula/walk-forward";
+import { EquityChart } from "@/components/vena/equity-chart";
+import { ControlesPanel, RobustessePanel } from "@/components/vena/controles";
+import { PriceChart } from "@/components/vena/price-chart";
+import { Stat } from "@/components/vena/stat";
+import { WalkForward } from "@/components/vena/walk-forward";
 import { EUR, formatDateTime, frNum, signedR } from "@/lib/format";
 import { useSim } from "@/lib/store";
 

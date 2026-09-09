@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const FICHIERS = ["Sivula.dc.html", "Sivula.solo.html"];
+const FICHIERS = ["Vena.dc.html", "Vena.solo.html"];
 const cache = new Map();
 const source = (f) => {
   if (!cache.has(f)) cache.set(f, readFileSync(new URL("../../" + f, import.meta.url), "utf8"));

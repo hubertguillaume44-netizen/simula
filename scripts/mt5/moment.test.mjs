@@ -10,7 +10,7 @@
  *      la médiane — la grandeur que medianesSpread() publie, pas un recalcul local.
  *   3. PAS DE REPLI : un seau sans bougie qui satisfait le moment perd son signal.
  *      Le robot ne peut pas entrer rétroactivement sur une bougie déjà passée — un
- *      repli sur l'ouverture ferait entrer Sivula là où le robot n'entrera jamais.
+ *      repli sur l'ouverture ferait entrer Véna là où le robot n'entrera jamais.
  *   4. Le moment voyage : construireConfig le transmet tel quel, et le robot généré
  *      embarque MOMENT_TYPE / MOMENT_HEURE / MOMENT_MED_SPREAD.
  */

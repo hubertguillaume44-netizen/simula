@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Harnais de comparaison Simula ↔ testeur MT5.
+ * Harnais de comparaison Véna ↔ testeur MT5.
  *
  *   node scripts/mt5-diff.mjs --csv AUDCAD_H1.csv --mt5 rapport.html \
  *        --ligne mediane --periode 15 --sl 0.5 --rr 2
@@ -15,10 +15,10 @@ import path from "node:path";
 import { chargerMoteur } from "./mt5/charger-moteur.mjs";
 import { construireConfig, lirePaliers, PALIERS_REFERENCE } from "./mt5/config.mjs";
 import { lireFichierMt5, lireRapportMt5 } from "./mt5/parse-mt5.mjs";
-import { comparer, motifSimula, rNet } from "./mt5/comparer.mjs";
+import { comparer, motifVena, rNet } from "./mt5/comparer.mjs";
 
 const AIDE = `
-Harnais Simula ↔ MT5 — compare la liste de trades du moteur à un rapport du testeur.
+Harnais Véna ↔ MT5 — compare la liste de trades du moteur à un rapport du testeur.
 
   node scripts/mt5-diff.mjs --csv <H1.csv> --mt5 <rapport MT5> [options]
 
@@ -104,7 +104,7 @@ async function main() {
   if (o.demo) {
     const { fabriquer } = await import("./mt5/fixture.mjs");
     const f = await fabriquer();
-    const dir = mkdtempSync(path.join(tmpdir(), "simula-mt5-"));
+    const dir = mkdtempSync(path.join(tmpdir(), "vena-mt5-"));
     o.csv = path.join(dir, "demo_H1.csv");
     o.mt5 = path.join(dir, "demo_mt5.html");
     writeFileSync(o.csv, f.csv);
@@ -198,7 +198,7 @@ async function main() {
   const p = (s = "") => L.push(s);
 
   // ---------- Rendu ----------
-  p(`# Simula ↔ MT5 — ${reglages.symbol}`);
+  p(`# Véna ↔ MT5 — ${reglages.symbol}`);
   p();
   p(`CSV : \`${o.csv}\` · rapport MT5 : \`${o.mt5}\``);
   p(
@@ -235,7 +235,7 @@ async function main() {
 
   p("## 1. Verdict brut");
   p();
-  p("| | Simula | MT5 |");
+  p("| | Véna | MT5 |");
   p("|---|---:|---:|");
   p(`| Trades | ${resumeSim.n} | ${rapport.trades.length} |`);
   p(
@@ -271,11 +271,11 @@ async function main() {
   p();
   p("| | trades |");
   p("|---|---:|");
-  p(`| Entrées Simula | ${entrees.nSim} |`);
+  p(`| Entrées Véna | ${entrees.nSim} |`);
   p(`| Entrées MT5 | ${entrees.nMt5} |`);
   p(`| **Appariées** | **${entrees.apparies}** |`);
-  p(`| Simula seul (MT5 n'a pas pris) | ${entrees.simSeule.length} |`);
-  p(`| MT5 seul (Simula n'a pas vu) | ${entrees.mt5Seule.length} |`);
+  p(`| Véna seul (MT5 n'a pas pris) | ${entrees.simSeule.length} |`);
+  p(`| MT5 seul (Véna n'a pas vu) | ${entrees.mt5Seule.length} |`);
   p();
   p(ENTETE_STATS);
   p(ligneStats("écart d'heure d'entrée (min)", entrees.ecartHeure, 1));
@@ -285,19 +285,19 @@ async function main() {
   p();
   if (entrees.simSeule.length) {
     p(
-      `### Entrées prises par Simula seul (${entrees.simSeule.length}, ${Math.min(N, entrees.simSeule.length)} affichées)`,
+      `### Entrées prises par Véna seul (${entrees.simSeule.length}, ${Math.min(N, entrees.simSeule.length)} affichées)`,
     );
     p();
-    p("| entrée Simula | prix | motif | R net | € |");
+    p("| entrée Véna | prix | motif | R net | € |");
     p("|---|---:|---|---:|---:|");
     for (const t of entrees.simSeule.slice(0, N)) {
       p(
-        `| ${iso(t.entree_t)} | ${fr(t.entree, 5)} | ${motifSimula(t)} | ${sgn(rNet(t), 2)} | ${sgn(rNet(t) * k, 0)} |`,
+        `| ${iso(t.entree_t)} | ${fr(t.entree, 5)} | ${motifVena(t)} | ${sgn(rNet(t), 2)} | ${sgn(rNet(t) * k, 0)} |`,
       );
     }
     p();
     p(
-      `Poids total : **${sgn(ecart.bucket.simSeule, 0)} €** de résultat Simula sans contrepartie MT5.`,
+      `Poids total : **${sgn(ecart.bucket.simSeule, 0)} €** de résultat Véna sans contrepartie MT5.`,
     );
     p();
   }
@@ -312,7 +312,7 @@ async function main() {
       p(`| ${iso(t.entree_t)} | ${fr(t.entree, 5)} | ${t.motif || "?"} | ${sgn(t.net, 0)} |`);
     }
     p();
-    p(`Poids total : **${sgn(ecart.bucket.mt5Seule, 0)} €** de résultat MT5 que Simula ignore.`);
+    p(`Poids total : **${sgn(ecart.bucket.mt5Seule, 0)} €** de résultat MT5 que Véna ignore.`);
     p();
   }
 
@@ -322,7 +322,7 @@ async function main() {
   p(`Même motif de sortie : **${sorties.memeMotif} / ${entrees.apparies}**.`);
   p(`Résultat de signe opposé : **${sorties.signeOppose.length} / ${entrees.apparies}**.`);
   p();
-  p("| motif Simula → MT5 | trades |");
+  p("| motif Véna → MT5 | trades |");
   p("|---|---:|");
   for (const [nom, n] of sorties.matrice) p(`| ${nom} | ${n} |`);
   p();
@@ -330,22 +330,22 @@ async function main() {
   p(ligneStats("écart d'heure de sortie (min)", sorties.ecartHeure, 1));
   p(ligneStats("écart de prix de sortie", sorties.ecartPrix, 5));
   p(ligneStats("écart de prix de sortie (en R)", sorties.ecartPrixR, 4));
-  p(ligneStats("durée Simula (h)", sorties.dureeSim, 1));
+  p(ligneStats("durée Véna (h)", sorties.dureeSim, 1));
   p(ligneStats("durée MT5 (h)", sorties.dureeMt5, 1));
   p();
   const divergentes = cmp.paires
-    .filter((x) => motifSimula(x.sim) !== x.mt5.motif)
+    .filter((x) => motifVena(x.sim) !== x.mt5.motif)
     .sort((a, b) => Math.abs(b.mt5.net - rNet(b.sim) * k) - Math.abs(a.mt5.net - rNet(a.sim) * k));
   if (divergentes.length) {
     p(
       `### Sorties divergentes (${divergentes.length}, les ${Math.min(N, divergentes.length)} plus coûteuses)`,
     );
     p();
-    p("| entrée | Simula : sortie / motif / R | MT5 : sortie / motif / € | écart € |");
+    p("| entrée | Véna : sortie / motif / R | MT5 : sortie / motif / € | écart € |");
     p("|---|---|---|---:|");
     for (const x of divergentes.slice(0, N)) {
       p(
-        `| ${iso(x.sim.entree_t)} | ${iso(x.sim.sortie_t)} · ${motifSimula(x.sim)} · ${sgn(rNet(x.sim), 2)} R | ${iso(x.mt5.sortie_t)} · ${x.mt5.motif || "?"} · ${sgn(x.mt5.net, 0)} € | ${sgn(x.mt5.net - rNet(x.sim) * k, 0)} |`,
+        `| ${iso(x.sim.entree_t)} | ${iso(x.sim.sortie_t)} · ${motifVena(x.sim)} · ${sgn(rNet(x.sim), 2)} R | ${iso(x.mt5.sortie_t)} · ${x.mt5.motif || "?"} · ${sgn(x.mt5.net, 0)} € | ${sgn(x.mt5.net - rNet(x.sim) * k, 0)} |`,
       );
     }
     p();
@@ -354,7 +354,7 @@ async function main() {
   p("## 4. Frais");
   p();
   p(
-    "Ce que Simula modélise. Le spread n'est plus déduit du R : il est payé dans le prix d'entrée (`px = open × (1 + spread)`), donc porté par le stop et l'objectif. Ne restent en coût post-hoc que la commission et le portage :",
+    "Ce que Véna modélise. Le spread n'est plus déduit du R : il est payé dans le prix d'entrée (`px = open × (1 + spread)`), donc porté par le stop et l'objectif. Ne restent en coût post-hoc que la commission et le portage :",
   );
   p();
   p(ENTETE_STATS);
@@ -378,7 +378,7 @@ async function main() {
   p(`| **Net** | **${sgn(frais.mt5Net, 2)}** | **${sgn(frais.mt5Net / k, 2)}** |`);
   p();
   p(
-    "Spread réellement subi, déduit de l'écart de prix d'entrée (MT5 achète à l'ask, Simula à l'open du CSV) :",
+    "Spread réellement subi, déduit de l'écart de prix d'entrée (MT5 achète à l'ask, Véna à l'open du CSV) :",
   );
   p();
   p(ENTETE_STATS);
@@ -388,7 +388,7 @@ async function main() {
   p(ligneStats("commission MT5 (R/trade)", frais.mt5CommissionR, 4));
   p();
   p(
-    `Réglage Simula : spread de repli ${fr(reglages.spread, 4)} % · swap ${fr(reglages.swap, 3)} %/an · commission ${fr(reglages.commission, 4)} %.`,
+    `Réglage Véna : spread de repli ${fr(reglages.spread, 4)} % · swap ${fr(reglages.swap, 3)} %/an · commission ${fr(reglages.commission, 4)} %.`,
   );
   p();
 
@@ -397,12 +397,12 @@ async function main() {
   p("| poste | € |");
   p("|---|---:|");
   p(
-    `| Résultat Simula (${fr(ecart.totalSimR, 2)} R × ${fr(k, 2)} €) | ${sgn(ecart.totalSimEur, 0)} |`,
+    `| Résultat Véna (${fr(ecart.totalSimR, 2)} R × ${fr(k, 2)} €) | ${sgn(ecart.totalSimEur, 0)} |`,
   );
   p(`| Résultat MT5 | ${sgn(ecart.totalMt5Eur, 0)} |`);
-  p(`| **Écart total (MT5 − Simula)** | **${sgn(ecart.total, 0)}** |`);
+  p(`| **Écart total (MT5 − Véna)** | **${sgn(ecart.total, 0)}** |`);
   p("| | |");
-  p(`| dont trades pris par Simula seul | ${sgn(-ecart.bucket.simSeule, 0)} |`);
+  p(`| dont trades pris par Véna seul | ${sgn(-ecart.bucket.simSeule, 0)} |`);
   p(`| dont trades pris par MT5 seul | ${sgn(ecart.bucket.mt5Seule, 0)} |`);
   p(`| dont sorties divergentes | ${sgn(ecart.bucket.sortieDifferente, 0)} |`);
   p(`| dont même sortie, écart résiduel | ${sgn(ecart.bucket.memeSortie, 0)} |`);
@@ -438,7 +438,7 @@ async function main() {
           iso(x.mt5.sortie_t),
           x.sim.sortie,
           x.mt5.sortie,
-          motifSimula(x.sim),
+          motifVena(x.sim),
           x.mt5.motif,
           x.sim.R,
           rNet(x.sim),
@@ -451,7 +451,7 @@ async function main() {
     for (const t of cmp.simSeule) {
       lignes.push(
         [
-          "simula_seul",
+          "vena_seul",
           iso(t.entree_t),
           "",
           t.entree,
@@ -460,7 +460,7 @@ async function main() {
           "",
           t.sortie,
           "",
-          motifSimula(t),
+          motifVena(t),
           "",
           t.R,
           rNet(t),

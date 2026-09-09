@@ -1,6 +1,6 @@
 import { Blueprint } from "@/components/blueprint";
-import { DropZone } from "@/components/simula/drop-zone";
-import { CheckRow, Field, NumberInput, Select } from "@/components/simula/fields";
+import { DropZone } from "@/components/vena/drop-zone";
+import { CheckRow, Field, NumberInput, Select } from "@/components/vena/fields";
 import { Button } from "@/components/ui/button";
 import { ENTREES_TXT, LIGNES_TXT, EUR } from "@/lib/format";
 import { useSim } from "@/lib/store";

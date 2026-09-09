@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Blueprint } from "@/components/blueprint";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { Stat } from "@/components/simula/stat";
+import { Stat } from "@/components/vena/stat";
 import { visitStats } from "@/lib/visits";
 
 export const Route = createFileRoute("/visiteurs")({
@@ -58,7 +58,7 @@ function Visiteurs() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-5 py-16 md:px-8 md:py-24">
         <div>
           <div className="kicker">Fréquentation</div>
-          <h1 className="mt-2 font-display text-5xl leading-none">Qui ouvre Simula</h1>
+          <h1 className="mt-2 font-display text-5xl leading-none">Qui ouvre Véna</h1>
           <p className="mt-4 max-w-prose text-sm text-muted">
             Pages vues et sessions dans cet onglet. Pas d’adresse IP, pas de nom. Le pays
             vient du réseau (code à deux lettres). Cette page n’est pas comptée.

@@ -421,7 +421,7 @@
    ]
   },
   {
-   "terme": "Lancer quand même SIVULA",
+   "terme": "Lancer quand même VÉNA",
    "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
    "vues": [
     "Toutes les pages"
@@ -436,7 +436,7 @@
   },
   {
    "terme": "Les deux scripts MT5",
-   "texte": "Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
+   "texte": "Vena_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Vena.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.",
    "vues": [
     "Mes instruments"
    ]
@@ -576,14 +576,14 @@
   },
   {
    "terme": "Portage sur la détention",
-   "texte": "Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Sivula emploie la durée que vos backtests ont mesurée sur chaque instrument.",
+   "texte": "Le portage — swap — se compte sur la durée pendant laquelle une position reste ouverte. Champ vide : Véna emploie la durée que vos backtests ont mesurée sur chaque instrument.",
    "vues": [
     "Toutes les pages"
    ]
   },
   {
    "terme": "Poser la question à l’assistant",
-   "texte": "Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.",
+   "texte": "Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Véna.",
    "vues": [
     "Toutes les pages"
    ]
@@ -759,13 +759,6 @@
    ]
   },
   {
-   "terme": "SIVULA",
-   "texte": "Page d'accueil et code d'accès",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Stop %",
    "texte": "Les distances de stop balayées, en pourcent du prix d’entrée : c’est elles qui définissent 1 R.",
    "vues": [
@@ -847,6 +840,13 @@
    "texte": "Choisir la taille des bougies balayées",
    "vues": [
     "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "VÉNA",
+   "texte": "Page d'accueil et code d'accès",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {

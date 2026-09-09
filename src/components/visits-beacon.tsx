@@ -2,7 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { pingVisit } from "@/lib/visits";
 
-const SID = "simula.sid";
+const SID = "vena.sid";
 function sessionId() {
   try {
     let id = sessionStorage.getItem(SID);

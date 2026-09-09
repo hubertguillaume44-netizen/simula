@@ -100,7 +100,7 @@ function termeDe(avant, dedans) {
   return mots.slice(-5).join(" ").trim();
 }
 
-const src = readFileSync(path.join(RACINE, "Sivula.dc.html"), "utf8");
+const src = readFileSync(path.join(RACINE, "Vena.dc.html"), "utf8");
 const lignes = src.split("\n");
 const plages = plagesDeVues(lignes);
 // décalages de début de ligne, pour retrouver la ligne d'un indice de caractère

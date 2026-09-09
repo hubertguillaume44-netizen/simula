@@ -11,14 +11,14 @@
  * décalage de bougies. `periode` vient de `periodeMtf`, pas de la période du signal.
  *
  * `stopMini` est la distance minimale de stop du courtier, en unités de PRIX
- * (StopsLevel × Point), relevée par Export_Symboles_Sivula.mq5. Elle ne mord que sur
+ * (StopsLevel × Point), relevée par Export_Symboles_Véna.mq5. Elle ne mord que sur
  * BITCOIN — 200,00, soit 1,00 % du cours de 2022 contre 0,25 % de celui d'aujourd'hui.
  * Le testeur y a refusé 928 ordres « invalid stops » sur 2022-2023 et aucun ensuite ;
  * en la respectant, le moteur passe de 420 à 352 trades contre 355 au testeur, et de
  * 66 trades en trop à zéro. Ailleurs elle vaut 20,00 ou moins, très en dessous des
  * stops mesurés, et ne change rien.
  *
- * `nSivula` / `rSivula` sont les chiffres que Sivula affichait AU MOMENT DE L'EXPORT
+ * `nVéna` / `rVéna` sont les chiffres que Véna affichait AU MOMENT DE L'EXPORT
  * (en-tête « Mesuré »), avant les corrections de suivi H1. Ils servent de repère
  * historique, pas de cible.
  */
@@ -29,7 +29,7 @@ export const PALIERS_REFERENCE = [
 ];
 
 // `portage` : taille du contrat et MONTANT de swap par lot et par nuit, relevés dans
-// Symboles_Sivula.csv (FxPro, 3 septembre 2026). Les paires forex y sont déclarées en
+// Symboles_Véna.csv (FxPro, 3 septembre 2026). Les paires forex y sont déclarées en
 // POINTS (SwapMode 1) et converties ici — points × Point × ContractSize — ce qui donne
 // 1 pour 1 sur une paire à cinq décimales et 100 000 de contrat. Les métaux et indices
 // sont déclarés en montant (SwapMode 2) et repris tels quels. BITCOIN est en intérêt
@@ -66,8 +66,8 @@ export const REFERENCES = [
     filtresAttendus: "pente D1 recul 20",
     mt5Eur: -2862.73,
     nMt5: 66,
-    nSivula: 46,
-    rSivula: 14.16,
+    nVéna: 46,
+    rVéna: 14.16,
   },
   {
     sym: "GOLD",
@@ -85,8 +85,8 @@ export const REFERENCES = [
     filtresAttendus: "tendance D1 mediane 5",
     mt5Eur: 4519.12,
     nMt5: 489,
-    nSivula: 396,
-    rSivula: 124.78,
+    nVéna: 396,
+    rVéna: 124.78,
   },
   {
     sym: "GOLD",
@@ -104,8 +104,8 @@ export const REFERENCES = [
     filtresAttendus: "aucun",
     mt5Eur: 8315.44,
     nMt5: 434,
-    nSivula: 396,
-    rSivula: 44.57,
+    nVéna: 396,
+    rVéna: 44.57,
   },
   {
     sym: "Germany40",
@@ -122,8 +122,8 @@ export const REFERENCES = [
     filtresAttendus: "pente D1 recul 8",
     mt5Eur: 2496.82,
     nMt5: 115,
-    nSivula: 99,
-    rSivula: 23.6,
+    nVéna: 99,
+    rVéna: 23.6,
   },
   {
     sym: "Japan225",
@@ -140,8 +140,8 @@ export const REFERENCES = [
     filtresAttendus: "pente D1 recul 3",
     mt5Eur: 1389.21,
     nMt5: 89,
-    nSivula: 66,
-    rSivula: 18.68,
+    nVéna: 66,
+    rVéna: 18.68,
   },
   {
     sym: "NZDCAD",
@@ -158,8 +158,8 @@ export const REFERENCES = [
     filtresAttendus: "pente D1 recul 15",
     mt5Eur: -1134.75,
     nMt5: 46,
-    nSivula: 44,
-    rSivula: 10.58,
+    nVéna: 44,
+    rVéna: 10.58,
   },
   {
     sym: "BITCOIN",
@@ -176,8 +176,8 @@ export const REFERENCES = [
     filtresAttendus: "aucun",
     mt5Eur: -6776.31,
     nMt5: 466,
-    nSivula: 618,
-    rSivula: 277.1,
+    nVéna: 618,
+    rVéna: 277.1,
   },
   {
     sym: "HongKong50",
@@ -194,8 +194,8 @@ export const REFERENCES = [
     filtresAttendus: "pente D1 recul 20",
     mt5Eur: 241.48,
     nMt5: 83,
-    nSivula: 67,
-    rSivula: 16.14,
+    nVéna: 67,
+    rVéna: 16.14,
   },
 ];
 

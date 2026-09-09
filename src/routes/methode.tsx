@@ -94,7 +94,7 @@ function Methode() {
 
         <Blueprint className="mt-11 flex flex-col gap-4 p-7">
           <div className="kicker">Faire le test sur vos propres règles</div>
-          <h3 className="font-display text-2xl">Simula applique ces contrôles par défaut</h3>
+          <h3 className="font-display text-2xl">Véna applique ces contrôles par défaut</h3>
           <p className="text-sm text-muted">
             Découpage en cinq tranches, frais du symbole déduits, signal sur bougie fermée,
             creux affiché avant le gain. Vos exports horaires restent dans votre navigateur.

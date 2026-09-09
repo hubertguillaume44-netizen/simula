@@ -1,4 +1,4 @@
-// Générateur d'Expert Advisor MQL5 à partir d'une configuration validée dans Sivula.
+// Générateur d'Expert Advisor MQL5 à partir d'une configuration validée dans Véna.
 //
 // POURQUOI CE ROBOT AGRÈGE LUI-MÊME SES BOUGIES
 // Le moteur ne lit que des H1 et reconstruit les unités supérieures avec ses propres
@@ -49,7 +49,7 @@ export function stampMaintenant() {
 // Le nom porte cet horodatage : sans lui, chaque export dupliquait le même nom, Windows
 // ajoutait « (1) », « (2) », et MT5 continuait de proposer les anciens .ex5.
 export function nomRobot(cfg, stamp) {
-  return ['Sivula', cfg.sym, cfg.sens === 'vente' ? 'Vente' : 'Achat', cfg.ligne || '',
+  return ['Vena', cfg.sym, cfg.sens === 'vente' ? 'Vente' : 'Achat', cfg.ligne || '',
     cfg.periode || '', 'SL' + String(cfg.sl).replace('.', 'p'),
     'RR' + String(cfg.rr).replace('.', 'p'), stamp || stampMaintenant()]
     .join('_').replace(/[^A-Za-z0-9_]/g, '_');
@@ -80,6 +80,11 @@ export function genererMQ5(cfg, ctx = {}) {
   const nom = nomRobot(cfg, stamp);
   // Le commentaire d'ordre est tronqué à 31 caractères par MT5 : le nom complet y perdait
   // son horodatage. On y met une étiquette courte, l'horodatage en tête.
+  // « SIV_ » NE CHANGE PAS, au même titre que le numéro magique. C'est une étiquette de
+  // protocole, pas une marque : elle est écrite par les robots déjà compilés et lue par
+  // cette application. La faire basculer à « VEN_ » remplirait le dossier Common\Files
+  // de deux orthographes du même fichier — exactement le symptôme qu'on corrige — et
+  // couperait la trace des robots en place. Elle est gelée.
   const marque = 'SIV_' + stamp;
   const vente = cfg.sens === 'vente';
   const periode = nb(cfg.periode, 20);
@@ -100,7 +105,7 @@ export function genererMQ5(cfg, ctx = {}) {
   // n'attend pas les mêmes bougies que le moteur et n'entre pas au même moment.
   const facteurSpread = nb(ctx.spreadFacteur, 0).toFixed(2);
   // Fenêtre horaire d'ENTRÉE, portée telle quelle depuis cfg.heures_entree du moteur.
-  // Elle DOIT voyager avec la configuration : un réglage qui existe dans Sivula et pas
+  // Elle DOIT voyager avec la configuration : un réglage qui existe dans Véna et pas
   // dans le robot est exactement la classe d'écart que ce harnais passe son temps à
   // traquer. Début égal à fin = fenêtre inactive, comme dans le moteur.
   const fen = cfg.heures_entree || {};
@@ -233,7 +238,7 @@ export function genererMQ5(cfg, ctx = {}) {
 
   return `//+------------------------------------------------------------------+
 //|  ${nom}
-//|  Généré par Sivula · build ${stamp} (UTC) · marque des ordres : SIV_${stamp}
+//|  Généré par Véna · build ${stamp} (UTC) · marque des ordres : SIV_${stamp}
 //|
 //|  Instrument      : ${esc(cfg.sym)}
 //|  Sens            : ${vente ? 'VENTE à découvert' : 'ACHAT'}
@@ -260,7 +265,7 @@ export function genererMQ5(cfg, ctx = {}) {
 //|  longtemps pour constater vous-même l'écart avec le backtest avant d'engager du capital.
 //|  Si le nombre de trades diverge, c'est un filtre mal transposé — pas du bruit.
 //+------------------------------------------------------------------+
-#property copyright "Sivula"
+#property copyright "Véna"
 #property version   "2.00"
 #property strict
 
@@ -307,14 +312,14 @@ input ulong  InpMagic           = ${nb(ctx.magic, 20260901)};
 // Moment d'exécution MESURÉ par instrument (moments.csv → scripts/moment-entree.mjs) :
 // quelle bougie H1 du seau a le droit d'exécuter le signal. "ouverture" = la première,
 // le comportement historique. Constantes et non paramètres : les changer sans remesurer
-// rendrait le backtest de Sivula non comparable.
+// rendrait le backtest de Véna non comparable.
 #define MOMENT_TYPE       "${momType}"
 #define MOMENT_HEURE      ${momHeure}   // heure serveur minimale (type "heure")
 #define MOMENT_MED_SPREAD ${momMed > 0 ? momMed.toFixed(6) : '0.0'}   // % du prix (types "spread"/"glissant")${momDate ? ', figée le ' + momDate : ''}
 // Paliers de sécurisation : en PARAMÈTRES et non en constantes, pour pouvoir les mettre
 // à zéro dans le testeur et voir ce que la sécurisation coûte ou rapporte, sans
 // recompiler. Les valeurs par défaut sont celles de la mesure : les changer rend le
-// backtest de Sivula non comparable.
+// backtest de Véna non comparable.
 input int InpPalier1Seuil  = ${p(0, 0)};  // Palier 1 — chemin parcouru (%) ; 0 = palier désactivé
 input int InpPalier1Niveau = ${p(0, 1)};  // Palier 1 — stop porté à (%)
 input int InpPalier2Seuil  = ${p(1, 0)};  // Palier 2 — chemin parcouru (%) ; 0 = palier désactivé
@@ -327,7 +332,7 @@ input int InpPalier3Niveau = ${p(2, 1)};  // Palier 3 — stop porté à (%)
 input bool InpDessin       = true;  // Dessiner entrée, stop, objectif et paliers sur le graphique
 ${vente ? '#define SENS_VENTE' : '#define SENS_ACHAT'}
 
-// Heures de séance conservées par la MESURE. Sivula écarte les heures qui ne sont pas
+// Heures de séance conservées par la MESURE. Véna écarte les heures qui ne sont pas
 // présentes toutes les années (nettoyage : fenêtre horaire homogène) avant d'agréger les
 // bougies H1. Agréger ici TOUTES les bougies donnerait des bougies D1 différentes — donc
 // d'autres moyennes, d'autres pentes et d'autres signaux. Vide = aucune heure écartée.
@@ -617,7 +622,7 @@ int OnInit()
    // quand un ancien .ex5 traîne dans MQL5\\Experts.
    // arguments séparés par des virgules : MQL5 n'accepte PAS la juxtaposition de
    // littéraux à la C, le fichier ne compilait pas
-   Print("=== SIVULA ROBOT · build ${stamp} (UTC)",
+   Print("=== VÉNA ROBOT · build ${stamp} (UTC)",
          " · ${esc(cfg.sym)} ${vente ? 'VENTE' : 'ACHAT'} ${esc(cfg.ligne)} ${periode}",
          " · stop ${sl}% R/R ${rr} · attendu ${nb(cfg.n, 0)} trades ===");
    Print("Journées découpées à 00:00 heure serveur, comme les horodatages des CSV mesurés.");
@@ -688,7 +693,7 @@ void ConfFermer()
 // Distinct du journal de conformité, et TOUJOURS ACTIF : un journal qu'on oublie
 // d'activer ne sert à rien le jour où l'écart apparaît. Celui-ci ne sert pas à
 // déboguer une exécution, il sert à savoir, six mois plus tard, ce que le robot a
-// vraiment fait — et à le comparer, ligne à ligne, à ce que Sivula avait mesuré.
+// vraiment fait — et à le comparer, ligne à ligne, à ce que Véna avait mesuré.
 //
 // Même dossier que la conformité : l'utilisateur n'a qu'un endroit à connaître.
 //
@@ -737,7 +742,7 @@ string LivP(double x)   { return DoubleToString(x, _Digits); }
 
 // La position en cours, telle qu'elle a été OUVERTE. Le stop courant bouge avec les
 // paliers ; le risque initial, lui, ne bouge pas — et c'est lui qui définit le R de
-// Sivula. Diviser par le risque courant donnerait deux colonnes non comparables.
+// Véna. Diviser par le risque courant donnerait deux colonnes non comparables.
 ulong    g_livTicket  = 0;
 double   g_livOuv     = 0.0;
 double   g_livSl0     = 0.0;
@@ -963,7 +968,7 @@ void SurveillerSortie()
                       : "manuel";
          double prof = HistoryDealGetDouble(d, DEAL_PROFIT);
          double frais = swapTot + commTot;
-         // profit_R sur le risque INITIAL : c'est la définition de Sivula. Rapporté au
+         // profit_R sur le risque INITIAL : c'est la définition de Véna. Rapporté au
          // risque courant, un trade sorti sur un palier vaudrait mécaniquement plus.
          string pr = (g_livRisque > 0.0) ? DoubleToString(prof / g_livRisque, 3) : "";
          Liv(StringFormat("%I64u;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%I64u;%s",
@@ -1231,7 +1236,7 @@ void GererPaliers()
          Conf(StringFormat("P|%s|%s|%s|%s|%s", ConfH(TimeCurrent()),
               DoubleToString(parcours, 2), ConfP(sl), ConfP(nouveau), ConfP(extreme)));
          // Un palier a bougé le stop : la sortie qui suivra sera un « palier » et non un
-         // « sl ». C'est LA distinction qui explique l'essentiel des écarts avec Sivula —
+         // « sl ». C'est LA distinction qui explique l'essentiel des écarts avec Véna —
          // le moteur sort sur le palier, MT5 sort sur le niveau du stop en intrabar.
          g_livPalier = true;
          trade.PositionModify(ticket, nouveau, tp);
@@ -1267,7 +1272,7 @@ void GererDuree()
 //| l'objectif reste celui de GererPaliers, et le journal CONF| reste |
 //| la source de vérité du harnais. Leur raison d'être : vérifier à   |
 //| l'œil, sur le chandelier, que le robot voit la même chose que     |
-//| Sivula — le vrai test des premières semaines.                     |
+//| Véna — le vrai test des premières semaines.                     |
 //|                                                                   |
 //| Tenue : un seul groupe d'objets, préfixé du magic pour que deux   |
 //| robots sur deux graphiques ne se marchent pas dessus ; traits     |
@@ -1636,7 +1641,7 @@ void Tableau()
    double parAn  = (jours > 7.0) ? nTotal * 365.25 / jours : 0.0;
 
    color vert = C'110,200,130', rouge = C'225,110,110', gris = C'170,175,185', blanc = C'235,238,242';
-   Ligne("SIVULA · ${nom}", blanc, "SIVULA");
+   Ligne("VÉNA · ${nom}", blanc, "VÉNA");
    Ligne("Etat : " + etat, (etat == "EN MARCHE" ? vert : rouge), "Etat : " + etatCourt);
    Ligne("${esc(cfg.sym)} ${vente ? 'VENTE' : 'ACHAT'} · ${esc(cfg.ligne)} ${periode} · stop ${sl} % · R/R ${rr}", gris,
          "${esc(cfg.sym)} ${vente ? 'VENTE' : 'ACHAT'} · stop ${sl} % · R/R ${rr}");
@@ -1742,7 +1747,7 @@ bool Entrer()
            ConfP(prix), ConfP(stop), ConfP(objectif), DoubleToString(lots, 2)));
 
       // La position telle qu'elle vient d'être ouverte. Le risque en devise est calculé
-      // ICI, sur la distance au stop INITIAL : c'est le dénominateur du R de Sivula.
+      // ICI, sur la distance au stop INITIAL : c'est le dénominateur du R de Véna.
       g_livTicket = g_posTicket;
       g_livOuv    = prix;
       g_livSl0    = stop;
@@ -1770,7 +1775,7 @@ void OnTick()
    // pas dessiné dans le testeur : cela ralentirait le backtest
    if(!MQLInfoInteger(MQL_TESTER)) Tableau();
    // les niveaux, eux, se dessinent aussi dans le testeur VISUEL : c'est là qu'on
-   // vérifie à l'œil que le robot voit la même chose que Sivula
+   // vérifie à l'œil que le robot voit la même chose que Véna
    if(!MQLInfoInteger(MQL_TESTER) || MQLInfoInteger(MQL_VISUAL_MODE)) DessinerNiveaux();
    SurveillerSortie();
    GererPaliers();

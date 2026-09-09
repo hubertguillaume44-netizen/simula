@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
-//|  Sivula_Releve.mq5                                               |
+//|  Vena_Releve.mq5                                               |
 //|  Écrit le relevé des symboles du courtier dans un CSV lu par      |
-//|  Sivula : spread, swaps, et surtout StopsLevel × Point.           |
+//|  Véna : spread, swaps, et surtout StopsLevel × Point.           |
 //|                                                                   |
 //|  POURQUOI CE FICHIER COMPTE                                       |
 //|  Le courtier impose une distance minimale entre le cours et le    |
@@ -9,14 +9,14 @@
 //|  0,25 % du cours à 81 000, mais 1,00 % à 20 000. Un stop de 1 %   |
 //|  était donc pile à la limite pendant tout 2022, et le testeur a   |
 //|  refusé 928 ordres « invalid stops » sur 2022-2023 — aucun        |
-//|  ensuite. Sans ce relevé, Sivula compte 66 trades que le courtier |
+//|  ensuite. Sans ce relevé, Véna compte 66 trades que le courtier |
 //|  n'aurait jamais acceptés ; avec lui, 352 contre 355 au testeur.  |
 //|                                                                   |
-//|  Le fichier atterrit dans MQL5\\Files\\Sivula\\releve.csv. Déposez-le  |
-//|  dans Sivula par « Déposer un relevé de symboles ».               |
+//|  Le fichier atterrit dans MQL5\\Files\\vena\\releve.csv. Déposez-le  |
+//|  dans Véna par « Déposer un relevé de symboles ».               |
 //|                                                                   |
 //|  LA LISTE NE VIT PAS DANS CE FICHIER. Elle vient de symboles.txt, |
-//|  que Sivula régénère à chaque changement de sélection. Sans cela  |
+//|  que Véna régénère à chaque changement de sélection. Sans cela  |
 //|  il faudrait recompiler dans MetaEditor à chaque fois — pour un   |
 //|  geste qu'on fait toutes les semaines, c'est inacceptable. Ce     |
 //|  script se compile UNE fois et ne bouge plus.                     |
@@ -26,7 +26,7 @@
 
 // Source PRIORITAIRE : un symbole par ligne ; lignes vides et commentaires (« // », ou « # » suivi d'une espace) ignorés.
 // Si le fichier existe, il l'emporte sur InpSymboles.
-input string InpFichierListe = "Sivula\\symboles.txt";  // Liste de symboles (prioritaire)
+input string InpFichierListe = "vena\\symboles.txt";  // Liste de symboles (prioritaire)
 // Vide = tous les symboles de l'Observation du marché. Sinon une liste séparée par des
 // virgules — utile pour ne relever que les instruments réellement mesurés.
 input string InpSymboles = "";        // Symboles (vide = Observation du marché)
@@ -95,7 +95,7 @@ bool Disponible(string sym)
 }
 
 //+------------------------------------------------------------------+
-//| Une ligne par symbole. Les noms de colonnes sont ceux que Sivula  |
+//| Une ligne par symbole. Les noms de colonnes sont ceux que Véna  |
 //| cherche dans un export BRUT de terminal : « Symbol » et « Point » |
 //| déclenchent ce format, « StopsLevel » porte la contrainte. Les    |
 //| renommer casse la lecture en silence — le fichier serait lu comme |
@@ -111,7 +111,7 @@ string LigneSymbole(string sym, bool dispo)
    long   spr   = SymbolInfoInteger(sym, SYMBOL_SPREAD);
    if(spr <= 0 && point > 0.0 && ask > bid) spr = (long)MathRound((ask - bid) / point);
 
-   // Les colonnes ajoutées viennent APRÈS celles que Sivula cherche : son lecteur
+   // Les colonnes ajoutées viennent APRÈS celles que Véna cherche : son lecteur
    // travaille par NOM d'en-tête, une colonne de plus lui est indifférente, mais une
    // colonne insérée au milieu décalerait un lecteur positionnel.
    // Le séparateur du fichier est « ; » : un point-virgule dans la description ou
@@ -136,7 +136,7 @@ string LigneSymbole(string sym, bool dispo)
       SymbolInfoInteger(sym, SYMBOL_TRADE_FREEZE_LEVEL),
       SymbolInfoString(sym, SYMBOL_CURRENCY_PROFIT),
       // Le spread relevé est celui de L'INSTANT DU CLIC, pas une moyenne. Pris à 3 h du
-      // matin sur un indice il est trois fois trop large, et le coût calculé par Sivula
+      // matin sur un indice il est trois fois trop large, et le coût calculé par Véna
       // avec. Sans l'heure du relevé, cette erreur est indiagnosticable.
       TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES),
       DoubleToString(SymbolInfoDouble(sym, SYMBOL_TRADE_TICK_VALUE), 6),
@@ -174,7 +174,7 @@ void OnStart()
 
    // Même dossier que la liste et que les bougies : l'utilisateur n'a qu'un chemin à
    // connaître, celui que MT5 ouvre par Fichier > Ouvrir le dossier de données.
-   string nom = "Sivula\\releve.csv";
+   string nom = "vena\\releve.csv";
    int f = FileOpen(nom, FILE_WRITE | FILE_TXT | FILE_ANSI);
    if(f == INVALID_HANDLE) { Print("Écriture impossible : ", GetLastError()); return; }
 
@@ -216,6 +216,6 @@ void OnStart()
    // courtiers la font varier avec la volatilité et annoncent 0 au repos. Le dire,
    // plutôt que de laisser croire que la faisabilité a été vérifiée.
    if(sansStop > 0)
-      PrintFormat("Attention : %d symbole(s) annoncent StopsLevel = 0. Sivula ne pourra "
+      PrintFormat("Attention : %d symbole(s) annoncent StopsLevel = 0. Véna ne pourra "
                   "pas vérifier la distance minimale de stop pour ceux-là.", sansStop);
 }

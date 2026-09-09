@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ConfigPanel } from "@/components/simula/config-panel";
-import { Duo, DuoRevoir } from "@/components/simula/duo";
-import { JournalPanel } from "@/components/simula/journal-panel";
-import { ResultsPanel } from "@/components/simula/results-panel";
-import { ScanPanel } from "@/components/simula/scan-panel";
+import { ConfigPanel } from "@/components/vena/config-panel";
+import { Duo, DuoRevoir } from "@/components/vena/duo";
+import { JournalPanel } from "@/components/vena/journal-panel";
+import { ResultsPanel } from "@/components/vena/results-panel";
+import { ScanPanel } from "@/components/vena/scan-panel";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { useSim } from "@/lib/store";
 import { cn } from "@/lib/utils";

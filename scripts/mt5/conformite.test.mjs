@@ -104,7 +104,7 @@ test("un rapport joué sur le mauvais symbole est signalé, pas exploité", () =
   // dix journées communes sur 94, et la conclusion — à tort — qu'une correction récente
   // avait tout cassé. Une heure perdue, et une accusation portée contre du code sain.
   const faux = contexteRapport(
-    "Expert: Sivula_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
+    "Expert: Véna_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
   );
   assert.equal(faux.attendu, "HongKong50");
   assert.equal(faux.symbole, "#Germany40");
@@ -112,14 +112,14 @@ test("un rapport joué sur le mauvais symbole est signalé, pas exploité", () =
 
   // le « # » du courtier et la casse ne doivent pas déclencher de faux positif
   const bon = contexteRapport(
-    "Expert: Sivula_Japan225_Achat_mediane_10_SL2_RR1p5_260904_0930\nSymbole: #Japan225\n",
+    "Expert: Véna_Japan225_Achat_mediane_10_SL2_RR1p5_260904_0930\nSymbole: #Japan225\n",
   );
   assert.equal(bon.concorde, true);
 });
 
 test("l'avertissement remonte au lecteur de rapport", () => {
   const r = lireRapportMt5(
-    "Expert: Sivula_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
+    "Expert: Véna_HongKong50_Achat_mediane_6_SL0p8_RR1p5_260904_0930\nSymbole: #Germany40\n",
   );
   assert.ok(r.avertissements.some((a) => /symbole DU GRAPHIQUE/.test(a)),
     "aucun avertissement sur le symbole");
@@ -361,7 +361,7 @@ test("le spread écrit est celui de la PREMIÈRE M1 de l'heure, pas de l'heure p
   // spreads sur 462 s'écartaient de ce que lit le robot, TOUS sur la bougie de 03:00,
   // jusqu'à 38 fois trop bas (0,00100 écrit contre 0,03793 payé). Sur GOLD, 16 sur
   // 2 933, tous à 00:00 ou 01:00.
-  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../../Export_H1_Vena.mq5", import.meta.url), "utf8");
   assert.match(src, /if\(iM1 < nM1 && m1\[iM1\]\.time < r\[i\]\.time \+ 3600\) sp = m1\[iM1\]\.spread;/,
     "le spread n'est pas repris sur la première M1 de l'heure");
   assert.doesNotMatch(src, /m1\[iM1\]\.time == r\[i\]\.time\) sp =/,
@@ -376,7 +376,7 @@ test("la séance se lit en chevauchement, et seulement dans l'état d'heure d'é
   // 04:00 (« market closed ») et entre à 05:00. Ne tester que la minute d'ouverture de
   // la bougie écartait 04:00 : 38 des 67 trades tombaient sur une bougie tenue pour
   // fermée, et le résultat changeait de signe — +6,63 R au testeur, -5,30 au moteur.
-  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../../Export_H1_Vena.mq5", import.meta.url), "utf8");
   const f = src.slice(src.indexOf("bool Traitable("), src.indexOf("bool Exporter("));
   assert.match(f, /int deb = d\.hour \* 60 \+ d\.min, fin = deb \+ 60;/,
     "la bougie n'est pas testée sur l'heure entière");
@@ -390,11 +390,11 @@ test("la séance se lit en chevauchement, et seulement dans l'état d'heure d'é
 });
 
 test("le relevé de symboles porte les colonnes que l'application cherche", () => {
-  // Sivula bascule sur le format « export brut de terminal » quand l'en-tête contient
+  // Véna bascule sur le format « export brut de terminal » quand l'en-tête contient
   // Symbol ET Point, et n'y trouve la contrainte que sous le nom StopsLevel. Renommer
   // une seule de ces colonnes fait relire le fichier comme un relevé retraité, sans
   // minimum de stop — et le contrôle de faisabilité redevient muet, en silence.
-  const src = readFileSync(new URL("../../Sivula_Releve.mq5", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../../Vena_Releve.mq5", import.meta.url), "utf8");
   // trois fragments depuis que le relevé porte l'heure et les tailles de contrat
   const entete = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"\s*\n?\s*"([^"]*)"/);
   assert.ok(entete, "en-tête introuvable dans le script");
@@ -408,7 +408,7 @@ test("le relevé de symboles porte les colonnes que l'application cherche", () =
   // le séparateur doit être le point-virgule : l'analyseur ne lit que celui-là
   assert.ok(!/FileWriteString\(f, "[^"]*,[^"]*Point/.test(src),
     "l'en-tête semble séparé par des virgules");
-  // Les colonnes ajoutées viennent APRÈS celles que Sivula cherche. Le lecteur travaille
+  // Les colonnes ajoutées viennent APRÈS celles que Véna cherche. Le lecteur travaille
   // par nom, mais une colonne insérée AVANT StopsLevel déplacerait la contrainte pour
   // tout lecteur positionnel — et l'ordre est ce que le fichier promet.
   for (const c of ["heure_releve", "TickValue", "TickSize", "VolumeMin", "VolumeStep", "Statut"]) {
@@ -420,16 +420,18 @@ test("le relevé de symboles porte les colonnes que l'application cherche", () =
 // ————— LA LISTE NE VIT PAS DANS LE .mq5 —————
 // C'est le point qui décide de l'utilisabilité : en dur, il faut rouvrir MetaEditor et
 // recompiler à chaque changement de sélection, pour un geste hebdomadaire.
-for (const fichier of ["Sivula_Releve.mq5", "Export_H1_Sivula.mq5"]) {
+for (const fichier of ["Vena_Releve.mq5", "Export_H1_Vena.mq5"]) {
   test(`${fichier} prend sa liste dans un fichier, en priorité`, () => {
     const src = readFileSync(new URL("../../" + fichier, import.meta.url), "utf8");
-    assert.match(src, /input string\s+InpFichierListe\s*=\s*"Sivula\\\\symboles\.txt"/,
-      "le chemin par défaut doit être celui que Sivula écrit");
+    // « vena », sans accent : un dossier est un CHEMIN. Windows et macOS ne normalisent
+    // pas le « é » de la même façon, et le dossier devient introuvable au transfert.
+    assert.match(src, /input string\s+InpFichierListe\s*=\s*"vena\\\\symboles\.txt"/,
+      "le chemin par défaut doit être celui que Véna écrit, et sans accent");
     // l'en-tête commenté doit être ignoré SANS jeter les noms à dièse (#USNDAQ100) :
     // le commentaire, c'est « // » ou un dièse suivi d'une espace, jamais le seul
     // premier caractère — la règle fine a son propre test plus bas
     assert.match(src, /StringGetCharacter\(l, 1\) == ' '/,
-      "l'en-tête commenté écrit par Sivula doit être ignoré sans jeter les noms à dièse");
+      "l'en-tête commenté écrit par Véna doit être ignoré sans jeter les noms à dièse");
     // priorité : la liste du fichier l'emporte sur la saisie
     assert.match(src, /rien à faire : la liste du fichier l'emporte/,
       "la branche prioritaire doit exister");
@@ -469,7 +471,7 @@ test("le dièse seul ne marque plus un commentaire dans les listes", () => {
   // Chez FxPro les indices s'appellent #USNDAQ100 : un lecteur qui saute les lignes
   // à dièse jetait dix-neuf noms sur vingt, en silence. Un commentaire, c'est « // »
   // ou un dièse SUIVI D'UNE ESPACE — un nom ne contient jamais d'espace.
-  for (const f of ["Export_H1_Sivula.mq5", "Sivula_Releve.mq5"]) {
+  for (const f of ["Export_H1_Vena.mq5", "Vena_Releve.mq5"]) {
     const src = readFileSync(new URL("../../" + f, import.meta.url), "utf8");
     assert.ok(!src.includes("StringGetCharacter(l, 0) == '#') continue"),
       f + " : le premier caractère ne peut pas être le critère");
@@ -483,7 +485,7 @@ test("le dièse seul ne marque plus un commentaire dans les listes", () => {
 });
 
 test("le script de bougies récapitule ses échecs avec leur raison", () => {
-  const src = readFileSync(new URL("../../Export_H1_Sivula.mq5", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../../Export_H1_Vena.mq5", import.meta.url), "utf8");
   // un Print par symbole se perd dans le journal : le bilan doit être groupé à la
   // fin, et distinguer les quatre issues — exporté, conservé, nom inconnu, échec
   assert.match(src, /TERMINÉ : %d demandé\(s\) — %d exporté\(s\), %d déjà à jour conservé\(s\)/);
@@ -500,8 +502,8 @@ test("le script de bougies récapitule ses échecs avec leur raison", () => {
 // ne les tenait ensemble. On extrait le VRAI lecteur de la page et on lui donne une ligne
 // au format que le script produit — colonnes ajoutées comprises. C'est le seul contrôle
 // qui interdise à l'un de dériver de l'autre.
-test("le relevé écrit par Sivula_Releve se relit dans l'application", () => {
-  const page = readFileSync(new URL("../../Sivula.dc.html", import.meta.url), "utf8");
+test("le relevé écrit par Vena_Releve se relit dans l'application", () => {
+  const page = readFileSync(new URL("../../Vena.dc.html", import.meta.url), "utf8");
   const i = page.indexOf("  analyserBareme(txt) {");
   const j = page.indexOf("\n    return table;\n  }", i);
   assert.ok(i > 0 && j > i, "analyserBareme introuvable dans la page");
@@ -509,7 +511,7 @@ test("le relevé écrit par Sivula_Releve se relit dans l'application", () => {
   const analyser = new Function(corps + " return analyserBareme;")();
 
   // l'en-tête EXACT du script, lu dans le script lui-même
-  const src = readFileSync(new URL("../../Sivula_Releve.mq5", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../../Vena_Releve.mq5", import.meta.url), "utf8");
   const m = src.match(/FileWriteString\(f, "([^"]+)"\s*\n?\s*"([^"]*)"\s*\n?\s*"([^"]*)"/);
   const entete = (m[1] + m[2] + m[3]).replace(/\\r\\n/, "");
 
@@ -527,7 +529,7 @@ test("le relevé écrit par Sivula_Releve se relit dans l'application", () => {
   assert.equal(t.GOLD.lot, 100);
   assert.equal(t.GOLD.bid, 2350.12);
   assert.equal(t.GOLD.stopsLevel, 200,
-    "StopsLevel est la raison d'être du relevé : sans lui Sivula compte des trades que "
+    "StopsLevel est la raison d'être du relevé : sans lui Véna compte des trades que "
     + "le courtier n'aurait jamais acceptés");
   // SwapMode 2 (montant par lot) doit ressortir en convention interne 1
   assert.equal(t.GOLD.swapType, 1);
