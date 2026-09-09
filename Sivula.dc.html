@@ -17579,8 +17579,18 @@ GROUPES = {
           },
         };
       })(),
+      // ————— LE PIED LÉGAL NE NOMME PERSONNE —————
+      //
+      // Il est hors du <main> : il s'affiche sur TOUTES les pages, en bas de l'écran.
+      // Une adresse de courriel posée là part dans toutes les captures — c'est le
+      // motif pour lequel elle a déjà quitté le pied de sauvegarde. Elle reste dans
+      // le tiroir de l'espace, dans le pied d'intendance du Portefeuille, dans
+      // l'infobulle de la pastille et sur les fichiers exportés.
+      //
+      // La branche d'essai, elle, RESTE : elle ne nomme personne, et distinguer un
+      // essai d'une licence est justement utile dans une capture d'écran.
       piedIdentite: 'Sivula ' + this.VERSION_APP + ' · ' + this.navFamille()
-        + (this.licenceMention() ? ' · ' + this.licenceMention() : ' · version d\u2019essai — aucune licence'),
+        + (this.licenceMention() ? '' : ' · version d\u2019essai — aucune licence'),
       ...(() => {
         // l'état des trois sections repliées : lisible sans les ouvrir
         const rep = s.tirRep || '';
