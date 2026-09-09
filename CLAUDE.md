@@ -79,6 +79,28 @@ Le dépôt GitHub s'appelle encore `hubertguillaume44-netizen/simula` : il se re
 depuis GitHub, pas depuis le code. Les deux liens qui le citent (`README.md`,
 `PASSATION.md`) suivront ce renommage-là.
 
+## Déploiement — la configuration vit dans le dépôt
+
+`netlify.toml` porte les trois réglages : commande de construction, `publish = "dist"`,
+répertoire de fonctions. **Il fait foi contre l'interface Netlify.** Un réglage posé dans
+une interface ne se relit pas, ne se révise pas en revue, et personne ne sait qu'il existe
+jusqu'au jour où il casse — c'est arrivé : l'interface annonçait `dist/client` et le dépôt
+construisait pour Vercel, deux sorties dont aucune n'existait.
+
+`vite.config.ts` construit avec `nitro({ preset: "netlify" })`. Le préréglage dépose les
+fichiers statiques dans `dist/` et le serveur SSR dans `.netlify/functions-internal/`,
+que Netlify déploie **en plus** du répertoire `netlify/functions`.
+
+**Les deux fonctions écrites à la main** (`licence.mjs`, `usage.mjs`) déclarent leurs
+chemins `/api/licence` et `/api/usage`. Le serveur SSR déclare `path: "/*"` et n'exclut
+que `/.netlify/*` : les deux se recouvrent. `netlify.toml` tranche par deux redirections
+`force = true` vers `/.netlify/functions/…`, cible hors de portée du fourre-tout SSR — on
+ne parie pas sur une préséance non documentée quand une licence qui tombe sur le SSR rend
+404 au webhook de paiement.
+
+`scripts/deploiement-netlify.test.mjs` lie ces réglages entre eux : préréglage, répertoire
+publié, présence des deux fonctions, et une redirection forcée par chemin déclaré.
+
 ## Le test qui tient la convention
 
 `scripts/app/nom-vena.test.mjs` échoue si l'ancien nom réapparaît ailleurs que dans la

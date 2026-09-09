@@ -124,7 +124,7 @@ export default defineConfig(({ command, isPreview }) => ({
     tailwindcss(),
     tanstackStart(),
     ...(command === "build" || isPreview
-      ? [nitro({ preset: "vercel", serverDir: "./server" })]
+      ? [nitro({ preset: "netlify", serverDir: "./server" })]
       : []),
     viteReact(),
   ],

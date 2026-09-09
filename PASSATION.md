@@ -264,6 +264,32 @@ travers un résolveur d'alias, pour trois fonctions. Le générateur vit désorm
 — et le harnais ne dépend plus du site du tout. C'est le seul acquis de l'épisode, et il
 est bon à garder : la vérité terrain du comparateur ne peut plus changer par ricochet.
 
+## Deux chaînes de travail sur le même dépôt : d'où viennent les régressions
+
+Le site public et l'application de mesure n'avancent pas toujours par le même canal, et
+un fichier peut arriver abîmé d'une chaîne qu'on ne suit pas. Savoir d'où vient une
+régression évite de la réparer deux fois — et évite surtout de la chercher dans son
+propre travail.
+
+**`scripts/grok-pwa-shared.mjs`, commit `c90be69` (« feat: chrome PWA partagé »).** Les
+entités HTML de `escapeHtml` et `unescapeHtml` sont arrivées **décodées dans le source** :
+`&amp;` y était devenu `&`, `&lt;` un `<`, `&quot;` un guillemet droit. Deux défauts
+emboîtés :
+
+1. Trois guillemets à la suite ligne 20 — le module ne s'analysait pas, `vite.config.ts`
+   ne se chargeait pas, la construction s'arrêtait sur `[PARSE_ERROR] Unterminated
+   string`.
+2. Et, invisible tant que le premier tenait, **trois des cinq remplacements réduits à des
+   opérations nulles** (`&` → `&`). `escapeHtml` ne protégeait donc plus rien : un titre
+   ou une description de `src/lib/og/site.json` pouvait fermer l'attribut `content="…"` et
+   injecter du balisage dans le `<head>` servi.
+
+Le second ne se voyait pas en lisant l'erreur, ni en faisant passer un test : il fallait
+lire **pourquoi** ces lignes existaient. C'est le genre de défaut qu'un renommage ou un
+formatage automatique produit en passant, et qu'aucune suite de tests n'attrape tant que
+le fichier ne s'analyse pas. Corrigé au commit `49eea92`, couvert depuis par
+`scripts/echappement-html.test.mjs`, qui refuse tout `.replaceAll("X", "X")`.
+
 ## Fichiers de cette passation
 
 - `moteur.js` — le moteur : chargement et nettoyage des CSV, indicateurs, 11 filtres, types

@@ -1,0 +1,55 @@
+# ————————————————————————————————————————————————————————————————————————
+# LA CONFIGURATION DE DÉPLOIEMENT VIT ICI, PAS DANS L'INTERFACE NETLIFY.
+#
+# Un réglage posé dans une interface ne se relit pas, ne se révise pas en revue, et
+# personne ne sait qu'il existe jusqu'au jour où il casse. C'est exactement ce qui
+# s'est produit : l'interface annonçait « dist/client » et « netlify/functions » quand
+# le dépôt construisait pour Vercel — aucune des deux sorties n'existait, et la panne
+# ne se voyait qu'au déploiement.
+#
+# Ce fichier fait foi. Les réglages équivalents de l'interface doivent être laissés
+# vides ou alignés : en cas de désaccord, c'est celui-ci qui gagne.
+# ————————————————————————————————————————————————————————————————————————
+
+[build]
+  # la même commande qu'en local : `vite build` puis la migration de base, qui se saute
+  # d'elle-même quand DATABASE_URL n'est pas posée
+  command = "npm run build"
+  # ce que `nitro({ preset: "netlify" })` produit : les fichiers statiques, à la racine.
+  # Pas « dist/client » — ce dossier n'existe sous aucun préréglage.
+  publish = "dist"
+
+[build.environment]
+  # la construction locale tourne sur Node 22 ; sans cette ligne Netlify choisit sa
+  # propre version par défaut, qui dérive avec le temps
+  NODE_VERSION = "22"
+
+[functions]
+  # LES DEUX FONCTIONS ÉCRITES À LA MAIN. Le préréglage nitro dépose le serveur SSR
+  # dans .netlify/functions-internal/, que Netlify déploie EN PLUS de ce répertoire —
+  # les deux jeux coexistent, ils ne se remplacent pas.
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# ————— LE ROUTAGE DES DEUX FONCTIONS, ÉCRIT PLUTÔT QUE SUPPOSÉ —————
+#
+# Le serveur SSR déclare `path: "/*"` et n'exclut que `/.netlify/*`. « /api/licence »
+# correspond donc à la fois à la fonction de licence et au fourre-tout du SSR, et
+# l'ordre de préséance entre deux fonctions qui se recouvrent n'est pas quelque chose
+# sur quoi il faut parier : une licence qui tombe sur le SSR rend 404 au webhook de
+# paiement, et ça ne se voit qu'au moment où un client paie.
+#
+# `force = true` : la règle s'applique même si autre chose correspondrait aussi.
+# La cible `/.netlify/functions/…` est dans l'`excludedPath` du SSR : elle ne peut
+# pas lui revenir.
+[[redirects]]
+  from = "/api/licence"
+  to = "/.netlify/functions/licence"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/usage"
+  to = "/.netlify/functions/usage"
+  status = 200
+  force = true
