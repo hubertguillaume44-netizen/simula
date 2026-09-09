@@ -527,6 +527,13 @@
    ]
   },
   {
+   "terme": "oublier le code sur cet ordinateur",
+   "texte": "Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Ouvrir dans un onglet",
    "texte": "Dans une vue intégrée, le navigateur n’accorde pas la protection du stockage : elle se demande depuis un onglet à lui.",
    "vues": [
@@ -629,13 +636,6 @@
    "texte": "Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.",
    "vues": [
     "Historique"
-   ]
-  },
-  {
-   "terme": "retirer ce code de cet ordinateur",
-   "texte": "Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.",
-   "vues": [
-    "Toutes les pages"
    ]
   },
   {

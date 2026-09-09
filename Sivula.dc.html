@@ -805,7 +805,7 @@
           </div>
           <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
             <span style="font-size:13px;line-height:1.55">{{ licEtatTxt }}</span>
-            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">retirer ce code de cet ordinateur</button>
+            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
           </sc-if>
           <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
             <span style="font-size:12px;line-height:1.55;color:var(--color-neutral-700)">Collez la clé reçue par courriel, avec l'adresse utilisée à l'achat. Elle s'ouvre ici même, sans compte et sans réseau : elle est signée, l'application la vérifie seule avec la clé publique embarquée dans cette page.</span>
@@ -1231,10 +1231,15 @@
           nom du fichier — et il rend compte de ce qu'il a rangé.
           Pas de nouvel identifiant : les trois champs nommés restent la cible du
           glisser-déposer de la page, celui-ci n'a besoin que de son onChange.
+
+          Elle n'est plus la SEULE cible : `surDepot` trie de la même façon, donc
+          lâcher n'importe où sur la page donne exactement le même résultat. La zone
+          reste parce qu'une cible invisible ne s'offre pas — mais son texte dit
+          désormais qu'on n'est pas obligé de la viser.
         -->
         <label class="zdep" style="margin-top:11px">
           <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Glissez ici tous vos CSV d’un coup</span>
-          <span style="font-size:11px;line-height:1.4" class="text-muted">Sivula reconnaît seul le relevé, le H1 et le M1</span>
+          <span style="font-size:11px;line-height:1.4" class="text-muted">Sivula reconnaît seul le relevé, le H1 et le M1 — ou lâchez-les n’importe où sur la page</span>
           <input type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoixTout }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
         </label>
         </div>
@@ -16971,6 +16976,14 @@ GROUPES = {
           aLancement: TARIF === 'lancement',
           mentionLancement: 'Tarif de lancement, pour les cinquante premiers abonnés — garanti tant que votre abonnement court.',
           // ————— LE CODE D'ACCÈS : plan et date EN CLAIR, motif en clair au refus —————
+          //
+          // `licEtatTxt` NOMME le titulaire, et c'est voulu — ne le retirez pas par
+          // zèle lors d'un nettoyage des affichages nominatifs. La mention a quitté le
+          // pied de sauvegarde et le pied légal parce que ceux-là sont PERMANENTS, sur
+          // toutes les pages, et partent donc dans toutes les captures. Ici, on vient
+          // exprès : c'est la carte où l'on colle et où l'on relit son propre code, et
+          // un client qui vérifie son abonnement doit voir à quel compte il est
+          // rattaché. Décision prise, pas oubli.
           licValide: !!(lic && lic.ok),
           licSaisie: !(lic && lic.ok),
           licEtatTxt: lic && lic.ok
@@ -17436,10 +17449,18 @@ GROUPES = {
       setRecherche: (e) => this.setState({ recherche: e.target.value }),
       surSurvol: (e) => { e.preventDefault(); if (!s.survol) this.setState({ survol: true }); },
       surSortie: (e) => { e.preventDefault(); this.setState({ survol: false }); },
+      // ————— LA PAGE ENTIÈRE EST LA ZONE DE TRI —————
+      //
+      // Le même geste avait deux comportements selon l'endroit où l'on lâchait : dans
+      // la zone de clôture il triait par mesure, ailleurs sur la page il routait le M1
+      // par le nom de fichier et refusait un relevé par « aucune bougie lisible ». Un
+      // fichier tombé deux centimètres à côté produisait un refus incompréhensible.
+      // `accepterTout` des deux côtés : la zone de clôture n'est plus que la cible
+      // visible du même tri, et le compte rendu groupé s'affiche dans les deux cas.
       surDepot: (e) => {
         e.preventDefault();
         this.setState({ survol: false });
-        this.accepterFichiers([...(e.dataTransfer.files || [])]);
+        this.accepterTout([...(e.dataTransfer.files || [])]);
       },
       surChoix: (e) => this.accepterFichiers([...(e.target.files || [])]),
       // le palier gratuit, dit AVANT le dépôt : « 3 sur 3 instruments personnels »
