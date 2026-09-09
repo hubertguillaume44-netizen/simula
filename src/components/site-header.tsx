@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { to: "/", label: "Accueil" },
   { to: "/methode", label: "Méthode" },
-  { to: "/pourquoi", label: "La démonstration" },
-  { to: "/simuler", label: "Simulateur" },
+  { to: "/pourquoi", label: "Pourquoi" },
+  // « Démonstration » et non « Simulateur » : cette page montre le raisonnement sur des
+  // séries d'exemple. Le produit s'ouvre par le bouton, à droite.
+  { to: "/simuler", label: "Démonstration" },
 ] as const;
 
 export function SiteHeader({ compact = false }: { compact?: boolean }) {
@@ -37,12 +39,16 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
               {l.label}
             </Link>
           ))}
-          <Link
-            to="/simuler"
+          {/* L'APPLICATION, PAS LA VITRINE. `/app` sert Vena.solo.html tel quel : un
+              fichier unique, hors du routeur du site — d'où un <a> et non un <Link>,
+              qui tenterait une navigation interne vers une route qui n'existe pas.
+              C'est ce bouton qu'un client qui a payé va chercher. */}
+          <a
+            href="/app"
             className="inline-flex min-h-11 items-center bg-steel px-4 font-display text-sm font-semibold tracking-wide text-panel no-underline hover:bg-steel-ink"
           >
-            Essayer
-          </Link>
+            Ouvrir mon outil
+          </a>
         </nav>
       </div>
     </header>

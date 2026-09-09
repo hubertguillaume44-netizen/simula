@@ -25,11 +25,11 @@ function Home() {
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <Link to="/simuler" className="no-underline text-ink">
             <Blueprint className="flex h-full flex-col gap-3 p-6 transition-colors duration-150 hover:bg-steel-soft/40">
-              <div className="kicker">Essayer</div>
+              <div className="kicker">Démonstration</div>
               <div className="font-display text-2xl">Scan, backtest et journal</div>
               <p className="text-sm text-muted">
-                Quatre instruments de démonstration pour commencer, puis vos propres exports
-                horaires en glisser-déposer.
+                Quatre instruments d’exemple, pour voir comment l’outil raisonne. Vos propres
+                exports horaires s’ouvrent dans l’application.
               </p>
             </Blueprint>
           </Link>
@@ -55,9 +55,18 @@ function Home() {
           </Link>
         </div>
         <div className="mt-10">
+          {/* Le bouton d'entrée ouvre l'APPLICATION — cinq pages, le moteur complet,
+              vos données. Il menait à la démonstration, qui ne peut pas la remplacer. */}
           <Button asChild>
-            <Link to="/simuler">Ouvrir le simulateur</Link>
+            <a href="/app">Ouvrir mon outil</a>
           </Button>
+          <p className="mt-3 text-sm text-muted">
+            Pas encore de données ?{" "}
+            <Link to="/simuler" className="underline decoration-line underline-offset-2">
+              voir la démonstration
+            </Link>{" "}
+            — quatre séries d’exemple, pour montrer le raisonnement.
+          </p>
         </div>
       </main>
       <SiteFooter />

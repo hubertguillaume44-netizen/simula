@@ -31,6 +31,21 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# ————— L'APPLICATION, SERVIE TELLE QUELLE SOUS /app —————
+#
+# `dist/app/index.html` est le fichier unique produit par `scripts/app/solo.mjs` : le
+# moteur complet, ses cinq pages, aucun voisin requis. Il ne passe pas par le rendu du
+# site — c'est un fichier statique, servi octet pour octet.
+#
+# La règle est écrite plutôt que laissée au hasard des URL propres : le serveur SSR
+# déclare `path: "/*"`, et une application qui tomberait sur lui rendrait la vitrine à
+# la place du produit.
+[[redirects]]
+  from = "/app"
+  to = "/app/index.html"
+  status = 200
+  force = true
+
 # ————— LE ROUTAGE DES DEUX FONCTIONS, ÉCRIT PLUTÔT QUE SUPPOSÉ —————
 #
 # Le serveur SSR déclare `path: "/*"` et n'exclut que `/.netlify/*`. « /api/licence »

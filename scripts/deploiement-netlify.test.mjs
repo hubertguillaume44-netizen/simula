@@ -83,10 +83,17 @@ test("chaque fonction a une redirection forcée vers son point d’entrée", () 
   }
 });
 
-test("la cible des redirections est hors de portée du fourre-tout SSR", () => {
-  // c’est ce qui rend la règle sûre : `/.netlify/*` est dans l’excludedPath du serveur
+test("chaque redirection vise une cible que le SSR ne peut pas avaler", () => {
+  // Deux familles, deux raisons d’être sûres :
+  //   — une FONCTION : `/.netlify/*` est dans l’excludedPath du serveur, il ne la voit pas ;
+  //   — un FICHIER publié : `preferStatic: true` fait gagner le statique sur la fonction,
+  //     et le fichier doit exister, sinon la règle renvoie vers un 404.
   for (const r of toml.redirects || []) {
-    assert.match(r.to, /^\/\.netlify\/functions\//,
-      "une cible hors de /.netlify/ pourrait revenir au SSR : " + r.to);
+    if (/^\/\.netlify\/functions\//.test(r.to)) continue;
+    assert.match(r.to, /^\/app\/index\.html$/,
+      "cible ni fonction ni fichier publié connu : " + r.to);
+    // ce fichier est produit par la construction : c’est `publier-solo.mjs` qui l’écrit
+    assert.match(lire("scripts/app/publier-solo.mjs"), /dist", "app", "index\.html"/,
+      "la cible statique doit être produite par la construction");
   }
 });

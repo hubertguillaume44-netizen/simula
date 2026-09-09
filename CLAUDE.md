@@ -101,6 +101,36 @@ ne parie pas sur une préséance non documentée quand une licence qui tombe sur
 `scripts/deploiement-netlify.test.mjs` lie ces réglages entre eux : préréglage, répertoire
 publié, présence des deux fonctions, et une redirection forcée par chemin déclaré.
 
+## Deux entrées, deux promesses
+
+| Adresse | Ce que c'est | Ce qu'elle promet |
+|---|---|---|
+| **`/app`** | `Vena.solo.html` servi tel quel, hors du routeur du site | « ouvrir mon outil » — cinq pages, le moteur complet, vos données |
+| **`/simuler`** | une page du site, en React | « voir comment ça raisonne » — quatre séries d'exemple |
+
+La démonstration a sa raison d'être : elle montre le raisonnement à quelqu'un qui n'a pas
+encore de données. Elle ne remplace pas le produit et ne doit pas s'en donner l'air —
+aucun lien vers `/simuler` ne promet le produit, et la page renvoie vers `/app` dès qu'il
+s'agit de mesurer ses propres exports.
+
+`/app` n'étant pas une route du routeur, on y va par un `<a href>` : un `<Link>`
+tenterait une navigation interne vers une route qui n'existe pas.
+
+**La construction REFAIT l'application avant de la publier.** `npm run build` appelle
+`scripts/app/publier-solo.mjs`, qui relance `solo.mjs`, vérifie que la version de
+l'artefact est celle de `Vena.dc.html`, puis copie dans `dist/app/index.html`. Publier le
+`Vena.solo.html` du dépôt aurait servi, un jour ou l'autre, une version figée divergeant
+de la source — la même panne que le préréglage de déploiement, une strate plus haut.
+
+**`_ds/` n'est pas dans le dépôt.** L'application charge sa feuille de style et son paquet
+depuis `_ds/industry-…/`. Sans eux, la page se charge mais la mise en page s'effondre :
+ce n'est pas « seulement l'habillage ». `publier-solo.mjs` le dit à chaque construction.
+Pour le corriger : déposer les deux fichiers dans `public/_ds/industry-…/`, Vite les
+recopie dans `dist/` tout seul.
+
+**React et React-DOM viennent d'unpkg.com**, chargés par le runtime DC au démarrage. Un
+réseau qui bloque unpkg laisse l'application vide.
+
 ## Le test qui tient la convention
 
 `scripts/app/nom-vena.test.mjs` échoue si l'ancien nom réapparaît ailleurs que dans la

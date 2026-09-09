@@ -37,8 +37,11 @@ function Simuler() {
           <div>
             <h1 className="font-display text-4xl md:text-5xl">Testez une règle, pas une courbe.</h1>
             <p className="mt-2 max-w-prose text-sm text-muted">
-              Version en ligne : quatre séries de démonstration. Version perso : glissez vos
-              CSV H1 — ils restent ici, dans ce navigateur.
+              Une démonstration sur quatre séries d’exemple, pour montrer le raisonnement.
+              Pour mesurer vos propres exports horaires,{" "}
+              <a href="/app" className="underline decoration-line underline-offset-2">
+                ouvrez l’application
+              </a>.
             </p>
             <div className="mt-2">
               <DuoRevoir />

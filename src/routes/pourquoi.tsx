@@ -29,7 +29,7 @@ function Pourquoi() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild>
-            <Link to="/simuler">Ouvrir le simulateur</Link>
+            <a href="/app">Ouvrir mon outil</a>
           </Button>
         </div>
       </section>

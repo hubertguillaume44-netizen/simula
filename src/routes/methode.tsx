@@ -101,7 +101,7 @@ function Methode() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
-              <Link to="/simuler">Essayer maintenant</Link>
+              <a href="/app">Ouvrir mon outil</a>
             </Button>
             <Button asChild variant="secondary">
               <Link to="/pourquoi">En savoir plus</Link>
