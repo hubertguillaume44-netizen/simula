@@ -12829,6 +12829,41 @@ GROUPES = {
       }
     });
   }
+  // ————— RENDRE LA MAIN SANS PASSER PAR UNE MINUTERIE —————
+  //
+  // Le calcul tourne dans les workers, qui ne sont pas bridés. Ce qui obligeait à
+  // garder l'onglet devant, c'était la boucle d'orchestration restée sur le fil
+  // principal : elle cédait la main par `setTimeout(0)` une fois par instrument, et
+  // le repli séquentiel une fois par VARIANTE. Or Chrome plafonne les minuteries d'un
+  // onglet caché à une par seconde, puis à une par minute au-delà de cinq minutes
+  // (bridage « intensif ») : sur 44 instruments cela ajoutait jusqu'à trois quarts
+  // d'heure, et le repli séquentiel, lui, s'arrêtait pour de bon.
+  //
+  // Un message de MessageChannel n'est pas une minuterie et n'est pas bridé. Le canal
+  // est créé UNE fois et réutilisé : en fabriquer un par cession fuirait deux ports
+  // par tour, et il y a un tour par variante dans le repli.
+  //
+  // La file garde l'ordre : un message reçu réveille la plus ancienne cession en
+  // attente, jamais une autre.
+  cederLeFil() {
+    if (!this._canalCession) {
+      // navigateur sans MessageChannel : la minuterie reste, bridée mais fonctionnelle.
+      // Aucun navigateur capable de faire tourner Sivula n'est dans ce cas.
+      if (typeof MessageChannel === 'undefined') return new Promise((r) => setTimeout(r, 0));
+      const canal = new MessageChannel();
+      this._cessions = [];
+      // poser onmessage démarre le port : pas de start() à écrire
+      canal.port2.onmessage = () => {
+        const suite = this._cessions.shift();
+        if (suite) suite();
+      };
+      this._canalCession = canal;
+    }
+    return new Promise((r) => {
+      this._cessions.push(r);
+      this._canalCession.port1.postMessage(0);
+    });
+  }
   // suspend la boucle sans la bloquer : on rend la main tant que la pause est tenue
   async attendreReprise() {
     if (!this._pauseScan) return;
@@ -13164,7 +13199,7 @@ GROUPES = {
           for (const x of r.out) out.push(x);
           for (const x of r.echecs) echecs.push(x);
           borner();
-          await new Promise((z) => setTimeout(z, 0));
+          await this.cederLeFil();
         }
       }
       // dernier passage sur l'instrument qui s'achève
@@ -13211,7 +13246,7 @@ GROUPES = {
           this.jetPartiel(archivesProv);
         }
       }
-      await new Promise((r) => setTimeout(r, 0)); // laisse la page respirer
+      await this.cederLeFil(); // laisse la page respirer, sans minuterie
     }
     } catch (e) {
       // panne imprévue : on publie quand même ce qui a été mesuré, avec l'explication
@@ -17982,7 +18017,10 @@ GROUPES = {
           + ' \u00b7 ' + this.duree(ecoule) + ' \u00e9coul\u00e9es'
           + (reste !== null && reste > 1 ? ' \u00b7 reste ~' + this.duree(reste) : '');
         return {
-          scanEtatTxt: coeur + ' \u00b7 gardez cet onglet au premier plan',
+          // La consigne sur la position de la fenêtre est partie : la gêne qu'elle
+          // documentait a été supprimée (voir `cederLeFil`). Une gêne qu'on peut
+          // supprimer ne se documente pas, et pas davantage en version atténuée.
+          scanEtatTxt: coeur,
           // la version courte, pour le rang de l'en-tête : le compte et le reste à
           // attendre. Le texte complet reste en infobulle, il n'est pas perdu.
           scanCourtTxt: Math.min(fait + 1, n) + ' / ' + n
