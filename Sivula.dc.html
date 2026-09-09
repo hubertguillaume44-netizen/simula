@@ -73,6 +73,13 @@
   /* la réserve d'échantillon : un encadré gris, pas un masquage */
   .jvmince { font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
              border: 1px solid var(--color-neutral-400); color: var(--color-neutral-700); padding: 2px 6px; }
+  /* L'entête d'une section du tiroir : titre à gauche, résumé à droite, chevron.
+     Le résumé est ce qui distingue un accordéon qui range d'un accordéon qui cache. */
+  .tsec { cursor: pointer; width: 100%; font: inherit; text-align: left; border: none;
+          background: none; border-top: 1px solid var(--color-divider);
+          padding: 11px 0; display: flex; align-items: baseline; gap: 12px; }
+  .tsec:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+  .tsec:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
   .mpast { cursor: pointer; font-family: var(--font-body); display: inline-flex;
            align-items: baseline; gap: 8px; padding: 5px 11px; border: 1px solid var(--color-divider);
            text-align: left; }
@@ -423,28 +430,35 @@
       <sc-if value="{{ tOngDonnees }}" hint-placeholder-val="{{ true }}">
 
       <!--
-        LE RISQUE EN TÊTE. « Demander la protection » était un lien de corps 11 en
-        dernière ligne, deux écrans plus bas — le seul bouton du panneau qui empêche
-        le navigateur de vider les données, celui qui aurait évité les deux pertes.
-        La persistance s'accorde une fois et ne se redemande jamais : elle se demande
-        AVANT d'avoir 487 configurations en jeu. La jauge remonte à côté de l'état de
-        protection : les deux disent la même chose. Retraits en neutral-700 pleine
-        encre, jamais en opacity : sur du text-muted les deux alphas se multiplient.
+        L'ALERTE HORS ACCORDÉON. Le stockage non protégé est la seule chose de ce
+        tiroir qui demande une action : la replier serait accepter qu'on la manque.
+        Elle porte le volume à droite — « 13 Mo sur 328 Mo » ne s'écrit plus qu'ICI,
+        la section Mémoire qui le répétait a disparu — la jauge, et les trois
+        commandes. Quand le stockage est protégé, la bordure passe en neutre et la
+        demande de protection s'en va ; l'export et l'import restent.
       -->
-      <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:{{ tirRisqueFond }}">
+      <div style="display:flex;flex-direction:column;gap:8px;padding:12px 13px;border:1px solid {{ tirBordAlerte }};margin-bottom:13px">
         <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
           <strong style="font-size:13px">{{ tirRisqueTitre }}</strong>
-          <span style="font-size:11px;margin-inline-start:auto;color:var(--color-neutral-700)">{{ tirJauge }}</span>
+          <span style="font-size:11px;margin-inline-start:auto;font-variant-numeric:tabular-nums" class="text-muted">{{ tirJauge }}</span>
         </div>
-        <span style="font-size:12px;line-height:1.55">{{ tirRisquePhrase }}</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;line-height:1.55" class="text-muted">{{ tirRisquePhrase }}</span>
+        <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ true }}">
+          <div style="height:5px;background:var(--color-neutral-300)">
+            <div style="height:5px;background:{{ placeCouleur }};width:{{ placePart }}"></div>
+          </div>
+        </sc-if>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <sc-if value="{{ aRedemander }}" hint-placeholder-val="{{ false }}">
-            <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ redemanderPersist }}">Demander la protection</button>
+            <button class="btn btn-primary" type="button" style="min-height:1.95rem;font-size:11.5px;padding-inline:11px" onClick="{{ redemanderPersist }}">Demander la protection</button>
           </sc-if>
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ exporterTout }}">Exporter mes données</button>
-          <sc-if value="{{ aTirOnglet }}" hint-placeholder-val="{{ false }}">
-            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px" onClick="{{ tirOuvrirOnglet }}" title="Dans une vue intégrée, le navigateur n’accorde pas la protection du stockage : elle se demande depuis un onglet à lui.">Ouvrir dans un onglet</button>
-          </sc-if>
+          <button class="btn btn-secondary" type="button" style="min-height:1.95rem;font-size:11.5px;padding-inline:11px" onClick="{{ exporterTout }}">Exporter mes données</button>
+          <!-- Un contrôle qui ne peut pas recevoir ce qu'on lui apporte vaut moins que
+               pas de contrôle : c'est un <label> avec son champ invisible par-dessus,
+               comme les zones du cadre MT5. -->
+          <label class="btn btn-secondary" style="min-height:1.95rem;font-size:11.5px;padding-inline:11px;cursor:pointer;position:relative;display:inline-flex;align-items:center">
+            Fichier à importer<input type="file" accept="application/json,.json" onChange="{{ choisirImport }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+          </label>
         </div>
         <sc-if value="{{ aPersistMsg }}" hint-placeholder-val="{{ false }}">
           <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ persistMsg }}</span>
@@ -452,42 +466,12 @@
         <sc-if value="{{ aOngletMsg }}" hint-placeholder-val="{{ false }}">
           <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ ongletMsg }}</span>
         </sc-if>
-        <span style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)">{{ tirExportTxt }}</span>
-      </div>
-
-      <!-- LES TROIS ESPACES, NOMMÉS ET PESÉS. Un basculement d'espace ne doit
-           jamais pouvoir se lire comme un effacement : chaque espace est nommé avec
-           son poids réel. Étanchéité voulue — aucun transfert automatique. -->
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--color-divider)">
-            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Votre licence</span>
-            <span style="font-size:12px;line-height:1.55">{{ licPiedTxt }}</span>
-            <button type="button" class="lien" style="align-self:flex-start;font-size:11px" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
-          </div>
-        </sc-if>
-        <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Espaces de données</span>
-        <div style="display:flex;flex-direction:column">
-          <sc-for list="{{ espacesTiroir }}" as="ed" hint-placeholder-count="3">
-            <div style="display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--color-divider);padding:4px 0;font-size:12px">
-              <span style="flex:1;min-width:0;font-weight:{{ ed.gras }}">{{ ed.nom }}</span>
-              <span class="{{ ed.cls }}" style="font-size:10px;white-space:nowrap">{{ ed.tag }}</span>
-              <span style="font-variant-numeric:tabular-nums;white-space:nowrap" class="text-muted">{{ ed.poids }}</span>
-            </div>
-          </sc-for>
-        </div>
-        <span style="font-size:10px;line-height:1.5" class="text-muted">Trois espaces étanches : rien ne passe de l'un à l'autre sans un export puis un import explicites.</span>
-      </div>
-
-      <!-- la promesse reste dépliée : une promesse repliée ne rassure personne -->
-      <div style="display:flex;flex-direction:column;gap:9px">
-        <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Confidentialité</span>
-        <p style="margin:0;font-size:12px;line-height:1.55"><strong>Vos données ne quittent pas votre navigateur.</strong> <span class="text-muted">Séries, scans, portefeuilles et réglages sont lus et calculés sur votre machine, et enregistrés sur cet appareil seulement. Les seules sorties possibles sont déclenchées par vous et décrites ici : les trois portes ci-dessous, et — si vous saisissez une clé — les tickers envoyés à Finnhub et les titres de presse envoyés au traducteur. En contrepartie, la sauvegarde vous appartient — vider les données du navigateur les supprime définitivement.</span></p>
-        <!-- la réponse de l'import (« Ce fichier ne vient pas de Sivula », « N blocs
-             réimportés ») ne s'affichait que sur Mes décisions : ici, le bouton avait
-             l'air de ne rien faire -->
         <sc-if value="{{ aSauvMsg }}" hint-placeholder-val="{{ false }}">
           <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ sauvMsg }}</span>
+        </sc-if>
+        <span style="font-size:11px;line-height:1.5" class="text-muted">{{ tirExportTxt }}</span>
+        <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ libLibereTxt }}</p>
         </sc-if>
         <sc-if value="{{ aDlgImport }}" hint-placeholder-val="{{ false }}">
           <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-color:var(--color-accent)">
@@ -504,8 +488,6 @@
             <span style="font-size:10px;line-height:1.5" class="text-muted">Fusionner n’écrit que ce qui manque ici. Remplacer écrase l’espace actuel : ce qu’il porte et qui n’est pas dans le fichier est perdu.</span>
           </div>
         </sc-if>
-
-        <!-- PORTE 1 : le fichier chiffré demande d'abord sa phrase — rien n'est lu avant -->
         <sc-if value="{{ aDlgChiffre }}" hint-placeholder-val="{{ false }}">
           <div class="blueprint" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;border-color:var(--color-accent)">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -521,8 +503,90 @@
               <span style="font-size:11px;line-height:1.5;color:var(--color-accent-900)">{{ dlgChiffreErr }}</span>
             </sc-if>
           </div>
+        </sc-if>      </div>
+
+      <!--
+        TROIS SECTIONS REPLIABLES, UNE SEULE OUVERTE À LA FOIS. Chacune porte son
+        résumé à droite quand elle est fermée — « à vie · espace client », « aucune
+        porte ouverte », « 71 blocs, 27 clés » — sinon l'accordéon cache l'information
+        au lieu de la ranger. L'exclusivité garde le tiroir à hauteur d'écran.
+      -->
+      <div style="display:flex;flex-direction:column">
+
+        <button type="button" class="tsec" onClick="{{ basculerSecLic }}"><strong style="font-size:13px;min-width:15ch">Licence et espaces</strong><span style="font-size:11px;flex:1;text-align:right" class="text-muted">{{ resLic }}</span><span style="font-size:12px" class="text-muted">{{ flecheLic }}</span></button>
+        <sc-if value="{{ aSecLic }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:10px;padding:2px 0 15px">
+            <sc-if value="{{ aLicPied }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <span style="font-size:12px;line-height:1.55">{{ licPiedTxt }}</span>
+                <button type="button" class="lien" style="align-self:flex-start;font-size:11px" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
+              </div>
+            </sc-if>
+            <!-- Chaque espace dit COMMENT ON Y ENTRE : c'est la seule information qui
+                 les rend compréhensibles. Sans elle, trois noms et trois poids. -->
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ espacesTiroir }}" as="ed" hint-placeholder-count="3">
+                <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--color-divider)">
+                  <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:16ch">
+                    <span style="font-size:12.5px;line-height:1.4;font-weight:{{ ed.gras }}">{{ ed.nom }}</span>
+                    <span style="font-size:10.5px;line-height:1.4" class="text-muted">{{ ed.entree }}</span>
+                  </span>
+                  <span class="{{ ed.cls }}" style="font-size:10px;white-space:nowrap">{{ ed.tag }}</span>
+                  <span style="font-size:11.5px;white-space:nowrap;font-variant-numeric:tabular-nums" class="text-muted">{{ ed.poids }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font-size:11px;line-height:1.5" class="text-muted">Trois espaces étanches : rien ne passe de l'un à l'autre sans un export puis un import explicites.</span>
+          </div>
         </sc-if>
 
+        <button type="button" class="tsec" onClick="{{ basculerSecSort }}"><strong style="font-size:13px;min-width:15ch">Ce qui sort d’ici</strong><span style="font-size:11px;flex:1;text-align:right" class="text-muted">{{ resSort }}</span><span style="font-size:12px" class="text-muted">{{ flecheSort }}</span></button>
+        <sc-if value="{{ aSecSort }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:11px;padding:2px 0 15px">
+            <p style="margin:0;font-size:12.5px;line-height:1.55"><strong>Vos données ne quittent pas votre navigateur.</strong> <span class="text-muted">Séries, scans, portefeuilles et réglages sont lus, calculés et enregistrés sur cet appareil seulement. Les seules sorties possibles sont les portes ci-dessous, toutes éteintes par défaut.</span></p>
+            <!-- L'ÉTAT DE CHAQUE PORTE, À DROITE. Les deux premières peuvent atteindre
+                 le réseau ; les deux dernières n'écrivent qu'un fichier sur le disque. -->
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--color-divider)">
+                <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:16ch">
+                  <span style="font-size:12.5px;line-height:1.4">Actualités et agenda</span>
+                  <span style="font-size:10.5px;line-height:1.4" class="text-muted">avec une clé : les tickers vers Finnhub, les titres reçus vers le traducteur</span>
+                </span>
+                <span style="font-size:11.5px;white-space:nowrap" class="text-muted">{{ etatPorteNews }}</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--color-divider)">
+                <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:16ch">
+                  <span style="font-size:12.5px;line-height:1.4">Compteur d’usage anonyme</span>
+                  <span style="font-size:10.5px;line-height:1.4" class="text-muted">des nombres, jamais un nom d’instrument ni un résultat</span>
+                </span>
+                <span style="font-size:11.5px;white-space:nowrap" class="text-muted">{{ etatPorteUsage }}</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--color-divider)">
+                <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:16ch">
+                  <span style="font-size:12.5px;line-height:1.4">Sauvegarde chiffrée</span>
+                  <span style="font-size:10.5px;line-height:1.4" class="text-muted">un fichier que vous seul pouvez relire</span>
+                </span>
+                <span style="font-size:11.5px;white-space:nowrap" class="text-muted">éteinte — écrit sur votre disque</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--color-divider)">
+                <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:16ch">
+                  <span style="font-size:12.5px;line-height:1.4">Diagnostic local</span>
+                  <span style="font-size:10.5px;line-height:1.4" class="text-muted">un rapport écrit sur votre disque, jamais envoyé</span>
+                </span>
+                <span style="font-size:11.5px;white-space:nowrap" class="text-muted">éteint — écrit sur votre disque</span>
+              </div>
+            </div>
+        <button type="button" class="rep" onClick="{{ tirBasculeNews }}"><span style="font-size:12px;flex:1"><strong>Actualités &amp; agenda</strong> <span style="color:var(--color-neutral-700)">— {{ tirNewsEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevNews }}</span></button>
+        <sc-if value="{{ tirRepNews }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:2px 0 10px">
+          <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">Facultatif, et déclenché seulement par une clé : Sivula demande à Finnhub les résultats trimestriels et les titres de presse de vos symboles — <strong>seuls les tickers sortent</strong>, jamais vos historiques, vos scans ni vos réglages. Les titres reçus en anglais sont ensuite traduits via MyMemory : <strong>le texte du titre part au service de traduction</strong>, rien d'autre. Sans clé, aucun de ces appels n'est fait.</p>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input class="input" type="password" style="min-height:2rem;height:2rem;font-size:12px;width:24ch" value="{{ cleNews }}" placeholder="clé Finnhub (facultative)" onChange="{{ majCleNews }}">
+            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:11px" onClick="{{ oublierCleNews }}" disabled="{{ sansCleNews }}">Oublier</button>
+          </div>
+          <span style="font-size:11px" class="text-muted">{{ etatCleNews }}</span>
+          </div>
+        </sc-if>
         <!-- PORTE 1 : la sauvegarde chiffrée, transportable — l'utilisateur détient la clé -->
         <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
           <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sauvegarde chiffrée, transportable</span>
@@ -551,11 +615,9 @@
             </div>
           </sc-if>
         </div>
-
         <sc-if value="{{ aSansNom }}" hint-placeholder-val="{{ false }}">
           <label class="radio" style="font-size:12px" title="Pour partager un résultat sans votre adresse — une capture, un envoi à un ami. Le robot exporté, lui, reste toujours à votre nom : c'est l'objet même de la licence nominative."><input type="checkbox" checked="{{ exportSansNomVal }}" onChange="{{ basculerSansNom }}"><span class="dot"></span>Retirer mon nom des exports CSV et JSON</label>
         </sc-if>
-
         <!-- PORTE 2 : le compteur d'usage anonyme, ÉTEINT par défaut -->
         <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
           <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Compteur d’usage anonyme — éteint par défaut</span>
@@ -566,60 +628,19 @@
             <pre style="margin:0;font-family:Consolas,ui-monospace,monospace;font-size:10px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:var(--color-neutral-100);padding:8px 9px;max-height:220px;overflow:auto">{{ usageCharge }}</pre>
           </sc-if>
         </div>
-
         <!-- PORTE 3 : le diagnostic — un téléchargement, pas une télémétrie -->
         <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--color-divider);padding-top:10px">
           <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Fichier de diagnostic — sans réseau</span>
           <span style="font-size:11px;line-height:1.55" class="text-muted">Pour signaler un bogue : ce bouton prépare un fichier texte lisible — versions, navigateur, état du stockage, tailles par instrument (anonymisées), dernières erreurs, signature de la dernière mesure sans le nom de l’instrument. Aucun envoi automatique : c’est un téléchargement. Relisez-le, puis joignez-le à un mail si vous le voulez.</span>
           <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ preparerDiagnosticClic }}">Préparer le fichier de diagnostic</button>
-        </div>
-      </div>
+        </div>          </div>
+        </sc-if>
 
-      <!--
-        LES TROIS AUTRES SUJETS SE REPLIENT en lignes-titres portant leur état : on
-        sait sans ouvrir. Tout le texte est conservé à l'ouverture ; les noms de blocs
-        internes ne s'affichent plus par défaut mais ne disparaissent pas — c'est ce
-        qui permet de comprendre un espace orphelin.
-      -->
-      <div style="display:flex;flex-direction:column">
-        <sc-if value="{{ aCommChamps }}" hint-placeholder-val="{{ false }}">
-          <button type="button" class="rep" onClick="{{ tirBasculeComm }}"><span style="font-size:12px;flex:1"><strong>Commissions du courtier</strong> <span style="color:var(--color-neutral-700)">— {{ tirCommEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevComm }}</span></button>
-          <sc-if value="{{ tirRepComm }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;flex-direction:column;gap:7px;padding:2px 0 10px">
-            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Commissions — {{ nomCompteTiroir }}</span>
-            <p style="margin:0;font-size:12px;line-height:1.5" class="text-muted">Ce que votre courtier prend en plus du spread, par lot et pour un seul côté. Seules les familles présentes dans vos portefeuilles sont listées.</p>
-            <sc-for list="{{ commChamps }}" as="cm" hint-placeholder-count="1">
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <span style="font-size:12px;min-width:14ch">{{ cm.nom }}</span>
-                <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:9ch" value="{{ cm.val }}" onChange="{{ cm.maj }}">
-                <select class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:auto" value="{{ cm.devise }}" onChange="{{ cm.majDevise }}">
-                  <sc-for list="{{ cm.devises }}" as="dv" hint-placeholder-count="2">
-                    <option value="{{ dv.v }}">{{ dv.nom }}</option>
-                  </sc-for>
-                </select>
-              </div>
-            </sc-for>
-            </div>
-          </sc-if>
-        </sc-if>
-        <button type="button" class="rep" onClick="{{ tirBasculeNews }}"><span style="font-size:12px;flex:1"><strong>Actualités &amp; agenda</strong> <span style="color:var(--color-neutral-700)">— {{ tirNewsEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevNews }}</span></button>
-        <sc-if value="{{ tirRepNews }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:6px;padding:2px 0 10px">
-          <p style="margin:0;font-size:12px;line-height:1.55" class="text-muted">Facultatif, et déclenché seulement par une clé : Sivula demande à Finnhub les résultats trimestriels et les titres de presse de vos symboles — <strong>seuls les tickers sortent</strong>, jamais vos historiques, vos scans ni vos réglages. Les titres reçus en anglais sont ensuite traduits via MyMemory : <strong>le texte du titre part au service de traduction</strong>, rien d'autre. Sans clé, aucun de ces appels n'est fait.</p>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input class="input" type="password" style="min-height:2rem;height:2rem;font-size:12px;width:24ch" value="{{ cleNews }}" placeholder="clé Finnhub (facultative)" onChange="{{ majCleNews }}">
-            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:11px" onClick="{{ oublierCleNews }}" disabled="{{ sansCleNews }}">Oublier</button>
-          </div>
-          <span style="font-size:11px" class="text-muted">{{ etatCleNews }}</span>
-          </div>
-        </sc-if>
-        <button type="button" class="rep" onClick="{{ tirBasculeStock }}"><span style="font-size:12px;flex:1"><strong>Contenu du stockage</strong> <span style="color:var(--color-neutral-700)">— {{ tirStockEtat }}</span></span><span style="font-size:11px" class="text-muted">{{ tirChevStock }}</span></button>
-        <sc-if value="{{ tirRepStock }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;flex-direction:column;gap:10px;padding:2px 0 10px">
+        <button type="button" class="tsec" onClick="{{ basculerSecDet }}"><strong style="font-size:13px;min-width:15ch">Détail du stockage</strong><span style="font-size:11px;flex:1;text-align:right" class="text-muted">{{ resDet }}</span><span style="font-size:12px" class="text-muted">{{ flecheDet }}</span></button>
+        <sc-if value="{{ aSecDet }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:11px;padding:2px 0 15px">
         <sc-if value="{{ aStockDiag }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid color-mix(in srgb,var(--color-text) 10%,transparent);padding-top:9px">
-            <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Contenu réel du stockage</span>
-            <strong style="font-family:var(--font-heading);font-size:15px">{{ stockResume }}</strong>
             <span style="font-size:11px;line-height:1.55" class="text-muted">{{ stockVerdict }}</span>
             <sc-for list="{{ stockLignes }}" as="sd" hint-placeholder-count="3">
               <div style="display:flex;gap:10px;align-items:baseline;font-size:11px;border-top:1px solid var(--color-divider);padding-top:4px">
@@ -629,32 +650,6 @@
             </sc-for>
           </div>
         </sc-if>
-        <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start" onClick="{{ ouvrirInventaire }}" title="{{ inventaireAide }}">{{ inventaireBouton }}</button>
-        <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ exporterManquants }}" disabled="{{ sansManquants }}" title="Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.">{{ exporterManquantsTxt }}</button>
-      <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ false }}">
-        <div style="height:1px;background:var(--color-divider)"></div>
-        <div style="display:flex;flex-direction:column;gap:9px">
-          <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Mémoire</span>
-          <div style="height:4px;background:color-mix(in srgb,var(--color-text) 12%,transparent)">
-            <div style="height:100%;background:{{ placeCouleur }};width:{{ placePart }}"></div>
-          </div>
-          <span style="font-size:12px" class="text-muted">{{ placeTxt }}<span style="display:block;font-size:11px">{{ placeDetail }}</span></span>
-          <!--
-            L'état de persistance, séparé de la barre par un filet : « protégé » n'est pas
-            un détail de confort, c'est la différence entre des données qui survivent au
-            remplissage du disque et des données que le navigateur peut jeter sans le dire.
-          -->
-          <sc-if value="{{ aPersistance }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--color-divider);padding-top:8px">
-              <span class="{{ persistCls }}" style="font-size:10px;white-space:nowrap">{{ persistTxt }}</span>
-              <span style="font-size:11px;line-height:1.5;flex:1;min-width:22ch" class="text-muted">{{ persistPhrase }}</span>
-            </div>
-          </sc-if>
-          <sc-if value="{{ aLibLibere }}" hint-placeholder-val="{{ false }}">
-            <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ libLibereTxt }}</p>
-          </sc-if>
-        </div>
-      </sc-if>
       <sc-if value="{{ aInventaire }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:8px">
           <strong style="font-family:var(--font-heading);font-size:15px">Ce qui occupe la mémoire</strong>
@@ -672,11 +667,12 @@
           </sc-for>
           <p style="margin:0;font-size:11px;line-height:1.5" class="text-muted">{{ inventaireNote }}</p>
         </div>
-      </sc-if>
+      </sc-if>            <button class="btn btn-ghost" type="button" style="min-height:2rem;font-size:12px;align-self:flex-start;padding-inline:12px" onClick="{{ preparerDiagnosticClic }}" title="Un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.">Préparer le fichier de diagnostic</button>
           </div>
         </sc-if>
+
         <sc-if value="{{ aRevoirPresentation }}" hint-placeholder-val="{{ false }}">
-          <button type="button" class="rep" style="border-bottom:1px solid var(--color-divider)" onClick="{{ revoirPresentation }}"><span style="font-size:12px;flex:1"><strong>Revoir la présentation</strong></span><span style="font-size:11px" class="text-muted">▸</span></button>
+          <button type="button" class="rep" style="border-top:1px solid var(--color-divider)" onClick="{{ revoirPresentation }}"><span style="font-size:12px;flex:1"><strong>Revoir la présentation</strong></span><span style="font-size:11px" class="text-muted">▸</span></button>
         </sc-if>
       </div>
 
@@ -2980,6 +2976,22 @@
               <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid {{ mesMarqueBord }};color:{{ mesMarqueEncre }};padding:1px 6px;white-space:nowrap">{{ mesMarque }}</span>
             </div>
             <span style="font-size:12px;line-height:1.55" class="text-muted">{{ mesTexte }}</span>
+            <sc-if value="{{ mesAChamps }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ mesChamps }}" as="mc" hint-placeholder-count="2">
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <span style="font-size:12px;min-width:14ch">{{ mc.nom }}</span>
+                    <input class="input" type="text" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:9ch" value="{{ mc.val }}" onChange="{{ mc.maj }}" onInput="{{ mc.maj }}">
+                    <select class="input" style="min-height:1.9rem;height:1.9rem;font-size:12px;width:auto" value="{{ mc.devise }}" onChange="{{ mc.majDevise }}">
+                      <sc-for list="{{ mc.devises }}" as="dv" hint-placeholder-count="2">
+                        <option value="{{ dv.v }}">{{ dv.nom }}</option>
+                      </sc-for>
+                    </select>
+                  </div>
+                </sc-for>
+                <span style="font-size:11px;line-height:1.5" class="text-muted">{{ mesNote }}</span>
+              </div>
+            </sc-if>
             <sc-if value="{{ mesAAction }}" hint-placeholder-val="{{ true }}">
               <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap">
                 <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11.5px;padding-inline:11px;flex:none" onClick="{{ mesAction }}" title="{{ mesActionAide }}">{{ mesActionTxt }}</button>
@@ -14793,6 +14805,41 @@ GROUPES = {
     }
     return { jvDires: dires, aJvManque: manque.length > 0, jvManque: manque };
   }
+  // ————— LES CHAMPS DE COMMISSION DU COMPTE ACTIF —————
+  //
+  // Une seule construction pour deux endroits : le rang « Comment on mesure » du scan,
+  // où le réglage a sa place, et le tableau des coûts du Portefeuille. Deux formulaires
+  // qui écrivent le même réglage finiraient par ne plus écrire la même chose.
+  //
+  // Une famille n'apparaît que si un portefeuille contient un instrument de cette
+  // famille : régler la commission sur les métaux quand on ne trade que des devises
+  // n'a aucun sens, et allonge la liste pour rien.
+  commChampsDuCompte() {
+    const s = this.state;
+    return this.COURTIERS.filter(([cle]) => cle === this.compteActif)
+        .flatMap(([cle]) => this.CLASSES
+        .filter(([k]) => (s.pfs || []).flatMap((p) => p.syms || [])
+          .some((sym) => this.classeDe(this.ligneCourtier(cle, sym)) === k))
+        .map(([k, lib]) => {
+        const t = (s.comm || {})[cle];
+        const v = t === undefined || t === null ? '' : (typeof t === 'number' ? t : t[k]);
+        return {
+          nom: lib,
+          val: v === undefined || v === null ? '' : v,
+          devise: ((s.commDev || {})[cle] || {})[k] || 'EUR',
+          devises: [{ v: 'EUR', nom: '€' }, { v: 'USD', nom: '$' }, { v: 'SYM', nom: 'sym.' }, { v: 'PCT', nom: '% du notionnel' }],
+          majDevise: (e) => {
+            const av = this.state.commDev || {};
+            this.maj({ commDev: { ...av, [cle]: { ...(av[cle] || {}), [k]: e.target.value } } });
+          },
+          maj: (e) => {
+            const av = this.state.comm || {};
+            const ta = typeof av[cle] === 'object' && av[cle] ? av[cle] : {};
+            this.maj({ comm: { ...av, [cle]: { ...ta, [k]: e.target.value === '' ? 0 : Number(e.target.value) } } });
+          },
+        };
+      }));
+  }
   // ————— LES TRADES RÉELS, TELS QUE LE ROBOT LES A ÉCRITS —————
   //
   // Source unique : le journal live (`simula.liveMt5.v1`), rempli par le dépôt des
@@ -17472,10 +17519,11 @@ GROUPES = {
       },
       ...(() => {
         const d = s.stockDiag;
-        if (!d) return { aStockDiag: false, stockLignes: [], stockResume: '', stockVerdict: '' };
+        if (!d) return { aStockDiag: false, stockLignes: [], stockVerdict: '', resDet: 'non mesuré' };
         return { aStockDiag: true,
-          stockResume: d.blocs + (d.blocs > 1 ? ' blocs' : ' bloc') + ' dans IndexedDB \u00b7 '
-            + d.cles + (d.cles > 1 ? ' clés' : ' clé') + ' localStorage',
+          // le résumé de la section repliable : le MÊME chiffre, écrit une seule fois
+          resDet: d.blocs + (d.blocs > 1 ? ' blocs' : ' bloc') + ', '
+            + d.cles + (d.cles > 1 ? ' clés' : ' clé'),
           stockVerdict: d.blocs === 0 && d.cles === 0
             ? 'Le stockage de cette adresse est entièrement vide : le navigateur l\u2019a effacé. '
               + 'Rien n\u2019est récupérable ici — seul un fichier exporté peut rendre vos données.'
@@ -17666,6 +17714,11 @@ GROUPES = {
         const espacesTiroir = ['client', 'perso', 'essai'].map((k2) => {
           const v = pe ? (pe[k2] || 0) : 0;
           return { nom: NOMS_ESP[k2],
+            // COMMENT ON Y ENTRE : c'est la seule information qui rend les trois
+            // espaces compréhensibles. Sans elle, trois noms et trois poids.
+            entree: { client: 's\u2019ouvre avec un code de licence',
+              perso: 's\u2019ouvre avec le verrou propriétaire',
+              essai: 'sans code — séries de démonstration' }[k2] || '',
             gras: k2 === esp ? '700' : '400',
             tag: k2 === esp ? 'espace actif' : '',
             cls: k2 === esp ? 'tag tag-accent' : '',
@@ -18038,9 +18091,7 @@ GROUPES = {
         }
         const d2 = s.stockDiag;
         return {
-          tirRepComm: rep === 'comm', tirBasculeComm: bascule('comm'),
           tirRepNews: rep === 'news', tirBasculeNews: bascule('news'),
-          tirRepStock: rep === 'stock', tirBasculeStock: bascule('stock'),
           tirCommEtat: commEtat,
           tirNewsEtat: this.lireCleNews() ? 'clé enregistrée' : 'sans clé, aucun appel',
           tirStockEtat: d2
@@ -18098,13 +18149,59 @@ GROUPES = {
           redemanderPersist: () => this.reclamerPersistance(true),
           aPersistMsg: !!s.persistMsg,
           persistMsg: s.persistMsg || '',
-          // en vue intégrée, le chemin qui MARCHE est l'onglet propre : le proposer ici,
-          // à côté de la demande qui sera refusée
-          aTirOnglet: this.dansIframe(),
-          tirOuvrirOnglet: () => this.ouvrirEnOnglet(),
+          // « Ouvrir dans un onglet » a quitté le tiroir : c'est une commande de
+          // navigation, pas d'intendance — même motif que son retrait du pied de
+          // sauvegarde. Le message qu'elle produisait reste affiché s'il existe.
           aOngletMsg: !!s.ongletMsg,
           ongletMsg: s.ongletMsg || '',
-          // ————— LE RISQUE EN TÊTE DU TIROIR, et trois sections repliées —————
+          // ————— LES TROIS SECTIONS DU TIROIR, EXCLUSIVES —————
+          //
+          // Une seule ouverte à la fois : le tiroir ne dépasse jamais la hauteur de
+          // l'écran, et rien ne se cherche au défilement. Chaque section fermée porte
+          // SON RÉSUMÉ à droite du titre — sans quoi l'accordéon cache l'information
+          // au lieu de la ranger.
+          //
+          // L'alerte de sauvegarde, elle, reste hors accordéon : c'est la seule chose
+          // du tiroir qui demande une action, et la replier serait accepter qu'on la
+          // manque.
+          ...(() => {
+            const ouv = s.tirSec === undefined ? 'lic' : s.tirSec;
+            const va = (k) => () => this.setState({ tirSec: ouv === k ? '' : k });
+            const l = s.lic;
+            const NOMS_P = { mensuel: 'mensuel', annuel: 'annuel', vie: 'à vie' };
+            const esp = { client: 'espace client', perso: 'espace personnel', essai: 'essai' }[
+              this.cleGlobale('').slice(1)] || 'espace client';
+            // une porte est OUVERTE quand elle peut faire sortir quelque chose : la clé
+            // d'actualités déclenche des appels, le compteur d'usage en envoie. La
+            // sauvegarde chiffrée et le diagnostic n'écrivent qu'un fichier sur le disque.
+            const cleN = !!this.lireCleNews();
+            const usage = !!(this.lireUsage() || {}).actif;
+            const nPortes = (cleN ? 1 : 0) + (usage ? 1 : 0);
+            return {
+              aSecLic: ouv === 'lic', flecheLic: ouv === 'lic' ? '\u25be' : '\u25b8',
+              basculerSecLic: va('lic'),
+              resLic: (l && l.ok ? (NOMS_P[l.plan] || l.plan) : 'sans licence') + ' \u00b7 ' + esp,
+              aSecSort: ouv === 'sort', flecheSort: ouv === 'sort' ? '\u25be' : '\u25b8',
+              basculerSecSort: va('sort'),
+              resSort: nPortes ? this.pl(nPortes, 'porte ouverte', 'portes ouvertes') : 'aucune porte ouverte',
+              aSecDet: ouv === 'det', flecheDet: ouv === 'det' ? '\u25be' : '\u25b8',
+              // « Voir ce qui occupe la mémoire » menait à la section qui le suivait
+              // immédiatement : le bouton est parti, et c'est l'OUVERTURE de la section
+              // qui déclenche le relevé. Sans cela l'inventaire ne se remplirait plus.
+              basculerSecDet: () => {
+                const versDet = ouv !== 'det';
+                this.setState({ tirSec: versDet ? 'det' : '' });
+                if (versDet && !(s.inventaire || []).length && !s.inventaireEnCours) {
+                  this.setState({ inventaireEnCours: true });
+                  this.inventaireStockage();
+                }
+              },
+              // ces deux états se lisent à droite de leur ligne, dans « Ce qui sort d'ici »
+              etatPorteNews: cleN ? 'clé posée — appels possibles' : 'sans clé — aucun appel',
+              etatPorteUsage: usage ? 'allumé' : 'éteint',
+            };
+          })(),
+          // ————— LE RISQUE EN TÊTE DU TIROIR —————
           // « Demander la protection » était un lien de corps 11 en dernière ligne,
           // deux écrans plus bas — le seul bouton qui aurait évité les deux pertes.
           // La persistance s'accorde une fois et ne se redemande jamais : autant la
@@ -18120,7 +18217,10 @@ GROUPES = {
             refusee: 'Le navigateur connaît la protection mais ne l\u2019a pas accordée. Redemandez-la — certains navigateurs ne l\u2019accordent qu\u2019après quelques visites, ou une fois le site mis en favori. En attendant, l\u2019export reste la protection sûre.',
             indisponible: 'Ce navigateur ne propose pas la protection du stockage : il peut effacer ces données après plusieurs jours sans visite, sans prévenir. L\u2019unique parade : exporter après chaque session — le bandeau en pied d\u2019écran le rappelle tant qu\u2019une mesure n\u2019est pas exportée.',
           }[s.persistEtat] || 'Le navigateur peut vider ces données quand le disque se remplit, sans prévenir. Une demande de protection suffit à le lui interdire.',
-          tirRisqueFond: s.persistEtat === 'accordee' ? 'var(--color-neutral-100)' : 'var(--color-accent-100)',
+          // Protégé : bordure neutre, l'alerte devient un état. Sinon : bordure accent,
+          // c'est la seule chose du tiroir qui demande une action.
+          tirBordAlerte: s.persistEtat === 'accordee'
+            ? 'var(--color-divider)' : 'var(--color-accent)',
           // après une suppression, ce chiffre reste figé un moment : le navigateur
           // récupère la place quand il veut, et rien dans la page ne peut l'y forcer
           aLibLibere: !!s.libLibere,
@@ -18171,11 +18271,8 @@ GROUPES = {
             : 'Voir ce qui occupe la mémoire, poste par poste, et libérer ce dont vous n\u2019avez plus besoin.',
         };
       })(),
-      ouvrirInventaire: () => {
-        if (s.inventaire) { this.setState({ inventaire: null }); return; }
-        this.setState({ inventaireEnCours: true });
-        this.inventaireStockage();
-      },
+      // `ouvrirInventaire` est parti avec son bouton : le relevé se déclenche
+      // maintenant à l'ouverture de « Détail du stockage » (voir `basculerSecDet`).
       ...(() => {
         const inv = s.inventaire;
         if (!inv || !inv.length) return { aInventaire: false, inventaire: [], inventaireNote: '' };
@@ -19851,6 +19948,15 @@ GROUPES = {
           : this.pl(durs.length, 'durée maximale', 'durées maximales')
             + (gt.includes('jamais') ? ' et sans limite' : '');
         const ACCENT = 'var(--color-accent-700)', NEUTRE = 'var(--color-neutral-700)';
+        // ————— LES COMMISSIONS, VENUES DE L'INTENDANCE —————
+        // Un réglage de MESURE, pas d'intendance : sa place est ici, à côté des frais
+        // réels, parce que c'est le même sujet — ce que le courtier prélève.
+        const commChamps = this.commChampsDuCompte();
+        const commPosee = commChamps.some((c) => Number(c.val) > 0);
+        const commTxt = !commChamps.length ? 'aucun instrument'
+          : commPosee ? this.pl(commChamps.filter((c) => Number(c.val) > 0).length,
+            'famille renseignée', 'familles renseignées')
+          : 'non renseignées';
         const T = [
           { cle: 'secu', nom: 'Sécurisation, lecture, durée',
             val: nSecuF > 1 ? '\u00d7' + nSecuF : lectTxt.toLowerCase(), calcul: true,
@@ -19882,6 +19988,17 @@ GROUPES = {
             note: frais
               ? 'Ils viennent du relevé déposé pour ce compte : changer de courtier change les chiffres.'
               : 'Ce scan sera marqué « sans frais » dans l\u2019historique — ses chiffres ne se comparent pas à ceux d\u2019un scan qui les compte.' },
+          { cle: 'comm', nom: 'Commissions du courtier',
+            val: commTxt, calcul: commPosee,
+            marque: 'hors calcul', fort: false,
+            texte: 'Ce que votre courtier prend EN PLUS du spread, par lot et pour un'
+              + ' aller-retour. Le relevé MT5 ne le porte pas — aucun terminal ne l\u2019expose —'
+              + ' donc il se saisit une fois par compte, et il se retranche ensuite de chaque'
+              + ' résultat comme les frais réels. Non renseigné, il vaut zéro : les chiffres'
+              + ' sont alors optimistes du montant exact de vos commissions.',
+            aAction: false, actionTxt: '', action: () => {}, actionAide: '',
+            champs: commChamps,
+            note: 'Propres à ' + this.nomCompteActif() + ' — un autre compte a les siennes.' },
           { cle: 'seuils', nom: 'Seuils d\u2019affichage',
             val: nSeuils ? nSeuils + ' actif' + (nSeuils > 1 ? 's' : '') : 'aucun', calcul: false,
             marque: 'hors calcul', fort: false,
@@ -19930,6 +20047,8 @@ GROUPES = {
           mesMarqueEncre: ouvert.fort ? 'var(--color-accent-900)' : 'var(--color-neutral-700)',
           mesTexte: ouvert.texte,
           mesAAction: ouvert.aAction === undefined ? true : ouvert.aAction,
+          mesAChamps: !!(ouvert.champs && ouvert.champs.length),
+          mesChamps: ouvert.champs || [],
           mesActionTxt: ouvert.actionTxt,
           mesActionAide: ouvert.actionAide,
           mesAction: ouvert.action,
@@ -22085,35 +22204,10 @@ GROUPES = {
       // Une commission ne se saisit que pour le compte affiché et pour les familles
       // réellement présentes dans le portefeuille : 5 comptes × 7 familles donnaient
       // 35 champs, dont sept libellés « Secondaire · … » identiques et indiscernables.
-      commChamps: this.COURTIERS.filter(([cle]) => cle === this.compteActif)
-        .flatMap(([cle]) => this.CLASSES
-        .filter(([k]) => (s.pfs || []).flatMap((p) => p.syms || [])
-          .some((sym) => this.classeDe(this.ligneCourtier(cle, sym)) === k))
-        .map(([k, lib]) => {
-        const t = (s.comm || {})[cle];
-        const v = t === undefined || t === null ? '' : (typeof t === 'number' ? t : t[k]);
-        return {
-          nom: lib,
-          val: v === undefined || v === null ? '' : v,
-          devise: ((s.commDev || {})[cle] || {})[k] || 'EUR',
-          devises: [{ v: 'EUR', nom: '€' }, { v: 'USD', nom: '$' }, { v: 'SYM', nom: 'sym.' }, { v: 'PCT', nom: '% du notionnel' }],
-          majDevise: (e) => {
-            const av = this.state.commDev || {};
-            this.maj({ commDev: { ...av, [cle]: { ...(av[cle] || {}), [k]: e.target.value } } });
-          },
-          maj: (e) => {
-            const av = this.state.comm || {};
-            const ta = typeof av[cle] === 'object' && av[cle] ? av[cle] : {};
-            this.maj({ comm: { ...av, [cle]: { ...ta, [k]: e.target.value === '' ? 0 : Number(e.target.value) } } });
-          },
-        };
-      })),
-      aCommChamps: (s.pfs || []).some((p) => (p.syms || []).length),
-      nomCompteTiroir: this.nomCompteActif(),
       coutPfResume: 'Pour chaque instrument de ' + ((pfListe[iPf] || {}).nom || 'ce portefeuille')
         + ' : le coût d\u2019un aller-retour sur ' + this.nomCompteActif() + ', et la part de votre risque de '
-        + EUR.format(euroR) + ' qu\u2019il emporte. Les commissions ci-dessous ne portent que sur ce compte, '
-        + 'et seulement sur les familles d\u2019instruments que ce portefeuille contient.',
+        + EUR.format(euroR) + ' qu\u2019il emporte. Les commissions de votre courtier se règlent '
+        + 'dans « Comment on mesure », sur la page Nouveau scan : elles sont propres à ce compte.',
       coutPfRows: (s.vue !== 'portefeuille' ? [] : symsPf).map((sym) => {
         const slPct = this.stopDe(sym);
         const cands = this.COURTIERS.map(([cle, nom]) => {

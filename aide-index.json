@@ -169,13 +169,6 @@
    ]
   },
   {
-   "terme": "Contenu réel du stockage",
-   "texte": "Enregistre les noms des instruments du relevé dont les bougies ne sont pas là, un par ligne. C’est un inventaire, pas le fichier que MT5 lit : celui-là s’obtient par « Liste pour MT5 » après avoir coché.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Contrôle du hasard",
    "texte": "On garde vos prix, votre stop, votre objectif et votre durée, et on remplace seulement le moment des entrées par des dates tirées au sort — autant de trades que votre configuration en a pris. Un avantage réel doit battre ces tirages.",
    "vues": [
@@ -527,13 +520,6 @@
    ]
   },
   {
-   "terme": "Ouvrir dans un onglet",
-   "texte": "Dans une vue intégrée, le navigateur n’accorde pas la protection du stockage : elle se demande depuis un onglet à lui.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Par an",
    "texte": "Pour la stratégie et le mélange : moyenne simple, le total divisé par les années — à mise fixe il n'y a rien à composer. Pour la détention et le sans risque : taux composé, puisque c'est le même capital qui grossit.",
    "vues": [
@@ -578,6 +564,13 @@
   {
    "terme": "Poser la question à l’assistant",
    "texte": "Pas encore disponible : cette réponse-là demande un serveur, une limite par visiteur, et un modèle qui connaisse vraiment Sivula.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Préparer le fichier de diagnostic",
+   "texte": "Un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.",
    "vues": [
     "Toutes les pages"
    ]
