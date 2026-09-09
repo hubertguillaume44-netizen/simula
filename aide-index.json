@@ -134,13 +134,6 @@
    ]
   },
   {
-   "terme": "Cible de Tout ranger",
-   "texte": "Destination du bouton « Tout ranger dans… ».",
-   "vues": [
-    "Portefeuille"
-   ]
-  },
-  {
    "terme": "Classer par",
    "texte": "Classer les lignes par ce critère",
    "vues": [
@@ -783,13 +776,6 @@
    "texte": "Éteint les dix filtres d'un coup : toutes les entrées candidates sont prises.",
    "vues": [
     "Backtest"
-   ]
-  },
-  {
-   "terme": "Tout ranger dans",
-   "texte": "Range les configurations non affectées dans le portefeuille choisi. Les lignes déjà rangées ne bougent pas.",
-   "vues": [
-    "Portefeuille"
    ]
   },
   {
