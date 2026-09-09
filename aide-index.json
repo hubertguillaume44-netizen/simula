@@ -148,13 +148,6 @@
    ]
   },
   {
-   "terme": "combinaisons demandées",
-   "texte": "Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Condition de la ligne NON restaurée",
    "texte": "La ligne cliquée portait une condition que le backtest n'a pas pu retrouver. Les chiffres décrivent une AUTRE configuration : plus de trades, un autre résultat. Relancez le scan pour rejouer la ligne fidèlement.",
    "vues": [
@@ -166,6 +159,13 @@
    "texte": "Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "confort — ne touche ni aux chiffres ni à la durée",
+   "texte": "Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.",
+   "vues": [
+    "Nouveau scan"
    ]
   },
   {
@@ -187,13 +187,6 @@
    "texte": "Soit vos configurations validées, soit toutes les configurations d'un instrument — pour voir si l'avantage tient sur tout un voisinage ou sur une seule ligne.",
    "vues": [
     "Historique"
-   ]
-  },
-  {
-   "terme": "court la fin du scan",
-   "texte": "Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.",
-   "vues": [
-    "Nouveau scan"
    ]
   },
   {
@@ -716,13 +709,6 @@
    ]
   },
   {
-   "terme": "Sécurisation seuils…",
-   "texte": "Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.",
-   "vues": [
-    "Nouveau scan"
-   ]
-  },
-  {
    "terme": "Seuils ·",
    "texte": "Les seuils qui décident quelles configurations s’affichent. Ils ne changent rien au calcul du scan : ce sont ceux de l’entonnoir de l’Historique, et il n’en existe qu’un jeu.",
    "vues": [
@@ -872,6 +858,13 @@
   {
    "terme": "virgule est admise fermer Stop",
    "texte": "Les distances de stop balayées, en pourcent du prix d’entrée : c’est elles qui définissent 1 R.",
+   "vues": [
+    "Nouveau scan"
+   ]
+  },
+  {
+   "terme": "Voir les résultats",
+   "texte": "Le TOP des configurations retenues, plus bas sur cette page.",
    "vues": [
     "Nouveau scan"
    ]

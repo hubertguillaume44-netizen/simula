@@ -52,6 +52,15 @@
      Un bouton plein sort quelque chose de Sivula ; une zone en pointillé attend
      qu'on y pose un fichier — le <input type="file"> la couvre entièrement, donc
      toute la surface est cliquable, et le glisser-déposer marche dessus. */
+  /* Le rang de « Comment on mesure » : une pastille par réglage, sa valeur à droite.
+     Carrée et filetée comme les cases de la grille — c'est la même famille d'objets.
+     Le fond accent à 9 % dit laquelle est ouverte ; à 5 %, laquelle est survolée. */
+  .mpast { cursor: pointer; font-family: var(--font-body); display: inline-flex;
+           align-items: baseline; gap: 8px; padding: 5px 11px; border: 1px solid var(--color-divider);
+           text-align: left; }
+  .mpast:hover { border-color: var(--color-accent);
+                 background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+  .mpast:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   .zdep { position: relative; cursor: pointer; display: flex; flex-direction: column; gap: 2px;
           border: 1px dashed var(--color-neutral-400); padding: 9px 14px; min-width: 26ch;
           align-self: flex-start; background: none; }
@@ -239,8 +248,13 @@
     <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
       <span style="margin-inline-start:auto;align-self:center;display:flex;align-items:center;gap:9px;min-width:0">
         <span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;opacity:.92" title="{{ scanEtatTxt }}">{{ scanCourtTxt }}</span>
-        <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap;flex:none" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
-        <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent);white-space:nowrap;flex:none" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+        <!-- Les commandes vivent dans la barre d'exécution du Nouveau scan. Elles ne
+             restent ici que sur les AUTRES pages, où cette barre n'est pas à l'écran :
+             sans cela, un scan lancé puis quitté n'aurait plus de bouton d'arrêt. -->
+        <sc-if value="{{ aCmdBandeau }}" hint-placeholder-val="{{ false }}">
+          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap;flex:none" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
+          <button type="button" style="cursor:pointer;font:inherit;font-size:12px;padding:4px 11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 55%,transparent);white-space:nowrap;flex:none" onClick="{{ arreterScan }}" title="Le scan s'arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+        </sc-if>
       </span>
       <span style="position:absolute;left:0;bottom:0;height:3px;width:{{ scanPct }};background:var(--color-bg);opacity:.85"></span>
     </sc-if>
@@ -2470,7 +2484,8 @@
         LE BLUEPRINT DE CONFIGURATION. Trois registres que le rang de neuf cases
         grises confondait : le périmètre (ce sur quoi la mesure porte — ne change
         pas la durée), la grille balayée (ce qui multiplie le calcul, chaque facteur
-        en pastille ×N dont le produit égale le rail), et les conditions d'entrée
+        qui multiplie vraiment portant sa pastille ×N — leur produit égale le rail ;
+        ×1 ne multiplie rien et n'affiche donc rien), et les conditions d'entrée
         (une dimension comparée, pas un interrupteur). Le facteur de la lecture
         haute/basse, qui vivait caché derrière « Sécurisation & seuils… », est
         affiché avec les autres : le produit des pastilles retombe sur ce que le
@@ -2483,7 +2498,6 @@
         <div style="display:flex;align-items:baseline;gap:12px;padding:8px 15px;border-bottom:1px solid var(--color-divider);flex-wrap:wrap">
           <span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Nouveau scan</span>
           <span style="font-size:11px" class="text-muted">{{ barreEtat }}</span>
-          <button type="button" class="lien" style="margin-inline-start:auto" onClick="{{ enregistrerGrille }}" title="Garde cette grille sous un nom, pour la rappeler d’un clic plus tard.">Sauver cette grille</button>
         </div>
 
         <!--
@@ -2643,7 +2657,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Déclencheur</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Ce qui déclenche l’entrée — chaque déclencheur coché est essayé sur toute la grille." onClick="{{ bsOuvreDecl }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsDeclVal }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDeclX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDecl }}</span>
+                <sc-if value="{{ aDeclX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDeclX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDecl }}</span>
               </button>
               <sc-if value="{{ bsPanDecl }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(430px,92vw)">
@@ -2661,7 +2675,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ligne · périodes</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La ligne que le prix doit franchir, et ses longueurs en bougies de l’unité — chaque valeur cochée multiplie le calcul." onClick="{{ bsOuvreLong }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsLiPVal }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsLiPX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span>
+                <sc-if value="{{ aLiPX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsLiPX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevLong }}</span>
               </button>
               <sc-if value="{{ bsPanLong }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
@@ -2691,7 +2705,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Stop %</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Les distances de stop balayées, en pourcent du prix d’entrée : c’est elles qui définissent 1 R." onClick="{{ bsOuvreStop }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSlPlage }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSlX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevStop }}</span>
+                <sc-if value="{{ aSlX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSlX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevStop }}</span>
               </button>
               <sc-if value="{{ bsPanStop }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;max-width:min(460px,92vw)">
@@ -2714,7 +2728,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Objectifs ×R</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Les objectifs visés balayés, en multiples du risque." onClick="{{ bsOuvreObj }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsRrListe }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRrX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevObj }}</span>
+                <sc-if value="{{ aRrX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsRrX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevObj }}</span>
               </button>
               <sc-if value="{{ bsPanObj }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2737,7 +2751,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sens</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Achat, vente, ou les deux — balayer les deux sens double le calcul." onClick="{{ bsOuvreSens }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSensGros }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSensX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSens }}</span>
+                <sc-if value="{{ aSensX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSensX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSens }}</span>
               </button>
               <sc-if value="{{ bsPanSens }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(430px,92vw)">
@@ -2755,7 +2769,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Paliers</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Comment le stop est porté en cours de route — chaque jeu coché est essayé sur toute la grille." onClick="{{ bsOuvrePal }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsPalGros }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span>
+                <sc-if value="{{ aPalX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsPalX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevPal }}</span>
               </button>
               <sc-if value="{{ bsPanPal }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:-1px;right:auto;max-width:min(460px,92vw)">
@@ -2781,7 +2795,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Durée max</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="Sortir au cours de clôture après N bougies H1 si ni le stop ni l’objectif n’ont été touchés." onClick="{{ bsOuvreDuree }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsDureeGros }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span>
+                <sc-if value="{{ aDureeX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsDureeX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevDuree }}</span>
               </button>
               <sc-if value="{{ bsPanDuree }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2807,7 +2821,7 @@
               <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Sécurisation</span>
               <button type="button" class="input" style="min-height:1.8rem;font-size:12px;padding:2px 6px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:7px;width:100%" title="La lecture des bougies ambiguës : quand stop et objectif tombent dans la même bougie, les deux lectures encadrent le résultat vrai." onClick="{{ bsOuvreSecuC }}">
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ bsSecuGros }}</span>
-                <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span>
+                <sc-if value="{{ aSecuX }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid var(--color-accent);color:var(--color-accent-900);padding:0 5px;white-space:nowrap;font-variant-numeric:tabular-nums">{{ bsSecuX }}</span></sc-if><span style="font-size:9px;color:var(--color-neutral-600)">{{ bsChevSecuC }}</span>
               </button>
               <sc-if value="{{ bsPanSecuC }}" hint-placeholder-val="{{ false }}">
                 <div class="pan" style="left:auto;right:-1px;max-width:min(460px,92vw)">
@@ -2876,41 +2890,60 @@
         </div>
 
 
-        <sc-if value="{{ bsPanMesure }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+        <!--
+          COMMENT ON MESURE : UN RANG DE PASTILLES, UN TIROIR.
 
-              <div style="display:flex;flex-direction:column;gap:10px;padding:0">
-                <div style="display:flex;flex-direction:column;gap:4px">
-                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                    <span style="font-size:12px">Sécurisation, lecture, durée</span>
-                    <span style="font-family:var(--font-heading);font-size:13px">{{ multSecu }}</span>
-                  </div>
-                  <span style="font-size:10px;line-height:1.45" class="text-muted">Ce bloc multiplie lui aussi le calcul, mais il décrit comment la position est tenue : il se règle ici, pas dans ce qu’on fait varier.</span>
-                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirSecu2 }}">Modifier…</button>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
-                  <label class="radio" style="font-size:12px"><input type="checkbox" checked="{{ btFrais }}" onChange="{{ toggleFrais }}"><span class="dot"></span>Compter les frais réels du symbole<span class="aide" title="{{ aideFrais }}">?</span></label>
-                  <label class="radio" style="font-size:11px"><input type="checkbox" checked="{{ sonScan }}" onChange="{{ toggleSonScan }}"><span class="dot"></span>Un son court à la fin du scan<span class="aide" title="Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.">?</span></label>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
-                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-                    <span style="font-size:12px">Seuils d’affichage</span>
-                    <span style="font-family:var(--font-heading);font-size:13px">{{ nSeuilsActifs }}</span>
-                  </div>
-                  <span style="font-size:10px;line-height:1.45" class="text-muted">Ils ne changent rien au calcul : ils décident lesquelles de ses configurations s’affichent.</span>
-                  <button type="button" class="btn btn-ghost" style="min-height:1.8rem;font-size:11px;align-self:flex-start;padding-inline:9px" onClick="{{ ouvrirSeuils }}">Régler les seuils…</button>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--color-divider);padding-top:9px">
-                  <span style="font-size:10px;line-height:1.45" class="text-muted">{{ coeursTxt }}</span>
-                  <sc-if value="{{ aChoixCoeurs }}" hint-placeholder-val="{{ true }}">
-                    <button type="button" class="{{ regimeCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:11px;padding:2px 8px;align-self:flex-start" onClick="{{ basculerRegime }}" title="{{ regimeAide }}">{{ regimeNom }}</button>
-                  </sc-if>
-                </div>
-              </div>
-                <sc-if value="{{ aSecuHors }}" hint-placeholder-val="{{ false }}">
-                  <span style="font-size:10px;line-height:1.45;color:var(--color-accent-700)">{{ secuHorsTxt }}</sc-if>
+          Quatre réglages empilés au même poids visuel sur près de deux cents pixels,
+          alors que leurs conséquences n'ont rien de comparable : la sécurisation
+          multiplie le calcul, les frais déplacent tous les chiffres sans coûter un
+          calcul de plus, les seuils ne touchent pas au calcul, les cœurs ne changent
+          que la durée. La distinction était écrite en petits caractères sous chaque
+          titre, donc lue par personne. Elle devient une MARQUE encadrée à côté du
+          titre du tiroir — accent quand le réglage coûte du calcul, grise sinon.
+
+          Ces quatre-là se règlent une fois et ne se touchent plus : ils tiennent sur
+          un rang de pastilles qui portent leur valeur actuelle, une seule ouverte à
+          la fois — on ne les compare pas entre eux.
+
+          À NOTER, parce que la maquette dit l'inverse : dans l'application livrée, ce
+          bloc n'était pas empilé en permanence, il était REPLIÉ derrière le bouton
+          « Sécurisation & seuils… » de la barre d'exécution. Ce bouton disparaît avec
+          la refonte de la barre ; la carte doit donc rester ouverte, sans quoi les
+          quatre réglages deviendraient injoignables. Mesuré : la page du Nouveau scan
+          passe de 1 237 px à 1 441 px, soit +204 px — elle ne raccourcit pas, elle
+          s'allonge, et c'est le prix de quatre réglages qu'on peut enfin lire.
+
+          Le son n'est pas un réglage de mesure : il descend en pied de carte, sous
+          un filet, avec ce qu'il ne touche pas.
+        -->
+        <div id="commentMesure" style="padding:11px 15px 12px;background:var(--color-neutral-100);border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap">
+            <strong style="font-family:var(--font-heading);font-size:15px;line-height:1.2">Comment on mesure</strong>
+            <span style="font-size:11px" class="text-muted">se règle une fois — ne varie pas dans la grille</span>
           </div>
-        </sc-if>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <sc-for list="{{ mesPastilles }}" as="mp" hint-placeholder-count="4">
+              <button type="button" class="mpast" style="border-color:{{ mp.bord }};background:{{ mp.fond }}" onClick="{{ mp.ouvrir }}" title="{{ mp.aide }}">
+                <span style="font-size:12px;line-height:1.3">{{ mp.nom }}</span>
+                <span style="font-family:var(--font-heading);font-size:12px;line-height:1.3;color:{{ mp.encre }};font-variant-numeric:tabular-nums">{{ mp.val }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--color-divider);padding-top:9px">
+            <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+              <strong style="font-size:13px;line-height:1.35">{{ mesTitre }}</strong>
+              <span style="font-family:var(--font-heading);font-size:11px;line-height:1.5;border:1px solid {{ mesMarqueBord }};color:{{ mesMarqueEncre }};padding:1px 6px;white-space:nowrap">{{ mesMarque }}</span>
+            </div>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">{{ mesTexte }}</span>
+            <sc-if value="{{ mesAAction }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap">
+                <button class="btn btn-secondary" type="button" style="min-height:1.9rem;font-size:11.5px;padding-inline:11px;flex:none" onClick="{{ mesAction }}" title="{{ mesActionAide }}">{{ mesActionTxt }}</button>
+                <span style="font-size:11px;line-height:1.5;flex:1;min-width:26ch" class="text-muted">{{ mesNote }}</span>
+              </div>
+            </sc-if>
+          </div>
+          <label class="radio" style="font-size:11.5px;border-top:1px solid var(--color-divider);padding-top:9px;align-items:baseline"><input type="checkbox" checked="{{ sonScan }}" onChange="{{ toggleSonScan }}"><span class="dot"></span>Un son court à la fin du scan<span style="font-size:11px;padding-inline-start:9px" class="text-muted" title="Coupé par défaut : un bip inattendu dans un bureau est pire que pas de rappel du tout. Le titre de l’onglet, lui, porte toujours la progression.">confort — ne touche ni aux chiffres ni à la durée</span></label>
+        </div>
 
         <!--
           LE PIED D'ACIER. Le total en très grand, la durée à côté, et l'équation en
@@ -2919,23 +2952,56 @@
           porte son remède. Sur ce fond sombre, le bouton secondaire du système est
           illisible : encre papier et filet papier à 45 %, posés en ligne.
         -->
-        <div style="position:sticky;bottom:{{ bsPiedBas }};z-index:25;display:flex;align-items:center;gap:16px;padding:11px 15px;background:var(--color-accent-900);color:var(--color-bg);flex-wrap:wrap">
-          <div style="display:flex;flex-direction:column;gap:1px">
-            <span style="font-family:var(--font-heading);font-size:38px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ combiTxt }}</span>
-            <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75">combinaisons demandées</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:1px;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:16px" title="{{ decompoTxt }}">
-            <span style="font-family:var(--font-heading);font-size:22px;line-height:1">{{ dureeCourte }}</span>
-            <span style="font-size:10px;opacity:.75">{{ bsPiedParInstr }}</span>
-          </div>
-          <span style="font-size:11px;line-height:1.5;opacity:.85;max-width:46ch;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:16px" title="{{ calculCombinaisons }}">{{ bsPiedEq }}</span>
-          <div style="display:flex;gap:8px;margin-inline-start:auto;align-items:center;flex-wrap:wrap">
-            <sc-if value="{{ scanEnCours }}" hint-placeholder-val="{{ false }}">
-              <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:5px 9px" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
-              <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:5px 9px" onClick="{{ arreterScan }}" title="Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+        <!--
+          LE PIED D'ACIER — UN SEUL JEU DE COMMANDES, UNE SEULE DURÉE.
+
+          La barre portait quatre boutons quel que soit l'état : Pause et Arrêter, qui
+          existaient déjà en haut de l'écran ; « Sécurisation & seuils… », un raccourci
+          de réglage au milieu de verbes d'exécution ; et « Lancer » pendant qu'un scan
+          tournait — relance-t-il, met-il en file, écrase-t-il huit minutes de calcul ?
+          Elle affichait en plus une estimation qui contredisait le reste réel annoncé
+          par le bandeau du haut.
+
+          Quatre états, un seul geste offert à chaque fois. Le grand nombre change de
+          sens avec l'état : à mesurer, mesurées, mesurées en tant de temps. La durée
+          affichée est l'estimation au repos, le RESTE RÉEL pendant le calcul — le même
+          chiffre que le bandeau, calculé au même endroit — et le temps écoulé à la fin.
+          Grille vide : la barre nomme l'obstacle et dit où le corriger, à la place du
+          produit des facteurs.
+
+          L'état « terminé » retombe au repos dès que la grille bouge : sans cela, une
+          barre qui ne propose que « Voir les résultats » interdirait de relancer.
+        -->
+        <div id="barreScan" style="position:sticky;bottom:{{ bsPiedBas }};z-index:25;display:flex;flex-direction:column;background:{{ barFond }};color:var(--color-bg)">
+          <sc-if value="{{ barEnCours }}" hint-placeholder-val="{{ false }}">
+            <div style="height:4px;background:color-mix(in srgb,var(--color-bg) 22%,transparent)"><div style="height:4px;background:var(--color-bg);width:{{ scanPct }}"></div></div>
+          </sc-if>
+          <div style="display:flex;align-items:center;gap:16px;padding:11px 15px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:1px">
+              <span style="font-family:var(--font-heading);font-size:38px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;opacity:{{ barGrosVoile }}">{{ barGros }}</span>
+              <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75">{{ barGrosSous }}</span>
+            </div>
+            <sc-if value="{{ barADroite }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:1px;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:16px" title="{{ barDroiteAide }}">
+                <span style="font-family:var(--font-heading);font-size:22px;line-height:1;font-variant-numeric:tabular-nums">{{ barDroite }}</span>
+                <span style="font-size:11px;line-height:1.4;opacity:.75;max-width:46ch">{{ barDroiteSous }}</span>
+              </div>
             </sc-if>
-            <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:11px;padding:6px 9px" onClick="{{ bsOuvreMesure }}" title="Sécurisation, lecture et durée · frais réels · seuils d’affichage · cœurs — comment on mesure, pas ce qu’on fait varier.">Sécurisation &amp; seuils…</button>
-            <button id="lancerScan" type="button" style="cursor:pointer;border:none;background:var(--color-bg);color:{{ devisBoutonEncre }};font-family:var(--font-body);font-size:12px;padding:8px 15px;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
+            <sc-if value="{{ barAManque }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12.5px;line-height:1.5;max-width:52ch;border-inline-start:1px solid color-mix(in srgb,var(--color-bg) 35%,transparent);padding-inline-start:16px">{{ barManque }}</span>
+            </sc-if>
+            <div style="display:flex;gap:9px;margin-inline-start:auto;align-items:center;flex-wrap:wrap">
+              <sc-if value="{{ barEnCours }}" hint-placeholder-val="{{ false }}">
+                <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:6px 13px;white-space:nowrap" onClick="{{ basculerPause }}" title="{{ pauseAide }}">{{ pauseBouton }}</button>
+                <button type="button" style="cursor:pointer;border:1px solid color-mix(in srgb,var(--color-bg) 45%,transparent);background:none;color:var(--color-bg);font-family:var(--font-body);font-size:12px;padding:6px 13px;white-space:nowrap" onClick="{{ arreterScan }}" title="Le scan s’arrête après le calcul en cours ; les résultats déjà obtenus sont conservés">{{ arretBouton }}</button>
+              </sc-if>
+              <sc-if value="{{ barFini }}" hint-placeholder-val="{{ false }}">
+                <button type="button" style="cursor:pointer;border:1px solid var(--color-bg);background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:7px 15px;white-space:nowrap" onClick="{{ voirResultats }}" title="Le TOP des configurations retenues, plus bas sur cette page.">Voir les résultats</button>
+              </sc-if>
+              <sc-if value="{{ barRepos }}" hint-placeholder-val="{{ true }}">
+                <button id="lancerScan" type="button" style="cursor:pointer;border:1px solid var(--color-bg);background:var(--color-bg);color:var(--color-accent-900);font-family:var(--font-body);font-size:12px;padding:7px 15px;white-space:nowrap;opacity:{{ lancerOpacite }}" onClick="{{ lancerScan }}" disabled="{{ scanImpossible }}" title="{{ scanImpossibleAide }}">Lancer le scan</button>
+              </sc-if>
+            </div>
           </div>
         </div>
       </div>
@@ -2943,7 +3009,7 @@
       <!-- La signature du scan : ce qui partira au moteur, en cinq lignes étiquetées —
            les mêmes que le Backtest. Une seule ligne était illisible dès trois filtres. -->
       <div style="display:flex;flex-direction:column;gap:3px;padding:8px 14px 2px">
-        <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qui partira au moteur</span>
+        <span style="font-size:9px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">{{ bsSigTitre }}</span>
         <div style="display:grid;grid-template-columns:11ch minmax(0,1fr);gap:0 12px">
           <sc-for list="{{ bsSigLignes }}" as="sg2" hint-placeholder-count="5">
             <span style="font-size:10px;padding:3px 0;color:var(--color-neutral-600);border-top:1px solid var(--color-divider)">{{ sg2.lib }}</span>
@@ -10841,6 +10907,37 @@ GROUPES = {
       * dev(this.TEMPS_VARIANTES, s.gTemps, 'jamais')
       * dev(this.LECTURE_VARIANTES, s.gLectures, 'favorable');
   }
+  // Combinaisons déjà mesurées : le scan avance par INSTRUMENT, et chaque instrument
+  // coûte le même nombre de combinaisons — le compte est donc exact aux bornes, jamais
+  // interpolé à l'intérieur d'un instrument.
+  mesureesScan(etat) {
+    const s = etat || this.state;
+    const n = s.scanNbSym || 0;
+    if (!n) return 0;
+    return Math.round((s.scanTestes || 0) * ((s.scanFait || 0) / n));
+  }
+  // Le reste réel, tel que le bandeau l'affiche. Le producteur `barResteTxt` le calcule
+  // une fois pour les deux ; cette méthode n'est que son point d'entrée depuis la barre.
+  resteScan(etat) {
+    const s = etat || this.state;
+    const ecoule = s.scanT0
+      ? Math.max(0, (Date.now() - s.scanT0 - (this._pauseMs || 0)
+        - (s.scanPause && this._pauseT0 ? Date.now() - this._pauseT0 : 0)) / 1000) : 0;
+    const fait = s.scanFait || 0, n = s.scanNbSym || 0;
+    const reste = fait > 0 ? ecoule / fait * (n - fait) : null;
+    return (reste !== null && reste > 1) ? 'reste \u2248 ' + this.duree(reste)
+      : (fait > 0 ? 'derniers instruments' : 'estimation en cours…');
+  }
+  // Signature de la grille : ce qui, en changeant, rend un résultat de scan périmé.
+  // Sert à faire retomber la barre « terminé » au repos dès qu'on touche un réglage.
+  sigGrille(etat) {
+    const s = etat || this.state;
+    const bouts = [];
+    for (const k of this.REGLAGES) bouts.push(String(s[k]));
+    for (const k of this.CHAMPS_PLAN) bouts.push(String(s[k]));
+    bouts.push((s.univers || []).join(','));
+    return bouts.join('|');
+  }
   conditionsBalayees(etat) {
     const s = etat || this.state;
     const conds = this.developper(s, this.VARIANTES_FILTRE, s.gFiltres, 'aucun');
@@ -13092,6 +13189,8 @@ GROUPES = {
     this.poserScan(total, courant, {
       scanArret: false, scanEnCours: false, progression: null,
       scanDuree: Date.now() - t0,
+      // l'état « terminé » de la barre ne vaut que pour CETTE grille
+      scanSig: this.sigGrille(),
       scanEchecs: echecs.slice(0, 12),
       // on ne déplace pas l'utilisateur : s'il consulte une autre page pendant le scan, il y reste
       scanVu: null, symOuvert: null, symTout: null,
@@ -17679,6 +17778,7 @@ GROUPES = {
       etatMemoire: this.etatMemoire(),
       fermerSauv: () => this.setState({ sauvEtat: null, sauvKo: false }),
       scanActif: !!s.scanEnCours,
+      aCmdBandeau: !!s.scanEnCours && (s.vue || 'scan') !== 'scan',
       // ————— LE RAPPEL DE FIN DE SCAN —————
       ...(() => {
         const d = s.notifDemande;
@@ -17714,6 +17814,9 @@ GROUPES = {
           // attendre. Le texte complet reste en infobulle, il n'est pas perdu.
           scanCourtTxt: Math.min(fait + 1, n) + ' / ' + n
             + (reste !== null && reste > 1 ? ' \u00b7 reste ~' + this.duree(reste) : ''),
+          // la barre du bas lit le MÊME reste : deux calculs donnaient deux durées
+          barResteTxt: (reste !== null && reste > 1) ? 'reste \u2248 ' + this.duree(reste)
+            : (fait > 0 ? 'derniers instruments' : 'estimation en cours…'),
           progression: s.scanEnCours ? coeur : (s.progression || ''),
           aProgression: !!(s.scanEnCours || s.progression),
         };
@@ -18396,7 +18499,14 @@ GROUPES = {
           bsPanNombres: s.bsPanneau === 'nombres', bsOuvreNombres: ouvre('nombres'),
           bsPanLignes: s.bsPanneau === 'lignes', bsOuvreLignes: ouvre('lignes'),
           bsPanEntree: s.bsPanneau === 'entree', bsOuvreEntree: ouvre('entree'),
-          bsPanMesure: s.bsPanneau === 'mesure', bsOuvreMesure: ouvre('mesure'),
+          // la carte « Comment on mesure » ne se replie plus : les deux renvois qui
+          // l'ouvraient l'amènent à l'écran, sur le tiroir de la sécurisation
+          bsPanMesure: false,
+          bsOuvreMesure: () => this.setState({ bsPanneau: '', mesOng: 'secu' }, () => {
+            setTimeout(() => { const el = document.getElementById('commentMesure');
+              if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 90,
+                behavior: 'smooth' }); }, 60);
+          }),
           bsInstrNb: this.universDuCompte(s.univers).length,
           bsPerVal: per + (per > 1 ? ' longueurs' : ' longueur') + ' · \u00d7' + per,
           bsSlVal: sls + (sls > 1 ? ' stops' : ' stop') + ' · \u00d7' + sls,
@@ -18411,27 +18521,27 @@ GROUPES = {
           bsRailGrille: frB(railN),
           bsPerX: '\u00d7' + per,
           bsPerListe: this.nombres(s.gPeriodes, [26]).join(' · '),
-          bsSlX: '\u00d7' + sls,
+          aSlX: sls > 1, bsSlX: sls > 1 ? '\u00d7' + sls : '',
           bsSlPlage: (() => { const l = this.nombres(s.gSls, [1]);
             const pc = (n) => String(n).replace('.', ',') + ' %';
             return l.length > 1 ? pc(l[0]) + ' \u2192 ' + pc(l[l.length - 1]) : pc(l[0]); })(),
           bsSlSous: sls + (sls > 1 ? ' valeurs de la grille' : ' seule valeur'),
-          bsRrX: '\u00d7' + rrs,
+          aRrX: rrs > 1, bsRrX: rrs > 1 ? '\u00d7' + rrs : '',
           bsRrListe: this.nombres(s.gRrs, [2.5]).map((n) => String(n).replace('.', ',') + '\u00d7').join(' · '),
           bsLigX: '\u00d7' + (nLig * nEnt),
           // les cases « à la Backtest » : Déclencheur et Ligne·périodes séparés,
           // et le moment d'exécution dit où il se règle vraiment
           bsDeclVal: nEnt > 1 ? 'Croisement + rebond, et croisement seul'
             : (ENTREES_TXT[(s.gEntrees || ['croisement_ou_rebond'])[0]] || 'Croisement et rebond'),
-          bsDeclX: '\u00d7' + nEnt,
+          aDeclX: nEnt > 1, bsDeclX: nEnt > 1 ? '\u00d7' + nEnt : '',
           bsLiPVal: (((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'Méd' }[k] || k)).join(' · ')) || 'MME')
             + ' · ' + per + (per > 1 ? ' périodes' : ' période'),
-          bsLiPX: '\u00d7' + (nLig * per),
+          aLiPX: nLig * per > 1, bsLiPX: nLig * per > 1 ? '\u00d7' + (nLig * per) : '',
           bsMomentVal: (s.ut || 'H1') === 'H1' ? 'la bougie suivante (H1)' : 'résolu par instrument',
           bsLigGros: ((s.gLignes || []).map((k) => ({ ema: 'MME', ma: 'MM', mediane: 'Méd' }[k] || k)).join(' · ') || 'MME'),
           bsLigSous: 'entrée : ' + (nEnt > 1 ? 'croisement + rebond, et croisement seul'
             : (ENTREES_TXT[(s.gEntrees || ['croisement_ou_rebond'])[0]] || 'croisement et rebond').toLowerCase()),
-          bsSecuX: '\u00d7' + nLect,
+          aSecuX: nLect > 1, bsSecuX: nLect > 1 ? '\u00d7' + nLect : '',
           bsSecuGros: nLect === 2 ? 'Lecture haute · basse'
             : ((s.gLectures || ['favorable'])[0] === 'prudente' ? 'Lecture basse' : 'Lecture haute'),
           bsSecuSous: nLect === 2 ? 'les deux bornes du résultat mesurées'
@@ -18472,7 +18582,7 @@ GROUPES = {
               ['Progressifs', '30 % → mi-risque, 50 % → point mort', progPris, basculeEsc(PROG, '30>-50 50>0')],
             ];
             return {
-              bsPalX: '\u00d7' + nSecuV,
+              aPalX: nSecuV > 1, bsPalX: nSecuV > 1 ? '\u00d7' + nSecuV : '',
               bsPalGros: nJeux === 0 ? (aFin ? 'réglage fin' : 'Aucun')
                 : jeux.filter(([, , pris]) => pris).map(([n]) => n).join(' · ')
                   + (aFin ? ' + fin' : ''),
@@ -18517,7 +18627,7 @@ GROUPES = {
               return { gDurees: l.join(' '), gTemps: g2 };
             }, () => this.ecrireSession());
             return {
-              bsDureeX: '\u00d7' + nTempsV,
+              aDureeX: nTempsV > 1, bsDureeX: nTempsV > 1 ? '\u00d7' + nTempsV : '',
               bsDureeGros: !avecLimite ? 'Sans limite'
                 : (sansLimite ? 'Sans limite · ' : '') + durees.join(' · '),
               bsDureeSous: nTempsV > 1 ? 'bougies H1 — chaque durée multiplie'
@@ -18530,7 +18640,7 @@ GROUPES = {
                 + frB(parInstrB / Math.max(1, nTempsV)) + ' combinaisons par instrument',
             };
           })(),
-          aSensX: nSens > 1, bsSensX: '\u00d7' + nSens,
+          aSensX: nSens > 1, bsSensX: nSens > 1 ? '\u00d7' + nSens : '',
           bsSensGros: nSens > 1 ? 'Achat · Vente' : (((s.gSens || [])[0] === 'vente') ? 'Vente' : 'Achat'),
           bsSensSous: nSens > 1 ? 'les deux sens balayés \u2014 le calcul double'
             : (((s.gSens || [])[0] === 'vente') ? 'achat non balayé' : 'vente non balayée'),
@@ -18597,6 +18707,8 @@ GROUPES = {
             + ' \u00d7 ' + nCond + ' condition' + (nCond > 1 ? 's' : '') + '.'
             + (nUB === 0 ? ' Le premier instrument coché porte le devis à ' + frB(parInstrB) + '.' : ''),
           bsPiedParInstr: this.duree(parInstrB / cpsB) + ' par instrument',
+          // pendant un calcul, ce récapitulatif décrit le passé : le futur y était faux
+          bsSigTitre: s.scanEnCours ? 'Ce qui est parti au moteur' : 'Ce qui partira au moteur',
           // ————— LES PANNEAUX PAR CARRÉ : décor des neuf cellules —————
           // un seul ouvert à la fois (s.bsPanneau) ; la cellule ouverte remonte en
           // z-index pour que son menu passe au-dessus des cellules voisines
@@ -19111,6 +19223,124 @@ GROUPES = {
       nSeuilsActifs: (() => {
         const n = (filtresVifs || []).filter((f) => f.ecartees !== 'rien écarté').length;
         return n ? n + ' actif' + (n > 1 ? 's' : '') : 'aucun';
+      })(),
+      // ————— LE RANG DE PASTILLES DE « COMMENT ON MESURE » —————
+      //
+      // Le multiplicateur affiché est `facteurSecu` — le MÊME que celui du rail et du
+      // devis. L'ancien `multSecu` comptait les entrées de gSecus au lieu de développer
+      // leurs variantes : il annonçait ×2 là où le moteur facturait ×4.
+      //
+      // La couleur de la valeur ne décore pas : accent quand le réglage entre dans le
+      // calcul (sécurisation toujours, frais quand ils sont comptés), neutre quand il
+      // n'y entre pas (seuils, cœurs). C'est la seule différence de couleur de la carte.
+      ...(() => {
+        const ong = s.mesOng || 'secu';
+        const nSecuF = this.facteurSecu(s);
+        const nLect = this.developper(s, this.LECTURE_VARIANTES, s.gLectures, 'favorable').length;
+        const frais = !!s.btFrais;
+        const nSeuils = (filtresVifs || []).filter((f) => f.ecartees !== 'rien écarté').length;
+        const nC = this.nCoeurs;
+        const nFils = (navigator && navigator.hardwareConcurrency) || 1;
+        const lectTxt = nLect === 2 ? 'Lecture haute et basse'
+          : ((s.gLectures || ['favorable'])[0] === 'prudente' ? 'Lecture basse' : 'Lecture haute');
+        // le résumé du tiroir nomme les trois réglages qu'il porte, comme les trois
+        // cases de la grille les nomment : lecture, paliers, durée maximale
+        const jx = this.jeuxPaliersScan(s);
+        const nJeux = (jx.aucun ? 1 : 0) + (jx.pm ? 1 : 0) + (jx.prog ? 1 : 0);
+        const aFin = jx.suiveur || (jx.finSegs || []).length > 0;
+        const palierTxt = (!aFin && nJeux <= 1 && jx.aucun) ? 'sans palier'
+          : (aFin && !nJeux) ? 'paliers au réglage fin'
+          : this.pl(nJeux + (aFin ? 1 : 0), 'jeu de paliers', 'jeux de paliers');
+        const gt = (s.gTemps || []).length ? s.gTemps : ['jamais'];
+        const durs = this.nombres(s.gDurees, []).filter((x) => x > 0);
+        const dureeTxt = (!gt.includes('limite') || !durs.length) ? 'sans limite de durée'
+          : this.pl(durs.length, 'durée maximale', 'durées maximales')
+            + (gt.includes('jamais') ? ' et sans limite' : '');
+        const ACCENT = 'var(--color-accent-700)', NEUTRE = 'var(--color-neutral-700)';
+        const T = [
+          { cle: 'secu', nom: 'Sécurisation, lecture, durée',
+            val: nSecuF > 1 ? '\u00d7' + nSecuF : lectTxt.toLowerCase(), calcul: true,
+            marque: nSecuF > 1 ? '\u00d7' + nSecuF + ' sur le calcul' : 'sans multiplier',
+            fort: nSecuF > 1,
+            texte: lectTxt + ' \u00b7 ' + palierTxt + ' \u00b7 ' + dureeTxt
+              + '. Décrit comment la position est tenue, pas ce qu\u2019on fait varier :'
+              + ' se règle ici une fois, et '
+              + (nSecuF > 1
+                ? 'multiplie par ' + nSecuF + ' le nombre de combinaisons, puisque chaque'
+                  + ' réglage de la grille est mesuré dans chacun de ces ' + nSecuF + ' cas.'
+                : 'ne multiplie rien tant qu\u2019un seul cas est coché.'),
+            actionTxt: 'Modifier…', action: () => this.setState({ panScan: 'secu' }),
+            actionAide: 'Lecture haute et basse, paliers de sécurisation, durée maximale.',
+            note: nLect === 2
+              ? 'La bande entre les deux lectures est le critère de conformité au testeur MT5.'
+              : 'Une seule lecture : le résultat n\u2019est pas encadré, et la bande de conformité au testeur MT5 demande les deux.' },
+          { cle: 'frais', nom: 'Frais réels du symbole',
+            val: frais ? 'comptés' : 'non comptés', calcul: frais,
+            marque: 'hors calcul', fort: false,
+            texte: 'Spread et portage du symbole, rapportés au risque du trade. Ils déplacent'
+              + ' tous les chiffres sans coûter un calcul de plus : sans eux le résultat est brut,'
+              + ' donc optimiste de plusieurs points de R sur quelques centaines de trades.',
+            actionTxt: frais ? 'Ne plus les compter' : 'Compter les frais réels',
+            action: () => this.setState({ btFrais: !s.btFrais }, () => this.ecrireSession()),
+            actionAide: frais
+              ? 'Le prochain scan mesurera des résultats bruts, et sera marqué « sans frais ».'
+              : 'Le prochain scan retranchera spread et portage du relevé de ce compte.',
+            note: frais
+              ? 'Ils viennent du relevé déposé pour ce compte : changer de courtier change les chiffres.'
+              : 'Ce scan sera marqué « sans frais » dans l\u2019historique — ses chiffres ne se comparent pas à ceux d\u2019un scan qui les compte.' },
+          { cle: 'seuils', nom: 'Seuils d\u2019affichage',
+            val: nSeuils ? nSeuils + ' actif' + (nSeuils > 1 ? 's' : '') : 'aucun', calcul: false,
+            marque: 'hors calcul', fort: false,
+            texte: 'Ils ne changent rien au calcul : ils décident lesquelles de ses configurations'
+              + ' s\u2019affichent. Rien n\u2019est perdu — tout ce qui a été mesuré reste dans'
+              + ' l\u2019historique et reste exportable, et desserrer un seuil le fait réapparaître'
+              + ' sans rien remesurer.',
+            actionTxt: 'Régler les seuils…', action: () => this.setState({ panScan: 'seuils' }),
+            actionAide: 'Les mêmes seuils que l\u2019entonnoir de l\u2019Historique.',
+            note: 'Ce sont exactement ceux de l\u2019entonnoir de l\u2019Historique — il n\u2019en existe qu\u2019un jeu.' },
+          { cle: 'coeurs', nom: 'C\u0153urs du processeur',
+            val: s.workersOk ? nC + ' sur ' + nFils : 'dans l\u2019onglet', calcul: false,
+            marque: 'change la durée seule', fort: false,
+            texte: (s.workersOk
+              ? 'Calcul hors du fil de la page, sur '
+                + (nFils > nC ? nC + ' des ' + nFils + ' c\u0153urs' : nC + (nC > 1 ? ' c\u0153urs' : ' c\u0153ur'))
+                + ' de votre processeur. '
+              : 'Votre navigateur ne permet pas de sortir le calcul du fil de la page : le scan'
+                + ' tourne dans l\u2019onglet, qui restera figé par moments. ')
+              + 'Le nombre de c\u0153urs ne change aucun résultat : les deux régimes donnent des'
+              + ' chiffres identiques au bit près, seule la durée change.',
+            actionTxt: s.pleinRegime ? 'Plein régime' : 'Machine utilisable',
+            action: () => this.setState({ pleinRegime: !s.pleinRegime }, () => this.ecrireSession()),
+            actionAide: s.pleinRegime
+              ? 'Tous les c\u0153urs sont pris : le scan est au plus rapide, mais le reste de votre ordinateur devient poussif.'
+              : 'Un c\u0153ur est laissé libre : le scan est un peu plus lent, mais vous pouvez continuer à travailler pendant qu\u2019il tourne.',
+            aAction: !!s.workersOk,
+            note: s.pleinRegime
+              ? 'Tous les c\u0153urs sont pris — le reste de l\u2019ordinateur devient poussif pendant le scan.'
+              : 'Un c\u0153ur reste libre — vous pouvez continuer à travailler pendant le scan.' },
+        ];
+        const ouvert = T.find((x) => x.cle === ong) || T[0];
+        return {
+          mesPastilles: T.map((x) => ({
+            nom: x.nom, val: x.val,
+            encre: x.calcul ? ACCENT : NEUTRE,
+            bord: x.cle === ouvert.cle ? 'var(--color-accent)' : 'var(--color-divider)',
+            fond: x.cle === ouvert.cle
+              ? 'color-mix(in srgb, var(--color-accent) 9%, transparent)' : 'none',
+            aide: x.marque + ' \u2014 ' + x.nom.toLowerCase(),
+            ouvrir: () => this.setState({ mesOng: x.cle }),
+          })),
+          mesTitre: ouvert.nom,
+          mesMarque: ouvert.marque,
+          mesMarqueBord: ouvert.fort ? 'var(--color-accent)' : 'var(--color-neutral-400)',
+          mesMarqueEncre: ouvert.fort ? 'var(--color-accent-900)' : 'var(--color-neutral-700)',
+          mesTexte: ouvert.texte,
+          mesAAction: ouvert.aAction === undefined ? true : ouvert.aAction,
+          mesActionTxt: ouvert.actionTxt,
+          mesActionAide: ouvert.actionAide,
+          mesAction: ouvert.action,
+          mesNote: ouvert.note,
+        };
       })(),
       titreTop: 'TOP des configurations',
       scanEnCoursTitre: 'Scan en cours',
@@ -20511,15 +20741,93 @@ GROUPES = {
           })(),
           e2Resume: parInstr.toLocaleString('fr-FR') + ' réglages par instrument',
           e3Resume: (s.btFrais ? 'frais réels' : 'sans frais') + ' \u00b7 sécurisation \u00b7 seuils',
-          // La sécurisation multiplie elle aussi : le dire ici est ce qui empêche la
-          // décomposition du bandeau de paraître fausse.
-          aSecuHors: nSecu > 1,
-          secuHorsTxt: 'Sécurisation, lecture et durée multiplient aussi (\u00d7' + nSecu
-            + ') : elles se règlent à l\u2019étape 3, parce qu\u2019elles décrivent comment on mesure.',
+          // La phrase de rappel sur le facteur de la sécurisation est partie : la
+          // pastille du rang de mesure porte ce ×N, et la carte du dessus le dit
+          // déjà. Deux endroits pour un seul chiffre, c'est un de trop.
           decompoTxt: this.pl(this.universDuCompte(s.univers).length, 'instrument', 'instruments')
             + ' \u00d7 ' + parInstr.toLocaleString('fr-FR') + ' réglages \u00b7 '
             + this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
           lancerOpacite: this.universDuCompte(s.univers).length ? '1' : '.5',
+          // ————— LES QUATRE ÉTATS DE LA BARRE —————
+          //
+          // `reste` et `mesurees` ne sont PAS recalculés ici : ils viennent du même
+          // bloc que le bandeau du haut (`barResteTxt`, `barMesurees`), sinon les deux
+          // durées de l'écran se remettraient à diverger — c'était le défaut d'origine.
+          //
+          // « Terminé » ne tient que tant que la grille n'a pas bougé : sa signature
+          // est prise à la fin du scan et comparée à celle du moment. Une barre bloquée
+          // sur « Voir les résultats » après une modification serait une impasse.
+          ...(() => {
+            const nU = this.universDuCompte(s.univers).length;
+            // même formule que le devis : deux estimations calculées séparément se
+            // remettraient à diverger, ce qui est précisément le défaut corrigé ici
+            let vit = null;
+            try { vit = JSON.parse(localStorage.getItem('simula.vitesse.v1')); } catch (e) {}
+            const cpsB2 = (vit && vit.combisParSec) || 1200;
+            const aCharger2 = (s.univers || []).filter((x) => !(this.dfs || {})[x]).length;
+            const secEst = (nU * parInstr) / cpsB2
+              + aCharger2 * ((vit && vit.secParInstrument) ? Math.min(3, vit.secParInstrument) : 1.2);
+            const fCond2 = fact.find((f) => f.cle === 'conditions');
+            const nCond2 = fCond2 ? fCond2.n : 1;
+            const railN2 = Math.max(1, Math.round(parInstr / nCond2));
+            const frN = (x) => Number(x || 0).toLocaleString('fr-FR');
+            const enCours = !!s.scanEnCours;
+            const fini = !enCours && !!s.scanDuree && s.scanSig === this.sigGrille(s);
+            const vide = !enCours && !fini && nU === 0;
+            const repos = !enCours && !fini && !vide;
+            const derniere = (s.archives || [])[0];
+            const instFin = (derniere && derniere.instruments) || 0;
+            const instTot = (derniere && derniere.instrumentsTotal) || (s.scanNbSym || 0);
+            const partiel = instTot > 0 && instFin < instTot;
+            const faitesFin = (partiel && instTot)
+              ? Math.round((s.scanTestes || 0) * (instFin / instTot)) : (s.scanTestes || 0);
+            const nSeuils = (filtresVifs || []).filter((f) => f.ecartees !== 'rien écarté').length;
+            return {
+              barEnCours: enCours, barFini: fini, barRepos: repos || vide,
+              barFond: vide ? 'var(--color-neutral-800)' : 'var(--color-accent-900)',
+              barGrosVoile: vide ? '.5' : '1',
+              // un scan ARRÊTÉ n'a pas mesuré ce qu'il avait prévu : le grand nombre
+              // suit les instruments réellement faits, sinon la barre annonçait
+              // « 172 800 mesurées » juste au-dessus de « 7 instruments sur 10 »
+              barGros: enCours ? Number(this.mesureesScan(s)).toLocaleString('fr-FR')
+                : fini ? Number(faitesFin).toLocaleString('fr-FR')
+                : (nU * parInstr).toLocaleString('fr-FR'),
+              barGrosSous: enCours
+                ? 'mesurées sur ' + Number(s.scanTestes || 0).toLocaleString('fr-FR')
+                : fini ? 'mesurées en ' + this.duree((s.scanDuree || 0) / 1000)
+                  + (partiel ? ' \u00b7 scan arrêté' : '')
+                : 'combinaisons à mesurer',
+              barADroite: !vide,
+              barDroite: enCours ? this.resteScan(s)
+                : fini ? Number((derniere && derniere.n) || 0).toLocaleString('fr-FR') + ' retenues'
+                : '\u2248 ' + this.duree(secEst),
+              barDroiteSous: enCours
+                ? 'instrument ' + Math.min((s.scanFait || 0) + 1, s.scanNbSym || 0) + ' sur '
+                  + (s.scanNbSym || 0)
+                  + (s.scanSymCourant ? ' \u2014 ' + this.nomComplet(s.scanSymCourant) : '')
+                : fini
+                  ? 'au-dessus de vos ' + (nSeuils ? nSeuils + ' seuil' + (nSeuils > 1 ? 's' : '')
+                    : 'seuils') + ' d\u2019affichage \u00b7 '
+                    + ((derniere && derniere.instruments) || 0) + ' instrument'
+                    + (((derniere && derniere.instruments) || 0) > 1 ? 's' : '')
+                    + ' sur ' + ((derniere && derniere.instrumentsTotal) || (s.scanNbSym || 0))
+                  : 'estimation \u00b7 ' + frN(railN2) + ' réglages \u00d7 ' + nU + ' instrument'
+                    + (nU > 1 ? 's' : '') + ' \u00d7 ' + nCond2 + ' condition' + (nCond2 > 1 ? 's' : ''),
+              barDroiteAide: enCours ? 'Le reste mesuré sur le temps déjà écoulé — le chiffre du bandeau.'
+                : fini ? 'Les configurations qui passent vos seuils d\u2019affichage.'
+                : this.pl(nU, 'instrument', 'instruments') + ' \u00d7 '
+                  + parInstr.toLocaleString('fr-FR') + ' réglages \u00b7 '
+                  + this.nCoeurs + (this.nCoeurs > 1 ? ' cœurs' : ' cœur'),
+              barAManque: vide,
+              barManque: 'Aucun instrument coché. Cochez-en au moins un dans la liste de gauche'
+                + ' \u2014 le reste de la grille est prêt.',
+              voirResultats: () => {
+                const el = document.getElementById('topScan');
+                if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70,
+                  behavior: 'smooth' });
+              },
+            };
+          })(),
           nGrilles: (this.lireGrilles() || []).length,
           grillesVues: !!s.grillesVues,
           basculerGrilles: () => this.setState({ grillesVues: !s.grillesVues }),
@@ -23244,6 +23552,8 @@ GROUPES = {
         return {
           aRepriseAuto: true,
           repriseAutoTxt: this.causeArret(a)
+            + ((a.reglages && a.reglages.btFrais === false)
+              ? ' Ce scan a été mesuré SANS FRAIS : ses chiffres sont bruts.' : '')
             + ' Le scan du ' + new Date(a.date).toLocaleString('fr-FR',
             { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
             + ' s\u2019est arrêté après ' + this.pl(faits.size, 'instrument', 'instruments')
@@ -23356,6 +23666,12 @@ GROUPES = {
               + (a.partiel ? ' · incomplet, ' + (a.instruments || 0) + ' / ' + (a.instrumentsTotal || '?') + ' instruments' : '')
               + (a.purgee ? (a.n ? ' · lignes retirées par une purge' : ' · vidé par une purge, reprenable') : '')
               + (a.reglages ? '' : ' · réglages non mémorisés')
+              // ————— DEUX SCANS INCOMPARABLES NE DOIVENT PAS SE RESSEMBLER —————
+              // Sans frais, les chiffres d'un scan sont bruts : ils ne se comparent
+              // à ceux d'un scan qui les compte sur aucune colonne. `btFrais` était
+              // déjà archivé dans `reglages` — il n'était simplement jamais montré,
+              // et c'est une erreur qu'on ne rattrape pas six mois plus tard.
+              + ((a.reglages && a.reglages.btFrais === false) ? ' · sans frais' : '')
               + (() => { const l = listeSyms(symsParScan.get(a.id), a.partiel ? a.universPlan : null);
                 return l.court ? ' · ' + l.court : ''; })(),
             quandAide: (() => { const l = listeSyms(symsParScan.get(a.id), a.partiel ? a.universPlan : null); return l.complet; })(),
