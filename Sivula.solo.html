@@ -97,6 +97,18 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
   /* Le rang de « Comment on mesure » : une pastille par réglage, sa valeur à droite.
      Carrée et filetée comme les cases de la grille — c'est la même famille d'objets.
      Le fond accent à 9 % dit laquelle est ouverte ; à 5 %, laquelle est survolée. */
+  /* La vue d'ensemble du Journal : tuiles filetées sans fond — le fond aurait fait
+     six cartes là où il n'y a qu'une seule lecture — et segments de période. */
+  .jvt { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px;
+         border: 1px solid var(--color-divider); min-width: 0; }
+  .jvseg { cursor: pointer; font-family: var(--font-body); font-size: 12px; white-space: nowrap;
+           padding: 5px 12px; border: 1px solid var(--color-divider); background: none; }
+  .jvseg:hover { border-color: var(--color-accent); }
+  .jvseg.on { background: var(--color-accent-900); color: var(--color-bg); border-color: var(--color-accent-900); }
+  .jvseg:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  /* la réserve d'échantillon : un encadré gris, pas un masquage */
+  .jvmince { font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+             border: 1px solid var(--color-neutral-400); color: var(--color-neutral-700); padding: 2px 6px; }
   .mpast { cursor: pointer; font-family: var(--font-body); display: inline-flex;
            align-items: baseline; gap: 8px; padding: 5px 11px; border: 1px solid var(--color-divider);
            text-align: left; }
@@ -4902,6 +4914,114 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         <span style="margin:0;font-family:var(--font-heading);font-size:27px;line-height:1.05">Journal</span>
         <span style="font-size:12px;line-height:1.55;flex:1;min-width:32ch;color:var(--color-neutral-700)">Tout ce que vous avez fait, du plus récent au plus ancien : chaque mesure, chaque scan, chaque robot exporté, chaque sauvegarde. Une entrée se déplie sur sa signature complète — c'est elle qui rend la mesure reproductible six mois plus tard.</span>
       </div>
+
+      <!--
+        LA VUE D'ENSEMBLE, EN TÊTE.
+
+        Le registre répondait seul à « où j'en suis » : il fallait le lire ligne à
+        ligne. Ce bloc répond d'un coup d'œil, et le registre redevient la preuve
+        détaillée au lieu d'être aussi le résumé.
+
+        Un SEUL filtre de période pour la page : il commande ce bloc et le registre.
+        Deux filtres auraient fini par afficher deux périodes contradictoires dès que
+        le registre aurait eu le sien.
+
+        Tous les chiffres viennent des trades RÉELS du journal du robot. Aucune valeur
+        en dur, aucune note sur 100, aucun verdict sous le seuil d'échantillon.
+      -->
+      <sc-if value="{{ aJvVue }}" hint-placeholder-val="{{ true }}">
+      <section class="card blueprint" style="padding:17px 19px;gap:14px">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+        <div style="display:flex;align-items:baseline;gap:13px;flex-wrap:wrap">
+          <span style="font-family:var(--font-heading);font-size:22px;line-height:1.1">{{ jvTitre }}</span>
+          <span style="font-size:12px" class="text-muted">{{ jvPeriodeTxt }}</span>
+          <span style="display:flex;gap:0;margin-inline-start:auto">
+            <sc-for list="{{ jvPers }}" as="jp" hint-placeholder-count="3">
+              <button class="{{ jp.cls }}" type="button" onClick="{{ jp.aller }}">{{ jp.nom }}</button>
+            </sc-for>
+          </span>
+        </div>
+
+        <sc-if value="{{ aJvChiffres }}" hint-placeholder-val="{{ true }}">
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:11px">
+          <sc-for list="{{ jvTuiles }}" as="jt" hint-placeholder-count="6">
+            <div class="jvt">
+              <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+                <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">{{ jt.nom }}</span>
+                <sc-if value="{{ jt.mince }}" hint-placeholder-val="{{ false }}">
+                  <span class="jvmince" title="Sous {{ jvSeuil }} trades, ce chiffre bouge trop pour trancher : il est affiché, pas certifié.">trop peu</span>
+                </sc-if>
+              </div>
+              <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;letter-spacing:-.01em;font-size:26px;line-height:1.05;color:{{ jt.coul }}">{{ jt.val }}</span>
+              <span style="font-size:11px;line-height:1.45" class="text-muted">{{ jt.sous }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(230px,1fr) minmax(300px,1.6fr);gap:24px;padding-top:13px;border-top:1px solid var(--color-divider)">
+
+          <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+            <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Répartition</span>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;height:22px;border:1px solid var(--color-divider)">
+                <sc-for list="{{ jvRepart }}" as="jr" hint-placeholder-count="3">
+                  <div style="width:{{ jr.larg }};background:{{ jr.fond }}"></div>
+                </sc-for>
+              </div>
+              <sc-for list="{{ jvRepart }}" as="jr" hint-placeholder-count="3">
+                <div style="display:flex;align-items:baseline;gap:9px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-divider)">
+                  <span style="width:11px;height:11px;flex:none;background:{{ jr.fond }};border:1px solid var(--color-divider)"></span>
+                  <span style="min-width:11ch">{{ jr.nom }}</span>
+                  <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:13px">{{ jr.n }}</span>
+                  <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:12px;margin-inline-start:auto" class="text-muted">{{ jr.pct }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <!-- le seuil du « nul » est un choix, pas une évidence : il se dit -->
+            <span style="font-size:11px;line-height:1.5" class="text-muted">{{ jvNulTxt }}</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+              <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Ce que l’échantillon permet de dire</span>
+              <button type="button" class="lien" style="font-size:11.5px" onClick="{{ jvBasculerCalc }}">{{ jvTxtCalc }}</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ jvDires }}" as="jd" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:3px;padding-bottom:8px;border-bottom:1px solid var(--color-divider)">
+                  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                    <strong style="font-size:12.5px;min-width:16ch">{{ jd.nom }}</strong>
+                    <span style="font-family:var(--font-heading);font-variant-numeric:tabular-nums;font-size:14px;color:{{ jd.coul }}">{{ jd.val }}</span>
+                    <span style="font-size:11px;margin-inline-start:auto" class="text-muted">{{ jd.n }}</span>
+                  </div>
+                  <span style="font-size:11.5px;line-height:1.5" class="text-muted">{{ jd.dit }}</span>
+                  <sc-if value="{{ jvMontrerCalc }}" hint-placeholder-val="{{ false }}">
+                    <code style="font-size:10.5px;line-height:1.45;color:var(--color-neutral-700)">{{ jd.calc }}</code>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ aJvManque }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:11px 13px;border:1px solid var(--color-accent)">
+            <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Ce qui manque pour aller plus loin</span>
+            <sc-for list="{{ jvManque }}" as="jm" hint-placeholder-count="2">
+              <p style="margin:0;font-size:12.5px;line-height:1.55">{{ jm }}</p>
+            </sc-for>
+            <span style="font-size:11px;line-height:1.5" class="text-muted">Ce ne sont pas des notes de zéro — ce sont des champs vides. Chacun se comble, et sa ligne apparaît d’elle-même.</span>
+          </div>
+        </sc-if>
+
+        </sc-if>
+        <sc-if value="{{ aJvVide }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;font-size:12.5px;line-height:1.6;max-width:96ch" class="text-muted">{{ jvVideTxt }}</p>
+        </sc-if>
+      </section>
+      </sc-if>
 
       <!--
         LE REGISTRE. Une seule liste chronologique, lue depuis ce que l'application
@@ -14482,6 +14602,250 @@ GROUPES = {
     this.setState({ liveRev: (this.state.liveRev || 0) + 1 });
     return fermes.length + m[magic].ouverts.length;
   }
+  // ————— CE QUE L'ÉCHANTILLON PERMET DE DIRE —————
+  //
+  // Le cœur du bloc, et ce qui le sépare d'un tableau de bord : chaque ligne porte son
+  // chiffre, SON NOMBRE D'OCCURRENCES, et une phrase qui dit ce qu'on peut en conclure.
+  // Quand on ne peut rien conclure, la phrase le dit et donne le compte qu'il faudrait.
+  // Aucune valeur en dur : tout se recalcule sur les trades passés en argument.
+  SEUIL_DIRE = 40;
+  diresJournal(js, per, ctx) {
+    const n = js.length;
+    const fr2 = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—' : x.toFixed(d).replace('.', ','));
+    // `fr` et `sg` vivent dans renderVals : cette méthode a les siens.
+    const sg2 = (x, d = 1) => (x === undefined || x === null || Number.isNaN(x) ? '—'
+      : (x >= 0 ? '+ ' : '− ') + Math.abs(x).toFixed(d).replace('.', ','));
+    const eur2 = (x) => (x >= 0 ? '+ ' : '− ') + EUR.format(Math.abs(Math.round(x)));
+    const SEUIL = this.SEUIL_DIRE;
+    const NEUTRE = 'var(--color-neutral-700)';
+    const dires = [];
+
+    // 1 · le facteur de profit, et ce que les trois plus gros gains lui font
+    (() => {
+      const gagnants = js.filter((x) => x.r > 0).sort((a, b) => b.r - a.r);
+      const gains = gagnants.reduce((a, x) => a + x.r, 0);
+      const pertes = js.filter((x) => x.r < 0).reduce((a, x) => a + -x.r, 0);
+      const trois = gagnants.slice(0, 3).reduce((a, x) => a + x.r, 0);
+      const part = gains > 0 ? trois / gains : 0;
+      const sansTrois = pertes > 0 ? (gains - trois) / pertes : NaN;
+      dires.push({ nom: 'Facteur de profit',
+        val: n < SEUIL ? 'rien à dire' : ctx.pfTxt(ctx.pf),
+        coul: n < SEUIL ? NEUTRE : 'var(--color-accent-900)',
+        n: this.pl(n, 'trade', 'trades'),
+        dit: n < SEUIL
+          ? n + ' trades, c’est trop peu pour un facteur de profit : les trois plus gros '
+            + 'gains en font déjà ' + Math.round(part * 100) + ' %, et quelques trades de '
+            + 'plus le renverseraient. Il faut en compter ' + SEUIL + ' pour l’afficher, '
+            + 'et environ 150 pour s’y fier.'
+          : 'Les trois plus gros gains font ' + Math.round(part * 100) + ' % des gains. '
+            + 'Retirez-les et il tombe à ' + fr2(sansTrois, 1) + '. '
+            + (part > 0.5
+              ? 'Le chiffre décrit donc une poignée de coups, pas une méthode.'
+              : 'Aucun trade ne le porte à lui seul : le chiffre décrit la série.'),
+        calc: 'somme(gains) ÷ |somme(pertes)| sur les trades clos — frais du courtier inclus' });
+    })();
+
+    // 2 · la régularité du risque : moyenne ± écart-type du risque engagé
+    (() => {
+      const cap = Number(this.state.capital) || 0;
+      // le risque engagé d'un trade réel se déduit de ce que le robot a écrit :
+      // profit_devise ÷ profit_R vaut le montant d'un R, c'est-à-dire le risque posé
+      const risques = js.filter((x) => Math.abs(x.r) >= 0.05 && x.devise !== 0)
+        .map((x) => Math.abs(x.devise / x.r));
+      if (!cap || risques.length < 5) {
+        dires.push({ nom: 'Régularité du risque', val: 'rien à dire', coul: NEUTRE,
+          n: risques.length + ' / ' + n + ' mesurables',
+          dit: !cap
+            ? 'Le capital de référence n’est pas renseigné : le risque engagé ne peut pas '
+              + 'être rapporté à quoi que ce soit. Posez-le dans l’en-tête (« 1 R = … ») '
+              + 'et la ligne apparaîtra d’elle-même.'
+            : 'Il faut le profit en devise ET en R sur au moins cinq trades pour déduire le '
+              + 'risque posé ; ' + risques.length + ' l’ont ici. Les trades gagnés ou perdus '
+              + 'à moins de 0,05 R ne permettent pas la division.',
+          calc: 'risque d’un trade = |profit_devise ÷ profit_R| — le montant d’un R, tel que le robot l’a écrit' });
+        return;
+      }
+      const moy = risques.reduce((a, x) => a + x, 0) / risques.length;
+      const ec = Math.sqrt(risques.reduce((a, x) => a + (x - moy) ** 2, 0) / risques.length);
+      const gros = risques.filter((x) => x > moy * 2).length;
+      dires.push({ nom: 'Régularité du risque',
+        val: fr2(moy / cap * 100, 2) + ' % ± ' + fr2(ec / cap * 100, 2),
+        coul: 'var(--color-text)', n: risques.length + ' / ' + n + ' mesurables',
+        dit: ec > moy * 0.5
+          ? 'L’écart-type vaut ' + fr2(ec / moy, 1) + ' fois la moyenne'
+            + (gros ? ' : ' + this.pl(gros, 'trade porte', 'trades portent')
+              + ' plus du double du risque des autres' : '')
+            + '. C’est mesurable, donc corrigeable.'
+          : 'Le risque posé varie peu d’un trade à l’autre : les résultats se comparent '
+            + 'entre eux sans correction.',
+        calc: 'moyenne et écart-type de |profit_devise ÷ profit_R|, rapportés au capital de l’en-tête' });
+    })();
+
+    // 3 · la concentration : ce que porte la meilleure journée
+    (() => {
+      const parJour = new Map();
+      for (const x of js) {
+        const d = new Date(x.s);
+        const k = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        parJour.set(k, (parJour.get(k) || 0) + (ctx.aEuros ? x.devise : x.r));
+      }
+      const total = ctx.aEuros ? ctx.somE : ctx.somR;
+      const jours = [...parJour.values()];
+      const meilleure = Math.max(...jours);
+      if (!(total > 0) || meilleure <= 0) {
+        dires.push({ nom: 'Concentration', val: 'rien à dire', coul: NEUTRE,
+          n: this.pl(jours.length, 'journée', 'journées'),
+          dit: total > 0
+            ? 'Aucune journée n’est positive alors que le total l’est : la part n’a pas de sens ici.'
+            : 'Le résultat de la période n’est pas positif : la part d’une journée dans un '
+              + 'total négatif ne veut rien dire. La ligne revient dès que le net repasse au-dessus de zéro.',
+          calc: 'part du résultat net apportée par la journée la plus forte — la journée est celle de la CLÔTURE' });
+        return;
+      }
+      const part = meilleure / total;
+      dires.push({ nom: 'Concentration', val: Math.round(part * 100) + ' %',
+        coul: 'var(--color-text)',
+        n: '1 journée sur ' + jours.length,
+        dit: part > 0.4
+          ? 'Une seule journée porte ' + Math.round(part * 100) + ' % du résultat. Le net '
+            + 'dépend donc d’un jour, pas d’une méthode — retirez-le et il reste '
+            + (ctx.aEuros ? eur2(total - meilleure) : sg2(total - meilleure, 1) + ' R') + '.'
+          : 'Aucune journée ne porte le résultat à elle seule : il vient de la série, pas d’un coup.',
+        calc: 'part du résultat net apportée par la journée la plus forte — la journée est celle de la CLÔTURE' });
+    })();
+
+    // 4 · les trades à cheval sur un rendez-vous suivi
+    (() => {
+      const NOMS = { nfp: 'NFP', cpi: 'CPI', pib: 'PIB', fomc: 'FOMC', bce: 'BCE',
+        eurz: 'Eurostat', bojboe: 'BoJ/BoE', eia: 'EIA', opt: 'options' };
+      let marques = [];
+      try {
+        // LA MÊME MÉCANIQUE que celle du backtest : `marquerEvenements` du moteur, sur
+        // les instants d'agenda de la période. Aucune seconde détection.
+        const evs = [];
+        const t0 = js[0].e, t1 = js[n - 1].s;
+        for (const cle of this.MESURABLES) {
+          for (const u of this.instantsEvenement(cle, t0, t1)) evs.push({ cle, ms: u });
+        }
+        const copie = js.map((x) => ({ entree_t: x.e, sortie_t: x.s, ref: x }));
+        this.M.marquerEvenements(copie, evs.sort((a, b) => a.ms - b.ms));
+        marques = copie.filter((x) => x.evTraverses && x.evTraverses.length);
+      } catch (e) { marques = []; }
+      const dedans = marques.map((x) => x.ref);
+      const dehors = js.filter((x) => !dedans.includes(x));
+      const pfDe = (l) => { let g = 0, p = 0;
+        for (const x of l) { if (x.r > 0) g += x.r; else p += -x.r; }
+        return p > 0 ? g / p : (g > 0 ? Infinity : NaN); };
+      const cles = [...new Set(marques.flatMap((x) => x.evTraverses))].map((c) => NOMS[c] || c);
+      dires.push({ nom: 'Trades à cheval sur un événement',
+        val: dedans.length >= this.SEUIL_DIRE ? ctx.pfTxt(pfDe(dedans)) : 'rien à dire',
+        coul: dedans.length >= this.SEUIL_DIRE ? 'var(--color-accent-900)' : NEUTRE,
+        n: this.pl(dedans.length, 'trade', 'trades'),
+        dit: !dedans.length
+          ? 'Aucun de vos ' + n + ' trades n’a traversé un rendez-vous suivi sur cette '
+            + 'période. Rien à comparer — ce n’est pas un résultat, c’est une absence.'
+          : dedans.length < this.SEUIL_DIRE
+            ? dedans.length + ' trades sur ' + n + ' ont traversé un rendez-vous suivi ('
+              + cles.join(', ') + ') : un seul qui bascule renverse la comparaison. La marque '
+              + 's’accumule, elle ne tranche pas — comptez ' + this.SEUIL_DIRE + ' trades marqués '
+              + 'pour un premier écart, une centaine pour s’y fier.'
+            : 'Sur ' + dedans.length + ' trades à cheval, le facteur de profit vaut '
+              + ctx.pfTxt(pfDe(dedans)) + ' contre ' + ctx.pfTxt(pfDe(dehors)) + ' pour les '
+              + dehors.length + ' autres. ' + (pfDe(dedans) < pfDe(dehors)
+                ? 'Traverser un rendez-vous coûte, sur votre échantillon.'
+                : 'Traverser un rendez-vous ne coûte pas, sur votre échantillon.'),
+        calc: 'PF des trades dont [entrée, sortie] contient l’instant d’un rendez-vous suivi — '
+          + 'même marquage que le backtest (marquerEvenements), masqué sous ' + this.SEUIL_DIRE + ' trades marqués' });
+    })();
+
+    // ————— CE QUI MANQUE POUR ALLER PLUS LOIN —————
+    // On NOMME les champs vides et le geste qui les comble. Pas de note de zéro : un
+    // champ vide n'est pas une mauvaise note, c'est une mesure qu'on ne peut pas faire.
+    const manque = [];
+    if (!ctx.aEuros) {
+      manque.push('Le profit en devise n’est renseigné sur aucun de vos ' + n + ' trades : '
+        + 'le résultat ne peut donc s’exprimer qu’en R, et le risque posé par trade ne se '
+        + 'déduit pas. Redéposez le journal du robot — la colonne profit_devise y est écrite '
+        + 'depuis la version en cours.');
+    }
+    if (!ctx.aFrais) {
+      manque.push('Les frais réels ne sont renseignés sur aucun de vos ' + n + ' trades : '
+        + 'les chiffres ci-dessus sont bruts, donc optimistes. La colonne frais est écrite '
+        + 'par le robot à la clôture ; un journal plus ancien ne la porte pas.');
+    }
+    if (!ctx.aMotifs) {
+      manque.push('Le motif de sortie n’est renseigné sur aucun de vos ' + n + ' trades : '
+        + 'on ne peut pas séparer ce qui a touché l’objectif de ce qui a touché le stop.');
+    }
+    if (!(Number(this.state.capital) || 0)) {
+      manque.push('Le capital de référence n’est pas posé : aucun pourcentage de risque ne '
+        + 'peut être calculé. Il se règle dans l’en-tête, sur « 1 R = … ».');
+    }
+    const sansMesure = js.filter((x) => !this.normValides(this.state.valides)
+      .some((v) => String(this.magicDe(v)) === x.magic || String(this.magicAncien(v)) === x.magic));
+    if (sansMesure.length === n) {
+      manque.push('Aucun de ces trades ne correspond à une configuration encore validée : '
+        + 'l’écart entre ce que Sivula avait mesuré et ce que le robot a fait ne peut donc pas '
+        + 'être calculé. Il réapparaît dès qu’une ligne du portefeuille porte le même magique.');
+    }
+    return { jvDires: dires, aJvManque: manque.length > 0, jvManque: manque };
+  }
+  // ————— LES TRADES RÉELS, TELS QUE LE ROBOT LES A ÉCRITS —————
+  //
+  // Source unique : le journal live (`simula.liveMt5.v1`), rempli par le dépôt des
+  // `SIV_trades_<SYM>_<MAGIC>.csv` du terminal. Rien n'est simulé ici, rien n'est en
+  // dur : un trade absent des fichiers déposés est absent du bloc, et un compte sans
+  // fichier n'a pas de vue d'ensemble — il a la phrase qui dit comment en avoir une.
+  horodateLive(x) {
+    // le robot écrit TimeToString(t, TIME_DATE|TIME_MINUTES) : « 2026.09.09 14:30 »,
+    // à l'heure du serveur du courtier. On ne la recale sur aucune autre horloge : elle
+    // sert à ordonner et à grouper par journée, deux usages que le décalage ne change pas.
+    const m = /^(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})[ T](\d{2}):(\d{2})/.exec(String(x || ''));
+    if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    const t = Date.parse(String(x || '').replace(/\./g, '-'));
+    return Number.isFinite(t) ? t : NaN;
+  }
+  // tous les trades CLOS du compte actif, du plus ancien au plus récent
+  tradesReels() {
+    const live = this.lireLive() || {};
+    const out = [];
+    for (const k of Object.keys(live)) {
+      const j = live[k];
+      for (const t of (j && j.trades) || []) {
+        const fin = this.horodateLive(t.t1);
+        if (!Number.isFinite(fin)) continue;
+        const deb = this.horodateLive(t.t0);
+        out.push({ ticket: t.ticket, sym: t.sym || (j && j.sym) || '', sens: t.sens,
+          motif: t.motif || '', magic: String(t.magic || k),
+          e: Number.isFinite(deb) ? deb : fin, s: fin,
+          r: Number(t.r) || 0, devise: Number(t.devise) || 0, frais: Number(t.frais) || 0 });
+      }
+    }
+    return out.sort((a, b) => a.s - b.s);
+  }
+  // Les bornes d'une période. « Ce mois » et « 3 mois » sont des mois CALENDAIRES :
+  // « du 1er au 9 septembre » se vérifie sur un relevé de courtier, « les 30 derniers
+  // jours » ne se vérifie sur rien.
+  bornesPeriode(per) {
+    const n = new Date();
+    if (per === 'mois') return { debut: Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), 1) };
+    if (per === 'trim') return { debut: Date.UTC(n.getUTCFullYear(), n.getUTCMonth() - 2, 1) };
+    return { debut: -Infinity };
+  }
+  // Le pire enchaînement perdant : le plus grand creux de la courbe cumulée, avec le
+  // nombre de trades qu'il a fallu pour le creuser. Mesuré sur les trades réels dans
+  // leur ordre de clôture — pas une somme des pertes, qui serait toujours pire.
+  pireReculReel(js) {
+    let cumR = 0, cumE = 0, hautR = 0, hautE = 0, iHaut = 0;
+    let pire = { r: 0, eur: 0, n: 0 };
+    for (let i = 0; i < js.length; i++) {
+      cumR += js[i].r; cumE += js[i].devise;
+      if (cumR > hautR) { hautR = cumR; hautE = cumE; iHaut = i + 1; }
+      const creux = cumR - hautR;
+      if (creux < pire.r) pire = { r: creux, eur: cumE - hautE, n: i + 1 - iHaut };
+    }
+    return pire;
+  }
   // L'ÉCART entre ce que le robot a fait et ce que Sivula avait mesuré, en %.
   //
   // Écrit ici plutôt que dans la page du portefeuille : la barre de navigation en a
@@ -23331,6 +23695,132 @@ GROUPES = {
       vueScan: this.state.vue === 'scan',
       vueBacktest: this.state.vue === 'backtest',
       vueJournal: this.state.vue === 'journal',
+      // ————— LA VUE D'ENSEMBLE DU JOURNAL —————
+      //
+      // Le registre répondait seul à « où j'en suis » : il fallait le lire ligne à
+      // ligne. Ce bloc répond d'un coup d'œil, et le registre redevient la preuve
+      // détaillée au lieu d'être aussi le résumé.
+      //
+      // TROIS REFUS TENUS ICI, ce sont eux qui font la différence avec un tableau de
+      // bord ordinaire : aucune note sur 100 — une jauge à 70 cache sa formule et son
+      // échantillon, « PF 1,47 sur 396 trades » se vérifie ; aucun verdict sur un
+      // échantillon mince — sous SEUIL_DIRE trades la ligne dit « rien à dire » et ce
+      // qu'il faudrait pour trancher ; aucun score pour un champ vide — un manque se
+      // nomme et s'accompagne du geste qui le comble.
+      //
+      // Un seul filtre de période pour la page : il commande ce bloc ET le registre.
+      // Deux filtres auraient fini par afficher deux périodes contradictoires.
+      ...(() => {
+        const per = s.jvPer || 'mois';
+        const SEUIL = this.SEUIL_DIRE;
+        const tous = this.tradesReels();
+        const b = this.bornesPeriode(per);
+        const js = tous.filter((x) => x.s >= b.debut);
+        const n = js.length;
+        const PERS = [['mois', 'Ce mois'], ['trim', '3 mois'], ['tout', 'Tout']];
+        const pct = (x) => Math.round(x * 100) + ' %';
+        // « du 1er au 9 septembre » : le premier du mois prend son ordinal, les autres non
+        const jour = (ms) => { const d = new Date(ms);
+          return (d.getUTCDate() === 1 ? '1er' : String(d.getUTCDate())) + ' '
+            + d.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' }); };
+        // `libelleCompteActif` porte déjà « nº 1 — FxPro MT5 » : rien à préfixer
+        const compte = this.libelleCompteActif();
+        // EUR.format pose le séparateur de milliers ET le symbole ; le signe est celui
+        // du reste de l'application — « + 21 672 € », pas « +21672 »
+        const eur = (x) => (x >= 0 ? '+ ' : '− ') + EUR.format(Math.abs(Math.round(x)));
+        const mince = n < SEUIL;
+        // le nom du courtier porte déjà « nº 1 » quand il y en a plusieurs
+        const base = {
+          jvPers: PERS.map(([id, nom]) => ({ nom,
+            cls: 'jvseg' + (id === per ? ' on' : ''),
+            aller: () => this.setState({ jvPer: id }) })),
+          jvSeuil: SEUIL,
+        };
+        if (!tous.length) {
+          // AUCUN TRADE RÉEL : pas de zéros, pas de tuiles vides — le geste qui comble.
+          return { ...base, aJvVue: true, aJvChiffres: false, aJvVide: true, jvTitre: 'Aucun trade réel encore',
+            jvPeriodeTxt: compte,
+            jvVideTxt: 'Ce bloc ne lit que les trades que votre robot a réellement '
+              + 'passés : il les prend dans les fichiers SIV_trades_<symbole>_<magique>.csv '
+              + 'que le robot écrit dans Common\\Files. Déposez-en un — le glisser-déposer '
+              + 'les reconnaît seul — et la vue d’ensemble apparaîtra. Rien n’est '
+              + 'simulé ici : tant qu’aucun trade n’est déposé, il n’y a rien à dire.',
+            jvTuiles: [], jvRepart: [], jvDires: [], aJvManque: false, jvManque: [],
+            jvMontrerCalc: false, jvTxtCalc: '', jvBasculerCalc: () => {} };
+        }
+        if (!n) {
+          return { ...base, aJvVue: true, aJvChiffres: false, aJvVide: true, jvTitre: 'Aucun trade clos sur cette période',
+            jvPeriodeTxt: this.pl(tous.length, 'trade clos au total', 'trades clos au total') + ' · ' + compte,
+            jvVideTxt: 'Vos ' + tous.length + ' trades clos sont hors de la période choisie. '
+              + '« Tout » les affiche.',
+            jvTuiles: [], jvRepart: [], jvDires: [], aJvManque: false, jvManque: [],
+            jvMontrerCalc: false, jvTxtCalc: '', jvBasculerCalc: () => {} };
+        }
+        const somR = js.reduce((a, x) => a + x.r, 0);
+        const somE = js.reduce((a, x) => a + x.devise, 0);
+        const gains = js.filter((x) => x.r > 0).reduce((a, x) => a + x.r, 0);
+        const pertes = js.filter((x) => x.r < 0).reduce((a, x) => a + -x.r, 0);
+        const pf = pertes > 0 ? gains / pertes : (gains > 0 ? Infinity : NaN);
+        const pfTxt = (x) => (Number.isFinite(x) ? fr(x, 2) : x === Infinity ? '∞' : '—');
+        // le seuil du « nul » est un CHOIX, pas une évidence : il se dit sous la barre
+        const NUL = 0.1;
+        const gag = js.filter((x) => x.r >= NUL).length;
+        const per2 = js.filter((x) => x.r <= -NUL).length;
+        const nul = n - gag - per2;
+        const durees = js.map((x) => x.s - x.e).sort((a, b) => a - b);
+        const med = durees[durees.length >> 1] || 0;
+        const dureeTxt = med < 86400000 ? Math.round(med / 3600000) + ' h' : fr(med / 86400000, 1) + ' j';
+        const recul = this.pireReculReel(js);
+        const aEuros = js.some((x) => x.devise !== 0);
+        const aFrais = js.some((x) => x.frais !== 0);
+        const aMotifs = js.some((x) => x.motif);
+        return { ...base, aJvVue: true, aJvChiffres: true, aJvVide: false, jvVideTxt: '',
+          jvTitre: 'Vos ' + this.pl(n, 'trade clos', 'trades clos'),
+          // la période affichée est celle des TRADES, pas celle du filtre : « du 1er au
+          // 9 septembre » quand le premier trade est du 1er, « du 2 au 9 » quand il est
+          // du 2. Annoncer les bornes du filtre ferait dire à la phrase plus que ce que
+          // les données portent.
+          jvPeriodeTxt: (n > 1 && js[0].s !== js[n - 1].s
+            ? 'du ' + jour(js[0].s) + ' au ' + jour(js[n - 1].s)
+            : 'le ' + jour(js[n - 1].s)) + ' · ' + compte,
+          jvTuiles: [
+            { nom: 'Résultat net', val: sg(somR, 1) + ' R', mince: false,
+              coul: somR >= 0 ? 'var(--color-accent-900)' : 'var(--color-text)',
+              sous: (aEuros ? eur(somE) + ' · ' : '')
+                + (aFrais ? 'frais réels comptés' : 'frais non renseignés par le robot') },
+            { nom: 'Facteur de profit', val: pfTxt(pf), mince,
+              coul: Number.isFinite(pf) && pf >= 1 ? 'var(--color-accent-900)' : 'var(--color-text)',
+              sous: 'gains ÷ pertes · ' + this.pl(n, 'trade', 'trades') },
+            { nom: 'Espérance', val: sg(somR / n, 2) + ' R', mince,
+              coul: somR >= 0 ? 'var(--color-accent-900)' : 'var(--color-text)',
+              sous: 'par trade' + (aFrais ? ', frais compris' : ', hors frais non renseignés') },
+            { nom: 'Trades gagnants', val: gag + ' sur ' + n, mince: false,
+              coul: 'var(--color-text)',
+              sous: pct(gag / n) + ' — ' + per2 + ' perdants, ' + nul + (nul > 1 ? ' nuls' : ' nul') },
+            { nom: 'Pire recul', val: recul.n ? sg(recul.r, 1) + ' R' : '—', mince: false,
+              coul: 'var(--color-text)',
+              sous: recul.n
+                ? (aEuros ? eur(recul.eur) + ' · ' : '')
+                  + 'sur ' + this.pl(recul.n, 'trade de suite', 'trades de suite')
+                : 'aucun creux : la courbe n’est jamais repassée sous un sommet' },
+            { nom: 'Durée médiane', val: dureeTxt, mince: false, coul: 'var(--color-text)',
+              sous: 'de l’entrée à la sortie' },
+          ],
+          jvRepart: [
+            { nom: 'Gagnants', n: gag, pct: pct(gag / n), larg: (gag / n * 100) + '%',
+              fond: 'var(--color-accent-500)' },
+            { nom: 'Perdants', n: per2, pct: pct(per2 / n), larg: (per2 / n * 100) + '%',
+              fond: 'var(--color-neutral-400)' },
+            { nom: 'Nuls', n: nul, pct: pct(nul / n), larg: (nul / n * 100) + '%',
+              fond: 'var(--color-neutral-300)' },
+          ],
+          jvNulTxt: 'Nul = clos à moins de ' + fr(NUL, 1) + ' R de l’entrée, frais compris.',
+          ...this.diresJournal(js, per, { pf, pfTxt, somE, somR, aEuros, aFrais, aMotifs }),
+          jvMontrerCalc: !!s.jvCalc,
+          jvTxtCalc: s.jvCalc ? 'Masquer les formules' : 'Voir les formules',
+          jvBasculerCalc: () => this.setState({ jvCalc: !s.jvCalc }),
+        };
+      })(),
       setVueScan: () => this.setState({ vue: 'scan' }),
       vueHistorique: this.state.vue === 'historique',
       setVueHistorique: () => this.setState({ vue: 'historique' }),
@@ -23546,21 +24036,29 @@ GROUPES = {
         }
         entrees.sort((a2, b2) => b2.t - a2.t);
         const actifs = s.regFiltres || [];
-        const presents = ['mesure', 'scan', 'robot', 'export'].filter((n) => entrees.some((e) => e.type === n));
-        const visibles = entrees.filter((e) => !actifs.length || actifs.includes(e.type));
+        // ————— UN SEUL FILTRE DE PÉRIODE POUR LA PAGE —————
+        // Il est posé en tête de la vue d'ensemble et commande aussi le registre :
+        // deux filtres auraient affiché deux périodes contradictoires sur le même écran.
+        const bReg = this.bornesPeriode(s.jvPer || 'mois');
+        const dansPeriode = entrees.filter((e) => e.t >= bReg.debut);
+        const presents = ['mesure', 'scan', 'robot', 'export'].filter((n) => dansPeriode.some((e) => e.type === n));
+        const visibles = dansPeriode.filter((e) => !actifs.length || actifs.includes(e.type));
         const rc = s.recalculs || {};
         return {
           regFiltres: presents.map((nom) => ({ nom,
-            n: entrees.filter((e) => e.type === nom).length,
+            n: dansPeriode.filter((e) => e.type === nom).length,
             cls: 'tag ' + (actifs.includes(nom) ? 'tag-accent' : 'tag-outline'),
             basculer: () => this.setState((p) => ({ regFiltres: (p.regFiltres || []).includes(nom)
               ? (p.regFiltres || []).filter((x) => x !== nom) : [...(p.regFiltres || []), nom] })) })),
           aRegFiltre: actifs.length > 0,
           regToutAfficher: () => this.setState({ regFiltres: [] }),
-          regResume: actifs.length
-            ? this.pl(visibles.length, 'entrée', 'entrées') + ' sur ' + entrees.length
-            : this.pl(entrees.length, 'entrée', 'entrées') + ' · tout est affiché',
-          aRegVide: entrees.length === 0,
+          regResume: (actifs.length
+            ? this.pl(visibles.length, 'entrée', 'entrées') + ' sur ' + dansPeriode.length
+            : this.pl(dansPeriode.length, 'entrée', 'entrées'))
+            + (entrees.length > dansPeriode.length
+              ? ' · ' + (entrees.length - dansPeriode.length) + ' hors période'
+              : (actifs.length ? '' : ' · tout est affiché')),
+          aRegVide: dansPeriode.length === 0,
           regPied: 'Rien ne s\u2019efface tout seul, quelle que soit l\u2019ancienneté : une entrée ne part que si vous la supprimez vous-même. '
             + this.pl(entrees.length, 'entrée', 'entrées') + ' dans cet espace, ' + this.nomCompteActif() + '.',
           regFil: visibles.map((e) => {
