@@ -8,7 +8,8 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const RACINE = new URL("../../", import.meta.url).pathname;
-const IGNORE = new Set(["node_modules", ".git", "dist", "build", ".netlify", "public"]);
+const IGNORE = new Set(["node_modules", ".git", "dist", "build",
+  ".netlify", ".vercel", ".output", "public"]);
 /** tous les fichiers texte du dépôt, sauf les artefacts et le journal d'aide généré */
 function fichiers(dir = RACINE, out = []) {
   for (const e of readdirSync(dir)) {

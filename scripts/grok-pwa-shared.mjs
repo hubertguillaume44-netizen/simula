@@ -12,22 +12,34 @@ const SHARE_META_KEYS = new Set([
   "x:game:image:height",
 ]);
 
+// Les entités HTML de ces deux fonctions avaient été DÉCODÉES dans le source : « &amp; »
+// y était devenu « & », « &lt; » un « < », et « &quot; » un guillemet droit — d'où trois
+// guillemets à la suite ligne 20, et l'arrêt de l'analyseur.
+//
+// C'est bien l'entité qu'il faut, pas un guillemet typographique : le seul remplacement
+// resté intact est `"'" -> "&#39;"`, et la sortie est interpolée dans des attributs
+// `content="..."`. Un guillemet courbe n'y fermerait pas l'attribut, mais ne protégerait
+// rien non plus — il changerait le texte au lieu de l'échapper.
+//
+// L'ORDRE compte, et il était juste : à l'échappement, « & » passe EN PREMIER, sinon les
+// entités qu'on vient d'écrire seraient réécrites à leur tour ; au déséchappement,
+// « &amp; » passe EN DERNIER, sinon « &amp;lt; » deviendrait « < » au lieu de « &lt; ».
 export function escapeHtml(value) {
   return String(value)
-    .replaceAll("&", "&")
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll('"', """)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
 
 function unescapeHtml(value) {
   return String(value)
-    .replaceAll("<", "<")
-    .replaceAll(">", ">")
-    .replaceAll(""", '"')
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
     .replaceAll("&#39;", "'")
-    .replaceAll("&", "&");
+    .replaceAll("&amp;", "&");
 }
 
 function placeholderCardColor(site = {}) {
