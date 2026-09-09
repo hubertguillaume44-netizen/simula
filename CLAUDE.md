@@ -168,6 +168,19 @@ substitution, absence de chargement de tiers dans le fichier livré, présence d
 et correspondance entre le chemin que l'application déclare et celui où le fichier est
 publié.
 
+## Protection temporaire du site (à retirer au lancement)
+
+Le site entier est derrière une authentification de base, déclarée dans `netlify.toml`
+par un bloc `[[edge_functions]]` de trois lignes. **Supprimer ces trois lignes l'enlève**
+— voir PASSATION.md, « La protection temporaire du site ».
+
+Le mot de passe vit dans la variable d'environnement **`VENA_ACCES`** posée dans Netlify,
+au format `identifiant:motdepasse`, jamais dans le dépôt. La fonction **ferme** quand la
+variable manque : une protection qui disparaît avec sa configuration ne protège rien.
+
+Elle couvre `/api/licence` : **le webhook Revolut recevra 401 tant qu'elle est en place**.
+À traiter le jour où le paiement s'ouvre, avec la liste `OUVERTS` de `protection.js`.
+
 ## Le test qui tient la convention
 
 `scripts/app/nom-vena.test.mjs` échoue si l'ancien nom réapparaît ailleurs que dans la

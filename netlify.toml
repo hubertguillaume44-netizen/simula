@@ -31,6 +31,23 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# ————— PROTECTION TEMPORAIRE DU SITE — À RETIRER AU LANCEMENT —————
+#
+# Ce bloc, et lui seul, met tout le site derrière une authentification de base : la
+# racine, /app, et les deux fonctions écrites à la main. Les fonctions de périphérie
+# passent AVANT les redirections ci-dessous, donc rien ne lui échappe.
+#
+# POUR L'ENLEVER : supprimer les trois lignes de ce bloc. Le fichier
+# netlify/edge-functions/protection.js peut rester — sans déclaration, il ne s'exécute
+# pas. C'est le seul geste. (Voir PASSATION.md, « La protection temporaire du site ».)
+#
+# LE MOT DE PASSE N'EST PAS ICI. Il vit dans la variable d'environnement VENA_ACCES,
+# posée dans Netlify, au format « identifiant:motdepasse ». Un secret versionné dans un
+# dépôt n'est plus un secret, et le retirer plus tard ne l'efface pas de l'historique.
+[[edge_functions]]
+  function = "protection"
+  path = "/*"
+
 # ————— L'APPLICATION, SERVIE TELLE QUELLE SOUS /app —————
 #
 # `dist/app/index.html` est le fichier unique produit par `scripts/app/solo.mjs` : le

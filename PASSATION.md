@@ -264,6 +264,51 @@ travers un résolveur d'alias, pour trois fonctions. Le générateur vit désorm
 — et le harnais ne dépend plus du site du tout. C'est le seul acquis de l'épisode, et il
 est bon à garder : la vérité terrain du comparateur ne peut plus changer par ricochet.
 
+## La protection temporaire du site — À RETIRER AU LANCEMENT
+
+Le site est fermé par une authentification de base, le temps du chantier. **Elle est
+temporaire.** Si on la découvre le jour où un client ne peut pas entrer, c'est trop tard :
+voici où elle est, et comment elle s'enlève.
+
+**Où elle est déclarée.** Dans `netlify.toml`, un seul bloc :
+
+```toml
+[[edge_functions]]
+  function = "protection"
+  path = "/*"
+```
+
+**Comment l'enlever.** Supprimer ces trois lignes. C'est le seul geste.
+`netlify/edge-functions/protection.js` peut rester : sans déclaration, il ne s'exécute
+pas. Le fichier ne déclare volontairement **pas** son propre chemin — une seconde
+déclaration survivrait à la suppression du bloc, et cette consigne serait fausse.
+
+**Le mot de passe.** Il n'est pas dans le dépôt. Il vit dans la variable d'environnement
+**`VENA_ACCES`**, posée à la main dans Netlify (Site configuration → Environment
+variables), au format `identifiant:motdepasse`. Un secret versionné n'est plus un secret,
+et le retirer plus tard ne l'efface pas de l'historique.
+
+**Elle ferme quand sa configuration manque.** Variable absente ou mal formée : la fonction
+rend un 503 qui dit ce qui manque, au lieu de laisser passer. Une protection qui disparaît
+avec sa configuration ne protège rien — le jour où quelqu'un renomme la variable, le site
+serait public sans que rien ne le signale.
+
+**Ce qu'elle couvre.** Tout : la racine, `/app`, les fichiers statiques, et **les deux
+fonctions écrites à la main** (`/api/licence`, `/api/usage`). Les fonctions de périphérie
+passent avant les redirections.
+
+> **À traiter le jour où le paiement s'ouvre.** Le webhook Revolut appelle `/api/licence`
+> depuis ses serveurs, qui ne savent pas envoyer d'identifiants : tant que la protection
+> est en place, **il recevra 401 et aucune licence ne sera délivrée**. Deux gestes ce
+> jour-là — retirer la protection (le lancement), ou ajouter `/api/licence` à la liste
+> `OUVERTS` en tête de `protection.js`. Cette liste est vide aujourd'hui ; une page de
+> confirmation de paiement (`/merci`, par exemple) devra y entrer pour la même raison :
+> un client qui vient de payer ne peut pas se heurter à un mot de passe.
+
+`scripts/protection-site.test.mjs` éprouve tout cela : le refus, l'acceptation, le
+mécanisme d'exclusion, la fermeture quand la variable manque, et l'unicité de la
+déclaration.
+
 ## Deux chaînes de travail sur le même dépôt : d'où viennent les régressions
 
 Le site public et l'application de mesure n'avancent pas toujours par le même canal, et
