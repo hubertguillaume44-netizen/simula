@@ -48,6 +48,16 @@
          display: flex; align-items: baseline; gap: 8px; width: 100%; }
   .rep:hover { color: var(--color-accent-700); }
   input[type="range"] { accent-color: var(--color-accent); cursor: pointer; }
+  /* CE QUI REÇOIT UN FICHIER NE RESSEMBLE PLUS À CE QUI EN TÉLÉCHARGE UN.
+     Un bouton plein sort quelque chose de Sivula ; une zone en pointillé attend
+     qu'on y pose un fichier — le <input type="file"> la couvre entièrement, donc
+     toute la surface est cliquable, et le glisser-déposer marche dessus. */
+  .zdep { position: relative; cursor: pointer; display: flex; flex-direction: column; gap: 2px;
+          border: 1px dashed var(--color-neutral-400); padding: 9px 14px; min-width: 26ch;
+          align-self: flex-start; background: none; }
+  .zdep:hover { border-color: var(--color-accent);
+                background: color-mix(in srgb, var(--color-accent) 5%, transparent); }
+  .zdep:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   /* Les deux entrées de l'accueil : « J'ai une clé » et « Espace client ».
      L'active s'inverse — fond clair sur bandeau bleu — parce qu'un simple filet
      ne se distingue pas à cette taille. */
@@ -1091,81 +1101,103 @@
         égalité, quel que soit son nombre.
       -->
       <!--
-        CHAQUE BOUTON À CÔTÉ DE L'ÉTAPE QU'IL EXÉCUTE.
+        CHAQUE GESTE À CÔTÉ DE CE QU'IL EXÉCUTE — ET L'INSTALLATION À PART.
 
         Les boutons étaient dispersés — les scripts en haut à droite, les deux dépôts
         en bas du cadre du capital, la liste en gris pâle à côté du titre — et le texte
-        devait donner des directions : « ci-dessus », « en bas ». Cinq lignes
-        numérotées, chaque bouton sur sa ligne, dans l'ordre où on les fait. Les trois
-        colonnes imposaient une lecture en zigzag ; cinq lignes se lisent de haut en
-        bas. `min-width:26ch` sur la colonne de texte : sur écran étroit, le bouton
-        passe SOUS le texte au lieu de l'écraser.
+        devait donner des directions : « ci-dessus », « en bas ». Chaque action est
+        maintenant sous le texte qui la demande, dans l'ordre où on les fait.
+
+        Deux temps, parce que les cinq lignes n'étaient pas de même rang : poser les
+        scripts se fait UNE fois, les quatre autres gestes reviennent à chaque mise à
+        jour des données. L'installation prend donc un rang à part, entre deux filets,
+        et son bouton passe en fantôme quand un relevé est déjà arrivé. Rien de plein
+        dans le cadre : aucune de ces actions n'est l'action principale de la page.
+
+        Ce qui REÇOIT un fichier n'est plus un bouton mais une zone de dépôt (`.zdep`,
+        pointillé) — un bouton ne dit pas qu'on peut lui lâcher un fichier dessus.
+        L'`input` reste en `position:absolute;inset:0;opacity:0` dans le `label` : la
+        zone entière reste cliquable, et le glisser-déposer de la page — qui vise
+        `champReleve`, `champBougies`, `champBougiesM1` — continue de fonctionner.
       -->
       <div id="zoneDepot" style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:0;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
-        <button type="button" onClick="{{ basculerMt5 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:0 0 11px;display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;width:100%" title="Les cinq étapes — scripts, relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.">
+        <button type="button" onClick="{{ basculerMt5 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:0 0 11px;display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;width:100%" title="L’installation des scripts, une fois — puis les quatre gestes de chaque mise à jour : relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.">
           <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
           <span style="font-size:11px" class="text-muted">l’installation une seule fois, le reste à chaque mise à jour</span>
           <span style="font-size:11px;margin-inline-start:auto;color:var(--color-accent-700)">{{ chevronMt5 }}</span>
         </button>
         <sc-if value="{{ ouvMt5V }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:0">
+
+        <!--
+          L'INSTALLATION SORT DE LA LISTE. On ne la fait qu'une fois : elle occupait
+          la première place et le seul bouton plein du cadre, devant trois gestes
+          répétés chaque semaine. Elle devient un rang à part, refermé par un filet,
+          et son bouton s'efface une fois le travail fait.
+        -->
+        <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:11px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider)">
+          <span class="tag tag-neutral" style="font-size:10px;white-space:nowrap;flex:none">une seule fois</span>
+          <span style="font-size:12.5px;line-height:1.5;flex:1;min-width:22ch">Les deux scripts dans <code>MQL5\Scripts</code>, compilés (F7)</span>
+          <button class="{{ scriptsCls }}" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.">{{ scriptsTxt }}</button>
+        </div>
+
+        <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:13px 0 2px" class="text-muted">À chaque mise à jour de vos données</span>
+
         <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
           <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">1</span>
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
-            <strong style="font-size:13px;line-height:1.4">Installer les deux scripts</strong>
-            <span style="font-size:12px;line-height:1.55" class="text-muted">Placez les deux <code>.mq5</code> dans <code>MQL5\Scripts</code>, ouvrez-les dans MetaEditor, compilez (F7). <strong>Une seule fois</strong>, à l’installation.</span>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+            <strong style="font-size:13px;line-height:1.4">Déposer le relevé de symboles</strong>
+            <span style="font-size:12px;line-height:1.55" class="text-muted">Dans MT5, glissez <code>Sivula_Releve</code> sur n’importe quel graphique : sans liste, il relève <strong>toute votre Observation du marché</strong>. Le <code>releve.csv</code> produit apporte le coût réel : spread, portage, minimum de stop.</span>
+            <label class="zdep">
+              <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Déposer un relevé</span>
+              <span style="font-size:11px;line-height:1.4" class="text-muted">ou glissez le fichier ici</span>
+              <input id="champReleve" type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
           </div>
-          <button class="btn btn-primary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerScripts }}" title="Sivula_Releve.mq5 (spreads, swaps, minimum de stop) et Export_H1_Sivula.mq5 (les bougies, H1 ou M1 selon son réglage). Servis tels quels, sans rien d’injecté : à compiler une fois.">Les deux scripts MT5</button>
         </div>
+
         <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
           <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">2</span>
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
-            <strong style="font-size:13px;line-height:1.4">Déposer le relevé de symboles</strong>
-            <span style="font-size:12px;line-height:1.55" class="text-muted">Dans MT5, glissez <code>Sivula_Releve</code> sur n’importe quel graphique : sans liste, il relève <strong>toute votre Observation du marché</strong>. Déposez ici le <code>releve.csv</code> produit — vos instruments apparaissent alors avec leur coût réel : spread, portage, minimum de stop.</span>
-          </div>
-          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
-            Déposer un relevé
-            <input id="champReleve" type="file" accept=".csv" onChange="{{ deposerReleve }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-          </label>
-        </div>
-        <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
-          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">3</span>
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
             <strong style="font-size:13px;line-height:1.4">Cocher les instruments souhaités</strong>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Cochez-les dans la liste de gauche, puis téléchargez <code>symboles.txt</code> — orthographié comme votre courtier les nomme. Posez-le dans <code>MQL5\Files\Sivula\</code>.</span>
+            <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;align-self:flex-start" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="{{ listeMt5Aide }}">{{ listeMt5Txt }}</button>
           </div>
-          <button class="btn btn-secondary" type="button" style="min-height:2rem;font-size:12px;padding-inline:12px;flex:none" onClick="{{ telechargerListe }}" disabled="{{ sansListeMt5 }}" title="{{ listeMt5Aide }}">{{ listeMt5Txt }}</button>
         </div>
+
         <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
-          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">4</span>
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">3</span>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
             <strong style="font-size:13px;line-height:1.4">Déposer les bougies H1</strong>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Glissez <code>Export_H1_Sivula</code> sur un graphique : un CSV par instrument de la liste, et eux seuls, dans <code>MQL5\Files</code>. Déposez-les ici — le scan devient possible.</span>
             <sc-if value="{{ aPalierCompteur }}" hint-placeholder-val="{{ false }}">
               <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}<sc-if value="{{ aPalierLien }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ goAccueil }}">page d'accueil</button>{{ palierCompteurFin }}</sc-if></span>
             </sc-if>
+            <label class="zdep">
+              <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Déposer les bougies H1</span>
+              <span style="font-size:11px;line-height:1.4" class="text-muted">ou glissez les fichiers ici</span>
+              <input id="champBougies" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
           </div>
-          <label class="btn btn-secondary" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
-            Déposer des bougies H1
-            <input id="champBougies" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoix }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-          </label>
         </div>
+
         <div style="display:flex;gap:13px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--color-divider)">
-          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">5</span>
-          <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:26ch">
+          <span style="font-family:var(--font-heading);font-size:16px;min-width:1.6ch;line-height:1.35" class="text-muted">4</span>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
             <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
               <strong style="font-size:13px;line-height:1.4">Déposer les bougies M1</strong>
               <span class="tag tag-outline" style="font-size:10px">facultatif</span>
             </div>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Même script, réglé sur M1 (<code>InpM1</code>). Le scan et le backtest n’en ont pas besoin : ils travaillent en H1. Le M1 sert à une seule chose, <strong>départager Sivula et le robot MT5 quand ils divergent</strong> — savoir si le stop ou l’objectif a été touché d’abord dans l’heure. Comptez soixante fois le volume du H1 : n’en déposez que pour les instruments que vous comparez.</span>
+            <label class="zdep">
+              <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Déposer les bougies M1</span>
+              <span style="font-size:11px;line-height:1.4" class="text-muted">ou glissez les fichiers ici</span>
+              <input id="champBougiesM1" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoixM1 }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+            </label>
           </div>
-          <label class="btn btn-ghost" style="min-height:2rem;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;position:relative;padding-inline:12px;flex:none">
-            Déposer des bougies M1
-            <input id="champBougiesM1" type="file" accept=".csv" multiple="{{ true }}" onChange="{{ surChoixM1 }}" style="position:absolute;inset:0;opacity:0;cursor:pointer">
-          </label>
         </div>
 
-        <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — ces cinq boutons ne sont là que si vous préférez cliquer.</span>
+        <span style="font-size:11px;line-height:1.5;padding-top:11px;border-top:1px solid var(--color-divider)" class="text-muted">Le chemin exact de <code>MQL5\Files</code> s’obtient dans MT5 par <strong>Fichier → Ouvrir le dossier de données</strong> : personne ne le trouve seul. Le glisser-déposer marche sur toute la page — ces boutons et ces zones ne sont là que si vous préférez cliquer.</span>
         </div>
         </sc-if>
         <sc-if value="{{ aMt5Copie }}" hint-placeholder-val="{{ false }}">
@@ -17544,6 +17576,12 @@ GROUPES = {
         const noms = [...new Set((s.univers || []).map(nomCourtier))];
         return {
           nListeMt5: noms.length,
+          // le rang d'installation s'efface une fois qu'il a servi : un relevé reçu
+          // prouve que Sivula_Releve.mq5 a été compilé et lancé
+          scriptsCls: ((this.baremes || {})[this.compteDesFichiers()])
+            ? 'btn btn-ghost' : 'btn btn-secondary',
+          scriptsTxt: ((this.baremes || {})[this.compteDesFichiers()])
+            ? 'Fait — retélécharger' : 'Les deux scripts MT5',
           listeMt5Txt: noms.length
             ? 'Liste pour MT5 · ' + noms.length + (noms.length > 1 ? ' sélectionnés' : ' sélectionné')
             : 'Liste pour MT5 · cochez des instruments',
