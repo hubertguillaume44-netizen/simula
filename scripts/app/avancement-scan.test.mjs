@@ -121,6 +121,23 @@ for (const f of FICHIERS) {
     assert.match(txt, /aCmdBandeau: !!s\.scanEnCours && \(s\.vue \|\| 'scan'\) !== 'scan'/,
       "pas de boutons sur la page du scan, où la barre d’exécution les porte");
   });
+
+  test(f + " : la jauge du bandeau est en encre papier, piste comprise", () => {
+    const txt = source(f);
+    const i = txt.indexOf("{{ scanActif }}");
+    const bloc = txt.slice(i, i + 3000);
+    // une piste : sans elle, un remplissage court n’a aucune référence de longueur
+    const piste = /position:absolute;left:0;top:0;height:(\d+)px;width:100%;background:color-mix\(in srgb,var\(--color-bg\) 22%,transparent\)/.exec(bloc);
+    assert.ok(piste, "la jauge doit avoir une piste à 22 % de l’encre papier");
+    // le remplissage, dans la piste, en encre papier pleine
+    const plein = /height:(\d+)px;width:\{\{ scanPct \}\};min-width:2px;background:var\(--color-bg\)/.exec(bloc);
+    assert.ok(plein, "le remplissage doit être en encre papier, avec un plancher de 2 px");
+    assert.equal(piste[1], plein[1], "piste et remplissage doivent avoir la même hauteur");
+    assert.equal(piste[1], "5", "la jauge doit faire 5 px");
+    // rien d’accent sur le fond accent : le rapport y tomberait à 2,4 pour 1
+    assert.ok(!/background:var\(--color-accent\)[;"]/.test(bloc),
+      "la jauge ne doit pas être en accent sur le fond accent sombre");
+  });
 }
 
 /** `avancementScan`, extraite du fichier livré et rendue exécutable ici. */
