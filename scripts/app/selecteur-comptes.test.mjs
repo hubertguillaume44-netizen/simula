@@ -41,9 +41,9 @@ function comptes(COURTIERS, { conf = {}, compteActif = "fxpro", noms = {} } = {}
     + "    return c ? c[1] : 'vos comptes';\n"
     + "  },\n"
     + "  changerCompte() {},\n"
-    + "  produire() {\n" + corps + "\n  },\n"
+    + "  produire(s) {\n" + corps + "\n  },\n"
     + "};", ctx);
-  return vm.runInContext("faux.produire()", ctx);
+  return vm.runInContext("faux.produire({ menuComptes: false })", ctx);
 }
 
 const NORMAL = [["fxpro", "FxPro MT5", null], ["compte2", "Compte nº 2", null],
@@ -89,6 +89,9 @@ for (const [quoi, table] of DEGRADES) {
     }
     // et la même exigence sur la liste des onglets, qui vient du même `ouverts`
     for (const e of r.comptesOuverts) assert.ok(e.cle, `onglet sans clé : ${JSON.stringify(e)}`);
+    // le menu est en <div> : chaque entrée porte son geste, il n'y a plus de valeur à
+    // retrouver dans une liste d'options
+    for (const e of r.comptesTete) assert.equal(typeof e.choisir, "function", "entrée sans geste");
   });
 }
 
@@ -107,4 +110,19 @@ test("une table entièrement dégradée laisse une option UTILISABLE, jamais une
 
 test("le producteur ne jette pas sur une table dégradée", () => {
   for (const [, table] of DEGRADES) assert.doesNotThrow(() => comptes(table, { conf: {} }));
+});
+
+test("le libellé du bouton nomme un compte que le menu offre vraiment", () => {
+  // le <select> tombait à "" quand sa valeur ne correspondait à aucune option, sans
+  // rien dire. Un bouton, lui, affiche un texte : il ne doit jamais nommer un compte
+  // absent du menu.
+  for (const [, table] of [["normal", NORMAL], ...DEGRADES]) {
+    const r = comptes(table, { conf: { demo: true } });
+    if (!r.comptesTete.length) continue;
+    const noms = r.comptesTete.map((x) => x.nom);
+    const tete = r.compteTeteTxt;
+    assert.ok(tete, "le bouton n’a pas de libellé");
+    assert.ok(noms.some((n) => n.startsWith(tete)) || tete === "vos comptes",
+      `le bouton annonce « ${tete} », absent du menu ${JSON.stringify(noms)}`);
+  }
 });

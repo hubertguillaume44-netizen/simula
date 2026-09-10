@@ -320,14 +320,41 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       <button type="button" onClick="{{ goAccueil }}" style="display:inline-flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès"><svg viewBox="0 0 100 100" width="24" height="24" style="display:block;flex:none" aria-hidden="true"><path fill="currentColor" d="M 6.00 17.63 L 19.45 17.63 L 44.50 64.60 L 69.55 17.63 L 94.00 17.63 L 59.48 82.37 L 35.02 82.37 L 37.77 77.21 Z"></path></svg>VÉNA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
         <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
-        <select style="cursor:pointer;font:inherit;font-size:13px;appearance:none;-webkit-appearance:none;background:color-mix(in srgb,var(--color-bg) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-bg) 34%,transparent);border-radius:0;padding:4px 26px 4px 9px;color:var(--color-bg);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) center,calc(100% - 9px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat" value="{{ compteChoisi }}" onChange="{{ changerDeCompte }}" title="Bougies, tarifs, scans et réglages sont propres au compte choisi.">
-          <sc-for list="{{ comptesTete }}" as="ct" hint-placeholder-count="2">
-            <option value="{{ ct.cle }}" style="color:var(--color-text)">{{ ct.nom }}</option>
-          </sc-for>
-          <sc-if value="{{ aAjoutCompte }}" hint-placeholder-val="{{ false }}">
-            <option value="__ajout" style="color:var(--color-text)">+ Ajouter un compte…</option>
+        <!--
+          UN MENU EN <div>, ET PAS UN <select>.
+
+          Le sélecteur natif n'affichait qu'une option VIDE chez un utilisateur, en vue
+          intégrée : ni valeur ni libellé, et « + Ajouter un compte… » visible sans que
+          sa condition ait été évaluée. Mesuré à l'exécution, `comptesTete` était juste à
+          chaque rendu — la liste n'arrivait simplement jamais au DOM.
+
+          `<select>` est un élément à CONTENU RESTREINT : la norme dit que l'analyseur
+          HTML, en mode « in select », ignore toute balise d'ouverture qui n'est pas
+          `option`, `optgroup`, `hr` ou un script. Une boucle ou une condition de gabarit
+          n'a donc rien à y faire — ce qui en sort dépend du moteur, et un moteur qui
+          applique la norme les supprime.
+
+          Le remplacer par un menu en `<div>` règle le problème PAR CONSTRUCTION plutôt
+          que par une rustine : aucun élément de gabarit ne vit plus dans un conteneur
+          qui se réserve le droit de le jeter. L'état `menuComptes` et sa bascule
+          existaient déjà, inutilisés ; ils servent enfin.
+        -->
+        <span style="position:relative;display:inline-flex">
+          <button type="button" onClick="{{ basculerMenuComptes }}" title="Bougies, tarifs, scans et réglages sont propres au compte choisi." style="cursor:pointer;font:inherit;font-size:13px;background:color-mix(in srgb,var(--color-bg) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-bg) 34%,transparent);border-radius:0;padding:4px 9px;color:var(--color-bg);display:inline-flex;align-items:center;gap:8px;max-width:34ch">
+            <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ compteTeteTxt }}</span>
+            <span style="font-size:9px;opacity:.8">{{ chevronComptes }}</span>
+          </button>
+          <sc-if value="{{ menuComptes }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;top:calc(100% + 4px);left:0;z-index:80;min-width:100%;width:max-content;max-width:44ch;background:var(--color-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;padding:3px 0">
+              <sc-for list="{{ comptesTete }}" as="ct" hint-placeholder-count="2">
+                <button type="button" onClick="{{ ct.choisir }}" style="cursor:pointer;font:inherit;font-size:12.5px;text-align:left;background:{{ ct.fond }};border:0;padding:6px 12px;color:var(--color-text);white-space:nowrap">{{ ct.nom }}</button>
+              </sc-for>
+              <sc-if value="{{ aAjoutCompte }}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{ ajouterCompte }}" title="{{ aideAjout }}" style="cursor:pointer;font:inherit;font-size:12.5px;text-align:left;background:none;border:0;border-top:1px solid var(--color-divider);padding:6px 12px;color:var(--color-accent-700);white-space:nowrap">+ Ajouter un compte…</button>
+              </sc-if>
+            </span>
           </sc-if>
-        </select>
+        </span>
       </sc-if>
     </div>
     <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
@@ -24326,7 +24353,20 @@ GROUPES = {
           comptesTete: [...ouverts.map(([cle, i]) => [cle, nomDe(cle, i) + (conf[cle] ? '' : ' — aucun relevé')]),
             ...(ouverts.some(([c]) => c === 'demo') ? [] : [['demo', this.nomCourtier('demo')]])]
             .filter(([cle, nom]) => cle && nom)
-            .map(([cle, nom]) => ({ cle, nom })),
+            .map(([cle, nom]) => ({ cle, nom,
+              fond: cle === this.compteActif ? 'var(--color-accent-100)' : 'transparent',
+              choisir: () => {
+                this.setState({ menuComptes: false });
+                if (cle !== this.compteActif) this.changerCompte(cle);
+              } })),
+          // le libellé du bouton : le compte actif, ou le premier de la liste si l'actif
+          // n'y figure pas — le menu ne peut plus annoncer un compte qu'il n'offre pas
+          compteTeteTxt: (() => {
+            const liste = [...ouverts.map(([cle, i]) => [cle, nomDe(cle, i)])];
+            const a = liste.find(([c]) => c === this.compteActif);
+            return a ? a[1] : (liste[0] ? liste[0][1] : this.nomCourtier('demo'));
+          })(),
+          chevronComptes: s.menuComptes ? '\u25be' : '\u25b8',
           changerDeCompte: (e) => {
             const cle = e.target.value;
             // l'entrée d'ajout n'est pas un compte : elle ouvre le premier libre
