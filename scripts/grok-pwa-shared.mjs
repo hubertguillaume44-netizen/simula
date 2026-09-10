@@ -124,7 +124,6 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
   ];
 }
 
-export const GROK_EXTENSIONS_SCRIPT_SRC = "https://grok.com/grok-app-builder/extensions.js";
 export function readGrokProjectId() {
   const fromProcess = typeof process !== "undefined" ? process.env?.VITE_PROJECT_ID : "";
   return String(fromProcess ?? "").trim();
@@ -145,13 +144,6 @@ export function grokXCreatorHeadTags(creator = readXCreator(), creatorId = readX
     `<meta property="x:creator" content="${escapeHtml(name)}">`,
     `<meta property="x:creator:id" content="${escapeHtml(id)}">`,
   ];
-}
-export function grokExtensionsHeadTags(projectId = readGrokProjectId()) {
-  const id = escapeHtml(projectId);
-  const tags = [];
-  if (projectId) tags.push(`<meta name="grok-project-id" content="${id}">`);
-  tags.push(`<script src="${GROK_EXTENSIONS_SCRIPT_SRC}"${projectId ? ` data-project-id="${id}"` : ""} defer></script>`);
-  return tags;
 }
 export function readOgSite(cwd = process.cwd()) {
   try {
@@ -286,13 +278,19 @@ export function injectGrokPwaHead(html, ctx = {}) {
   const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
       if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
-      if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
+      // le RÔLE, pas le chemin : la page déclare la sienne, qui porte la marque —
+      // comparer le chemin lui en ajoutait une seconde, vers un fichier absent
+      if (key === "apple-touch-icon") return !/rel=["\']apple-touch-icon["\']/i.test(next);
       return !next.includes(`name="${key}"`);
     })
     .map(([, tag]) => tag);
   next = insertAfterHeadOpen(next, grokOgHeadTags({ host, appName, site, documentTitle, cwd }).join(""));
-  if (!next.includes("/grok-app-builder/extensions.js")) missing.push(...grokExtensionsHeadTags(projectId));
-  else if (projectId && !next.includes('name="grok-project-id"')) missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
+  // AUCUN SCRIPT DE TIERS DANS LE <head>. Ce chargement venait de l'outillage
+  // d'origine : chaque ouverture de page partait chercher un fichier sur un domaine
+  // extérieur, donc y signalait la visite, et un réseau qui bloque ce domaine
+  // servait le site sans lui. Rien du site n'en dépend. Seule l'étiquette locale du
+  // projet reste — elle ne sort pas du document.
+  if (projectId && !next.includes('name="grok-project-id"')) missing.push(`<meta name="grok-project-id" content="${escapeHtml(projectId)}">`);
   if (projectId && !next.includes('property="grok:app_id"') && !next.includes("property='grok:app_id'")) {
     missing.push(`<meta property="grok:app_id" content="${escapeHtml(projectId)}">`);
   }

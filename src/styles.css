@@ -1,4 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Condensed:wght@500;600;700&display=swap");
+/* Les polices sont dans le dépôt, servies depuis le même domaine, et régénérées par
+   `npm run site:polices`. Elles arrivaient du service de polices de Google : un réseau
+   qui bloque ce domaine servait le site sans sa typographie, une panne du service la
+   retirait sans recours, et chaque ouverture de page y signalait une visite. Sur un
+   outil qui touche à des données financières personnelles, la dernière ne se rattrape
+   pas. */
+@import "./polices.css";
 @import "tailwindcss";
 
 @theme {
