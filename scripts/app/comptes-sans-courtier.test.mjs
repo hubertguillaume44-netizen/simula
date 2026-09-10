@@ -271,3 +271,95 @@ test("fluxDe : un compte mal nommé ne peut pas couper les titres américains", 
   assert.equal(f("AAPL.US").base, "AAPL.US", "le point reste réservé à l’alias : c’est la garde");
   assert.equal(f("AAPL.US").courtier, null);
 });
+
+// ————— LA CONVENTION MT5 N'APPARTIENT À AUCUN COMPTE —————
+//
+// La table qui traduit GER40 → #Germany40 et XAUUSD → GOLD décrit le vocabulaire du
+// catalogue MT5, pas le catalogue d'une maison : le « # » devant les indices et leur nom
+// par pays sont une convention de place. Elle était pourtant indexée par clé de compte —
+// ALIAS_COURTIER.fxpro — et lue partout sous cette forme. Un client sur son propre compte
+// héritait donc d'une table qui semblait décrire « le courtier nº 1 », et son deuxième
+// compte n'en profitait pas alors que son terminal suit la même convention.
+
+const CONVENTIONS = valeur(litteral(SOURCE, "\n  CONVENTIONS_MT5 = {", "{", "}"));
+
+test("la table de conventions n’est plus rangée sous une clé de compte", () => {
+  // hors commentaires : le commentaire de la table RACONTE l'ancien rangement, et doit
+  // pouvoir le nommer — c'est ce qui empêche quelqu'un de le refaire par ignorance.
+  // L'interdit porte sur l'identifiant qui s'exécute, pas sur la mémoire de ce qu'il fut.
+  assert.equal(sansCommentaires(SOURCE).includes("ALIAS_COURTIER"), false,
+    "la table est encore nommée d’après un courtier, ou lue par clé de compte");
+  // à plat : les valeurs sont des symboles, jamais des sous-tables par compte
+  const parCompte = Object.entries(CONVENTIONS)
+    .filter(([, v]) => typeof v !== "string")
+    .map(([k]) => k);
+  assert.deepEqual(parCompte, [],
+    `« ${parCompte.join(", ")} » est un niveau de compte : la convention MT5 ne dépend pas `
+    + "du compte qu’on regarde.");
+  assert.ok(Object.keys(CONVENTIONS).length > 80,
+    `${Object.keys(CONVENTIONS).length} entrées : la table a maigri au passage`);
+});
+
+test("les trois lectures consultent la table sans clé de compte", () => {
+  // le pont inverse (cleFiche), la résolution de barème (chercherLigneCourtier) et la
+  // lecture de frais par flux (fraisDe) — plus aucune n’indexe par compte
+  const lectures = [...SOURCE.matchAll(/this\.CONVENTIONS_MT5/g)];
+  assert.equal(lectures.length, 4, `${lectures.length} lectures, quatre attendues`);
+  assert.equal(SOURCE.includes("CONVENTIONS_MT5["), true);
+  // aucune ne passe par une variable de compte avant d’atteindre la table
+  const indexee = [...SOURCE.matchAll(/CONVENTIONS_MT5\[\s*(cle|src|compte|c)\s*\]/g)];
+  assert.deepEqual(indexee.map((m) => m[0]), [],
+    "une lecture indexe encore la table par compte");
+  // et la clé de compte a quitté la signature : la garder aurait continué de laisser
+  // croire que la convention dépend du compte
+  assert.match(SOURCE, /chercherLigneCourtier\(tb, sym\)/,
+    "chercherLigneCourtier porte encore une clé de compte");
+  const appels = [...SOURCE.matchAll(/chercherLigneCourtier\(([^)]*)\)/g)]
+    .map((m) => m[1].split(",").length);
+  assert.deepEqual([...new Set(appels)], [2],
+    "un appel passe encore trois arguments : le troisième serait lu comme le symbole");
+});
+
+test("les appariements connus tiennent, et l’inconnu ressort inchangé", () => {
+  // ce que la table doit continuer de résoudre, quel que soit le compte
+  const attendus = { XAUUSD: "GOLD", GER40: "#Germany40", JP225: "#Japan225",
+    NAS100: "#USNDAQ100", IBEX35: "#Spain35", US30: "#US30", "BNP.FR": "BNPP.PA" };
+  for (const [de, vers] of Object.entries(attendus)) {
+    assert.equal(CONVENTIONS[de], vers, `« ${de} » ne s’apparie plus à « ${vers} »`);
+  }
+  // et rien n'est inventé pour ce qui n'y est pas
+  for (const inconnu of ["AUDCAD", "0700.HK", "STLAM.MI", "005930.KS", "EURUSD"]) {
+    assert.equal(CONVENTIONS[inconnu], undefined,
+      `« ${inconnu} » a gagné un alias : ce qui n’est pas connu doit ressortir inchangé`);
+  }
+});
+
+test("la table est atteignable depuis un compte autre que le nº 1", () => {
+  // c'est TOUT le sens du changement : on monte la vraie fonction et on l'interroge avec
+  // le barème d'un second compte, sur un symbole que seule la table sait résoudre
+  const corps = litteral(SOURCE, "\n  chercherLigneCourtier(tb, sym) {", "{", "}");
+  const ctx = { Object, String, Array, RegExp };
+  vm.createContext(ctx);
+  vm.runInContext("var faux = {\n"
+    + "  CONVENTIONS_MT5: " + JSON.stringify(CONVENTIONS) + ",\n"
+    + "  FRAIS_SYM: {},\n"
+    + "  chercherLigneCourtier: function (tb, sym) " + corps + ",\n};", ctx);
+  const cherche = (tb, sym) => JSON.parse(vm.runInContext(
+    "JSON.stringify(faux.chercherLigneCourtier(" + JSON.stringify(tb) + ", "
+    + JSON.stringify(sym) + ") || null)", ctx));
+
+  // un relevé quelconque, déposé sur n'importe quel compte : il nomme l'indice à la
+  // façon du catalogue MT5, le client l'appelle GER40
+  const releve = { "#Germany40": { sym: "#Germany40", bid: 1 }, GOLD: { sym: "GOLD", bid: 2 } };
+  assert.equal(cherche(releve, "GER40").sym, "#Germany40",
+    "l’alias ne se résout plus : la table n’est plus atteignable");
+  assert.equal(cherche(releve, "XAUUSD").sym, "GOLD");
+  assert.equal(cherche(releve, "GER40.cash").sym, "#Germany40",
+    "le suffixe de contrat doit se retirer avant l’alias");
+  // ce que la table ne connaît pas ne trouve rien — silence, jamais une estimation
+  assert.equal(cherche(releve, "AUDCAD"), null,
+    "un symbole absent doit échouer en silence, pas s’apparier de force");
+  // et l'appariement flou reste interdit entre familles
+  assert.equal(cherche({ "US500.cash": { sym: "US500.cash" } }, "SPX500.US"), null,
+    "un indice et une action ne doivent jamais s’apparier");
+});

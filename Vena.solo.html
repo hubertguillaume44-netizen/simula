@@ -7832,7 +7832,7 @@ class Component extends DCLogic {
   cleFiche(sym) {
     this._pont = this._pont || (() => {
       const m = {};
-      for (const [k, v] of Object.entries(this.ALIAS_COURTIER.fxpro || {})) {
+      for (const [k, v] of Object.entries(this.CONVENTIONS_MT5 || {})) {
         if (!m[v]) m[v] = k;
       }
       return m;
@@ -8575,10 +8575,10 @@ GROUPES = {
       for (const symApp of this.SYMBOLES) aVisiter.add(this.fluxDe(symApp).base);
       for (const k of Object.keys(t)) if (!k.startsWith('__')) aVisiter.add(k);
       for (const base of aVisiter) {
-        const l = this.chercherLigneCourtier(t, cle, base);
+        const l = this.chercherLigneCourtier(t, base);
         if (!l || !l.mt4 || l.chiffre) continue;
         // le compte de référence ne peut pas se citer lui-même comme source de prix
-        const r = cle === refCle ? null : this.chercherLigneCourtier(ref, refCle, base);
+        const r = cle === refCle ? null : this.chercherLigneCourtier(ref, base);
         // Le prix ne doit PAS dépendre du catalogue du compte principal : sinon une
         // action absente du catalogue reste invisible. À défaut, la dernière clôture
         // de la série H1 de l'instrument fait un prix légitime.
@@ -8588,13 +8588,13 @@ GROUPES = {
         // et son relevé reste inchiffrable.
         const ailleurs = () => {
           const ref = this.prixReference();
-          const l2 = this.chercherLigneCourtier(ref, this.COURTIERS[0][0], base);
+          const l2 = this.chercherLigneCourtier(ref, base);
           if (l2 && l2.bid) return l2.bid;
           for (const [c2] of this.COURTIERS) {
             if (c2 === cle) continue;
             const t2 = (this.baremes || {})[c2];
             if (!t2) continue;
-            const l3 = this.chercherLigneCourtier(t2, c2, base);
+            const l3 = this.chercherLigneCourtier(t2, base);
             if (l3 && l3.bid) return l3.bid;
           }
           return 0;
@@ -8657,7 +8657,7 @@ GROUPES = {
       if (!t) continue;
       let n = 0;
       for (const symApp of this.SYMBOLES) {
-        const l = this.chercherLigneCourtier(t, cle, this.fluxDe(symApp).base);
+        const l = this.chercherLigneCourtier(t, this.fluxDe(symApp).base);
         if (l && (!l.mt4 || l.chiffre)) n++;
       }
       this._nChiffres[cle] = n;
@@ -8679,7 +8679,7 @@ GROUPES = {
     // absent : l'utilisateur doit pouvoir distinguer les deux
     const attente = !l.length && this.COURTIERS.some(([c]) => {
       const t = (this.baremes || {})[c];
-      return t && this.chercherLigneCourtier(t, c, this.fluxDe(sym).base);
+      return t && this.chercherLigneCourtier(t, this.fluxDe(sym).base);
     });
     const v = { a: l.length > 0, attente,
       txt: l.map(([c, n]) => ABR[c] || n).join(' '),
@@ -9201,10 +9201,26 @@ GROUPES = {
     }
   }
 
-  // correspondance explicite : les indices et métaux portent des noms différents
-  // chez chaque courtier. Aucun appariement flou entre familles (indice vs action).
-  ALIAS_COURTIER = {
-    fxpro: { XAUUSD: 'GOLD', GOLD: 'GOLD', XAGUSD: 'SILVER', XPTUSD: 'PLATINUM',
+  // ————— LE VOCABULAIRE DE MT5, PAS CELUI D'UN COURTIER —————
+  //
+  // Cette table traduit des tickers génériques vers la façon dont le catalogue MT5 nomme
+  // les mêmes sous-jacents : les indices y sont préfixés d'un « # » et désignés PAR PAYS
+  // et non par ticker (GER40 → #Germany40, JP225 → #Japan225), les métaux et cryptos
+  // portent leur nom en toutes lettres (XAUUSD → GOLD), et les actions européennes des
+  // codes Reuters (BNP.FR → BNPP.PA). C'est une convention de place, publique.
+  //
+  // ELLE ÉTAIT RANGÉE SOUS UNE CLÉ DE COMPTE — ALIAS_COURTIER.fxpro — et lue partout
+  // sous cette forme. Deux conséquences, toutes deux fausses : la structure racontait
+  // qu'un courtier nommé occupait le compte nº 1, et un deuxième compte n'en profitait
+  // pas alors que son terminal suit très probablement la même convention. Ce n'était pas
+  // une fuite, c'était une erreur de rangement.
+  //
+  // ELLE N'EST PAS UNE AUTORITÉ. Elle reste UN essai parmi les autres, à la place qu'elle
+  // occupait déjà : un alias qui ne correspond à rien échoue en silence et laisse passer
+  // le symbole brut. Et l'appariement flou reste interdit — jamais entre familles, un
+  // indice n'est pas une action : cette garde vit plus bas, dans chercherLigneCourtier.
+  CONVENTIONS_MT5 = {
+      XAUUSD: 'GOLD', GOLD: 'GOLD', XAGUSD: 'SILVER', XPTUSD: 'PLATINUM',
       XPDUSD: 'PALLADIUM', Copper: 'COPPER',
       BTCUSD: 'BITCOIN', ETHUSD: 'ETHEREUM', LTCUSD: 'LITECOIN', XRPUSD: 'XRP',
       ADAUSD: 'CARDANO', SOLUSD: 'SOLANA', DOGUSD: 'DOGECOIN', DOTUSD: 'POLKADOT',
@@ -9213,7 +9229,7 @@ GROUPES = {
       USSPX500: '#USSPX500', US500: '#USSPX500', SPX500: '#USSPX500',
       USNDAQ100: '#USNDAQ100', NAS100: '#USNDAQ100', US100: '#USNDAQ100',
       US30: '#US30', DJ30: '#US30',
-      // indices : FxPro les préfixe de « # » et les nomme par pays, pas par ticker
+      // indices : le catalogue les préfixe de « # » et les nomme par pays, pas par ticker
       GER40: '#Germany40', GER30: '#Germany40', DE40: '#Germany40',
       FRA40: '#France40', FR40: '#France40', CAC40: '#France40',
       EUSTX50: '#Euro50', EU50: '#Euro50', ESTX50: '#Euro50',
@@ -9232,8 +9248,8 @@ GROUPES = {
       DE40: '#Germany40', DAX40: '#Germany40',
       UK100C: '#UK100', FRA40C: '#France40',
       US2000: '#US2000', CHINA50: '#ChinaA50', CN50: '#ChinaA50',
-      // actions européennes : FxPro les nomme en codes Reuters (.PA, .DE, .L), sans
-      // rapport avec le ticker local. Clés sur les symboles RÉELS de Véna — les
+      // actions européennes : le catalogue les nomme en codes Reuters (.PA, .DE, .L),
+      // sans rapport avec le ticker local. Clés sur les symboles RÉELS de Véna — les
       // valeurs allemandes y portent un « d » avant le suffixe.
       'MC.FR': 'LVMH.PA', 'OR.FR': 'OREP.PA', 'TTE.FR': 'TTEF.PA', 'BNP.FR': 'BNPP.PA',
       'GLE.FR': 'SOGN.PA', 'CS.FR': 'AXAF.PA', 'SU.FR': 'SCHN.PA', 'AIR.FR': 'AIR.PA',
@@ -9243,8 +9259,12 @@ GROUPES = {
       'VIE.FR': 'VIE.PA', 'CA.FR': 'CARR.PA', 'EN.FR': 'BOUY.PA', 'ML.FR': 'MICP.PA',
       'BN.FR': 'DANO.PA', 'DG.FR': 'SGEF.PA', 'CDI.FR': 'DIOR.PA', 'STMPA.FR': 'STMPA.PA',
       'AF.FR': 'AIRF.PA',
-      // Sanofi n'existe chez FxPro que par son ADR de New York : c'est le seul relevé
-      // disponible pour ce sous-jacent, spread et swap y sont ceux du marché américain.
+      // Sanofi n'apparaît dans certains catalogues que par son ADR de New York : quand
+      // c'est le seul relevé disponible pour ce sous-jacent, spread et swap y sont ceux
+      // du marché américain. ATTENTION : l'alias est le PREMIER essai de la liste — chez
+      // un catalogue qui cote AUSSI la ligne de Paris, c'est quand même l'ADR qui sera
+      // lu. C'est la limite de cette entrée-ci, la seule de la table qui traverse une
+      // place de cotation ; les autres ne font que traduire un nom.
       'SAN.FR': 'SNY.O',
       'SAPd.DE': 'SAPG.DE', 'MBGd.DE': 'MBGn.DE', 'DBKd.DE': 'DBKGn.DE', 'RHMd.DE': 'RHMG.DE',
       'P911d.DE': 'P911.DE', 'MUV2d.DE': 'MUVGn.DE', 'EOANd.DE': 'EONGn.DE',
@@ -9252,10 +9272,10 @@ GROUPES = {
       'ALVd.DE': 'ALVG.DE', 'ADSd.DE': 'ADSGn.DE', 'DTEd.DE': 'DTEGn.DE',
       'CONd.DE': 'CONG.DE', 'LHAd.DE': 'LHAG.DE', 'SHLd.DE': 'SHLG.DE',
       // même remarque pour HSBC (relevé de Londres) et Alibaba (ADR de New York).
-      // Tencent, China Resources, Stellantis et Samsung n'ont aucun relevé chez FxPro :
-      // volontairement non appariés, « pas de relevé » y est la bonne réponse.
+      // Tencent, China Resources, Stellantis et Samsung ne sont appariés nulle part :
+      // volontairement absents de la table, « pas de relevé » est la bonne réponse.
       'AZN.GB': 'AZN.L', '0005.HK': 'HSBA.L', '9988.HK': 'BABA.N',
-      'META.US': 'META.O' },
+      'META.US': 'META.O',
   };
   // la commission est facturée en euros par lot et par côté ; sa part du notionnel
   // change donc d'un instrument à l'autre. On convertit avec les taux du relevé lui-même.
@@ -9328,7 +9348,7 @@ GROUPES = {
     this._cacheL = this._cacheL || new Map();
     const kc = cle + '|' + symBrut + '|' + this.sigBaremes();
     if (this._cacheL.has(kc)) return this._cacheL.get(kc);
-    const r = this.chercherLigneCourtier(tb, cle, this.fluxDe(symBrut).base);
+    const r = this.chercherLigneCourtier(tb, this.fluxDe(symBrut).base);
     // relevé trouvé mais coût non calculable (export MT4 sans prix) : traité comme
     // « pas de relevé » plutôt que d'afficher un chiffre inventé
     const ok = r && (!r.mt4 || r.chiffre) ? r : null;
@@ -9409,11 +9429,14 @@ GROUPES = {
     return this._serieSet.has(sym) || this._serieSet.has(this.fluxDe(sym).base)
       || this._serieSet.has(this.sansContrat(sym));
   }
-  chercherLigneCourtier(tb, cle, sym) {
-    // un même indice s'écrit « US100.cash » chez une propfirm et « #USNDAQ100 » chez
-    // FxPro : le suffixe de contrat se retire avant tout, sinon aucun alias ne matche
+  // La clé de compte a QUITTÉ la signature : la convention MT5 ne dépend pas du compte
+  // qu'on regarde, et la garder en paramètre aurait continué de le laisser croire.
+  chercherLigneCourtier(tb, sym) {
+    // un même indice s'écrit « US100.cash » chez l'un et « #USNDAQ100 » dans le
+    // catalogue MT5 : le suffixe de contrat se retire avant tout, sinon aucun alias ne
+    // matche
     const nu = sym.replace(/\.(cash|spot|CFD)$/i, '');
-    const alias = (this.ALIAS_COURTIER[cle] || {})[sym] || (this.ALIAS_COURTIER[cle] || {})[nu];
+    const alias = this.CONVENTIONS_MT5[sym] || this.CONVENTIONS_MT5[nu];
     const essais = [alias, sym, nu, this.FRAIS_SYM[sym], this.FRAIS_SYM[nu],
       '#' + sym, '#' + nu, sym.replace(/^#/, ''),
       sym.replace(/d\.(DE)$/, '.$1'), sym.replace(/d\.(DE)$/, ''),
@@ -11232,9 +11255,10 @@ GROUPES = {
     const e = t[this.FRAIS_SYM[f.base] || f.base];
     if (e) return { ...e, connu: true, saisi: false };
     // le relevé du courtier nomme les indices autrement (USNDAQ100 → NAS100) :
-    // on lit l'alias explicite, sans jamais balayer tout le barème
+    // on lit l'alias explicite, sans jamais balayer tout le barème. Dernier essai, comme
+    // avant : ce qu'il ne résout pas ressort inchiffré, jamais estimé.
     const src = this.source(f.base);
-    const al = (this.ALIAS_COURTIER[src] || {})[f.base];
+    const al = this.CONVENTIONS_MT5[f.base];
     const l = al && ((this.baremes || {})[src] || {})[al];
     if (l) return { spread_pct: l.spread_pct, swap_annuel_pct: l.swapL,
       ...this.portageDe(l),
