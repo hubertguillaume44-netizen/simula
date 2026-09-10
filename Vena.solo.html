@@ -1105,7 +1105,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             est écrit à la place, et c'est déjà la réponse à « clé perdue ».
           -->
           <span style="font-size:12.5px;line-height:1.55">Il n'y a pas de compte à ouvrir : <strong>rien n'est conservé sur vous, pas même votre achat</strong> — c'est la contrepartie de la promesse ci-dessous.</span>
-          <span style="font-size:12.5px;line-height:1.55" class="text-muted">Clé perdue ou courriel égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>. Elle est re-signée à l'identique et renvoyée — une clé ne s'épuise pas et ne se révoque pas.</span>
+          <span style="font-size:12.5px;line-height:1.55" class="text-muted">Clé perdue ou courriel égaré : écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a>. Elle est re-signée à l'identique et renvoyée — une clé ne s'épuise pas et ne se révoque pas.</span>
           <span style="font-size:11.5px;line-height:1.5;padding-top:8px;border-top:1px solid var(--color-divider)" class="text-muted">Pas encore client ? La clé s'obtient à l'achat, ci-dessus — rien à créer avant.</span>
         </div>
       </div>
@@ -1144,7 +1144,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Véna ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="mailto:hubert.guillaume.44@gmail.com">hubert.guillaume.44@gmail.com</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">À votre nom, sur vos machines.</strong> La licence couvre vos machines personnelles — fixe et portable. Elle est nominative : votre adresse s'affiche dans l'application et signe les robots et fichiers exportés (une case permet de la retirer d'un résultat que vous partagez). Et ce que vous achetez est un outil de mesure, pas un contenu : un code emprunté ne donne accès à aucune bibliothèque, aucun signal, aucun résultat — seulement au droit de mesurer ses propres séries, à exporter soi-même depuis son propre MetaTrader, avec ses propres relevés de frais.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Trois portes, toutes facultatives.</strong> Une sauvegarde chiffrée dont vous détenez seul la phrase ; un compteur d'usage anonyme, <strong style="color:var(--color-text)">éteint par défaut</strong>, avec un bouton qui montre exactement ce qui part avant que ça parte ; et un fichier de diagnostic qui se télécharge et ne s'envoie jamais tout seul. Aucune ne conditionne l'usage du logiciel — et à part elles, rien ne quitte votre navigateur.</p>
@@ -18561,6 +18561,25 @@ GROUPES = {
       // encore ouvert — délivrance manuelle : scripts/licence/signer.mjs.
       ...(() => {
         const TARIF = 'lancement'; // 'lancement' | 'normal' — LE drapeau
+        // ————— L'ADRESSE DE CONTACT, À UN SEUL ENDROIT —————
+        //
+        // Elle était écrite QUATRE fois : deux emplacements, et à chacun le href du
+        // mailto puis le texte du lien. Une information qui vit à plusieurs endroits
+        // finit par diverger, et ici la divergence est MUETTE — le texte annonce une
+        // adresse, le lien en ouvre une autre, et personne ne s'en aperçoit avant qu'un
+        // client contrarié écrive dans le vide.
+        //
+        // Elle appartient à cette famille-ci : ce qui change le jour où la vente
+        // s'ouvre. Basculer un jour vers une boîte du domaine ne coûtera qu'une ligne
+        // — celle-ci. On ne l'écrit pas ici : le test refuse toute adresse en dur, y
+        // compris dans un commentaire, et il a raison — c'est ainsi qu'on repart à
+        // quatre copies, la première étant toujours « pour l'exemple ».
+        //
+        // Ni obfusquée, ni remplacée par un formulaire : un moissonneur sérieux n'est
+        // arrêté par aucune des deux, et l'un comme l'autre retire le clic à quelqu'un
+        // qui a perdu sa clé — donc déjà contrarié. Sans serveur, un champ de contact
+        // serait une porte peinte sur un mur.
+        const MAIL_CONTACT = 'contact.vena@gmail.com';
         const LIENS = {
           lancement: { mois: '', an: '' },
           normal: { mois: '', an: '' },
@@ -18577,6 +18596,10 @@ GROUPES = {
         const p = PRIX[TARIF];
         const lic = s.lic;
         return { acheterMois: aller('mois'), acheterAn: aller('an'),
+          // le HREF et le TEXTE viennent de la même valeur : c'est tout l'objet de la
+          // constante, et les réécrire à la main annulerait la correction
+          mailContact: MAIL_CONTACT,
+          mailContactHref: 'mailto:' + MAIL_CONTACT,
           // les prix viennent du DRAPEAU : basculer TARIF change les deux colonnes,
           // les liens et l'économie annoncée, sans autre modification
           prixMois: p.mois,
