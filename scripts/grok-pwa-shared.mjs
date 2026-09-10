@@ -105,12 +105,31 @@ export function renderInstallPageHtml(template, { host, url } = {}) {
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
-export function renderWebManifest(hostHeader) {
-  const name = appNameFromHost(hostHeader);
+export function renderWebManifest() {
   return JSON.stringify({
-    name, short_name: name, id: "/", start_url: "/", scope: "/", display: "standalone",
-    background_color: "#000000", theme_color: "#000000",
-    icons: [{ src: "/__grok/icon-180.png", sizes: "180x180", type: "image/png" }],
+    // le nom du produit, et non celui que l'outillage déduisait de l'hôte : hors d'un
+    // domaine en .grok.me il retombait sur « Grok App », qui s'installait tel quel sur
+    // l'écran d'accueil
+    name: "Véna — simulateur de stratégies trading",
+    short_name: "Véna",
+    id: "/", start_url: "/", scope: "/", display: "standalone",
+    // le papier du site, la même valeur que le meta theme-color. Le fond de démarrage
+    // doit être celui que la page affiche vraiment, sinon l'ouverture flashe en noir
+    // avant de blanchir.
+    background_color: "#ebeae6", theme_color: "#ebeae6",
+    // des fichiers qui existent : /__grok/icon-180.png rendait 404, donc une
+    // installation sur écran d'accueil n'avait aucune icône du tout. Les trois portent
+    // le palier `lg` de la marque, chacune rendue depuis le tracé par
+    // `npm run site:icones`.
+    //
+    // PAS de `purpose: "maskable"`. Un système qui rogne une icône maskable ampute les
+    // deux départs du signe, comme le rognage rond d'Instagram : il faudrait un tracé
+    // réduit, et ça ne vaut pas le coup pour l'instant.
+    icons: [
+      { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { src: "/icone-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icone-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+    ],
   }, null, 2);
 }
 

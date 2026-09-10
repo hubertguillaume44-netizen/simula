@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Fabrique les trois icônes PNG du site à partir de la marque Véna.
+ * Fabrique les icônes PNG du site à partir de la marque Véna.
  *
  * LA RÈGLE QUE CE SCRIPT EXISTE POUR TENIR : le signe existe en trois DESSINS, pas en
  * trois tailles. Le rapport de graisses du grand palier — 6 pour le jambage fin, 17 pour
@@ -40,6 +40,10 @@ const CIBLES = [
   { fichier: "public/favicon-16.png", px: 16, palier: "sm", pourquoi: "onglet du navigateur" },
   { fichier: "public/favicon-32.png", px: 32, palier: "md", pourquoi: "onglet en écran dense" },
   { fichier: "public/apple-touch-icon.png", px: 180, palier: "lg", pourquoi: "écran d'accueil iOS" },
+  // les deux tailles qu'Android attend d'un manifeste. Elles partent du tracé comme les
+  // autres : rasteriser 192 depuis le fichier de 180 serait déjà une réduction.
+  { fichier: "public/icone-192.png", px: 192, palier: "lg", pourquoi: "manifeste, écran d'accueil Android" },
+  { fichier: "public/icone-512.png", px: 512, palier: "lg", pourquoi: "manifeste, écran de démarrage Android" },
 ];
 
 /** Chromium fourni par l'environnement, quand la version de Playwright ne colle pas. */
@@ -100,7 +104,7 @@ async function fabriquer() {
   } finally {
     await nav.close();
   }
-  console.log("Trois dessins, trois fichiers. Aucun n'est la réduction d'un autre.");
+  console.log(`${CIBLES.length} fichiers, chacun rendu depuis son palier. Aucun n'est la réduction d'un autre.`);
 }
 
 await fabriquer();
