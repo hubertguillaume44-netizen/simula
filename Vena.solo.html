@@ -6129,8 +6129,25 @@ const estCleApp = (k) => !!k && (k.startsWith(PREFIXE) || k.startsWith(PREFIXE_A
 const MIGRATION = migrerStockage();
 migrerBase();
 
+// ————— LE CAPITAL D'EXEMPLE —————
+//
+// Le capital est un réglage persisté : ce littéral ne sert QU'aux navigateurs vierges.
+// Autrement dit, à tous les visiteurs, et à eux seuls — celui qui a déjà réglé le sien
+// ne le verra jamais. C'est précisément là qu'un chiffre personnel se publie sans qu'on
+// s'en aperçoive : l'auteur, lui, ne le rencontre plus.
+//
+// Il est rond, et il doit le rester. 10 000 € à 1 % donne « 1 R = 100 € » : personne ne
+// prend cela pour un solde de compte, et le visiteur comprend au premier coup d'œil
+// qu'il doit y mettre le sien. Un chiffre précis dirait le contraire — il aurait l'air
+// d'une mesure, donc d'un réglage déjà fait.
+//
+// Nommée et déclarée HORS de l'objet d'état : c'est ce qui rend la règle vérifiable.
+// scripts/app/pas-de-chiffre-perso.test.mjs refuse tout littéral >= 1000 dans l'état
+// initial, sans avoir à connaître le chiffre qu'il empêche d'y revenir.
+const CAPITAL_DEFAUT = 10000; // exemple, pas un chiffre d'utilisateur
+
 class Component extends DCLogic {
-  state = { tab: 'accueil', capital: 76020, risquePct: 1, vue: 'marche',
+  state = { tab: 'accueil', capital: CAPITAL_DEFAUT, risquePct: 1, vue: 'marche',
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
     btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '', bande: null,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
