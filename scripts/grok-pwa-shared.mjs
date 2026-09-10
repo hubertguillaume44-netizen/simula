@@ -136,7 +136,11 @@ export function renderWebManifest() {
 export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
   return [
     ["manifest", '<link rel="manifest" href="/__grok/manifest.webmanifest">'],
-    ["apple-touch-icon", '<link rel="apple-touch-icon" href="/__grok/icon-180.png">'],
+    // le fichier qui existe et qui porte la marque : /__grok/icon-180.png rendait 404.
+    // Ce repli ne sert qu'aux pages qui n'en déclarent pas — aujourd'hui aucune,
+    // __root.tsx en pose une pour tout le site — mais un repli qui pointe dans le vide
+    // n'est pas un repli.
+    ["apple-touch-icon", '<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">'],
     ["apple-mobile-web-app-title", `<meta name="apple-mobile-web-app-title" content="${escapeHtml(appName)}">`],
     ["apple-mobile-web-app-status-bar-style", '<meta name="apple-mobile-web-app-status-bar-style" content="black">'],
     ["theme-color", '<meta name="theme-color" content="#000000">'],
@@ -296,7 +300,10 @@ export function injectGrokPwaHead(html, ctx = {}) {
   let next = stripShareMetaTags(html);
   const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
-      if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
+      // le RÔLE, pas le chemin — comme pour l'icône iOS. Une page qui déclare son
+      // manifeste ailleurs s'en verrait ajouter un second, et le dernier déclaré ne
+      // gagne pas de façon garantie d'un navigateur à l'autre.
+      if (key === "manifest") return !/rel=["\']manifest["\']/i.test(next);
       // le RÔLE, pas le chemin : la page déclare la sienne, qui porte la marque —
       // comparer le chemin lui en ajoutait une seconde, vers un fichier absent
       if (key === "apple-touch-icon") return !/rel=["\']apple-touch-icon["\']/i.test(next);

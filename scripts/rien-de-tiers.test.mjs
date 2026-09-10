@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { injectGrokPwaHead, renderWebManifest } from "./grok-pwa-shared.mjs";
+import { grokPwaHeadTags, injectGrokPwaHead, renderWebManifest } from "./grok-pwa-shared.mjs";
 
 const lire = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), "utf8");
 
@@ -126,4 +126,50 @@ test("le manifeste porte le nom du produit, pas celui de l’outillage", () => {
   assert.equal(manifeste.short_name, "Véna");
   assert.equal(manifeste.name, "Véna — simulateur de stratégies trading");
   assert.doesNotMatch(manifeste.name + manifeste.short_name, /grok/i);
+});
+
+// ————— AUCUN LIEN VERS UN FICHIER ABSENT —————
+// Deux gardes de ce module ont été prises en défaut pour la même raison : elles
+// comparaient un CHEMIN au lieu du rôle du lien. La page ayant changé le sien, la garde
+// ne le reconnaissait plus et injectait un doublon — vers un fichier qui n'existe pas.
+// Elles comparent maintenant le rôle ; ce test tient l'autre moitié, la cible.
+
+/** Les liens d'icône d'un fragment de HTML, avec leur href. */
+function iconesDe(html) {
+  return [...html.matchAll(/<link[^>]*rel=["'](?:apple-touch-)?icon["'][^>]*>/gi)]
+    .map((m) => m[0])
+    .map((tag) => tag.match(/href=["']([^"']+)["']/)?.[1])
+    .filter(Boolean);
+}
+
+test("les icônes de repli du <head> visent des fichiers du dépôt", () => {
+  const html = grokPwaHeadTags("Véna").map(([, tag]) => tag).join("");
+  const cibles = iconesDe(html);
+  assert.ok(cibles.length > 0, "aucune icône de repli déclarée");
+  for (const src of cibles) {
+    assert.ok(existsSync(new URL(`../public${src}`, import.meta.url)), `${src} n’existe pas`);
+  }
+});
+
+test("les icônes de la page d’installation visent des fichiers du dépôt", () => {
+  // cette page-là est réellement servie, sur la requête d’installation
+  for (const src of iconesDe(lire("scripts/install-page.html"))) {
+    assert.ok(existsSync(new URL(`../public${src}`, import.meta.url)), `${src} n’existe pas`);
+  }
+});
+
+test("les icônes que le site déclare visent des fichiers du dépôt", () => {
+  const racine = lire("src/routes/__root.tsx");
+  const cibles = [...racine.matchAll(/rel:\s*"(?:apple-touch-)?icon"[^}]*href:\s*"([^"]+)"/g)]
+    .map((m) => m[1]);
+  assert.equal(cibles.length, 4, "les quatre icônes du site ne sont plus quatre");
+  for (const src of cibles) {
+    assert.ok(existsSync(new URL(`../public${src}`, import.meta.url)), `${src} n’existe pas`);
+  }
+});
+
+test("une page qui déclare son manifeste ne s’en voit pas ajouter un second", () => {
+  const html = injectGrokPwaHead(PAGE, { host: "venapp.fr", site: {} });
+  const manifestes = [...html.matchAll(/<link[^>]*rel=["']manifest["'][^>]*>/gi)];
+  assert.equal(manifestes.length, 1, `${manifestes.length} manifestes déclarés`);
 });
