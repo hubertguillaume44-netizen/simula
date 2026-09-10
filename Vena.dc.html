@@ -801,7 +801,7 @@
                   <button class="btn btn-primary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.adopter }}" title="Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement">Adopter</button>
                 </sc-if>
                 <sc-if value="{{ iv.aChoix }}" hint-placeholder-val="{{ false }}">
-                  <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.choix }}" title="Garde l’exemplaire enregistré sous l’ancien nom : il continue d’être lu tel quel, et l’autre est supprimé. Deux clics.">{{ iv.choixTxt }}</button>
+                  <button class="{{ iv.choixCls }}" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.choix }}" title="Garde l’exemplaire enregistré sous l’ancien nom : il continue d’être lu tel quel, et l’autre est supprimé. Deux clics.">{{ iv.choixTxt }}</button>
                 </sc-if>
                 <sc-if value="{{ iv.aSupprimable }}" hint-placeholder-val="{{ true }}">
                   <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.liberer }}" title="{{ iv.aide }}">{{ iv.bouton }}</button>
@@ -15962,7 +15962,16 @@ GROUPES = {
     let blocs = [];
     try { blocs = (await this.clesGros()).map(String); } catch (e) { blocs = []; }
     let ls = [];
-    try { ls = Object.keys(localStorage).filter((k) => estCleApp(k)); } catch (e) { ls = []; }
+    // `Object.keys(localStorage)` rendait les MÉTHODES de la façade — getItem, setItem,
+    // key… — dont aucune ne commence par un préfixe de l'application : le compte de clés
+    // valait donc TOUJOURS zéro. Un objet ordinaire n'a pas l'énumération d'un Storage.
+    // On passe par length/key, qui traversent jusqu'au stockage réel.
+    try {
+      for (let i = 0; i < STOCK_BRUT.length; i++) {
+        const k = STOCK_BRUT.key(i);
+        if (estCleApp(k)) ls.push(k);
+      }
+    } catch (e) { ls = []; }
     // regroupement par espace : « vena.series.v1.client.fxpro » sans le symbole
     const espaces = new Map();
     for (const k of blocs) {
@@ -16088,8 +16097,12 @@ GROUPES = {
       // qu'on n'a pas lue est irrattrapable ; un doublon qu'on n'ose pas trancher et
       // qu'on ne montre pas occupe la place pour toujours. C'est une décision humaine.
       if (n && anc && n.v !== anc.v) {
+        // les deux valeurs sont déjà lues : on les DÉCRIT ici plutôt que de rendre deux
+        // poids arrondis. « 58 entrées » contre « aucune » se décide sans réfléchir ;
+        // « 1 Ko » contre « 1 Ko » ne se décide pas du tout.
         postes.push({ ...commun, type: 'conflit', octets: n.octets + anc.octets,
-          octetsNeuf: n.octets, octetsAncien: anc.octets });
+          octetsNeuf: n.octets, octetsAncien: anc.octets,
+          faceNeuve: this.decrireValeur(n.v), faceAncienne: this.decrireValeur(anc.v) });
         continue;
       }
       const octets = (n ? n.octets : 0) + (anc ? anc.octets : 0);
@@ -16172,6 +16185,44 @@ GROUPES = {
     }
     return o;
   }
+  // ————— CE QUE PORTE UNE VALEUR, EN UN COUP D'ŒIL —————
+  //
+  // Un conflit se tranche sur le CONTENU, pas sur des octets arrondis. Le cas réel :
+  // l'exemplaire actuel de la liste des séries valait « [] » (2 octets), l'ancien
+  // portait 58 symboles (559 octets) — et l'écran affichait « 1 Ko » contre « 1 Ko »,
+  // avec « Garder l'actuel » en bouton principal. C'est-à-dire : détruire la liste et
+  // garder le vide, proposé par défaut.
+  decrireValeur(v) {
+    const t = String(v === null || v === undefined ? '' : v);
+    const octets = t.length * 2;
+    // VIDE OU DÉGÉNÉRÉ : ça se dit en toutes lettres, et ça ne peut pas être le choix
+    // principal. Une valeur qu'on garde par défaut ne doit jamais être celle qui ne
+    // porte rien.
+    const nu = t.trim();
+    if (nu === '' || nu === '[]' || nu === '{}' || nu === 'null') {
+      return { vide: true, octets,
+        quoi: nu === '[]' ? 'une liste vide' : nu === '{}' ? 'un ensemble vide'
+          : nu === 'null' ? 'une valeur absente' : 'rien du tout' };
+    }
+    try {
+      const o = JSON.parse(t);
+      if (Array.isArray(o)) {
+        return { vide: o.length === 0, octets, n: o.length,
+          quoi: o.length + ' entrée' + (o.length > 1 ? 's' : '') };
+      }
+      if (o && typeof o === 'object') {
+        const n = Object.keys(o).length;
+        return { vide: n === 0, octets, n, quoi: n + ' entrée' + (n > 1 ? 's' : '') };
+      }
+    } catch (e) { /* pas du JSON : on s'en tient au poids */ }
+    return { vide: false, octets, quoi: octets + ' octets' };
+  }
+  // le poids EXACT, sans arrondi : un arrondi qui masque un rapport de 1 à 280 n'aide
+  // personne à choisir. Sous le kilo-octet, on écrit les octets.
+  poidsExact(o) {
+    const n = Number(o || 0);
+    return n < 1024 ? n + ' o' : this.taille(n);
+  }
   // ————— LES POSTES DU localStorage, NOMMÉS —————
   // Rend {} pour les blocs IndexedDB : la cascade ci-dessus les nomme déjà.
   posteLocal(p) {
@@ -16196,24 +16247,46 @@ GROUPES = {
       const id = p.prefixe + '|conflit';
       const arme = this.state.libSuppr === id;
       const armeA = this.state.libSuppr === id + '|ancien';
+      // le poids de la VALEUR, pas de la clé plus la valeur : c'est la valeur qu'on
+      // compare. Le total du poste, lui, reste ce que la suppression rendra.
+      const N = p.faceNeuve || { quoi: this.poidsExact(p.octetsNeuf), octets: p.octetsNeuf, vide: false };
+      const A = p.faceAncienne || { quoi: this.poidsExact(p.octetsAncien), octets: p.octetsAncien, vide: false };
+      // LE VIDE N'EST JAMAIS LE CHOIX PRINCIPAL. Quand un côté ne porte rien, c'est
+      // l'autre qui prend le bouton plein — garder le vide reste possible, mais il faut
+      // le vouloir.
+      const neuveVide = !!N.vide;
+      const ancienneVide = !!A.vide;
+      const ditFace = (f) => f.quoi + ' \u00b7 ' + this.poidsExact(f.octets || 0);
       return {
         nom: nomFamille + ou + ' — DEUX EXEMPLAIRES QUI DIFFÈRENT',
-        detail: 'Un exemplaire sous le nom actuel (' + this.taille(p.octetsNeuf) + ') et un '
-          + 'sous l\u2019ancien (' + this.taille(p.octetsAncien) + '), et leurs contenus ne sont pas '
-          + 'les mêmes. Véna ne tranche pas seul : jeter une valeur sans l\u2019avoir lue est '
-          + 'irrattrapable. Gardez celui que vous voulez — l\u2019autre est supprimé et sa place rendue.',
+        detail: 'Exemplaire actuel : ' + ditFace(N) + '. '
+          + 'Exemplaire ancien : ' + ditFace(A) + '. '
+          + (neuveVide && !ancienneVide
+            ? 'L\u2019exemplaire actuel ne porte rien : le garder revient à jeter l\u2019ancien. '
+            : ancienneVide && !neuveVide
+              ? 'L\u2019exemplaire ancien ne porte rien : il n\u2019y a rien à sauver de ce côté. '
+              : '')
+          + 'Véna ne tranche pas seul : jeter une valeur sans l\u2019avoir lue est irrattrapable. '
+          + 'Gardez celui que vous voulez — l\u2019autre est supprimé et sa place rendue.',
         aSupprimable: true,
         aAdopter: false,
         aChoix: true,
-        choixTxt: armeA ? 'Confirmer : garder l\u2019ancien' : 'Garder l\u2019ancien',
+        // les deux boutons portent le MÊME libellé de forme ; c'est le style qui dit
+        // lequel est le choix sûr, et le détail qui dit pourquoi
+        choixTxt: armeA ? 'Confirmer : garder l\u2019ancien' : 'Garder l\u2019ancien'
+          + (neuveVide && !ancienneVide ? ' (' + A.quoi + ')' : ''),
+        choixCls: neuveVide && !ancienneVide ? 'btn btn-primary' : 'btn btn-secondary',
         choix: () => {
           if (!armeA) { this.setState({ libSuppr: id + '|ancien' }); return; }
           this.setState({ libSuppr: null });
           this.libererLocal(p, 'ancien');
         },
-        bouton: arme ? 'Confirmer : garder l\u2019actuel' : 'Garder l\u2019actuel',
+        bouton: arme ? 'Confirmer : garder l\u2019actuel' : 'Garder l\u2019actuel'
+          + (ancienneVide && !neuveVide ? ' (' + N.quoi + ')' : ''),
         aide: arme ? 'Cliquez à nouveau : l\u2019exemplaire ancien sera supprimé.'
-          : 'Garde l\u2019exemplaire sous le nom actuel et supprime l\u2019ancien. Deux clics.',
+          : neuveVide && !ancienneVide
+            ? 'Garde l\u2019exemplaire actuel, qui ne porte rien, et supprime l\u2019ancien. Deux clics.'
+            : 'Garde l\u2019exemplaire sous le nom actuel et supprime l\u2019ancien. Deux clics.',
         liberer: () => {
           if (!arme) { this.setState({ libSuppr: id }); return; }
           this.setState({ libSuppr: null });
@@ -18481,11 +18554,30 @@ GROUPES = {
           // le résumé de la section repliable : le MÊME chiffre, écrit une seule fois
           resDet: d.blocs + (d.blocs > 1 ? ' blocs' : ' bloc') + ', '
             + d.cles + (d.cles > 1 ? ' clés' : ' clé'),
-          stockVerdict: d.blocs === 0 && d.cles === 0
-            ? 'Le stockage de cette adresse est entièrement vide : le navigateur l\u2019a effacé. '
-              + 'Rien n\u2019est récupérable ici — seul un fichier exporté peut rendre vos données.'
+          // NE PARLER DE PERTE QUE SI ON PEUT LA PROUVER.
+          //
+          // Cette phrase s'est affichée EN TÊTE D'UN INVENTAIRE QUI LISTAIT 6,2 Mo de
+          // scans : elle annonçait à quelqu'un qui venait de croire avoir tout perdu que
+          // tout était bien perdu, alors que ses données étaient énumérées dessous. Deux
+          // causes : le compte de clés valait toujours zéro (voir `diagnosticStockage`),
+          // et la condition ne regardait pas l'inventaire.
+          //
+          // La garde porte donc sur l'inventaire lui-même, pas seulement sur la
+          // formulation : tant qu'un poste existe, aucune phrase de perte ne peut
+          // sortir. `inventaireEnCours` couvre le temps de la mesure — annoncer le vide
+          // avant d'avoir compté serait le même défaut, une seconde plus tôt.
+          stockVerdict: (s.inventaire && s.inventaire.length) || s.inventaireEnCours
+            ? 'Chaque espace ci-dessous est un compte. Si l\u2019un porte des blocs sans que ses '
+              + 'instruments apparaissent, c\u2019est son index qui manque — le bandeau de '
+              + 'récupération le propose alors en tête de page.'
+            : d.blocs === 0 && d.cles === 0
+            ? 'Rien n\u2019est enregistré pour cette adresse : ni bougies, ni scans, ni réglages. '
+              + 'Soit rien n\u2019a encore été déposé, soit le navigateur a vidé son stockage. '
+              + 'Un fichier exporté est la seule chose qui puisse rendre des données.'
             : d.blocs === 0
-              ? 'Aucune bougie ni aucun scan en mémoire. Les clés restantes ne portent que des réglages.'
+              ? 'Aucune bougie ni aucun scan en mémoire — ' + d.cles + ' clé'
+                + (d.cles > 1 ? 's' : '') + ' de réglages sont bien là. Ce n\u2019est pas une perte : '
+                + 'les bougies se redéposent, et un scan se relance.'
               : 'Chaque espace ci-dessous est un compte. Si l\u2019un porte des blocs sans que ses '
                 + 'instruments apparaissent, c\u2019est son index qui manque — le bandeau de '
                 + 'récupération le propose alors en tête de page.',
@@ -19260,7 +19352,7 @@ GROUPES = {
               : p.type === 'series'
                 ? p.n + ' séries enregistrées. Les supprimer libère beaucoup de place ; il faudra les redéposer pour scanner ce compte.'
                 : Number(p.n || 0).toLocaleString('fr-FR') + ' configurations mesurées. Les supprimer ne touche pas à vos bougies.',
-            poids: this.taille(p.octets || 0),
+            poids: this.poidsExact(p.octets || 0),
             bouton: s.libEnCours === p.prefixe + '|' + p.type
               ? 'Suppression… ' + (s.libFait || 0) + '/' + (s.libTotal || p.n || 0)
               : (this.state.libSuppr === p.prefixe + '|' + p.type ? 'Confirmer' : 'Supprimer'),
@@ -19270,7 +19362,7 @@ GROUPES = {
             aAdopter: p.type === 'horsIndex',
             adopter: () => this.adopterHorsIndex(p),
             aSupprimable: true,
-            aChoix: false, choixTxt: '', choix: () => {},
+            aChoix: false, choixTxt: '', choix: () => {}, choixCls: 'btn btn-secondary',
             liberer: () => {
               const id = p.prefixe + '|' + p.type;
               if (this.state.libSuppr !== id) { this.setState({ libSuppr: id }); return; }

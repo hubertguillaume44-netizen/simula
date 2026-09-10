@@ -30,6 +30,9 @@ function extraire(debut, fin) {
 /** La cascade de l'inventaire et `posteLocal`, montées sur un faux composant. */
 function rendreInventaire(inv, etat = {}) {
   const posteLocal = extraire("  posteLocal(p) {", "  CLE_MENAGE =");
+  // `poidsExact` est la vraie méthode : c'est elle qui décide de l'arrondi, et
+  // l'arrondi est justement ce que ce test surveille. La stuber le viderait de sens.
+  const poidsExact = extraire("  poidsExact(o) {", "  // ————— LES POSTES DU localStorage");
   const cascade = extraire("inventaire: inv.map((p) => ({", "\n          })),");
   const ctx = { Number, String, Math, JSON, Object, Array, Date, console };
   ctx.globalThis = ctx;
@@ -38,6 +41,7 @@ function rendreInventaire(inv, etat = {}) {
     "var faux = {",
     "  state: " + JSON.stringify({ libSuppr: null, ...etat }) + ",",
     "  taille(o) { return Math.round((o || 0) / 1024) + ' Ko'; },",
+    poidsExact + ",",
     "  nomCourtier(c) { return 'Courtier ' + c; },",
     "  setState() {}, adopterHorsIndex() {}, libererPoste() {}, libererLocal() {},",
     posteLocal + ",",
@@ -58,6 +62,13 @@ const POSTES = [
   // les trois du localStorage : aucun ne porte `n`, sauf `reglages`
   { type: "local", x: "scan.v1.client.fxpro", famille: "scan", espace: "client", compte: "fxpro",
     prefixe: "vena.scan.v1.client.fxpro", octets: 3_200_050, ancienSeul: true, doublon: false },
+  // le cas réel : l'exemplaire actuel est une LISTE VIDE, l'ancien porte 58 symboles
+  { type: "conflit", x: "series.v1.client.fxpro", famille: "series", espace: "client",
+    compte: "fxpro", prefixe: "vena.series.v1.client.fxpro", octets: 561 * 2,
+    octetsNeuf: 4, octetsAncien: 1118,
+    faceNeuve: { vide: true, octets: 4, quoi: "une liste vide" },
+    faceAncienne: { vide: false, octets: 1118, n: 58, quoi: "58 entrées" } },
+  // et un conflit ordinaire, sans côté vide
   { type: "conflit", x: "impactEvts.v1.client.fxpro", famille: "impactEvts", espace: "client",
     compte: "fxpro", prefixe: "vena.impactEvts.v1.client.fxpro", octets: 24_128,
     octetsNeuf: 9_662, octetsAncien: 14_466 },
@@ -88,15 +99,42 @@ test("chaque poste rendu porte de quoi s’afficher, sans « undefined »", () =
   }
 });
 
-test("le conflit s’annonce comme un conflit, avec ses deux poids et ses deux choix", () => {
-  const c = rendreInventaire(POSTES).find((iv) => iv.aChoix);
-  assert.ok(c, "aucun poste n’offre de choix : le conflit n’est plus arbitrable");
-  assert.match(c.nom, /DEUX EXEMPLAIRES QUI DIFFÈRENT/);
-  // les deux poids sont dits : c'est sur eux que l'utilisateur tranche
+test("le conflit s’annonce comme un conflit, avec ses deux choix", () => {
+  const c = rendreInventaire(POSTES).filter((iv) => iv.aChoix);
+  assert.equal(c.length, 2, "les conflits ne sont plus arbitrables");
+  for (const iv of c) {
+    assert.match(iv.nom, /DEUX EXEMPLAIRES QUI DIFFÈRENT/);
+    assert.equal(typeof iv.choix, "function");
+    assert.ok(iv.aSupprimable, "le second choix a disparu");
+  }
+});
+
+test("un conflit dont un côté est vide le dit, et ne propose pas le vide en principal", () => {
+  // le cas réel : « [] » (2 octets) contre 58 symboles (559 octets), et l'écran
+  // affichait « 1 Ko » contre « 1 Ko » avec « Garder l'actuel » en bouton principal
+  const c = rendreInventaire(POSTES).find((iv) => /Liste des séries/.test(iv.nom));
+  assert.ok(c, "le conflit des séries a disparu");
+  // en toutes lettres
+  assert.match(c.detail, /une liste vide/);
+  assert.match(c.detail, /58 entrées/);
+  assert.match(c.detail, /le garder revient à jeter l’ancien/);
+  // les poids se lisent séparément et SANS arrondi trompeur
+  // le poids de la VALEUR (« [] » = 2 caractères = 4 octets), pas celui de la clé
+  assert.match(c.detail, /une liste vide · 4 o/, "le poids du côté vide doit être en octets");
+  assert.match(c.detail, /58 entrées · 1 Ko/);
+  assert.ok(!/1 Ko.*1 Ko/.test(c.detail), "deux poids arrondis au même chiffre");
+  // et le bouton plein est celui qui garde la donnée
+  assert.equal(c.choixCls, "btn btn-primary", "garder l’ancien doit être le choix principal");
+  assert.match(c.choixTxt, /58 entrées/);
+});
+
+test("un conflit ordinaire garde « l’actuel » en choix principal", () => {
+  const c = rendreInventaire(POSTES).find((iv) => /Impact des événements/.test(iv.nom));
+  assert.ok(c, "le conflit ordinaire a disparu");
+  assert.equal(c.choixCls, "btn btn-secondary");
+  // sans description, le repli est le poids du poste
   assert.match(c.detail, /9 Ko/);
   assert.match(c.detail, /14 Ko/);
-  assert.equal(typeof c.choix, "function");
-  assert.ok(c.aSupprimable, "le second choix a disparu");
 });
 
 test("les réglages comptent dans le total mais n’offrent pas de bouton", () => {
@@ -112,4 +150,71 @@ test("une suppression en cours s’affiche sur un poste sans compte de blocs", (
   const [iv] = rendreInventaire([POSTES.find((p) => p.type === "local")],
     { libEnCours: "vena.scan.v1.client.fxpro|local", libFait: 1 });
   assert.ok(!String(iv.bouton).includes("undefined"), `bouton : ${iv.bouton}`);
+});
+
+// ————— NE PARLER DE PERTE QUE SI ON PEUT LA PROUVER —————
+//
+// « Le stockage de cette adresse est entièrement vide : le navigateur l'a effacé » s'est
+// affiché EN TÊTE D'UN INVENTAIRE QUI LISTAIT 6,2 Mo de scans. C'est le pire message
+// possible : il annonce à quelqu'un qui vient de croire avoir tout perdu que tout est
+// bien perdu, alors que ses données sont énumérées dans le même écran.
+
+/** Le verdict du diagnostic, calculé par le vrai producteur. */
+function verdict(stockDiag, etat = {}) {
+  const cascade = extraire("stockVerdict: (s.inventaire", "\n          stockLignes:");
+  const ctx = { Number, String, Object };
+  vm.createContext(ctx);
+  const expr = cascade.replace(/^stockVerdict:\s*/, "").replace(/,\s*$/, "");
+  vm.runInContext("var f = function (s, d) { return (" + expr + "); };", ctx);
+  return vm.runInContext("f", ctx)({ inventaire: null, inventaireEnCours: false, ...etat }, stockDiag);
+}
+
+test("aucune phrase de perte tant que l’inventaire n’est pas vide", () => {
+  // le cas réel : le diagnostic croit tout vide — le compte de clés valait toujours zéro
+  // — mais l'inventaire, lui, porte des postes
+  const v = verdict({ blocs: 0, cles: 0 }, { inventaire: [{ type: "local", octets: 6_200_000 }] });
+  assert.ok(!/effacé|perdu|Rien n’est enregistré/.test(v),
+    `phrase de perte au-dessus d’un inventaire plein : ${v}`);
+});
+
+test("ni pendant la mesure : annoncer le vide avant d’avoir compté est le même défaut", () => {
+  const v = verdict({ blocs: 0, cles: 0 }, { inventaire: null, inventaireEnCours: true });
+  assert.ok(!/effacé|Rien n’est enregistré/.test(v), v);
+});
+
+test("un stockage réellement vide le dit — sans affirmer une perte qu’on ne prouve pas", () => {
+  const v = verdict({ blocs: 0, cles: 0 }, { inventaire: [], inventaireEnCours: false });
+  assert.match(v, /Rien n’est enregistré/);
+  // les DEUX explications, parce qu'on ne sait pas laquelle est vraie
+  assert.match(v, /rien n’a encore été déposé/);
+  assert.match(v, /le navigateur a vidé/);
+});
+
+test("« aucune bougie » n’est pas « tout est perdu »", () => {
+  const v = verdict({ blocs: 0, cles: 23 }, { inventaire: [], inventaireEnCours: false });
+  assert.match(v, /Aucune bougie ni aucun scan/);
+  assert.match(v, /23 clés de réglages sont bien là/);
+  assert.match(v, /Ce n’est pas une perte/);
+  assert.ok(!/effacé/.test(v));
+});
+
+/** La source sans ses commentaires de ligne : un garde-fou doit lire le CODE. */
+function sansCommentaires(txt) {
+  return txt.split("\n").map((l) => l.replace(/^\s*\/\/.*$/, "")).join("\n");
+}
+
+test("le diagnostic compte les clés par length/key, pas par Object.keys", () => {
+  // l’énumération d’un Storage est une propriété exotique du navigateur : un objet
+  // ordinaire ne l’a pas, et rend ses propres méthodes à la place. Le compte de clés
+  // valait donc toujours zéro, et c’est ce zéro qui déclenchait la phrase de perte.
+  const corps = sansCommentaires(extraire("async diagnosticStockage() {", "  async inventaireStockage("));
+  assert.ok(!/Object\.keys\(localStorage\)/.test(corps),
+    "la façade n’a pas l’énumération d’un Storage");
+  assert.match(corps, /STOCK_BRUT\.key\(i\)/);
+});
+
+test("nulle part ailleurs on n’énumère le stockage de cette façon", () => {
+  // le commentaire qui explique le défaut a le droit de le nommer ; le code, non
+  assert.ok(!/Object\.keys\(localStorage\)/.test(sansCommentaires(SOURCE)),
+    "une énumération de ce genre rendrait les méthodes de la façade, jamais les clés");
 });
