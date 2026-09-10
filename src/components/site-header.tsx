@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { VenaMark } from "@/components/vena-mark";
+import { VenaMark, palierPour } from "@/components/vena-mark";
 
 const LINKS = [
   { to: "/", label: "Accueil" },
@@ -30,7 +30,11 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           aria-label="Véna — accueil"
           className="mr-auto flex min-w-0 items-center gap-3 no-underline text-ink"
         >
-          <VenaMark taille="lg" className="h-6 w-6 shrink-0" />
+          {/* le palier vient de la RÈGLE, pas d'un littéral : `h-6 w-6` rend le signe
+              à 24 px, et `palierPour(24)` répond `md`. Écrire « lg » ici, comme je
+              l'avais fait, contredisait la règle du composant — à 24 px le jambage
+              fin du palier `lg` fait 1,44 px et grisonne hors écran retina. */}
+          <VenaMark taille={palierPour(24)} className="h-6 w-6 shrink-0" />
           <span className="shrink-0 font-display text-lg font-semibold tracking-wide">VÉNA</span>
           <span className="hidden min-w-0 truncate text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             Simulateur de stratégies trading
