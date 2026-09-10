@@ -3,7 +3,7 @@
 // Observé chez un utilisateur, en vue intégrée : le menu de l'en-tête ne portait qu'une
 // option VIDE — ni valeur ni libellé — plus « + Ajouter un compte… ». Un `<select>` dont
 // la valeur ne correspond à aucune option retombe à "", si bien que l'en-tête
-// n'annonçait plus aucun compte alors que le reste de l'écran nommait FxPro partout.
+// n'annonçait plus aucun compte alors que le reste de l'écran nommait le compte partout.
 //
 // La forme a été identifiée par élimination, en forçant chaque valeur dégénérée dans le
 // fichier livré : `undefined`, `[]` et `null` ne rendent QUE « + Ajouter un compte… » ;
@@ -24,6 +24,11 @@ const SOURCE = readFileSync(new URL("../../Vena.dc.html", import.meta.url), "utf
 function comptes(COURTIERS, { conf = {}, compteActif = "fxpro", noms = {} } = {}) {
   const i = SOURCE.indexOf("        const conf = this.comptesConfigures();");
   assert.ok(i > 0, "le producteur des comptes ne se délimite plus");
+  // UN SEUL bloc doit commencer ainsi. Un second producteur ouvrant sur la même ligne a
+  // déjà été inséré au-dessus : `indexOf` avait attrapé le sien, et le test échouait sur
+  // une variable manquante — un message qui ne désignait pas la vraie cause.
+  assert.equal(SOURCE.indexOf("        const conf = this.comptesConfigures();", i + 1), -1,
+    "deux blocs ouvrent sur cette ligne : la délimitation attrape le premier venu");
   const j = SOURCE.indexOf("\n        };\n      })(),", i);
   assert.ok(j > i, "la fin du producteur ne se délimite plus");
   const corps = SOURCE.slice(i, j + "\n        };".length);
@@ -46,7 +51,10 @@ function comptes(COURTIERS, { conf = {}, compteActif = "fxpro", noms = {} } = {}
   return vm.runInContext("faux.produire({ menuComptes: false })", ctx);
 }
 
-const NORMAL = [["fxpro", "FxPro MT5", null], ["compte2", "Compte nº 2", null],
+// Le libellé du nº 1 est ARBITRAIRE ici, et distinct du défaut de l'application : ce que
+// ces tests vérifient, c'est que le producteur restitue le libellé qu'on lui donne — pas
+// qu'il en connaisse un en particulier.
+const NORMAL = [["fxpro", "Mon courtier", null], ["compte2", "Compte nº 2", null],
   ["demo", "Compte démo — données fictives", null]];
 
 test("au premier rendu, le menu porte le compte actif nommé", () => {
@@ -55,7 +63,7 @@ test("au premier rendu, le menu porte le compte actif nommé", () => {
   const cles = r.comptesTete.map((x) => x.cle);
   assert.ok(cles.includes("fxpro"), `le compte actif manque : ${JSON.stringify(cles)}`);
   const f = r.comptesTete.find((x) => x.cle === "fxpro");
-  assert.match(f.nom, /FxPro MT5/);
+  assert.match(f.nom, /Mon courtier/);
 });
 
 test("le compte actif est là même sans relevé et sans nom personnalisé", () => {
@@ -69,9 +77,9 @@ test("le compte actif est là même sans relevé et sans nom personnalisé", () 
 // COURTIERS dégradé de toutes les façons plausibles : le producteur déstructure
 // `map(([cle], i) => …)`, et une ligne qui n'est pas un tableau y rend `cle: undefined`
 const DEGRADES = [
-  ["une ligne vide", [[], ["fxpro", "FxPro MT5", null], ["demo", "Démo", null]]],
-  ["une ligne non-tableau", [null, ["fxpro", "FxPro MT5", null], ["demo", "Démo", null]]],
-  ["un objet à la place d’une ligne", [{}, ["fxpro", "FxPro MT5", null], ["demo", "Démo", null]]],
+  ["une ligne vide", [[], ["fxpro", "Mon courtier", null], ["demo", "Démo", null]]],
+  ["une ligne non-tableau", [null, ["fxpro", "Mon courtier", null], ["demo", "Démo", null]]],
+  ["un objet à la place d’une ligne", [{}, ["fxpro", "Mon courtier", null], ["demo", "Démo", null]]],
   ["une ligne sans nom", [["fxpro"], ["demo", "Démo", null]]],
   ["la table entière vide", []],
   ["la table qui n’est pas un tableau", null],

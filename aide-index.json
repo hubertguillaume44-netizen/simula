@@ -121,6 +121,13 @@
   },
   {
    "terme": "Ce qu'un compte ne contiendrait pas",
+   "texte": "Le nom de ce compte, tel que vous le lisez. Il reste dans votre navigateur.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
+   "terme": "Ce qu'un compte ne contiendrait pas",
    "texte": "L’installation des scripts, une fois — puis les quatre gestes de chaque mise à jour : relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.",
    "vues": [
     "Mes instruments"
@@ -187,6 +194,20 @@
    "texte": "Le contrôle du hasard en série, sur un lot de configurations. Il ne sert plus au quotidien — chaque fiche porte son propre contrôle — mais il reste pour balayer un scan entier d’un coup.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "Choisir un fichier",
+   "texte": "Choisit un fichier sur votre disque. Véna y réécrit tout, chaque minute.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Choisir un fichier de sauvegarde",
+   "texte": "Choisit un fichier sur votre disque. Véna y réécrit tout, chaque minute. Aucun vidage de navigateur ne l’atteint.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -271,6 +292,13 @@
    "texte": "Remet les valeurs par défaut de ce filtre, sans changer son état actif ou non.",
    "vues": [
     "Backtest"
+   ]
+  },
+  {
+   "terme": "Demander la protection",
+   "texte": "Demande au navigateur de ne pas vider ce site quand le disque se remplit.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -365,10 +393,38 @@
    ]
   },
   {
+   "terme": "Exporter mes données",
+   "texte": "Enregistre tout dans un fichier, maintenant. À refaire après chaque séance.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Exporter mes données",
+   "texte": "Enregistre tout dans un fichier, sur votre disque. C’est ce fichier que vous réimporterez dans l’onglet à part.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Fermer",
+   "texte": "Masque ce rang. Le prochain refus le fera revenir.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "fichier de diagnostic",
    "texte": "Prépare un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.",
    "vues": [
     "Journal"
+   ]
+  },
+  {
+   "terme": "Fichier de diagnostic — sans réseau",
+   "texte": "Garde l’exemplaire enregistré sous l’ancien nom : il continue d’être lu tel quel, et l’autre est supprimé. Deux clics.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -418,13 +474,6 @@
    "texte": "Éteint par défaut : une date estimée peut être fausse d'un jour ou deux, et un bandeau sur une date fausse est pire que pas de bandeau.",
    "vues": [
     "Marché"
-   ]
-  },
-  {
-   "terme": "Lancer quand même VÉNA",
-   "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
-   "vues": [
-    "Toutes les pages"
    ]
   },
   {
@@ -565,6 +614,13 @@
    "texte": "Chaque colonne est annualisée sur sa propre fenêtre : les trades ne couvrent pas toujours toute la série de cotations.",
    "vues": [
     "Portefeuille"
+   ]
+  },
+  {
+   "terme": "Plus tard",
+   "texte": "Ferme cette proposition. Elle ne reviendra pas — le rang d’état, lui, reste tant qu’aucun filet n’est en place.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {
@@ -850,6 +906,13 @@
    ]
   },
   {
+   "terme": "VÉNA",
+   "texte": "Bougies, tarifs, scans et réglages sont propres au compte choisi.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
    "terme": "Verdict du tirage",
    "texte": "Le cumul en R, année par année, gradué et daté. Deux instruments au même total n’ont pas la même allure : c’est ce que la colonne d’un tableau ne pouvait pas montrer.",
    "vues": [
@@ -882,6 +945,13 @@
    "texte": "Combien de fois on rejoue chaque configuration avec des entrées au hasard. Il en faut au moins vingt fois le nombre de configurations contrôlées pour que le verdict corrigé puisse conclure : 200 pour une poignée de lignes, 1 000 dès que vous testez les variantes.",
    "vues": [
     "Historique"
+   ]
+  },
+  {
+   "terme": "Voir ce qui occupe la mémoire",
+   "texte": "Ouvre l'Intendance et mesure ce que ce navigateur garde, poste par poste.",
+   "vues": [
+    "Toutes les pages"
    ]
   },
   {

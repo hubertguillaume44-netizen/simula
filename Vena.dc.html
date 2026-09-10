@@ -1107,7 +1107,7 @@
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> MetaTrader 4 ou 5 chez votre courtier, et savoir en exporter les barres H1 en CSV — c'est un menu, pas de la programmation. Véna ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
+        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> <strong style="color:var(--color-text)">MetaTrader 5</strong> chez votre courtier — c'est la seule plateforme que Véna lit : les deux outils qu'elle vous fait installer sont des scripts MQL5, et ce sont eux qui produisent les bougies. <strong style="color:var(--color-text)">Ni cTrader, ni TradingView, ni relevé de courtier au format maison</strong> : mieux vaut le savoir avant d'acheter qu'après. Un export de symboles MetaTrader 4 est accepté pour les frais, mais les bougies viennent de MT5. Aucune programmation : glisser un script sur un graphique, puis déposer les fichiers ici. Véna ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
         <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">À votre nom, sur vos machines.</strong> La licence couvre vos machines personnelles — fixe et portable. Elle est nominative : votre adresse s'affiche dans l'application et signe les robots et fichiers exportés (une case permet de la retirer d'un résultat que vous partagez). Et ce que vous achetez est un outil de mesure, pas un contenu : un code emprunté ne donne accès à aucune bibliothèque, aucun signal, aucun résultat — seulement au droit de mesurer ses propres séries, à exporter soi-même depuis son propre MetaTrader, avec ses propres relevés de frais.</p>
@@ -1377,6 +1377,25 @@
         `champReleve`, `champBougies`, `champBougiesM1` — continue de fonctionner.
       -->
       <div id="zoneDepot" style="padding:15px 18px 17px;display:flex;flex-direction:column;gap:0;background:var(--color-neutral-100);border-bottom:2px solid var(--color-divider);min-width:0">
+        <!--
+          NOMMER LE COMPTE, AU PREMIER CONTACT.
+
+          Le libellé par défaut ne nomme aucun courtier — l'application ne sait pas chez
+          qui son lecteur travaille. C'est donc au client de le dire, et il faut qu'il
+          apprenne qu'il en a le droit : le champ se montre ici, sur un compte encore
+          vide, et non dans un tiroir de réglages où personne ne va avant d'en avoir eu
+          besoin.
+
+          Le suffixe de fichier est annoncé en même temps parce qu'il DÉCOULE du nom :
+          renommer le compte change la façon de nommer ses CSV de second flux. Le dire
+          après coup vaudrait un fichier mal rattaché.
+        -->
+        <sc-if value="{{ aInviteNom }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:0 0 12px;margin-bottom:12px;border-bottom:1px solid var(--color-divider)">
+            <span style="font-size:12.5px;line-height:1.5;flex:1;min-width:24ch">Ce compte n’a pas encore de nom. Donnez-lui celui de <strong>votre</strong> courtier : il s’affichera partout dans l’application, et sert de suffixe (<code>{{ suffixeCompte }}</code>) pour distinguer les fichiers de ce compte.</span>
+            <input class="input" type="text" style="min-height:2rem;height:2rem;font-size:12.5px;width:22ch;flex:none" value="{{ nomSaisi }}" onChange="{{ renommer }}" placeholder="{{ placeholderNom }}" title="Le nom de ce compte, tel que vous le lisez. Il reste dans votre navigateur.">
+          </div>
+        </sc-if>
         <button type="button" onClick="{{ basculerMt5 }}" style="cursor:pointer;border:none;background:none;font:inherit;text-align:left;padding:0 0 11px;display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;width:100%" title="L’installation des scripts, une fois — puis les quatre gestes de chaque mise à jour : relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.">
           <strong style="font-family:var(--font-heading);font-size:16px">Produire ces fichiers depuis MT5</strong>
           <span style="font-size:11px" class="text-muted">l’installation une seule fois, le reste à chaque mise à jour</span>
@@ -6156,12 +6175,24 @@ class Component extends DCLogic {
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
     beSeuil3: 0, beNiveau3: 0, trailingPct: 1.5, secuPrudent: false,
     fZone: false, utZone: 'D1', zoneTouches: 3, zoneTol: 0.5, zoneMarge: 1, zoneMemoire: 250,
-    comm: { fxpro: { forex: 3.5, metal: 3.5, indice: 0, actionUS: 0.02, actionAutre: 0.1, crypto: 0, autre: 0 },
+    // ————— LES COMMISSIONS PAR DÉFAUT SONT NULLES, TOUS COMPTES CONFONDUS —————
+    //
+    // Le compte nº 1 portait les tarifs d'un courtier précis : 3,5 € par lot sur le
+    // forex et les métaux, 0,02 $ par action américaine. Faux chez tout le monde sauf
+    // chez moi — et faux EN SILENCE : rien à l'écran ne disait que ces frais étaient
+    // ceux de quelqu'un d'autre, alors qu'ils entraient dans chaque résultat chiffré.
+    //
+    // Zéro n'est pas un mensonge, c'est un manque VISIBLE. L'application dit déjà
+    // « aucun relevé de courtier — les frais ne sont pas comptés », et le champ à zéro
+    // se remarque. Des frais faux, eux, ne se remarquent pas.
+    comm: { fxpro: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte2: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte3: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte4: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 },
       compte5: { forex: 0, metal: 0, indice: 0, actionUS: 0, actionAutre: 0, crypto: 0, autre: 0 } },
-    commDev: { fxpro: { forex: 'EUR', metal: 'EUR', actionUS: 'USD', actionAutre: 'PCT' } }, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
+    // Aucune devise présumée non plus : commDevise() retombe déjà sur 'EUR' quand la
+    // clé manque, et le sélecteur de devise reste à la main du client.
+    commDev: {}, pfs: null, pfActif: 0, favoris: null, valides: [], dragSym: null, dragDepuis: null, dragPf: null, selSym: null, ajoutSym: '',
     ddMax: 0, winMin: 0, oosMin: 0, detail: null, ficheMsg: null, modeTable: 'lecture', ouvLot: false, btPanneau: '', panScan: '', pfMesures: false, sonScan: false,
     manqCoches: [], manqMsg: null, grpTout: [],
     ctrlEnCours: false, ctrlMsg: null, ctrlOk: null,
@@ -7639,14 +7670,59 @@ class Component extends DCLogic {
       "DEMO-CRYPTO": "Démo — crypto"
   };
 
-  SUFFIXES_FLUX = { FXPRO: 'fxpro' };
-  // « AAPL.US-FXPRO » : même sous-jacent qu'AAPL.US, mais un autre flux de bougies
+  // ————— LE SUFFIXE DE FLUX N'EST PLUS LE NOM D'UN COURTIER —————
+  //
+  // « AAPL.US-FXPRO » : même sous-jacent qu'AAPL.US, mais un autre flux de bougies, chez
+  // un autre compte. Le suffixe était FXPRO et lui seul : pour comparer deux flux, il
+  // fallait nommer son fichier d'après un courtier chez qui on n'est pas.
+  //
+  // Le suffixe de chaque compte est maintenant DÉRIVÉ DE SON NOM — celui que le client a
+  // saisi, ou « Compte nº 2 » → C2 à défaut. Il se lit à l'écran, à l'endroit même où on
+  // lui demande de déposer le fichier.
+  ALIAS_FLUX = { FXPRO: 'fxpro' }; // alias HISTORIQUE : des fichiers portent déjà ce nom
+  /** Le suffixe à écrire dans un nom de fichier pour rattacher une série à ce compte. */
+  suffixeFlux(cle) {
+    // le bac à sable ne reçoit jamais de vrai fichier : son libellé ferait un suffixe
+    // long et illisible pour rien
+    if (cle === 'demo') return 'DEMO';
+    const brut = String(this.nomCourtier(cle) || '');
+    // « Compte nº 2 » → C2 : court, sans accent, et il ne ressemble à aucun code de place
+    const n = brut.match(/^Compte\s*n[\u00ba\u00b0o]?\s*(\d+)/i);
+    if (n) return 'C' + n[1];
+    const slug = brut.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12);
+    return slug.length >= 2 ? slug : String(cle).toUpperCase().slice(0, 12);
+  }
+  /** suffixe → clé de compte. L'alias historique l'emporte : mes fichiers restent lus. */
+  tableFlux() {
+    if (this._tableFlux) return this._tableFlux;
+    const t = {};
+    for (const ligne of (Array.isArray(this.COURTIERS) ? this.COURTIERS : [])) {
+      const cle = Array.isArray(ligne) ? ligne[0] : null;
+      if (!cle) continue;
+      const suf = this.suffixeFlux(cle);
+      if (suf && !t[suf]) t[suf] = cle;
+    }
+    // posé EN DERNIER et de force : si quelqu'un baptise un compte « FxPro », ses
+    // fichiers et les miens porteraient le même suffixe. L'alias tranche pour l'ancien,
+    // qui est le seul dont des fichiers existent déjà sur des disques.
+    for (const [suf, cle] of Object.entries(this.ALIAS_FLUX)) t[suf] = cle;
+    this._tableFlux = t;
+    return t;
+  }
   fluxDe(sym) {
-    const m = String(sym).match(/^(.+?)[-@.](FXPRO)$/i);
+    const m = String(sym).match(/^(.+?)([-@.])([A-Za-z0-9]{2,12})$/);
     if (!m) return { base: sym, courtier: null, label: '' };
-    const cle = this.SUFFIXES_FLUX[m[2].toUpperCase()];
-    const nom = (this.COURTIERS.find(([c]) => c === cle) || [, m[2]])[1];
-    return { base: m[1], courtier: cle, label: nom };
+    const suf = m[3].toUpperCase();
+    // LE POINT RESTE RÉSERVÉ À L'ALIAS. « AAPL.US » est un code de place, pas un compte :
+    // sans cette clause, un compte nommé « US » couperait en deux tous les titres
+    // américains. Le tiret et l'arobase, eux, ne servent qu'à cela.
+    if (m[2] === '.' && !Object.prototype.hasOwnProperty.call(this.ALIAS_FLUX, suf)) {
+      return { base: sym, courtier: null, label: '' };
+    }
+    const cle = this.tableFlux()[suf];
+    if (!cle) return { base: sym, courtier: null, label: '' };
+    return { base: m[1], courtier: cle, label: this.nomCourtier(cle) };
   }
   // avec 170 000 configurations en mémoire, chaque rendu refaisait plusieurs passes
   // complètes. On ne recalcule que si la signature des entrées a changé.
@@ -8182,16 +8258,40 @@ GROUPES = {
     Japan225: '#Japan225', Spain35: '#Spain35' };
   DEBUT = Date.UTC(2020, 0, 1);
 
-  source(sym) { return 'fxpro'; }
+  // Le compte d'où viennent les frais d'un instrument : le compte ACTIF, comme partout
+  // ailleurs. Cette fonction retournait 'fxpro' en dur — elle faisait donc lire la date
+  // de barème et les frais du compte nº 1 même en travaillant sur le nº 3.
+  source(sym) { return this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif; }
 
-  // date des relevés importés (MT5 : Vue → Symboles ; MT4 : Affichage → Symboles)
-  DATES_BAREME = { fxpro: '26/08/2026' };
-  // Un seul compte : FxPro MT5. Les comptes propfirm ont été retirés — on avance sur
-  // FxPro seul, la structure reste multi-comptes pour en rajouter un plus tard.
+  // Date des relevés LIVRÉS avec l'application. Il n'y en a plus aucun : la date d'un
+  // barème vient du relevé que le client dépose (this.dateBareme, écrit à l'import), ou
+  // n'existe pas. Une date en dur ici était celle de MON export — affichée avec autorité
+  // chez quelqu'un qui n'avait rien déposé ce jour-là, ni aucun autre.
+  // La table reste, vide : les trois lectures l'indexent, et une clé absente y donne
+  // déjà « relevés : » au lieu de « relevés du 26/08/2026 : ».
+  DATES_BAREME = {};
+
+  // ————— LES COMPTES : LA CLÉ N'EST PAS LE LIBELLÉ —————
+  //
+  // Première colonne : la CLÉ DE STOCKAGE, cleGlobale(base) + '.' + compte. Bougies,
+  // relevés de frais, scans et réglages sont rangés dessous — cloisonnement strict.
+  //
+  // 'fxpro' EST UNE CLÉ, PAS UN NOM. Elle date de l'époque où le nº 1 était un compte
+  // FxPro ; elle ne veut plus rien dire, et elle NE DOIT PAS être « corrigée » en
+  // 'compte1' : les données déjà écrites sous '.fxpro' chez les utilisateurs — des
+  // centaines de mégaoctets de bougies — deviendraient invisibles d'un coup, sans
+  // message d'erreur, parce qu'on serait allé les chercher sous une clé qui n'a jamais
+  // rien reçu. Renommer cette clé exige une migration écrite d'abord ; en attendant,
+  // elle reste, et seul son LIBELLÉ change.
+  //
+  // Deuxième colonne : le libellé par défaut. Aucun nom de courtier : le fichier publié
+  // ne sait pas chez qui son lecteur travaille. nomCourtier() préfère de toute façon le
+  // nom que le client saisit (renommerCompte → CLE_NOMS).
+  //
   // Troisième colonne = relevé livré avec l'application. Elle vaut null partout :
   // le fichier publié ne contient AUCUN relevé de courtier réel. Seul l'exemple de
   // démonstration est livré, et il ne sert qu'en version d'essai.
-  COURTIERS = [['fxpro', 'FxPro MT5', null],
+  COURTIERS = [['fxpro', 'Compte nº 1', null],
     ['compte2', 'Compte nº 2', null],
     ['compte3', 'Compte nº 3', null],
     ['compte4', 'Compte nº 4', null],
@@ -8533,7 +8633,11 @@ GROUPES = {
   comptesDe(sym) {
     this._cacheD = this._cacheD || new Map();
     if (this._cacheD.has(sym)) return this._cacheD.get(sym);
-    const ABR = { fxpro: 'Fx', compte2: 'C2', compte3: 'C3', compte4: 'C4', compte5: 'C5' };
+    // L'abréviation suit le RANG du compte. « Fx » venait de FxPro : une marque affichée
+    // dans un tableau, chez quelqu'un qui n'y est pas client. 'fxpro' reste la clé de
+    // stockage — voir COURTIERS — mais ne se montre plus.
+    const ABR = { fxpro: 'C1', compte2: 'C2', compte3: 'C3', compte4: 'C4', compte5: 'C5',
+      demo: 'D\u00e9m' };
     const l = this.COURTIERS.filter(([c]) => this.ligneCourtier(c, sym));
     // un relevé présent mais non convertible n'est pas la même chose qu'un instrument
     // absent : l'utilisateur doit pouvoir distinguer les deux
@@ -8593,6 +8697,8 @@ GROUPES = {
     const v = (nom || '').trim();
     if (v) this._noms[cle] = v; else delete this._noms[cle];
     try { localStorage.setItem(this.CLE_NOMS, JSON.stringify(this._noms)); } catch (e) {}
+    // le suffixe de flux se DÉRIVE du nom : renommer change le suffixe, donc la table
+    this._tableFlux = null;
     this.forceUpdate();
   }
   // Classement des tables de décisions sur trois colonnes. Un clic classe du meilleur au
@@ -15742,8 +15848,8 @@ GROUPES = {
   // que par leur horodatage, et on ne sait plus lequel va où.
   etiquetteCompte() {
     const cle = this.compteDesFichiers();
-    // le nom du courtier quand il est court et distinctif (« FxPro MT5 » → FxProMT5,
-    // « FTMO » → FTMO) ; sinon la clé du compte, qui est unique par construction —
+    // le nom donné au compte quand il est court et distinctif (« Pepperstone » →
+    // Pepperstone) ; sinon la clé du compte, qui est unique par construction —
     // « Compte démo — données fictives » ne fait pas une étiquette de fichier
     const nom = String(this.nomCourtier(cle) || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]/g, '');
@@ -23310,8 +23416,14 @@ GROUPES = {
         });
         return { aFlux: rows.length > 1, fluxRows: rows,
           fluxResume: rows.length + ' séries chargées pour ce sous-jacent, comparées à réglages identiques. '
-            + 'Pour en ajouter une, déposez le CSV d\u2019un autre flux nommé « ' + base + '-FXPRO_H1.csv » : '
-            + 'Véna le reconnaît comme le même sous-jacent et applique les frais du bon compte.' };
+            // LE SUFFIXE CITÉ EST CELUI DU COMPTE COURANT, pas un nom de courtier.
+            // « GOLD-FXPRO_H1.csv » demandait au client de nommer ses fichiers d'après
+            // un courtier chez qui il n'est pas ; il ne pouvait pas deviner que ce mot
+            // était une clé interne, ni qu'il avait le droit d'en changer.
+            + 'Pour en ajouter une, déposez le CSV d\u2019un autre flux nommé « ' + base + '-'
+            + this.suffixeFlux(this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif)
+            + '_H1.csv » : Véna le reconnaît comme le même sous-jacent et applique les frais '
+            + 'du bon compte. Ce suffixe suit le nom que vous donnez au compte.' };
       })(),
       dDuree: d && d.nuits !== undefined
         ? (d.nuits < 1 ? Math.round(d.nuits * 24) + ' h' : fr(d.nuits, 1) + ' jours')
@@ -24421,7 +24533,8 @@ GROUPES = {
       setOngCourtier: (e) => this.setState({ ongCourtier: e.target.value, coutLimite: 60 }),
       // même repli que le dépôt lui-même : « tous » range dans le compte nº 1
       nomCompte: this.compteActif === 'tous' ? this.nomCourtier(this.COURTIERS[0][0]) : this.nomCompteActif(),
-      // « les fichiers de FxPro MT5 » mais « les fichiers du Compte nº 2 »
+      // « les fichiers du Compte nº 2 » mais « les fichiers de Pepperstone » : l'article
+      // suit le libellé, qui est celui du client dès qu'il en a saisi un
       deNomCompte: (() => {
         const n = this.compteActif === 'tous' ? this.nomCourtier(this.COURTIERS[0][0]) : this.nomCompteActif();
         return /^Compte/.test(n) ? 'du ' + n : 'de ' + n;
@@ -24453,15 +24566,43 @@ GROUPES = {
             this.setState({ confirmBareme: null, baremeMsg: 'Dépôt annulé : le relevé de ' + nom + ' est intact.' }); },
         };
       })(),
-      nomSaisi: this.compteActif === 'tous' ? '' : ((this._noms || (this._noms = this.lireNoms()))[this.compteActif] || ''),
-      renommer: (e) => this.renommerCompte(this.compteActif, e.target.value),
-      aRenommer: this.compteActif !== 'tous',
+      // ————— LE CHAMP DE NOM, LÀ OÙ LE COMPTE EST OUVERT —————
+      //
+      // renommerCompte() et lireNoms() existaient déjà ; nomSaisi / renommer / aRenommer
+      // aussi. AUCUN gabarit ne les lisait : le mécanisme était complet et invisible,
+      // donc inutilisable. Un client ne pouvait pas savoir qu'il avait le droit de
+      // nommer ses comptes — il voyait le nom d'un courtier qui n'est pas le sien et le
+      // prenait pour une contrainte du logiciel.
+      //
+      // L'invitation ne s'affiche que sur un compte VIDE et JAMAIS NOMMÉ, à l'endroit où
+      // on vient de l'ouvrir. Elle disparaît dès qu'il porte un nom ou un relevé : ce
+      // n'est pas un réglage permanent, c'est un premier contact.
+      ...(() => {
+        const cle = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
+        const perso = (this._noms || (this._noms = this.lireNoms()))[cle] || '';
+        // `configures`, et non `conf` : le producteur du sélecteur, plus bas, ouvre par
+        // `const conf = this.comptesConfigures();` et son test délimite le corps sur
+        // cette ligne exacte. Deux blocs qui commencent pareil, et l'extraction attrape
+        // le premier venu.
+        const configures = this.comptesConfigures();
+        return {
+          nomSaisi: this.compteActif === 'tous' ? '' : perso,
+          renommer: (e) => this.renommerCompte(cle, e.target.value),
+          aRenommer: this.compteActif !== 'tous',
+          // le bac à sable ne se renomme pas : il porte toujours son propre relevé, donc
+          // conf['demo'] est vrai et la condition l'écarte déjà — on le redit pour que
+          // personne ne « simplifie » la condition en oubliant pourquoi elle tient
+          aInviteNom: this.compteActif !== 'tous' && cle !== 'demo' && !perso && !configures[cle],
+          placeholderNom: this.nomCourtier(cle),
+          suffixeCompte: this.suffixeFlux(cle),
+        };
+      })(),
       // le relevé déposé va toujours au compte actif : plus de choix à faire
       deposerReleve: (e) => this.accepterBareme(
         this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif,
         e.target.files && e.target.files[0]),
-      // un onglet par compte, sous la barre des vues : « Compte nº 1 » = FxPro MT5.
-      // En ajouter un se fait en ajoutant une ligne à COURTIERS.
+      // un onglet par compte, sous la barre des vues. En ajouter un se fait en ajoutant
+      // une ligne à COURTIERS ; le libellé par défaut ne nomme aucun courtier.
       // Un compte n'apparaît dans la liste que s'il porte un relevé — ou s'il est celui
       // qu'on vient d'ouvrir. Trois comptes vides annoncés en permanence occupaient 60 %
       // de la barre pour ne rien dire.
@@ -24500,7 +24641,7 @@ GROUPES = {
           // qu'une option vide — valeur et libellé — plus « + Ajouter un compte… ». Un
           // `<select>` dont la valeur ne correspond à aucune option retombe à "", si
           // bien que l'en-tête n'annonçait plus aucun compte alors que le reste de
-          // l'écran nommait FxPro correctement.
+          // l'écran nommait le compte correctement.
           //
           // La cause reste à trouver. Cette garde ne la masque pas : elle change une
           // panne SILENCIEUSE — un menu qui a l'air vide — en panne VISIBLE : il ne
@@ -25251,7 +25392,7 @@ GROUPES = {
         const jour = (ms) => { const d = new Date(ms);
           return (d.getUTCDate() === 1 ? '1er' : String(d.getUTCDate())) + ' '
             + d.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' }); };
-        // `libelleCompteActif` porte déjà « nº 1 — FxPro MT5 » : rien à préfixer
+        // `libelleCompteActif` porte déjà « Compte nº 1 » : rien à préfixer
         const compte = this.libelleCompteActif();
         // EUR.format pose le séparateur de milliers ET le symbole ; le signe est celui
         // du reste de l'application — « + 21 672 € », pas « +21672 »

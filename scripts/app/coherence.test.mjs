@@ -252,8 +252,12 @@ test("aide-index : aucun terme n’est un morceau de phrase voisine", async () =
     const t = (e.terme || "").trim();
     assert.ok(t.length > 0, "terme vide pour : " + (e.texte || "").slice(0, 50));
     // « fermer Unité », « fermer Depuis » : le grattage arrière ramassait le lien de
-    // fermeture du panneau précédent. Dix entrées portaient ce préfixe.
-    assert.ok(!/^fermer\b/i.test(t), "terme happé sur un panneau voisin : « " + t + " »");
+    // fermeture du panneau PRÉCÉDENT, puis la légende du groupe suivant. Dix entrées
+    // portaient ce préfixe — et toutes DEUX MOTS, parce que le défaut est un collage.
+    // Un « Fermer » seul, lui, est le libellé que le bouton porte vraiment : l'extracteur
+    // le prend sur la balise elle-même, sans rien gratter. Interdire les deux mettait le
+    // gabarit en faute pour un défaut qui n'est plus le sien.
+    assert.ok(!/^fermer\s+\S/i.test(t), "terme happé sur un panneau voisin : « " + t + " »");
     // « sur » : le libellé était « {{ n }} sur {{ total }} », il n’en restait que la
     // préposition. Un terme d’un seul mot outil ne nomme rien.
     assert.ok(!/^(sur|de|du|des|le|la|les|et|à|au|aux|un|une)$/i.test(t),
