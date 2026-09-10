@@ -28,21 +28,28 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
         <Link
           to="/"
           aria-label="Véna — accueil"
-          className="mr-auto flex items-center gap-3 no-underline text-ink"
+          className="mr-auto flex min-w-0 items-center gap-3 no-underline text-ink"
         >
           <VenaMark taille="lg" className="h-6 w-6 shrink-0" />
           <span className="shrink-0 font-display text-lg font-semibold tracking-wide">VÉNA</span>
-          <span className="hidden text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
+          <span className="hidden min-w-0 truncate text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             Simulateur de stratégies trading
           </span>
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-4">
+        {/* `shrink-0` : quand la place manque, c'est le bloc de marque qui rend du
+            terrain — donc l'accroche, seule chose tronquable de la rangée. Sans lui, le
+            navigateur répartit le manque entre les deux blocs et pousse le bouton hors
+            de l'écran. */}
+        <nav className="flex shrink-0 items-center gap-1 sm:gap-4">
           {LINKS.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               className={cn(
-                "hidden px-2 py-2 text-sm no-underline sm:inline",
+                // `md` et non `sm` : mesurée, la rangée demande 732 px au minimum avec
+                // ces quatre liens et l'accroche réduite à rien. Les afficher dès 640 px
+                // mettait le bouton hors de l'écran — or il ne cède jamais.
+                "hidden px-2 py-2 text-sm no-underline md:inline",
                 pathname === l.to ? "text-steel" : "text-ink hover:text-steel",
               )}
             >
@@ -55,7 +62,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
               C'est ce bouton qu'un client qui a payé va chercher. */}
           <a
             href="/app"
-            className="inline-flex min-h-11 items-center bg-steel px-4 font-display text-sm font-semibold tracking-wide text-panel no-underline hover:bg-steel-ink"
+            className="inline-flex min-h-11 shrink-0 items-center bg-steel px-4 font-display text-sm font-semibold tracking-wide text-panel no-underline hover:bg-steel-ink"
           >
             Ouvrir mon outil
           </a>
