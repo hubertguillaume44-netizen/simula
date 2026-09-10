@@ -242,3 +242,83 @@ test("le tri du dépôt route la sauvegarde AVANT de juger l’extension", () =>
   assert.match(corps, /examinerImport\(sauvegardes\[0\]\)/,
     "la sauvegarde ne part pas dans le circuit d’import");
 });
+
+// ————— SUPPRIMER POUR FAIRE DE LA PLACE —————
+//
+// La première version gardait la jumelle ancienne : supprimer sous le nom neuf ne
+// libérait rien tout en annonçant une réussite — le défaut même qu'on corrigeait
+// ailleurs, une opération qui échoue en silence. On ne supprime pas pour supprimer, on
+// supprime pour faire de la place ; c'est la seule raison d'ouvrir cet écran.
+//
+// Ce qui reste intangible : la suppression est EXPLICITE. Ces tests tiennent cette
+// frontière, la seule qui protège le dernier exemplaire d'une donnée.
+
+test("aucune suppression de clé ancienne n’a lieu sans un geste explicite", () => {
+  // toutes les suppressions visant le préfixe ancien, dans tout le fichier
+  const lignes = SOURCE.split("\n");
+  const suppressions = [];
+  lignes.forEach((l, i) => {
+    if (/removeItem\((?:ancienne|PREFIXE_ANCIEN|aRetirer)/.test(l)
+      || /for \(const k of aRetirer\)/.test(l)) suppressions.push({ n: i + 1, l: l.trim() });
+  });
+  assert.ok(suppressions.length > 0, "plus aucune suppression : le ménage a disparu");
+
+  // chacune doit vivre dans l'un des DEUX seuls endroits autorisés
+  const iMig = SOURCE.indexOf("function migrerStockage()");
+  const finMig = SOURCE.indexOf("// ————— LE REPLI DE LECTURE —————");
+  const iLib = SOURCE.indexOf("async libererLocal(p, garder) {");
+  const finLib = SOURCE.indexOf("async libererPoste(p) {");
+  assert.ok(iMig > 0 && finMig > iMig && iLib > 0 && finLib > iLib, "les deux zones ne se délimitent plus");
+  const ligneDe = (n) => lignes.slice(0, n - 1).join("\n").length;
+  for (const s of suppressions) {
+    const pos = ligneDe(s.n);
+    const dansMigration = pos >= iMig && pos < finMig;
+    const dansMenage = pos >= iLib && pos < finLib;
+    assert.ok(dansMigration || dansMenage,
+      `suppression hors des deux endroits permis, ligne ${s.n} : ${s.l}`);
+  }
+});
+
+test("la suppression explicite emporte les deux noms, et dit ce qu’elle a rendu", () => {
+  const i = SOURCE.indexOf("async libererLocal(p, garder) {");
+  const corps = SOURCE.slice(i, SOURCE.indexOf("async libererPoste(p) {"));
+  // sans choix, les deux noms partent : garder la jumelle ne libérerait rien
+  assert.match(corps, /: \[neuve, ancienne\];/,
+    "une suppression franche doit emporter les deux noms");
+  // le poids annoncé est MESURÉ avant et après, pas déduit de l'inventaire
+  assert.match(corps, /const avant = this\.poidsBrut\(aRetirer\);/);
+  assert.match(corps, /const libere = avant - this\.poidsBrut\(aRetirer\);/,
+    "le poids annoncé doit être le poids réellement rendu");
+  // ce qui n'a pas pu partir est retenu, et le compte rendu le dit
+  assert.match(corps, /const restees = aRetirer\.filter/);
+  assert.match(SOURCE, /libRestees && s\.libRestees\.length/,
+    "le compte rendu doit dire ce qui n’a pas pu être retiré");
+  // et tout passe au journal, avec les deux noms
+  assert.match(corps, /this\.noterMenage\(\{ t: Date\.now\(\), cles: aRetirer, restees, octets: libere/);
+});
+
+test("trancher un conflit ne réécrit rien — il ne reste que le repli", () => {
+  const i = SOURCE.indexOf("async libererLocal(p, garder) {");
+  const corps = SOURCE.slice(i, SOURCE.indexOf("async libererPoste(p) {"));
+  // garder l'ancien = retirer le neuf. Aucun setItem : dans un stockage qui déborde,
+  // recopier l'ancien sous le nom neuf serait précisément ce qui ne passe pas.
+  assert.ok(!/setItem/.test(corps), "trancher un conflit ne doit écrire aucun octet");
+  assert.match(corps, /garder === 'neuf' \? \[ancienne\]/);
+  assert.match(corps, /garder === 'ancien' \? \[neuve\]/);
+});
+
+test("l’inventaire pèse le localStorage exactement, sans estimer", () => {
+  const i = SOURCE.indexOf("// ————— LE localStorage AUSSI, ET AU POIDS EXACT —————");
+  assert.ok(i > 0, "l’inventaire ne liste plus le localStorage");
+  const corps = SOURCE.slice(i, SOURCE.indexOf("postes.sort((a, b) => (b.octets || 0)", i));
+  // la valeur est là : sa longueur est exacte. Deux octets par caractère, clé comprise.
+  assert.match(corps, /octets: \(k\.length \+ v\.length\) \* 2/);
+  // un poste par donnée, pas par clé : les deux noms d'une même donnée font une ligne
+  assert.match(corps, /if \(n && anc && n\.v !== anc\.v\)/,
+    "deux valeurs différentes doivent devenir un conflit, jamais une fusion");
+  assert.match(corps, /type: 'conflit'/);
+  // et la lecture se fait en BRUT : la façade rendrait l'ancienne valeur sous le nom
+  // neuf, et l'inventaire compterait deux fois la même donnée
+  assert.ok(!/[^_]localStorage\.(getItem|key|length)/.test(corps),
+    "l’inventaire doit lire STOCK_BRUT, jamais la façade");
+});

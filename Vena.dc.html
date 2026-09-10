@@ -764,7 +764,12 @@
                 <sc-if value="{{ iv.aAdopter }}" hint-placeholder-val="{{ false }}">
                   <button class="btn btn-primary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.adopter }}" title="Ajoute ces séries à la liste : elles redeviennent scannables sans nouveau téléchargement">Adopter</button>
                 </sc-if>
-                <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.liberer }}" title="{{ iv.aide }}">{{ iv.bouton }}</button>
+                <sc-if value="{{ iv.aChoix }}" hint-placeholder-val="{{ false }}">
+                  <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.choix }}" title="Garde l’exemplaire enregistré sous l’ancien nom : il continue d’être lu tel quel, et l’autre est supprimé. Deux clics.">{{ iv.choixTxt }}</button>
+                </sc-if>
+                <sc-if value="{{ iv.aSupprimable }}" hint-placeholder-val="{{ true }}">
+                  <button class="btn btn-secondary" type="button" style="min-height:1.8rem;font-size:11px;padding-inline:9px" onClick="{{ iv.liberer }}" title="{{ iv.aide }}">{{ iv.bouton }}</button>
+                </sc-if>
               </div>
             </div>
           </sc-for>
@@ -15901,6 +15906,56 @@ GROUPES = {
         postes.push({ type: 'scan', compte: connu ? seg : null, prefixe, n, octets });
       }
     }
+
+    // ————— LE localStorage AUSSI, ET AU POIDS EXACT —————
+    //
+    // L'inventaire ne listait que les blocs IndexedDB. Le bandeau de quota renvoyait
+    // donc vers un écran incapable de résoudre le problème qu'il annonçait : les 3,2 Mo
+    // qui bloquaient tout n'y figuraient pas. Un renvoi vers un écran impuissant est
+    // pire que pas de renvoi — il fait croire qu'on a mal cherché.
+    //
+    // Ici, rien n'est estimé : la valeur est là, sa longueur est exacte. Deux octets par
+    // caractère, clé comprise, comme le navigateur compte.
+    const paires = new Map();
+    try {
+      for (let i = 0; i < STOCK_BRUT.length; i++) {
+        const k = STOCK_BRUT.key(i);
+        if (!estCleApp(k)) continue;
+        const ancien = k.startsWith(PREFIXE_ANCIEN);
+        const x = k.slice((ancien ? PREFIXE_ANCIEN : PREFIXE).length);
+        if (!paires.has(x)) paires.set(x, {});
+        const v = STOCK_BRUT.getItem(k) || '';
+        paires.get(x)[ancien ? 'ancien' : 'neuf'] = { cle: k, octets: (k.length + v.length) * 2, v };
+      }
+    } catch (e) {}
+
+    // Sous ce seuil, ce sont des réglages et des repères : les supprimer un par un ne
+    // libère rien et fait perdre des préférences. Ils comptent dans le total, en une
+    // ligne, sans bouton — un conflit, lui, se montre quelle que soit sa taille.
+    const SEUIL_REGLAGES = 4096;
+    let petits = 0, nPetits = 0;
+    for (const [x, paire] of paires) {
+      const n = paire.neuf, anc = paire.ancien;
+      const seg = x.split('.');
+      const espace = seg.find((z) => z === 'essai' || z === 'client' || z === 'perso') || null;
+      const dernier = seg[seg.length - 1];
+      const compte = this.COURTIERS.some(([c]) => c === dernier) ? dernier : null;
+      const commun = { x, famille: seg[0], espace, compte, prefixe: PREFIXE + x };
+      // LES DEUX EXISTENT ET DIFFÈRENT : on ne tranche pas, on montre. Jeter une valeur
+      // qu'on n'a pas lue est irrattrapable ; un doublon qu'on n'ose pas trancher et
+      // qu'on ne montre pas occupe la place pour toujours. C'est une décision humaine.
+      if (n && anc && n.v !== anc.v) {
+        postes.push({ ...commun, type: 'conflit', octets: n.octets + anc.octets,
+          octetsNeuf: n.octets, octetsAncien: anc.octets });
+        continue;
+      }
+      const octets = (n ? n.octets : 0) + (anc ? anc.octets : 0);
+      if (octets < SEUIL_REGLAGES) { petits += octets; nPetits++; continue; }
+      postes.push({ ...commun, type: 'local', octets,
+        ancienSeul: !n && !!anc, doublon: !!(n && anc) });
+    }
+    if (petits) postes.push({ type: 'reglages', prefixe: PREFIXE + 'reglages', octets: petits, n: nPetits });
+
     postes.sort((a, b) => (b.octets || 0) - (a.octets || 0));
     // le total détenu est posé ICI, avec les postes qu'on vient de mesurer : le calculer
     // dans mesurerPlace le prenait sur l'inventaire d'avant la suppression
@@ -15965,7 +16020,137 @@ GROUPES = {
     await this.inventaireStockage(!this.state.tiroir);
     await this.mesurerPlace();
   }
+  // Le poids RÉEL de ces clés, maintenant. Sert avant et après une suppression : ce
+  // qu'on annonce libéré doit être ce qui l'a été, et non ce qu'on espérait libérer.
+  poidsBrut(cles) {
+    let o = 0;
+    for (const k of cles) {
+      try { const v = STOCK_BRUT.getItem(k); if (v !== null) o += (k.length + v.length) * 2; } catch (e) {}
+    }
+    return o;
+  }
+  // ————— LES POSTES DU localStorage, NOMMÉS —————
+  // Rend {} pour les blocs IndexedDB : la cascade ci-dessus les nomme déjà.
+  posteLocal(p) {
+    if (p.type !== 'local' && p.type !== 'conflit' && p.type !== 'reglages') return {};
+    const ou = (p.espace === 'essai' ? ' · version d\u2019essai'
+      : p.espace === 'perso' ? ' · espace personnel' : '')
+      + (p.compte ? ' — ' + this.nomCourtier(p.compte) : '');
+    const nomFamille = { scan: 'Historique des scans', series: 'Liste des séries',
+      baremes: 'Barèmes de frais', impactEvts: 'Impact des événements',
+      portefeuilles: 'Portefeuilles', runs: 'Journal des mesures',
+      couverture: 'Couverture des bougies', moments: 'Moments d\u2019entrée',
+      spreads: 'Écarts saisis', regimes: 'Régimes de marché', grilles: 'Grilles de scan',
+      hasard: 'Contrôles du hasard', liveMt5: 'Relevés MT5' }[p.famille] || p.famille;
+    if (p.type === 'reglages') {
+      return { nom: 'Réglages et repères',
+        detail: p.n + ' petites clés — préférences, dates, compteurs. Elles pèsent peu et '
+          + 'les supprimer ne libérerait rien tout en perdant vos réglages : elles comptent '
+          + 'dans le total, sans bouton.',
+        aSupprimable: false, aAdopter: false, aChoix: false };
+    }
+    if (p.type === 'conflit') {
+      const id = p.prefixe + '|conflit';
+      const arme = this.state.libSuppr === id;
+      const armeA = this.state.libSuppr === id + '|ancien';
+      return {
+        nom: nomFamille + ou + ' — DEUX EXEMPLAIRES QUI DIFFÈRENT',
+        detail: 'Un exemplaire sous le nom actuel (' + this.taille(p.octetsNeuf) + ') et un '
+          + 'sous l\u2019ancien (' + this.taille(p.octetsAncien) + '), et leurs contenus ne sont pas '
+          + 'les mêmes. Véna ne tranche pas seul : jeter une valeur sans l\u2019avoir lue est '
+          + 'irrattrapable. Gardez celui que vous voulez — l\u2019autre est supprimé et sa place rendue.',
+        aSupprimable: true,
+        aAdopter: false,
+        aChoix: true,
+        choixTxt: armeA ? 'Confirmer : garder l\u2019ancien' : 'Garder l\u2019ancien',
+        choix: () => {
+          if (!armeA) { this.setState({ libSuppr: id + '|ancien' }); return; }
+          this.setState({ libSuppr: null });
+          this.libererLocal(p, 'ancien');
+        },
+        bouton: arme ? 'Confirmer : garder l\u2019actuel' : 'Garder l\u2019actuel',
+        aide: arme ? 'Cliquez à nouveau : l\u2019exemplaire ancien sera supprimé.'
+          : 'Garde l\u2019exemplaire sous le nom actuel et supprime l\u2019ancien. Deux clics.',
+        liberer: () => {
+          if (!arme) { this.setState({ libSuppr: id }); return; }
+          this.setState({ libSuppr: null });
+          this.libererLocal(p, 'neuf');
+        },
+      };
+    }
+    const id = p.prefixe + '|local';
+    const arme = this.state.libSuppr === id;
+    return {
+      nom: nomFamille + ou + (p.ancienSeul ? ' — exemplaire ancien' : ''),
+      detail: (p.ancienSeul
+        ? 'Enregistré sous l\u2019ancien nom, et lu tel quel : la place manquait pour le déplacer. '
+        : p.doublon
+        ? 'Présent sous les deux noms, avec le même contenu : la suppression emporte les deux. '
+        : '')
+        + 'Poids exact, mesuré sur la valeur elle-même.',
+      aSupprimable: true, aAdopter: false, aChoix: false,
+      bouton: arme ? 'Confirmer' : 'Supprimer',
+      aide: arme ? 'Cliquez à nouveau pour supprimer définitivement ce poste, sous ses deux noms.'
+        : 'Supprime ce poste, sous le nom actuel ET sous l\u2019ancien : sinon rien ne serait rendu. Deux clics.',
+      liberer: () => {
+        if (!arme) { this.setState({ libSuppr: id }); return; }
+        this.setState({ libSuppr: null });
+        this.libererLocal(p);
+      },
+    };
+  }
+  CLE_MENAGE = 'vena.menage.v1';
+  lireMenage() {
+    try { return JSON.parse(localStorage.getItem(this.CLE_MENAGE) || '[]') || []; } catch (e) { return []; }
+  }
+  // Le journal du ménage : ce qui a été supprimé, sous quels noms, et le poids
+  // réellement rendu. Trente entrées suffisent — c'est une trace, pas un historique, et
+  // elle ne doit pas devenir elle-même un poste de stockage.
+  noterMenage(e) {
+    const l = [e, ...this.lireMenage()].slice(0, 30);
+    try { localStorage.setItem(this.CLE_MENAGE, JSON.stringify(l)); } catch (err) {}
+  }
+  // ————— SUPPRIMER UNE CLÉ DU localStorage, LES DEUX NOMS COMPRIS —————
+  //
+  // On ne supprime pas pour supprimer, on supprime pour faire de la place : c'est la
+  // seule raison d'ouvrir cet écran. Laisser la jumelle ancienne ne libérerait rien tout
+  // en annonçant une réussite — exactement le défaut qu'on vient de corriger ailleurs,
+  // une opération qui échoue en silence. Et l'utilisateur verrait revenir ce qu'il a
+  // jeté, sans comprendre, le stockage toujours plein.
+  //
+  // Ce chemin n'est emprunté que sur un geste EXPLICITE. Aucune suppression automatique
+  // de clé ancienne n'existe ailleurs : ni au chargement, ni dans la migration, ni en
+  // effet de bord.
+  //
+  // `garder` vaut « neuf » ou « ancien » pour trancher un conflit, et rien pour une
+  // suppression franche. Trancher ne réécrit RIEN : garder l'ancien, c'est retirer le
+  // neuf et laisser le repli de lecture faire son travail — le seul geste qui ne demande
+  // pas un octet de libre dans un stockage qui déborde.
+  async libererLocal(p, garder) {
+    const neuve = PREFIXE + p.x;
+    const ancienne = PREFIXE_ANCIEN + p.x;
+    const aRetirer = garder === 'neuf' ? [ancienne]
+      : garder === 'ancien' ? [neuve]
+      : [neuve, ancienne];
+    const avant = this.poidsBrut(aRetirer);
+    for (const k of aRetirer) { try { STOCK_BRUT.removeItem(k); } catch (e) {} }
+    // ce qui n'a PAS pu partir : le chiffre annoncé le dira
+    const restees = aRetirer.filter((k) => { try { return STOCK_BRUT.getItem(k) !== null; } catch (e) { return true; } });
+    const libere = avant - this.poidsBrut(aRetirer);
+    this.noterMenage({ t: Date.now(), cles: aRetirer, restees, octets: libere, garder: garder || null });
+    this._serieSet = null;
+    this.setState({ libEnCours: null, libFait: 0, libTotal: 0, libLibere: aRetirer.length - restees.length,
+      libOctets: libere, libRestees: restees });
+    await this.inventaireStockage();
+    await this.mesurerPlace();
+  }
   async libererPoste(p) {
+    // les réglages n'ont pas de bouton : les supprimer un par un ne libère rien
+    if (p.type === 'reglages') return;
+    if (p.type === 'local') return this.libererLocal(p);
+    // un conflit ne se supprime pas, il se TRANCHE : ses deux boutons appellent
+    // libererLocal avec le côté à garder. Tomber ici serait supprimer sans choisir.
+    if (p.type === 'conflit') return;
     this._serieSet = null;
     // 147 blocs supprimés un par un prennent plusieurs secondes : sans indicateur,
     // le bouton paraît inerte et on reclique
@@ -18794,7 +18979,17 @@ GROUPES = {
           // après une suppression, ce chiffre reste figé un moment : le navigateur
           // récupère la place quand il veut, et rien dans la page ne peut l'y forcer
           aLibLibere: !!s.libLibere,
-          libLibereTxt: s.libLibere
+          // CE QU'ON ANNONCE LIBÉRÉ EST CE QUI L'A ÉTÉ. Si une clé n'a pas pu partir,
+          // le chiffre le dit plutôt que de compter une place qu'on n'a pas rendue.
+          libLibereTxt: (s.libRestees && s.libRestees.length)
+            ? s.libLibere + ' bloc' + (s.libLibere > 1 ? 's' : '') + ' supprim\u00e9'
+              + (s.libLibere > 1 ? 's' : '') + ' — ' + this.taille(s.libOctets || 0) + ' rendus. '
+              + s.libRestees.length + ' n\u2019a pas pu \u00eatre retir\u00e9 : '
+              + s.libRestees.join(', ') + '.'
+            : s.libOctets
+            ? s.libLibere + ' bloc' + (s.libLibere > 1 ? 's' : '') + ' supprim\u00e9'
+              + (s.libLibere > 1 ? 's' : '') + ' — ' + this.taille(s.libOctets) + ' rendus au navigateur.'
+            : s.libLibere
             ? s.libLibere + ' blocs supprimés. Le total ci-dessus est celui du navigateur : '
               + 'il ne baisse qu\u2019au fil de son propre nettoyage, parfois après plusieurs minutes ou un redémarrage. '
               + 'La place est bien rendue — les nouveaux dépôts en profitent immédiatement.'
@@ -18876,12 +19071,17 @@ GROUPES = {
               : 'Supprime ce poste. Deux clics pour confirmer.',
             aAdopter: p.type === 'horsIndex',
             adopter: () => this.adopterHorsIndex(p),
+            aSupprimable: true,
+            aChoix: false, choixTxt: '', choix: () => {},
             liberer: () => {
               const id = p.prefixe + '|' + p.type;
               if (this.state.libSuppr !== id) { this.setState({ libSuppr: id }); return; }
               this.setState({ libSuppr: null });
               this.libererPoste(p);
             },
+            // les trois postes du localStorage EN DERNIER : ils remplacent le nom, le
+            // détail et les boutons que la cascade ci-dessus a posés pour les blocs
+            ...this.posteLocal(p),
           })),
           // le poids des séries est estimé : le mesurer exactement demanderait de relire
           // 200 blocs, ce qui gèlerait la page
@@ -24784,6 +24984,29 @@ GROUPES = {
             aAction: true, actionTxt: 'Exporter à nouveau', action: () => this.exporterTout(),
             aRecalcul: false, aSuppr: false });
         }
+        // ————— LE MÉNAGE : ce qui a été supprimé, et ce que ça a rendu —————
+        // Une suppression emporte les DEUX noms d'une donnée. Sans trace, personne ne
+        // pourrait dire ce qui est parti ni combien de place cela a rendu — et un
+        // utilisateur qui vide son stockage pendant une panne a besoin de ce compte.
+        for (const m of this.lireMenage()) {
+          const nom = String((m.cles || [])[0] || '').replace(/^vena\./, '');
+          entrees.push({ id: 'men' + m.t, t: m.t, type: 'ménage', cls: 'tag-outline',
+            titre: m.garder === 'ancien' ? 'Exemplaire actuel supprimé (conflit tranché)'
+              : m.garder === 'neuf' ? 'Exemplaire ancien supprimé (conflit tranché)'
+              : 'Poste supprimé du stockage',
+            sous: nom + ' — ' + this.taille(m.octets || 0) + ' rendus',
+            chiffre: this.taille(m.octets || 0),
+            encre: 'var(--color-text)',
+            // les DEUX noms, en clair : c'est la seule façon de savoir ce qui a disparu
+            signature: (m.cles || []).join(' · ')
+              + ((m.restees || []).length ? ' — non retiré : ' + m.restees.join(', ') : ''),
+            chiffres: [],
+            note: (m.restees || []).length
+              ? 'Une clé n\u2019a pas pu être retirée : le poids ci-dessus est ce qui a RÉELLEMENT été rendu, pas ce qui était visé.'
+              : 'Supprimé sur demande, sous ses deux noms. Aucun ménage automatique n\u2019existe : rien n\u2019est supprimé sans un geste explicite.',
+            aAction: false, actionTxt: '', action: () => {},
+            aRecalcul: false, aSuppr: false });
+        }
         entrees.sort((a2, b2) => b2.t - a2.t);
         const actifs = s.regFiltres || [];
         // ————— UN SEUL FILTRE DE PÉRIODE POUR LA PAGE —————
@@ -24791,7 +25014,7 @@ GROUPES = {
         // deux filtres auraient affiché deux périodes contradictoires sur le même écran.
         const bReg = this.bornesPeriode(s.jvPer || 'mois');
         const dansPeriode = entrees.filter((e) => e.t >= bReg.debut);
-        const presents = ['mesure', 'scan', 'robot', 'export'].filter((n) => dansPeriode.some((e) => e.type === n));
+        const presents = ['mesure', 'scan', 'robot', 'export', 'ménage'].filter((n) => dansPeriode.some((e) => e.type === n));
         const visibles = dansPeriode.filter((e) => !actifs.length || actifs.includes(e.type));
         const rc = s.recalculs || {};
         return {
