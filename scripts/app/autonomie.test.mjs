@@ -52,6 +52,11 @@ test("la substitution est posée AVANT le runtime, sans toucher au fichier gén�
     "le point de substitution du runtime a changé de forme");
 });
 
+/** Occurrences d’une chaîne littérale, sans expression régulière à échapper. */
+function compter(texte, aiguille) {
+  return texte.split(aiguille).length - 1;
+}
+
 test("le fichier autonome n’a plus aucun chargement de tiers", () => {
   const solo = lire("Vena.solo.html");
   const urls = [...new Set(solo.match(/https?:\/\/[a-zA-Z0-9./@_:-]{4,90}/g) || [])];
@@ -61,7 +66,14 @@ test("le fichier autonome n’a plus aucun chargement de tiers", () => {
     // le runtime cherche, et ce qu’on remplace. Elles ne sont jamais chargées.
     const estCle = /unpkg\.com\/react(-dom)?@18\.3\.1/.test(u)
       && solo.includes('"' + u + '":"') && solo.includes("var __R = {");
-    assert.ok(estPorte || estCle, "chargement d’un tiers dans le fichier livré : " + u);
+    // l’espace de noms SVG est un IDENTIFIANT, jamais une adresse à charger. Il est
+    // obligatoire dans un `data:image/svg+xml`, où le dessin est analysé comme un
+    // document XML à part entière. On l’admet seulement si TOUTES ses occurrences sont
+    // des déclarations `xmlns=` : une vraie adresse vers w3.org resterait un défaut.
+    const estEspaceDeNoms = u === "http://www.w3.org/2000/svg"
+      && compter(solo, u) === compter(solo, "xmlns='" + u + "'") + compter(solo, 'xmlns="' + u + '"');
+    assert.ok(estPorte || estCle || estEspaceDeNoms,
+      "chargement d’un tiers dans le fichier livré : " + u);
   }
   // et React voyage bien DANS le fichier
   assert.match(solo, /window\.__resources\[__u\] = URL\.createObjectURL/,

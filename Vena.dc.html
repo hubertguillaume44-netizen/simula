@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Véna</title>
 <!--
+  ————— L'ICÔNE DE L'ONGLET, EN DATA-URI —————
+  Seule forme compatible avec un fichier autonome : un `href` vers un fichier voisin
+  laisserait l'onglet nu dès que l'application est ouverte en `file://`, et casserait
+  la promesse que `scripts/app/autonomie.test.mjs` tient — aucun voisin requis.
+
+  Palier `sm` (fin 13 / plein 22), le dessin que la règle prescrit sous 20 px : à cette
+  taille, le jambage fin du grand palier passe sous le pixel et il ne reste qu'un V
+  ordinaire. Fond encre, marque réservée, comme `public/favicon.svg` du site.
+-->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231c1e20'/%3E%3Cpath fill='%23f4f3ef' d='M 6 18.51 L 21.47 18.51 L 44.65 61.97 L 67.83 18.51 L 94 18.51 L 60.41 81.49 L 34.24 81.49 L 36.91 76.47 Z'/%3E%3C/svg%3E">
+<!--
   ————— REACT VIENT DU DÉPÔT, PAS D'UN CDN —————
   `support.js` charge React et React-DOM depuis unpkg.com. Trois conséquences, toutes
   inacceptables pour un produit payant : un réseau d'entreprise qui bloque le domaine
@@ -262,7 +273,15 @@
          doit pouvoir le comprimer ni prendre sa place — les annonces vivent APRÈS
          les onglets, et ce sont elles qui rétrécissent. -->
     <div style="display:flex;align-items:center;gap:12px;flex:none">
-      <button type="button" onClick="{{ goAccueil }}" style="background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès">VÉNA</button>
+      <!-- LE SIGNE EST INLINE, ET IL SUIT LA COULEUR DU TEXTE.
+           Inline : un `<img src>` vers /logo/ ferait du fichier unique un fichier à
+           voisins, et l'application ouverte en `file://` perdrait sa marque.
+           `fill="currentColor"` et rien d'autre : le bouton est en `color:inherit`, le
+           signe prend donc la couleur de l'en-tête quel que soit le thème — une couleur
+           fixe le ferait disparaître sur le fond sombre.
+           Palier `md` (fin 11 / plein 20), celui que la règle prescrit à 24 px.
+           Le bouton reste un bouton : `goAccueil` est une navigation interne. -->
+      <button type="button" onClick="{{ goAccueil }}" style="display:inline-flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès"><svg viewBox="0 0 100 100" width="24" height="24" style="display:block;flex:none" aria-hidden="true"><path fill="currentColor" d="M 6.00 17.63 L 19.45 17.63 L 44.50 64.60 L 69.55 17.63 L 94.00 17.63 L 59.48 82.37 L 35.02 82.37 L 37.77 77.21 Z"></path></svg>VÉNA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
         <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
         <select style="cursor:pointer;font:inherit;font-size:13px;appearance:none;-webkit-appearance:none;background:color-mix(in srgb,var(--color-bg) 12%,transparent);border:1px solid color-mix(in srgb,var(--color-bg) 34%,transparent);border-radius:0;padding:4px 26px 4px 9px;color:var(--color-bg);background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 14px) center,calc(100% - 9px) center;background-size:5px 5px,5px 5px;background-repeat:no-repeat" value="{{ compteChoisi }}" onChange="{{ changerDeCompte }}" title="Bougies, tarifs, scans et réglages sont propres au compte choisi.">

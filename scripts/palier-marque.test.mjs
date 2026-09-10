@@ -93,3 +93,50 @@ test("le palier par défaut du composant reste celui des grandes tailles", () =>
   assert.match(src, /taille = "lg"/);
   assert.equal(reglePalier()(80), "lg");
 });
+
+// ————— L'APPLICATION PORTE LE MÊME SIGNE QUE LE SITE —————
+// Le fichier unique ne peut pas importer le composant : il doit rester autonome, donc
+// les tracés y sont écrits en clair. Deux copies de la même géométrie existent donc, et
+// une copie qui dérive serait une seconde marque. Ce test les tient appariées.
+
+/** Les nombres d'un tracé, pour comparer « 6.00 » et « 6 » comme un même sommet. */
+function sommets(trace) {
+  return (trace.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+}
+
+/** Les trois tracés du composant, source unique de la géométrie. */
+function tracesDuComposant() {
+  const trouves = {};
+  for (const m of lire(COMPOSANT).matchAll(/^ {2}(lg|md|sm): "([^"]+)",$/gm)) trouves[m[1]] = m[2];
+  assert.equal(Object.keys(trouves).length, 3, "la table GRAISSES ne se lit plus");
+  return trouves;
+}
+
+test("le signe de l’en-tête de l’application est le palier md du composant", () => {
+  const app = lire("Vena.dc.html");
+  const entete = app.match(/<button type="button" onClick="\{\{ goAccueil \}\}"[^>]*>(<svg[\s\S]*?<\/svg>)VÉNA<\/button>/);
+  assert.ok(entete, "le signe n’est plus dans le bouton de marque de l’en-tête");
+  const trace = entete[1].match(/\sd="([^"]+)"/);
+  assert.ok(trace, "le signe de l’en-tête n’a pas de tracé");
+  assert.deepEqual(sommets(trace[1]), sommets(tracesDuComposant().md),
+    "le signe de l’en-tête a dérivé du palier md du composant");
+  // il suit la couleur du texte : une couleur fixe le ferait disparaître sur fond sombre
+  assert.match(entete[1], /fill="currentColor"/);
+  assert.doesNotMatch(entete[1], /fill="(?!currentColor)/);
+  // rendu à 24 px, la taille pour laquelle la règle prescrit `md`
+  assert.match(entete[1], /width="24" height="24"/);
+});
+
+test("l’icône d’onglet de l’application est le palier sm, et ne cite aucun voisin", () => {
+  const app = lire("Vena.dc.html");
+  const icone = app.match(/<link rel="icon"[^>]*href="(data:image\/svg\+xml,[^"]+)"/);
+  assert.ok(icone, "l’application ne déclare pas d’icône en data-URI");
+  const svg = decodeURIComponent(icone[1].slice("data:image/svg+xml,".length));
+  const trace = svg.match(/<path[^>]*\sd='([^']+)'/);
+  assert.ok(trace, "l’icône n’a pas de tracé");
+  assert.deepEqual(sommets(trace[1]), sommets(tracesDuComposant().sm),
+    "l’icône d’onglet a dérivé du palier sm du composant");
+  // les couleurs du produit, et rien d'autre
+  assert.match(svg, /fill='#1c1e20'/);
+  assert.match(svg, /fill='#f4f3ef'/);
+});
