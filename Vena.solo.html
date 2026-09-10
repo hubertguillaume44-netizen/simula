@@ -9259,22 +9259,33 @@ GROUPES = {
       'VIE.FR': 'VIE.PA', 'CA.FR': 'CARR.PA', 'EN.FR': 'BOUY.PA', 'ML.FR': 'MICP.PA',
       'BN.FR': 'DANO.PA', 'DG.FR': 'SGEF.PA', 'CDI.FR': 'DIOR.PA', 'STMPA.FR': 'STMPA.PA',
       'AF.FR': 'AIRF.PA',
-      // Sanofi n'apparaît dans certains catalogues que par son ADR de New York : quand
-      // c'est le seul relevé disponible pour ce sous-jacent, spread et swap y sont ceux
-      // du marché américain. ATTENTION : l'alias est le PREMIER essai de la liste — chez
-      // un catalogue qui cote AUSSI la ligne de Paris, c'est quand même l'ADR qui sera
-      // lu. C'est la limite de cette entrée-ci, la seule de la table qui traverse une
-      // place de cotation ; les autres ne font que traduire un nom.
-      'SAN.FR': 'SNY.O',
       'SAPd.DE': 'SAPG.DE', 'MBGd.DE': 'MBGn.DE', 'DBKd.DE': 'DBKGn.DE', 'RHMd.DE': 'RHMG.DE',
       'P911d.DE': 'P911.DE', 'MUV2d.DE': 'MUVGn.DE', 'EOANd.DE': 'EONGn.DE',
       'HENd.DE': 'HNKG_p.DE', 'PUMd.DE': 'PUMG.DE', 'SIEd.DE': 'SIEGn.DE',
       'ALVd.DE': 'ALVG.DE', 'ADSd.DE': 'ADSGn.DE', 'DTEd.DE': 'DTEGn.DE',
       'CONd.DE': 'CONG.DE', 'LHAd.DE': 'LHAG.DE', 'SHLd.DE': 'SHLG.DE',
-      // même remarque pour HSBC (relevé de Londres) et Alibaba (ADR de New York).
+      // ————— AUCUNE ENTRÉE NE TRAVERSE UNE PLACE DE COTATION —————
+      //
+      // Trois le faisaient, et sont retirées : SAN.FR → SNY.O (Paris vers l'ADR de New
+      // York), 0005.HK → HSBA.L (Hong Kong vers Londres), 9988.HK → BABA.N (Hong Kong
+      // vers l'ADR de New York).
+      //
+      // Cette table répond à « comment ce catalogue nomme-t-il LA MÊME chose ». Un ADR
+      // n'est pas la même chose que sa ligne locale : autre devise, autre séance, autres
+      // frais, autre liquidité. Et le vrai défaut était le SILENCE — rien n'avertissait
+      // celui qui mesurait Sanofi à Paris qu'il lisait des spreads américains, et un
+      // résultat faux qui ne se signale pas est pire qu'un résultat absent.
+      //
+      // Sans alias, le symbole ressort INCHANGÉ : il se résout sur le relevé s'il y
+      // figure, et sinon les frais restent non chiffrés — ce que l'application sait déjà
+      // dire. Le dernier recours de chercherLigneCourtier ne peut pas le rattraper : il
+      // exige la même racine ET la même place.
+      //
+      // Ce qui reste ici ne traduit qu'un NOM, à place constante : .FR et .PA sont Paris,
+      // .GB et .L sont Londres, .US .O .N sont les États-Unis, .DE est Francfort.
       // Tencent, China Resources, Stellantis et Samsung ne sont appariés nulle part :
       // volontairement absents de la table, « pas de relevé » est la bonne réponse.
-      'AZN.GB': 'AZN.L', '0005.HK': 'HSBA.L', '9988.HK': 'BABA.N',
+      'AZN.GB': 'AZN.L',
       'META.US': 'META.O',
   };
   // la commission est facturée en euros par lot et par côté ; sa part du notionnel
@@ -18726,7 +18737,7 @@ GROUPES = {
         // arrêté par aucune des deux, et l'un comme l'autre retire le clic à quelqu'un
         // qui a perdu sa clé — donc déjà contrarié. Sans serveur, un champ de contact
         // serait une porte peinte sur un mur.
-        const MAIL_CONTACT = 'contact.vena@gmail.com';
+        const MAIL_CONTACT = 'venacontact1@gmail.com';
         const LIENS = {
           lancement: { mois: '', an: '' },
           normal: { mois: '', an: '' },

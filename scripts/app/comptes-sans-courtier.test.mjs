@@ -363,3 +363,88 @@ test("la table est atteignable depuis un compte autre que le nº 1", () => {
   assert.equal(cherche({ "US500.cash": { sym: "US500.cash" } }, "SPX500.US"), null,
     "un indice et une action ne doivent jamais s’apparier");
 });
+
+// ————— AUCUNE ENTRÉE NE TRAVERSE UNE PLACE DE COTATION —————
+//
+// CONVENTIONS_MT5 répond à une seule question : « comment ce catalogue nomme-t-il LA MÊME
+// chose ». Trois entrées y répondaient autre chose — SAN.FR → SNY.O (Paris vers l'ADR de
+// New York), 0005.HK → HSBA.L (Hong Kong vers Londres), 9988.HK → BABA.N (Hong Kong vers
+// l'ADR). Un ADR n'est pas sa ligne locale : autre devise, autre séance, autres frais,
+// autre liquidité. Et le défaut était MUET — rien n'avertissait celui qui mesurait Sanofi
+// à Paris qu'il lisait des spreads américains.
+//
+// LA GARDE N'EST PAS UNE LISTE D'ENTRÉES CONNUES, c'est une règle de forme : deux
+// suffixes de place appartiennent, ou non, à la même bourse. Une liste ne protégerait que
+// du passé ; la règle attrape aussi la PROCHAINE entrée fautive, qui n'existe pas encore.
+//
+// LE PRIX À PAYER, ET C'EST VOULU : un suffixe inconnu fait ÉCHOUER le test. Ajouter une
+// place — Milan, Tokyo, Toronto — oblige à venir la classer ici, donc à se demander si la
+// nouvelle entrée traduit un nom ou change de bourse. C'est exactement la relecture que
+// la table mérite quand elle grossit, et elle est automatique au lieu d'être espérée.
+const BOURSES = {
+  FR: "paris", PA: "paris",          // .FR est la convention de Véna, .PA celle de Reuters
+  DE: "francfort",
+  GB: "londres", L: "londres",
+  US: "etats-unis", O: "etats-unis", N: "etats-unis", // Nasdaq et NYSE, même séance
+  HK: "hong-kong",
+};
+
+/** Le suffixe de place d'un symbole, ou "" — la même lecture que chercherLigneCourtier. */
+function placeDe(x) {
+  const p = String(x).replace(/^#/, "").replace(/-PERP$/, "").split(".");
+  return p.length > 1 ? p[p.length - 1].toUpperCase() : "";
+}
+
+test("aucun alias ne fait changer de bourse", () => {
+  const inconnus = new Set();
+  const traversent = [];
+  for (const [de, vers] of Object.entries(CONVENTIONS)) {
+    const pd = placeDe(de);
+    const pv = placeDe(vers);
+    // un symbole sans suffixe ne désigne aucune place : indices, métaux, cryptos
+    if (!pd || !pv) continue;
+    for (const p of [pd, pv]) if (!BOURSES[p]) inconnus.add(p);
+    if (BOURSES[pd] && BOURSES[pv] && BOURSES[pd] !== BOURSES[pv]) {
+      traversent.push(`${de} → ${vers} (${BOURSES[pd]} → ${BOURSES[pv]})`);
+    }
+  }
+  assert.deepEqual([...inconnus], [],
+    `place non classée : « ${[...inconnus].join(", ")} ». Classez-la dans BOURSES — et en `
+    + "la classant, vérifiez que l’entrée qui l’amène traduit bien un NOM et ne change pas "
+    + "de bourse.");
+  assert.deepEqual(traversent, [],
+    "un alias fait changer de bourse : ce n’est plus le même instrument — autre devise, "
+    + "autre séance, autres frais, autre liquidité — et rien ne le dit à l’écran. Sans "
+    + "alias, le symbole ressort inchangé et les frais restent non chiffrés, ce que "
+    + "l’application sait déjà annoncer.");
+});
+
+test("les trois entrées retirées le sont, et rien ne les rattrape", () => {
+  for (const sym of ["SAN.FR", "0005.HK", "9988.HK"]) {
+    assert.equal(CONVENTIONS[sym], undefined, `« ${sym} » a un alias de nouveau`);
+  }
+  // et le dernier recours de chercherLigneCourtier ne peut pas les réapparier : il exige
+  // la même racine ET la même place. On le vérifie sur la vraie fonction.
+  const corps = litteral(SOURCE, "\n  chercherLigneCourtier(tb, sym) {", "{", "}");
+  const ctx = { Object, String, Array, RegExp };
+  vm.createContext(ctx);
+  vm.runInContext("var faux = {\n"
+    + "  CONVENTIONS_MT5: " + JSON.stringify(CONVENTIONS) + ",\n"
+    + "  FRAIS_SYM: {},\n"
+    + "  proprietaireRacine: function () { return null; },\n"
+    + "  chercherLigneCourtier: function (tb, sym) " + corps + ",\n};", ctx);
+  const cherche = (tb, sym) => JSON.parse(vm.runInContext(
+    "JSON.stringify(faux.chercherLigneCourtier(" + JSON.stringify(tb) + ", "
+    + JSON.stringify(sym) + ") || null)", ctx));
+
+  // un relevé qui porte l'ADR : Sanofi à Paris ne doit PAS s'y raccrocher
+  assert.equal(cherche({ "SNY.O": { sym: "SNY.O" } }, "SAN.FR"), null,
+    "Sanofi Paris lit encore l’ADR de New York");
+  assert.equal(cherche({ "HSBA.L": { sym: "HSBA.L" } }, "0005.HK"), null,
+    "HSBC Hong Kong lit encore la ligne de Londres");
+  assert.equal(cherche({ "BABA.N": { sym: "BABA.N" } }, "9988.HK"), null,
+    "Alibaba Hong Kong lit encore l’ADR de New York");
+  // mais s'il figure au relevé sous son propre nom, il se résout — c'est le repli attendu
+  assert.equal(cherche({ "SAN.FR": { sym: "SAN.FR" } }, "SAN.FR").sym, "SAN.FR",
+    "un symbole sans alias doit ressortir inchangé et se résoudre s’il est au relevé");
+});
