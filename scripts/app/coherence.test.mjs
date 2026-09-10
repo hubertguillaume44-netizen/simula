@@ -216,8 +216,13 @@ for (const f of FICHIERS) {
     // automatique, le renommer supprimerait la fonction
     assert.match(txt, /: 'Choisir le fichier de sauvegarde',/,
       "l’état qui n’exporte pas doit garder son nom propre");
+    // AU MOINS deux, et non exactement deux. Ce garde-fou est là pour qu'un chemin ne
+    // DISPARAISSE pas ; en figer le nombre interdisait d'en ouvrir un nouveau, alors que
+    // le défaut d'origine était justement que la sauvegarde automatique n'était
+    // atteignable que depuis un tiroir. La proposition au premier import réel en ajoute
+    // un troisième.
     const chemins = (txt.match(/this\.choisirFichierAuto\(\)/g) || []).length;
-    assert.equal(chemins, 2, "le chemin vers la sauvegarde automatique doit survivre");
+    assert.ok(chemins >= 2, "le chemin vers la sauvegarde automatique doit survivre, vu " + chemins);
   });
 
   test(f + " : un seul calcul du reste, en combinaisons", () => {

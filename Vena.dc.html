@@ -368,6 +368,42 @@
     ouvre l'Intendance, qui sait libérer poste par poste. C'est à l'utilisateur de
     choisir ce qu'il libère — il ne peut pas décider de ce qu'on lui cache.
   -->
+  <!--
+    LE FILET, PROPOSÉ UNE FOIS, AU MOMENT OÙ IL A UN SENS.
+    Il s'affiche quand la première donnée réelle entre, jamais au chargement : à ce
+    moment l'utilisateur n'a rien à perdre, et il apprend à refuser. Il ne bloque rien —
+    un outil qui refuse de fonctionner tant qu'on n'a pas choisi un dossier se fait
+    fermer. Refusé, il ne revient pas : c'est le rang du dessous qui prend le relais.
+  -->
+  <sc-if value="{{ aFiletPropose }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:9px 32px 10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-height:34px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
+      <strong style="font-family:var(--font-heading);font-size:13px;letter-spacing:.04em">Vos premières données réelles</strong>
+      <span style="font-size:12px;line-height:1.5;min-width:0">{{ filetProposeTxt }}</span>
+      <sc-if value="{{ aFiletFichier }}" hint-placeholder-val="{{ true }}">
+        <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:var(--color-bg);color:var(--color-accent-900);border:0;padding:4px 11px;white-space:nowrap" onClick="{{ choisirFilet }}" title="Choisit un fichier sur votre disque. Véna y réécrit tout, chaque minute. Aucun vidage de navigateur ne l’atteint.">Choisir un fichier de sauvegarde</button>
+      </sc-if>
+      <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:4px 11px;white-space:nowrap" onClick="{{ exporterDepuisFilet }}" title="Enregistre tout dans un fichier, maintenant. À refaire après chaque séance.">Exporter mes données</button>
+      <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:4px 11px;white-space:nowrap;margin-inline-start:auto" onClick="{{ plusTardFilet }}" title="Ferme cette proposition. Elle ne reviendra pas — le rang d’état, lui, reste tant qu’aucun filet n’est en place.">Plus tard</button>
+    </div>
+  </sc-if>
+  <!--
+    TANT QU'IL N'Y A PAS DE FILET, ET QU'IL Y A QUELQUE CHOSE À PERDRE.
+    Ce n'est pas une nouvelle, c'est un ÉTAT : il ne se referme pas. S'il gêne, c'est
+    qu'il faut agir, et agir le fait disparaître. Rien tant qu'il n'y a que des démos ;
+    il s'efface dès qu'un des deux filets est en place — pas de rappel de zèle.
+  -->
+  <sc-if value="{{ aSansFilet }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:7px 32px 8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-height:30px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
+      <span style="font-size:11.5px;line-height:1.5;min-width:0">{{ sansFiletTxt }}</span>
+      <sc-if value="{{ aFiletFichier }}" hint-placeholder-val="{{ true }}">
+        <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:var(--color-bg);color:var(--color-accent-900);border:0;padding:3px 10px;white-space:nowrap" onClick="{{ choisirFilet }}" title="Choisit un fichier sur votre disque. Véna y réécrit tout, chaque minute.">Choisir un fichier</button>
+      </sc-if>
+      <sc-if value="{{ aFiletProtection }}" hint-placeholder-val="{{ true }}">
+        <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:3px 10px;white-space:nowrap" onClick="{{ demanderFiletProtection }}" title="Demande au navigateur de ne pas vider ce site quand le disque se remplit.">Demander la protection</button>
+      </sc-if>
+      <span style="font-size:11px;margin-inline-start:auto;white-space:nowrap;opacity:.75">{{ sansFiletEtat }}</span>
+    </div>
+  </sc-if>
   <sc-if value="{{ aManquePlace }}" hint-placeholder-val="{{ false }}">
     <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px 9px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-height:34px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
       <strong style="font-family:var(--font-heading);font-size:13px;letter-spacing:.04em">Enregistrement refusé</strong>
@@ -6018,7 +6054,7 @@ class Component extends DCLogic {
     res: null, seg: null, courbe: [], varianteRatee: false, ligneAttendue: null, cfgLigne: null, ecartLigne: '', scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
     tradesMin: 40, segMin: 3, marche: null, tri: 'total', erreur: null, recherche: '', parSymbole: 1,
     deposes: [], survol: false, messageDepot: null, spreadSaisi: null, swapSaisi: null,
-    manquePlace: null,
+    manquePlace: null, filetPropose: false,
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
     beSeuil3: 0, beNiveau3: 0, trailingPct: 1.5, secuPrudent: false,
     fZone: false, utZone: 'D1', zoneTouches: 3, zoneTol: 0.5, zoneMarge: 1, zoneMemoire: 250,
@@ -8016,7 +8052,14 @@ GROUPES = {
       depotEnCours: null,
       ecritureRefusee: nonGardes.length ? true : p.ecritureRefusee,
       messageDepot: muet ? p.messageDepot : compteRendu,
-    }), () => { if (ajoutes.length || infosMoments.length) this.lancerTest(); });
+    }), () => {
+      if (ajoutes.length || infosMoments.length) this.lancerTest();
+      // LE MOMENT : la première donnée réelle vient d'entrer. C'est ici, et pas au
+      // chargement, qu'un filet a un sens à proposer — l'utilisateur a maintenant
+      // quelque chose à perdre. `proposerFilet` ne fait rien si ce n'est qu'une démo,
+      // si un filet est déjà en place, ou si la proposition a déjà été faite.
+      if (ajoutes.length) this.proposerFilet();
+    });
     return compteRendu;
   }
   // portefeuille et indices de départ pris dans le catalogue réel du compte : les
@@ -16684,6 +16727,41 @@ GROUPES = {
     } catch (e) {}
     return dump;
   }
+  // ————— LE FILET, PROPOSÉ AU BON MOMENT —————
+  //
+  // `choisirFichierAuto` est la meilleure protection de l'application : un vrai fichier
+  // sur le disque, réécrit chaque minute, qu'aucun vidage de navigateur n'atteint. Elle
+  // était rangée dans un tiroir — personne ne la trouve avant d'avoir perdu quelque
+  // chose.
+  //
+  // PAS AU PREMIER DÉMARRAGE. À ce moment l'utilisateur n'a rien à perdre : la demande
+  // est du bruit, et il apprend à la refuser. On la pose quand la première donnée réelle
+  // arrive — un instrument qui n'est pas une démo.
+  //
+  // UNE FOIS. Refusée, elle ne revient pas : c'est le bandeau permanent qui prend le
+  // relais, et lui ne bloque rien.
+  CLE_FILET = 'vena.filet.propose.v1';
+  // Des données réelles : au moins un instrument déposé qui n'est pas une démonstration.
+  aDonneesReelles() {
+    return (this.state.deposes || []).some((x) => !this.SYM_DEMO.includes(x));
+  }
+  // Un filet en place : le fichier sur disque, OU la protection accordée par le
+  // navigateur. L'un des deux suffit — pas de rappel de zèle.
+  aFilet() {
+    return !!(this.state.autoNom && !this.state.autoAttente) || this.state.persistEtat === 'accordee';
+  }
+  async proposerFilet() {
+    if (!this.aDonneesReelles() || this.aFilet()) return;
+    try { if (localStorage.getItem(this.CLE_FILET)) return; } catch (e) { return; }
+    try { localStorage.setItem(this.CLE_FILET, String(Date.now())); } catch (e) {}
+    // LA PROTECTION EST DEMANDÉE AU MÊME MOMENT. Le navigateur l'accorde d'après
+    // l'usage du site ; la demander au premier chargement, c'est la faire refuser au
+    // moment où elle a le plus de chances d'être accordée.
+    await this.reclamerPersistance(false);
+    // et la proposition s'affiche, sans jamais bloquer le travail : un outil qui refuse
+    // de fonctionner tant qu'on n'a pas choisi un dossier se fait fermer
+    this.setState({ filetPropose: true });
+  }
   async choisirFichierAuto() {
     if (!window.showSaveFilePicker) {
       this.setState({ autoMsg: 'Ce navigateur ne sait pas écrire dans un fichier (Chrome ou Edge le permettent). '
@@ -16838,11 +16916,18 @@ GROUPES = {
   async protegerStockage() {
     let permanent = false;
     try {
-      if (navigator.storage && navigator.storage.persist) {
+      if (navigator.storage && navigator.storage.persisted) {
+        // ON LIT, ON NE DEMANDE PLUS ICI. Le navigateur accorde la protection d'après
+        // l'usage du site : la demander au premier chargement, quand l'utilisateur n'a
+        // encore rien fait, c'est gâcher la demande au moment où elle a le plus de
+        // chances d'être refusée. Elle est posée au premier import réel, avec la
+        // proposition de fichier — voir `proposerFilet`.
         permanent = await navigator.storage.persisted();
-        if (!permanent) permanent = await navigator.storage.persist();
       }
     } catch (e) {}
+    this.setState({ persistant: !!permanent, persistanceConnue: true,
+      persistEtat: permanent ? 'accordee'
+        : (navigator.storage && navigator.storage.persisted) ? this.state.persistEtat || 'inconnu' : 'indisponible' });
     let scan = null;
     try { scan = await this.grosGet(this.cle(this.CLE_SCAN)); } catch (e) {}
     const marque = this.cle('vena.scan.temoin');
@@ -18378,6 +18463,12 @@ GROUPES = {
       },
       // fermer le rang n'efface pas le problème : le prochain refus le repose
       fermerManquePlace: () => this.setState({ manquePlace: null }),
+      // les gestes du filet. Aucun ne bloque : « Plus tard » ferme la proposition et
+      // laisse le rang d'état, qui dit la même chose sans rien demander.
+      choisirFilet: () => { this.setState({ filetPropose: false }); this.choisirFichierAuto(); },
+      exporterDepuisFilet: () => { this.setState({ filetPropose: false }); this.exporterTout(); },
+      plusTardFilet: () => this.setState({ filetPropose: false }),
+      demanderFiletProtection: () => this.reclamerPersistance(true),
       aPriveMsg: !!s.priveMsg,
       fermerPrive: () => {
         try { sessionStorage.setItem('vena.prive.vu', '1'); } catch (e) {}
@@ -19364,6 +19455,39 @@ GROUPES = {
       etatMemoire: this.etatMemoire(),
       fermerSauv: () => this.setState({ sauvEtat: null, sauvKo: false }),
       scanActif: !!s.scanEnCours,
+      // ————— LE FILET : la proposition, puis l'état —————
+      ...(() => {
+        const fichierPossible = typeof window !== 'undefined' && !!window.showSaveFilePicker && !this.dansIframe();
+        const protectionPossible = !!(navigator.storage && navigator.storage.persist)
+          && s.persistEtat !== 'accordee' && s.persistEtat !== 'indisponible';
+        const reelles = this.aDonneesReelles();
+        const filet = this.aFilet();
+        // ce que le navigateur permet VRAIMENT : promettre un fichier là où il est
+        // interdit vaut moins que dire tout de suite ce qui marche à la place
+        const commun = { aFiletFichier: fichierPossible, aFiletProtection: protectionPossible };
+        return {
+          ...commun,
+          aFiletPropose: !!s.filetPropose && !filet,
+          filetProposeTxt: fichierPossible
+            ? 'Elles ne vivent que dans ce navigateur, qui peut les vider sans prévenir. '
+              + 'Un fichier sur votre disque, réécrit à chaque minute, les met hors d\u2019atteinte.'
+            : this.dansIframe()
+              ? 'Elles ne vivent que dans ce navigateur, qui peut les vider sans prévenir. '
+                + 'Cette vue intégrée n\u2019autorise pas l\u2019écriture directe dans un fichier : ouvrez Véna '
+                + 'dans un onglet à lui, ou exportez après chaque séance.'
+              : 'Elles ne vivent que dans ce navigateur, qui peut les vider sans prévenir. '
+                + 'Ce navigateur ne sait pas écrire dans un fichier (Chrome ou Edge le permettent) : '
+                + 'exportez après chaque séance.',
+          // L'ÉTAT, PAS UNE NOUVELLE : pas de bouton pour le fermer.
+          aSansFilet: reelles && !filet && !s.filetPropose,
+          sansFiletTxt: 'Aucune sauvegarde hors de ce navigateur. Vos données sont ici, et nulle part ailleurs.',
+          sansFiletEtat: 'Protection du stockage : ' + (
+            s.persistEtat === 'accordee' ? 'accordée'
+            : s.persistEtat === 'refusee' ? 'refusée par le navigateur'
+            : s.persistEtat === 'indisponible' ? 'inconnue de ce navigateur'
+            : 'pas encore demandée'),
+        };
+      })(),
       // LE REFUS DE QUOTA, dit en clair. `octets` est le poids de l'écriture refusée,
       // donc le minimum à libérer — jamais présenté comme un total, que le navigateur
       // ne donne pas.
