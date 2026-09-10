@@ -419,6 +419,34 @@
     qu'il faut agir, et agir le fait disparaître. Rien tant qu'il n'y a que des démos ;
     il s'efface dès qu'un des deux filets est en place — pas de rappel de zèle.
   -->
+  <!--
+    LA VUE INTÉGRÉE, DITE AU RANG PERMANENT — ET SON PIÈGE.
+
+    « Ouvrez Véna dans un onglet à part » est le bon conseil pour le stockage : la page
+    cesse d'être cloisonnée, le quota passe de quelques centaines de mégaoctets à
+    plusieurs gigaoctets, et l'écriture dans un fichier redevient possible.
+
+    Mais une iframe cloisonnée et un onglet de premier plan sont DEUX PARTITIONS
+    DIFFÉRENTES. Dans le nouvel onglet, les données ne suivent pas : l'utilisateur y
+    trouve une application vide et vient de perdre son travail — en suivant notre
+    conseil. C'est exactement ce qui est arrivé, à ceci près que ce n'était pas exprès.
+
+    D'où la SÉQUENCE : tant qu'aucun export du jour n'existe, c'est l'export qui porte le
+    bouton plein et l'ouverture qui passe en second. Les deux s'inversent une fois
+    l'export fait. L'ouverture n'est jamais bloquée — le but est que le geste sûr soit le
+    plus évident, pas que l'autre soit interdit.
+
+    La date vient de `lireSauvInfo`, celle qui affiche déjà « Dernier export : … ». Pas
+    de drapeau nouveau : deux mémoires de la même chose finissent par diverger.
+  -->
+  <sc-if value="{{ aVueIntegre }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:7px 32px 8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-height:30px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
+      <span style="font-size:11.5px;line-height:1.5;min-width:0">{{ vueIntegreTxt }}</span>
+      <button type="button" class="{{ vueIntegreExportCls }}" style="cursor:pointer;font:inherit;font-size:11px;padding:3px 10px;white-space:nowrap;border-radius:0" onClick="{{ exporterDepuisIntegre }}" title="Enregistre tout dans un fichier, sur votre disque. C’est ce fichier que vous réimporterez dans l’onglet à part.">Exporter mes données</button>
+      <button type="button" class="{{ vueIntegreOuvrirCls }}" style="cursor:pointer;font:inherit;font-size:11px;padding:3px 10px;white-space:nowrap;border-radius:0" onClick="{{ ouvrirOngletPropre }}" title="{{ vueIntegreOuvrirAide }}">Ouvrir dans un onglet</button>
+      <span style="font-size:11px;margin-inline-start:auto;white-space:nowrap;opacity:.75">{{ vueIntegreExportTxt }}</span>
+    </div>
+  </sc-if>
   <sc-if value="{{ aSansFilet }}" hint-placeholder-val="{{ false }}">
     <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:7px 32px 8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-height:30px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
       <span style="font-size:11.5px;line-height:1.5;min-width:0">{{ sansFiletTxt }}</span>
@@ -18623,6 +18651,14 @@ GROUPES = {
       exporterDepuisFilet: () => { this.setState({ filetPropose: false }); this.exporterTout(); },
       plusTardFilet: () => this.setState({ filetPropose: false }),
       demanderFiletProtection: () => this.reclamerPersistance(true),
+      exporterDepuisIntegre: () => this.exporterTout(),
+      // L'OUVERTURE N'EST JAMAIS BLOQUÉE. Quelqu'un qui veut regarder l'application dans
+      // un onglet propre doit pouvoir le faire ; c'est l'évidence du geste qui change,
+      // pas sa disponibilité. `noopener` : le nouvel onglet n'a rien à savoir de celui-ci.
+      ouvrirOngletPropre: () => {
+        try { window.open(location.href, '_blank', 'noopener'); }
+        catch (e) { this.setState({ ongletMsg: 'Ce navigateur a refusé d\u2019ouvrir un onglet. Copiez l\u2019adresse de la page et ouvrez-la vous-même.' }); }
+      },
       aPriveMsg: !!s.priveMsg,
       fermerPrive: () => {
         try { sessionStorage.setItem('vena.prive.vu', '1'); } catch (e) {}
@@ -19683,6 +19719,37 @@ GROUPES = {
                 + 'Ce navigateur ne sait pas écrire dans un fichier (Chrome ou Edge le permettent) : '
                 + 'exportez après chaque séance.',
           // L'ÉTAT, PAS UNE NOUVELLE : pas de bouton pour le fermer.
+          // ————— LA VUE INTÉGRÉE, ET LE PRIX DE SA SORTIE —————
+          //
+          // Le remède change de coffre : une iframe cloisonnée et un onglet de premier
+          // plan sont deux partitions. Le dire AVANT le clic, pas après.
+          ...(() => {
+            if (!this.dansIframe()) {
+              return { aVueIntegre: false, vueIntegreTxt: '', vueIntegreExportTxt: '',
+                vueIntegreExportCls: '', vueIntegreOuvrirCls: '', vueIntegreOuvrirAide: '' };
+            }
+            // la MÊME date que « Dernier export » : pas de second drapeau à tenir
+            let t = this.lireSauvInfo().t;
+            if (s.sauvDate) t = Math.max(t, s.sauvDate);
+            const couvert = !!(t && Date.now() - t < 86400000);
+            const quota = s.place && s.place.quota ? this.taille(s.place.quota) : null;
+            return {
+              aVueIntegre: true,
+              vueIntegreTxt: 'Vue intégrée : stockage réduit et cloisonné'
+                + (quota ? ' — ' + quota + ' ici, contre plusieurs gigaoctets dans un onglet à part' : '')
+                + '. Cet onglet-là a SON PROPRE COFFRE : les données d\u2019ici n\u2019y seront pas.',
+              // tant qu'aucun export du jour n'existe, l'export est le geste plein
+              vueIntegreExportCls: couvert ? 'btn btn-ghost' : 'btn btn-primary',
+              vueIntegreOuvrirCls: couvert ? 'btn btn-primary' : 'btn btn-ghost',
+              vueIntegreOuvrirAide: couvert
+                ? 'Ouvre la page dans un onglet de premier plan. Réimportez-y votre fichier exporté.'
+                : 'Ouvre la page dans un onglet de premier plan — qui a son propre coffre. '
+                  + 'Exportez d\u2019abord, sinon vous y trouverez une application vide.',
+              vueIntegreExportTxt: couvert
+                ? 'Export du jour : ' + this.quandCourt(t)
+                : 'Aucun export aujourd\u2019hui',
+            };
+          })(),
           aSansFilet: reelles && !filet && !s.filetPropose,
           sansFiletTxt: 'Aucune sauvegarde hors de ce navigateur. Vos données sont ici, et nulle part ailleurs.',
           sansFiletEtat: 'Protection du stockage : ' + (

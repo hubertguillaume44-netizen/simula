@@ -142,3 +142,86 @@ test("la pastille dit DE QUEL tiroir elle parle", () => {
   assert.ok(!/'mémoire presque pleine'/.test(SOURCE), "la pastille ne nomme pas son tiroir");
   assert.match(SOURCE, /'stockage du navigateur presque plein'/);
 });
+
+// ————— LA SORTIE DE LA VUE INTÉGRÉE CHANGE DE COFFRE —————
+//
+// « Ouvrez Véna dans un onglet à part » est le bon conseil pour le stockage : la page
+// cesse d'être cloisonnée et le quota passe à plusieurs gigaoctets. Mais une iframe
+// cloisonnée et un onglet de premier plan sont DEUX PARTITIONS : les données ne suivent
+// pas. Suivre ce conseil sans exporter, c'est perdre son travail une seconde fois.
+//
+// D'où la séquence : tant qu'aucun export du jour n'existe, l'export porte le bouton
+// plein. L'ouverture n'est jamais bloquée — c'est l'évidence du geste qui change.
+
+/** Le producteur du rang permanent, monté sur un faux composant. */
+function rangIntegre({ integre = true, quota = 304012710, export_ = null } = {}) {
+  const corps = corpsIIFE("            if (!this.dansIframe()) {");
+  const ctx = { Math, Number, String, JSON, Object, Date };
+  vm.createContext(ctx);
+  vm.runInContext(
+    "var reel = {\n"
+    + "  dansIframe() { return " + JSON.stringify(integre) + "; },\n"
+    + "  lireSauvInfo() { return { t: " + JSON.stringify(export_ || 0) + " }; },\n"
+    + "  quandCourt(t) { return 'auj. 16:16'; },\n"
+    + "  taille(o) { return Math.round(Number(o || 0) / 1048576) + ' Mo'; },\n"
+    + "  produire(s) {\n" + corps + "\n  },\n"
+    + "};", ctx);
+  return vm.runInContext("reel.produire({ place: { quota: " + quota + " } })", ctx);
+}
+
+test("hors vue intégrée, le rang n’existe pas", () => {
+  assert.equal(rangIntegre({ integre: false }).aVueIntegre, false);
+});
+
+test("le rang nomme le quota réel et dit le prix AVANT le clic", () => {
+  const r = rangIntegre();
+  assert.ok(r.aVueIntegre);
+  assert.match(r.vueIntegreTxt, /réduit et cloisonné/);
+  assert.match(r.vueIntegreTxt, /290 Mo ici/, r.vueIntegreTxt);
+  // le prix, en toutes lettres, dans le texte du rang — pas dans une infobulle
+  assert.match(r.vueIntegreTxt, /SON PROPRE COFFRE/);
+  assert.match(r.vueIntegreTxt, /les données d’ici n’y seront pas/);
+});
+
+test("sans export du jour, c’est l’export qui porte le bouton plein", () => {
+  const r = rangIntegre({ export_: 0 });
+  assert.equal(r.vueIntegreExportCls, "btn btn-primary");
+  assert.equal(r.vueIntegreOuvrirCls, "btn btn-ghost");
+  assert.equal(r.vueIntegreExportTxt, "Aucun export aujourd’hui");
+  // et l'infobulle de l'ouverture dit pourquoi elle est en second
+  assert.match(r.vueIntegreOuvrirAide, /Exportez d’abord/);
+});
+
+test("avec un export du jour, les deux boutons s’inversent", () => {
+  const r = rangIntegre({ export_: Date.now() - 3600000 });
+  assert.equal(r.vueIntegreExportCls, "btn btn-ghost");
+  assert.equal(r.vueIntegreOuvrirCls, "btn btn-primary");
+  assert.match(r.vueIntegreExportTxt, /Export du jour/);
+  assert.ok(!/Exportez d’abord/.test(r.vueIntegreOuvrirAide));
+});
+
+test("un export d’avant-hier ne couvre pas : le compte se fait en 24 h", () => {
+  const r = rangIntegre({ export_: Date.now() - 3 * 86400000 });
+  assert.equal(r.vueIntegreExportCls, "btn btn-primary");
+  assert.equal(r.vueIntegreExportTxt, "Aucun export aujourd’hui");
+});
+
+test("la date vient de lireSauvInfo, pas d’un drapeau nouveau", () => {
+  // deux mémoires de la même chose finissent par diverger : celle-ci est déjà celle
+  // qu’affiche « Dernier export »
+  const corps = corpsIIFE("            if (!this.dansIframe()) {");
+  assert.match(corps, /let t = this\.lireSauvInfo\(\)\.t;/);
+  assert.match(corps, /if \(s\.sauvDate\) t = Math\.max\(t, s\.sauvDate\);/);
+  assert.ok(!/vena\.integre|integreVu|CLE_INTEGRE/.test(SOURCE), "un drapeau nouveau est apparu");
+});
+
+test("l’ouverture n’est jamais bloquée, et n’emporte rien avec elle", () => {
+  const i = SOURCE.indexOf("ouvrirOngletPropre: () => {");
+  assert.ok(i > 0, "le bouton d’ouverture a disparu");
+  const corps = SOURCE.slice(i, SOURCE.indexOf("},", i) + 2);
+  assert.match(corps, /window\.open\(location\.href, '_blank', 'noopener'\)/);
+  // aucune condition : le but est que le geste sûr soit le plus évident, pas que
+  // l’autre soit interdit
+  assert.ok(!/if \(|couvert|return;/.test(corps.replace(/catch[\s\S]*/, "")),
+    "l’ouverture ne doit être soumise à aucune condition");
+});
