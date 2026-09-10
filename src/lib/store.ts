@@ -45,6 +45,13 @@ function migrerCle(neuve: string, ancienne: string) {
     const v = localStorage.getItem(ancienne);
     if (v === null) return;
     localStorage.setItem(neuve, v);
+    // DÉPLACER, PAS COPIER, et seulement après avoir relu. Une migration qui copie
+    // exige deux fois la place et n'aboutit pas dans un stockage à moitié plein —
+    // c'est ainsi qu'un scan de 3 Mo est resté dehors côté application. Tant que la
+    // neuve ne porte pas exactement la valeur de la source, l'ancienne est le seul
+    // exemplaire et ne bouge pas.
+    if (localStorage.getItem(neuve) === v) localStorage.removeItem(ancienne);
+    else localStorage.removeItem(neuve);
   } catch {
     /* stockage indisponible : on repartira de zéro, sans perdre l'ancien */
   }
@@ -52,20 +59,49 @@ function migrerCle(neuve: string, ancienne: string) {
 migrerCle(RUNS_KEY, "simula.runs.v1");
 migrerCle(ONB_KEY, "simula.onb.v1");
 
+// LE REPLI DE LECTURE. La clé neuve fait toujours foi si elle existe, même vide ;
+// l'ancienne n'est lue que lorsqu'elle est absente. Rien n'est écrit, rien n'est
+// supprimé : ce qui n'a pas pu être déplacé reste au moins LISIBLE.
+function lire(cle: string): string | null {
+  try {
+    const v = localStorage.getItem(cle);
+    if (v !== null) return v;
+    return localStorage.getItem(cle.replace(/^vena\./, "simula."));
+  } catch {
+    return null;
+  }
+}
+
+// UN REFUS DE QUOTA DOIT SE VOIR. `catch { /* quota */ }` était une perte silencieuse :
+// l'utilisateur croyait son journal enregistré. Un chemin unique, que tous les
+// écrivains empruntent, retient le refus et le poids de ce qui n'est pas passé.
+let refusStockage: { cle: string; octets: number } | null = null;
+export function refusDeStockage() {
+  return refusStockage;
+}
+function ecrire(cle: string, valeur: string): boolean {
+  try {
+    localStorage.setItem(cle, valeur);
+    refusStockage = null;
+    return true;
+  } catch {
+    // le navigateur refuse sans dire de combien : le seul chiffre exact est le poids de
+    // l'écriture refusée, donc le minimum à libérer. Deux octets par caractère (UTF-16).
+    refusStockage = { cle, octets: (cle.length + valeur.length) * 2 };
+    return false;
+  }
+}
+
 function loadRuns(): Run[] {
   try {
-    return JSON.parse(localStorage.getItem(RUNS_KEY) || "[]") as Run[];
+    return JSON.parse(lire(RUNS_KEY) || "[]") as Run[];
   } catch {
     return [];
   }
 }
 
-function saveRuns(runs: Run[]) {
-  try {
-    localStorage.setItem(RUNS_KEY, JSON.stringify(runs.slice(0, 60)));
-  } catch {
-    /* quota */
-  }
+function saveRuns(runs: Run[]): boolean {
+  return ecrire(RUNS_KEY, JSON.stringify(runs.slice(0, 60)));
 }
 
 type SimState = {
@@ -100,6 +136,8 @@ type SimState = {
   calculEnCours: "robuste" | "ailleurs" | null;
   exemples: { rejete: Exemple; valide: Exemple } | null;
   onb: boolean;
+  // le stockage a refusé une écriture : ce qui manque, en octets, pour qu'elle passe
+  manquePlace: { cle: string; octets: number } | null;
   init: () => void;
   patch: (p: Partial<Settings>) => void;
   setVue: (v: Vue) => void;
@@ -159,6 +197,7 @@ export const useSim = create<SimState>((set, get) => ({
   calculEnCours: null,
   exemples: null,
   onb: true,
+  manquePlace: null,
 
   init: () => {
     if (get().ready || bootStarted) return;
@@ -167,7 +206,7 @@ export const useSim = create<SimState>((set, get) => ({
       const series = demoSeries();
       const instruments = [...DEMO_INSTRUMENTS];
       const onb =
-        typeof window === "undefined" ? true : localStorage.getItem(ONB_KEY) !== "1";
+        typeof window === "undefined" ? true : lire(ONB_KEY) !== "1";
       let uploads: Awaited<ReturnType<typeof loadUploads>> = [];
       if (typeof window !== "undefined") {
         uploads = await loadUploads();
@@ -396,8 +435,10 @@ export const useSim = create<SimState>((set, get) => ({
       segTotal: s.segs?.total ?? null,
     };
     const runs = [run, ...s.runs];
-    saveRuns(runs);
-    set({ runs, vue: "journal" });
+    // un enregistrement refusé se DIT : sans ce retour, l'utilisateur croyait son
+    // journal écrit et le retrouvait vide au rechargement
+    const ecrit = saveRuns(runs);
+    set({ runs, vue: "journal", manquePlace: ecrit ? null : refusDeStockage() });
   },
 
   sauverScan: () => {
@@ -414,14 +455,14 @@ export const useSim = create<SimState>((set, get) => ({
       top: garde,
     };
     const runs = [run, ...s.runs];
-    saveRuns(runs);
-    set({ runs, vue: "journal" });
+    const ecrit = saveRuns(runs);
+    set({ runs, vue: "journal", manquePlace: ecrit ? null : refusDeStockage() });
   },
 
   supprimerRun: (id) => {
     const runs = get().runs.filter((r) => r.id !== id);
-    saveRuns(runs);
-    set({ runs });
+    const ecrit = saveRuns(runs);
+    set({ runs, manquePlace: ecrit ? null : refusDeStockage() });
   },
 
   rechargerRun: (run) => {
@@ -511,20 +552,12 @@ export const useSim = create<SimState>((set, get) => ({
   },
 
   dismissOnb: () => {
-    try {
-      localStorage.setItem(ONB_KEY, "1");
-    } catch {
-      /* quota */
-    }
-    set({ onb: false });
+    const ecrit = ecrire(ONB_KEY, "1");
+    set({ onb: false, manquePlace: ecrit ? null : refusDeStockage() });
   },
 
   applyExemple: (ex) => {
-    try {
-      localStorage.setItem(ONB_KEY, "1");
-    } catch {
-      /* quota */
-    }
+    ecrire(ONB_KEY, "1");
     set({
       onb: false,
       vue: "backtest",
@@ -540,10 +573,12 @@ export const useSim = create<SimState>((set, get) => ({
   },
 
   reopenOnb: () => {
+    // on ne retire QUE la clé neuve : effacer aussi sa jumelle ancienne supprimerait,
+    // sur un geste d'entretien, le seul exemplaire d'une donnée non déplacée
     try {
       localStorage.removeItem(ONB_KEY);
     } catch {
-      /* quota */
+      /* stockage indisponible */
     }
     set({ onb: true });
   },

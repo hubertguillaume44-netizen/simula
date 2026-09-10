@@ -390,6 +390,28 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
 
     Tout est en `--color-bg` sur le fond accent sombre : jamais d'accent sur accent.
   -->
+  <!--
+    LE STOCKAGE A REFUSÉ UNE ÉCRITURE, ET ÇA SE VOIT.
+
+    Cinquante et un `catch {}` avalaient ce refus. L'utilisateur voyait ses données
+    disparaître sans un mot, alors que le programme savait. Un refus est maintenant
+    signalé DANS l'écriture elle-même et remonte ici, sur son propre rang, quelle que
+    soit la page — comme le bandeau d'avancement, et pour la même raison : une alerte
+    qu'on ne voit pas ne sert à rien.
+
+    Il dit le MINIMUM à libérer, pas un total : le navigateur refuse sans dire de
+    combien, et le seul chiffre exact est le poids de l'écriture refusée. Le bouton
+    ouvre l'Intendance, qui sait libérer poste par poste. C'est à l'utilisateur de
+    choisir ce qu'il libère — il ne peut pas décider de ce qu'on lui cache.
+  -->
+  <sc-if value="{{ aManquePlace }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px 9px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-height:34px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
+      <strong style="font-family:var(--font-heading);font-size:13px;letter-spacing:.04em">Enregistrement refusé</strong>
+      <span style="font-size:12px;line-height:1.5;min-width:0">{{ manquePlaceTxt }}</span>
+      <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:var(--color-bg);color:var(--color-accent-900);border:0;padding:4px 11px;white-space:nowrap" onClick="{{ voirCeQuiOccupe }}" title="Ouvre l'Intendance et mesure ce que ce navigateur garde, poste par poste.">Voir ce qui occupe la mémoire</button>
+      <button type="button" style="cursor:pointer;font:inherit;font-size:11px;background:none;color:var(--color-bg);border:1px solid color-mix(in srgb,var(--color-bg) 42%,transparent);padding:4px 11px;white-space:nowrap;margin-inline-start:auto" onClick="{{ fermerManquePlace }}" title="Masque ce rang. Le prochain refus le fera revenir.">Fermer</button>
+    </div>
+  </sc-if>
   <sc-if value="{{ scanActif }}" hint-placeholder-val="{{ false }}">
     <div style="position:relative;background:var(--color-accent-900);color:var(--color-bg);padding:8px 32px 9px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;min-height:34px;border-top:1px solid color-mix(in srgb,var(--color-bg) 22%,transparent)">
       <!--
@@ -5709,6 +5731,11 @@ const moisAn = (ms) => {
 // apparaissent — un profil ouvert dans deux onglets, une ancienne version rechargée.
 const PREFIXE = 'vena.';
 const PREFIXE_ANCIEN = 'simula.';
+// LE STOCKAGE RÉEL, sans repli ni report. Plus bas, `localStorage` désigne une façade
+// qui sait relire l'ancien nom et signaler un refus de quota ; la migration, elle, doit
+// voir le navigateur tel qu'il est — sinon elle lirait sa propre traduction et croirait
+// avoir déjà déplacé ce qu'elle n'a pas touché.
+const STOCK_BRUT = globalThis.localStorage;
 const CLE_MIGRATION = PREFIXE + 'migration.nom.v1';
 // Les familles, dans l'ordre de valeur. Ce qui n'est listé nulle part passe en dernier :
 // une clé oubliée ici est migrée quand même, jamais perdue.
@@ -5727,52 +5754,195 @@ function famille(cle) {
 function migrerStockage() {
   let anciennes = [];
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
+    for (let i = 0; i < STOCK_BRUT.length; i++) {
+      const k = STOCK_BRUT.key(i);
       if (k && k.startsWith(PREFIXE_ANCIEN)) anciennes.push(k);
     }
-  } catch (e) { return { fait: 0, restant: 0, erreur: 'stockage illisible' }; }
-  if (!anciennes.length) return { fait: 0, restant: 0 };
+  } catch (e) { return { fait: 0, restant: 0, restantOctets: 0, erreur: 'stockage illisible' }; }
+  if (!anciennes.length) return { fait: 0, restant: 0, restantOctets: 0 };
 
-  const rang = (k) => {
-    const f = famille(k);
-    const d = MIGRATION_DONNEES.indexOf(f);
-    if (d >= 0) return d;
-    const r = MIGRATION_REGLAGES.indexOf(f);
-    if (r >= 0) return MIGRATION_DONNEES.length + r;
-    return MIGRATION_DONNEES.length + MIGRATION_REGLAGES.length;
-  };
-  anciennes.sort((a, b) => rang(a) - rang(b) || a.localeCompare(b));
+  // LA PLUS GROSSE D'ABORD, et non la plus précieuse.
+  //
+  // L'ordre par familles disait la valeur des données ; il ne disait rien de la place.
+  // Une migration qui COPIE exige deux fois la place et n'aboutit pas dans un stockage
+  // à moitié plein : c'est ainsi qu'un scan de 3 Mo est resté dehors pendant que tout ce
+  // qui était petit passait. Celle-ci déplace, donc chaque clé finie rend ses octets à
+  // la suivante — mais la première a besoin de sa propre place. Commencer par la plus
+  // grosse, c'est libérer le plus tôt possible, et si la place manque quand même, c'est
+  // la petite qui reste dehors plutôt que le scan de travail.
+  const poids = new Map();
+  for (const k of anciennes) {
+    let n = 0;
+    try { n = (STOCK_BRUT.getItem(k) || '').length + k.length; } catch (e) {}
+    poids.set(k, n);
+  }
+  anciennes.sort((a, b) => (poids.get(b) || 0) - (poids.get(a) || 0) || a.localeCompare(b));
 
   let fait = 0;
-  let echecs = 0;
+  let echec = null;
+  const restantes = [];
   for (const ancienne of anciennes) {
+    // ON N'INSISTE PAS. Le premier refus dit que la place manque ; les suivants
+    // écriraient par-dessus le peu qui reste et brouilleraient le diagnostic.
+    if (echec) { restantes.push(ancienne); continue; }
     const neuve = PREFIXE + ancienne.slice(PREFIXE_ANCIEN.length);
     try {
-      // la clé neuve fait foi : si elle existe, l'utilisateur a déjà travaillé dessus
-      // et l'ancienne est une trace périmée qu'il ne faut surtout pas recopier par-dessus
-      if (localStorage.getItem(neuve) !== null) continue;
-      const v = localStorage.getItem(ancienne);
+      // La clé neuve fait foi : si elle existe, l'utilisateur a déjà travaillé dessus.
+      // On ne la recopie pas, et surtout ON NE SUPPRIME PAS l'ancienne — les deux
+      // peuvent différer (une neuve à « [] » devant une ancienne pleine), et la
+      // supprimer ici détruirait le seul exemplaire d'une valeur qu'on n'a pas lue.
+      if (STOCK_BRUT.getItem(neuve) !== null) continue;
+      const v = STOCK_BRUT.getItem(ancienne);
       if (v === null) continue;
-      localStorage.setItem(neuve, v);
-      // relecture : une écriture refusée pour cause de quota est silencieuse
-      if (localStorage.getItem(neuve) !== v) { localStorage.removeItem(neuve); echecs++; continue; }
+      STOCK_BRUT.setItem(neuve, v);
+      // RELIRE AVANT DE SUPPRIMER. Un setItem qui lève est visible ; un setItem tronqué
+      // ne l'est pas. Tant que la neuve ne porte pas exactement la valeur de la source,
+      // l'ancienne reste le seul exemplaire et ne bouge pas d'un octet.
+      if (STOCK_BRUT.getItem(neuve) !== v) {
+        STOCK_BRUT.removeItem(neuve);
+        echec = { cle: ancienne, octets: poids.get(ancienne) || 0, motif: 'écriture tronquée' };
+        restantes.push(ancienne);
+        continue;
+      }
+      STOCK_BRUT.removeItem(ancienne);
       fait++;
-    } catch (e) { echecs++; }
+    } catch (e) {
+      // la neuve n'existait pas avant nous — on vient de le vérifier — donc la retirer
+      // ne peut rien détruire, et laisse la place à l'ancienne qui, elle, est intacte
+      try { STOCK_BRUT.removeItem(neuve); } catch (e2) {}
+      echec = { cle: ancienne, octets: poids.get(ancienne) || 0, motif: (e && e.name) || 'refus' };
+      restantes.push(ancienne);
+    }
   }
-  // LA TRACE EN DERNIER, et seulement si rien n'a échoué : une migration partielle ne
-  // doit pas se déclarer terminée, sinon la reprise au chargement suivant n'aurait pas lieu.
-  if (!echecs) {
-    try {
-      localStorage.setItem(CLE_MIGRATION, JSON.stringify({
-        de: PREFIXE_ANCIEN, vers: PREFIXE, cles: fait, quand: new Date().toISOString(),
-        // l'ancien jeu reste : il ne sera proposé à la suppression qu'après un export
-        ancienGarde: true,
-      }));
-    } catch (e) {}
+
+  const restantOctets = restantes.reduce((a, k) => a + (poids.get(k) || 0), 0);
+  // ET ON LE DIT. Le compteur d'échecs existait déjà ; personne ne le lisait, et
+  // l'utilisateur a vu ses données disparaître sans un mot. Le refus emprunte le même
+  // chemin que celui d'une écriture ordinaire, donc il atteint l'écran.
+  if (echec) {
+    // le poids annoncé est celui de TOUT ce qui reste à déplacer : c'est ce qu'il faut
+    // libérer pour en finir, et non le seul bloc sur lequel la migration a buté
+    quotaEnAttente = { cle: echec.cle, octets: restantOctets * 2, motif: 'migration',
+      restant: restantes.length, quand: Date.now() };
+    if (signalerQuota) { try { signalerQuota(quotaEnAttente); quotaEnAttente = null; } catch (e) {} }
   }
-  return { fait, restant: echecs, anciennes: anciennes.length };
+  // LA TRACE EN DERNIER, et elle porte ce qui RESTE. Sans ce compte, un second passage
+  // ne savait pas ce qu'il avait à finir, et l'échec n'était lu par personne : le
+  // programme savait qu'il n'avait pas migré le scan de travail et ne l'a dit à
+  // personne. `fini` distingue une migration terminée d'une migration à reprendre.
+  try {
+    STOCK_BRUT.setItem(CLE_MIGRATION, JSON.stringify({
+      de: PREFIXE_ANCIEN, vers: PREFIXE, cles: fait, quand: new Date().toISOString(),
+      restant: restantes.length, restantOctets, fini: !restantes.length,
+    }));
+  } catch (e) {}
+  return { fait, restant: restantes.length, restantOctets, anciennes: anciennes.length, echec };
 }
+
+// ————— RECONNAÎTRE SA PROPRE SAUVEGARDE —————
+//
+// Un fichier que l'application vient d'écrire ne doit jamais être rejeté par elle comme
+// étranger. La page d'import est couverte de zones en `accept=".csv"`, dont une qui
+// prend TOUT le document : quelqu'un qui venait de cliquer « Exporter mes données » et
+// qui lâchait le fichier obtenu s'entendait répondre que ce n'était pas un CSV. Le
+// bouton « Réimporter » est ailleurs, dans un tiroir. Ce refus est ce qui a fait croire
+// qu'il fallait du CSV, et qui a laissé l'utilisateur sans issue de secours.
+//
+// Le NOM d'abord, parce qu'il suffit dans la quasi-totalité des cas et ne coûte rien ;
+// le CONTENU ensuite, parce qu'un fichier renommé reste une sauvegarde. Les deux noms
+// d'outil sont acceptés sans date limite : quelqu'un réimportera dans deux ans un
+// fichier exporté aujourd'hui.
+const EXT_SAUVEGARDE = /\.(json|vena|sivula)$/i;
+function nomDeSauvegarde(nom) { return EXT_SAUVEGARDE.test(String(nom || '')); }
+// L'enveloppe, lue sur les premiers octets seulement : un dump fait plusieurs mégaoctets
+// et le décider ne demande pas de le lire en entier.
+function texteDeSauvegarde(debut) {
+  const t = String(debut || '').slice(0, 400).replace(/\s+/g, '');
+  return t.indexOf('"outil":"vena"') >= 0 || t.indexOf('"outil":"simula"') >= 0;
+}
+
+// ————— LE REPLI DE LECTURE —————
+//
+// Le pendant de `cleVersNeuf`, à la lecture : « vena.X » → « simula.X ». Il rend
+// LISIBLE ce que la migration n'a pas pu déplacer, sans écrire un octet dans un
+// stockage déjà plein et sans rien supprimer.
+function cleVersAncien(k) {
+  if (typeof k !== 'string') return null;
+  if (k.startsWith(PREFIXE)) return PREFIXE_ANCIEN + k.slice(PREFIXE.length);
+  const g = 'gros:' + PREFIXE;
+  if (k.startsWith(g)) return 'gros:' + PREFIXE_ANCIEN + k.slice(g.length);
+  return null;
+}
+
+// ————— UN REFUS DE QUOTA DOIT SE VOIR —————
+//
+// Cinquante et un `catch {}` avalaient une écriture refusée, chacun une perte
+// silencieuse possible. Plutôt que de les reprendre un par un — et d'en oublier un —
+// le signalement est posé DANS l'écriture elle-même : la façade note le refus avant de
+// relancer l'erreur, si bien que le `catch` de l'appelant garde son comportement sans
+// pouvoir étouffer l'alerte.
+let signalerQuota = null;
+let quotaEnAttente = null;
+function poserSignalQuota(fn) {
+  signalerQuota = fn;
+  // un refus survenu avant que l'écran existe n'est pas perdu : il est remis au premier
+  // abonné, sinon la panne du chargement serait précisément celle qu'on ne verrait pas
+  if (fn && quotaEnAttente) { const q = quotaEnAttente; quotaEnAttente = null; try { fn(q); } catch (e) {} }
+}
+function noterQuota(cle, valeur, motif) {
+  // « COMBIEN IL MANQUE » ne s'obtient pas du navigateur : il refuse sans dire de
+  // combien. Ce qu'on sait exactement, c'est le poids de l'écriture refusée — donc le
+  // MINIMUM à libérer pour qu'elle passe. On le dit comme tel, jamais comme un total.
+  // (Deux octets par caractère : le stockage compte en UTF-16.)
+  const octets = (String(cle || '').length + String(valeur === null || valeur === undefined ? '' : valeur).length) * 2;
+  const q = { cle: String(cle || ''), octets, motif: motif || 'quota', quand: Date.now() };
+  if (signalerQuota) { try { signalerQuota(q); return q; } catch (e) {} }
+  quotaEnAttente = q;
+  return q;
+}
+
+// ————— LA FAÇADE DU STOCKAGE —————
+//
+// Elle porte le même nom que l'objet du navigateur et le masque pour tout le code qui
+// suit : les cent quarante-sept accès en profitent sans être réécrits un par un, et
+// aucun appelant ne peut l'oublier. Au-dessus, `STOCK_BRUT` reste le stockage réel.
+//
+// `length` et `key` passent tels quels : l'inventaire doit voir les DEUX jeux de clés,
+// puisque l'occupation réelle du navigateur est bien celle des deux.
+const localStorage = {
+  get length() { return STOCK_BRUT.length; },
+  key(i) { return STOCK_BRUT.key(i); },
+  getItem(k) {
+    const v = STOCK_BRUT.getItem(k);
+    // LA CLÉ NEUVE FAIT TOUJOURS FOI, même vide : un « [] » écrit par l'application est
+    // une réponse, pas une absence. Le repli ne sert que lorsqu'elle n'existe pas.
+    if (v !== null) return v;
+    const a = cleVersAncien(k);
+    return a === null ? null : STOCK_BRUT.getItem(a);
+  },
+  setItem(k, v) {
+    try {
+      STOCK_BRUT.setItem(k, v);
+    } catch (e) {
+      noterQuota(k, v, (e && e.name) || 'refus');
+      throw e;
+    }
+    // une écriture TRONQUÉE ne lève pas : seule la relecture la voit. On compare les
+    // longueurs et non les chaînes — un scan de trois mégaoctets ne se recompare pas
+    // caractère par caractère à chaque enregistrement.
+    const relu = STOCK_BRUT.getItem(k);
+    if (relu === null || relu.length !== String(v).length) {
+      noterQuota(k, v, 'écriture tronquée');
+      throw new Error('écriture tronquée');
+    }
+  },
+  // ON NE SUPPRIME QUE LA CLÉ DEMANDÉE. Effacer aussi sa jumelle ancienne ferait
+  // disparaître, sur un simple geste d'entretien, le seul exemplaire d'une donnée que
+  // la migration n'a pas pu déplacer. Conséquence assumée : tant que l'ancienne est là,
+  // une donnée supprimée sous son nom neuf redevient lisible par le repli.
+  removeItem(k) { STOCK_BRUT.removeItem(k); },
+  clear() { STOCK_BRUT.clear(); },
+};
 
 // LA BASE IndexedDB porte elle aussi l'ancien nom. Elle ne contient qu'une poignée de
 // handles de fichier ; on recopie son contenu sous le nouveau nom, sans rien effacer.
@@ -5864,6 +6034,7 @@ class Component extends DCLogic {
     res: null, seg: null, courbe: [], varianteRatee: false, ligneAttendue: null, cfgLigne: null, ecartLigne: '', scanN: 0, scanRev: 0, archives: [], scanVu: null, scanEnCours: false, scanTestes: 0,
     tradesMin: 40, segMin: 3, marche: null, tri: 'total', erreur: null, recherche: '', parSymbole: 1,
     deposes: [], survol: false, messageDepot: null, spreadSaisi: null, swapSaisi: null,
+    manquePlace: null,
     typeSecu: 'be_progressif', beSeuil1: 30, beNiveau1: -50, beSeuil2: 50, beNiveau2: 0,
     beSeuil3: 0, beNiveau3: 0, trailingPct: 1.5, secuPrudent: false,
     fZone: false, utZone: 'D1', zoneTouches: 3, zoneTol: 0.5, zoneMarge: 1, zoneMemoire: 250,
@@ -10594,6 +10765,9 @@ GROUPES = {
     if (this._battement) clearInterval(this._battement);
   }
   async componentDidMount() {
+    // le signal de quota trouve enfin un lecteur. Un refus survenu AVANT ce moment —
+    // pendant la migration, par exemple — est remis ici par `poserSignalQuota`.
+    poserSignalQuota((q) => this.setState({ manquePlace: q }));
     window.addEventListener('beforeunload', this.quitter);
     this.suivreHauteurEntete();
     // un redimensionnement peut faire sortir un panneau déjà ouvert
@@ -14855,15 +15029,58 @@ GROUPES = {
       });
     } catch (e) { return false; }
   }
-  async grosGet(cle) {
-    try {
-      const db = await this.idb();
-      return await new Promise((ok) => {
-        const tx = db.transaction('gros', 'readonly');
+  // LE REPLI DE LECTURE, ici aussi — et à DEUX niveaux.
+  // `migrerBase` ne recopiait que le magasin des fichiers (« h ») : les scans du
+  // magasin « gros » n'ont jamais été déplacés, et ceux d'un utilisateur d'avant le
+  // renommage dorment encore dans la base à l'ancien nom. La clé neuve fait foi ; on ne
+  // regarde en arrière que lorsqu'elle ne rend rien, et on n'écrit ni ne supprime rien.
+  lireGros(base, cle) {
+    return new Promise((ok) => {
+      try {
+        const tx = base.transaction('gros', 'readonly');
         const q = tx.objectStore('gros').get(cle);
         q.onsuccess = () => ok(q.result || null);
         q.onerror = () => ok(null);
+      } catch (e) { ok(null); }
+    });
+  }
+  // la base à l'ancien nom, ouverte SANS la créer : `indexedDB.open` sur un nom inconnu
+  // fabriquerait une base vide, et l'inventaire compterait un poste qui n'existe pas
+  async baseAncienne() {
+    if (this._baseAnc !== undefined) return this._baseAnc;
+    this._baseAnc = null;
+    try {
+      const nom = PREFIXE_ANCIEN + 'auto';
+      if (indexedDB.databases) {
+        const l = await indexedDB.databases();
+        if (Array.isArray(l) && !l.some((d) => d && d.name === nom)) return null;
+      }
+      const db = await new Promise((ok, ko) => {
+        const r = indexedDB.open(nom);
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => ko(r.error);
+        r.onblocked = () => ko(new Error('bloquée'));
       });
+      if (!db.objectStoreNames.contains('gros')) { db.close(); return null; }
+      this._baseAnc = db;
+    } catch (e) { this._baseAnc = null; }
+    return this._baseAnc;
+  }
+  async grosGet(cle) {
+    try {
+      const db = await this.idb();
+      const v = await this.lireGros(db, cle);
+      if (v) return v;
+      const ancienne = cleVersAncien(cle);
+      if (ancienne) {
+        const w = await this.lireGros(db, ancienne);
+        if (w) return w;
+      }
+      const vieille = await this.baseAncienne();
+      if (!vieille) return null;
+      const x = await this.lireGros(vieille, cle);
+      if (x) return x;
+      return ancienne ? await this.lireGros(vieille, ancienne) : null;
     } catch (e) { return null; }
   }
   // ————— séries déposées : gardées telles quelles, relues au démarrage —————
@@ -15916,6 +16133,29 @@ GROUPES = {
   // on ne sait pas ce qui est entré.
   async accepterTout(liste) {
     if (!this.M || !liste || !liste.length) return;
+    // UNE SAUVEGARDE VÉNA LÂCHÉE ICI PART DANS L'IMPORT, pas dans le tri des CSV.
+    // Reconnue AVANT qu'on juge l'extension : par le nom, puis par l'enveloppe pour un
+    // fichier renommé. Elle passe par `examinerImport`, donc par l'écran de
+    // confrontation — jamais d'écrasement silencieux.
+    const sauvegardes = [];
+    const reste = [];
+    for (const f of liste) {
+      if (nomDeSauvegarde(f.name)) { sauvegardes.push(f); continue; }
+      let debut = '';
+      try { debut = await f.slice(0, 400).text(); } catch (e) {}
+      if (texteDeSauvegarde(debut)) sauvegardes.push(f); else reste.push(f);
+    }
+    if (sauvegardes.length) {
+      // une seule à la fois : l'écran de confrontation est unique, comme pour les relevés
+      await this.examinerImport(sauvegardes[0]);
+      if (sauvegardes.length > 1 || reste.length) {
+        this.setState({ sauvMsg: 'Sauvegarde « ' + sauvegardes[0].name + ' » ouverte.'
+          + (sauvegardes.length > 1 ? ' Les ' + (sauvegardes.length - 1) + ' autres sauvegardes attendent : redéposez-les une par une.' : '')
+          + (reste.length ? ' ' + reste.length + ' fichier' + (reste.length > 1 ? 's' : '') + ' de bougies : redéposez-les après.' : '') });
+      }
+      return;
+    }
+    liste = reste;
     const releves = [], h1 = [], m1 = [], refus = [];
     this.setState({ depotEnCours: { fait: 0, total: liste.length, nom: liste[0].name },
       messageDepot: null });
@@ -17880,6 +18120,15 @@ GROUPES = {
       // toujours sur « Vos données » : l'onglet mémorisé faisait retomber chaque
       // réouverture sur le Journal, sans chemin de retour évident
       ouvrirTiroir: () => { this.setState({ tiroir: true, tiroirOnglet: 'donnees' }); this.diagnosticStockage(); this.peserEspaces(); },
+      // le bandeau de quota renvoie à l'inventaire, qui sait libérer poste par poste :
+      // c'est l'utilisateur qui choisit ce qu'il libère, pas nous
+      voirCeQuiOccupe: () => {
+        this.setState({ tiroir: true, tiroirOnglet: 'donnees' });
+        this.diagnosticStockage(); this.peserEspaces();
+        this.inventaireStockage();
+      },
+      // fermer le rang n'efface pas le problème : le prochain refus le repose
+      fermerManquePlace: () => this.setState({ manquePlace: null }),
       aPriveMsg: !!s.priveMsg,
       fermerPrive: () => {
         try { sessionStorage.setItem('vena.prive.vu', '1'); } catch (e) {}
@@ -18844,6 +19093,30 @@ GROUPES = {
       etatMemoire: this.etatMemoire(),
       fermerSauv: () => this.setState({ sauvEtat: null, sauvKo: false }),
       scanActif: !!s.scanEnCours,
+      // LE REFUS DE QUOTA, dit en clair. `octets` est le poids de l'écriture refusée,
+      // donc le minimum à libérer — jamais présenté comme un total, que le navigateur
+      // ne donne pas.
+      ...(() => {
+        const q = s.manquePlace;
+        if (!q) return { aManquePlace: false, manquePlaceTxt: '' };
+        const ko = Math.max(1, Math.round(q.octets / 1024));
+        const quoi = String(q.cle || '').replace(/^(vena|simula)\./, '').split('.')[0] || 'une donn\u00e9e';
+        // LE CAS DE LA MIGRATION SE DIT AUTREMENT : rien n'est perdu, tout reste
+        // lisible, et c'est la première chose que l'utilisateur a besoin d'entendre.
+        if (q.motif === 'migration') {
+          const n = q.restant || 1;
+          return { aManquePlace: true,
+            manquePlaceTxt: 'La place manque dans ce navigateur : ' + n + ' bloc'
+              + (n > 1 ? 's' : '') + ' d\u2019une version pr\u00e9c\u00e9dente n\u2019' + (n > 1 ? 'ont' : 'a')
+              + ' pas pu \u00eatre d\u00e9plac\u00e9' + (n > 1 ? 's' : '') + ' — dont ' + quoi + '. '
+              + 'RIEN N\u2019EST PERDU : ces donn\u00e9es restent lues telles quelles. Lib\u00e9rez '
+              + 'au moins ' + ko + ' Ko pour terminer le d\u00e9placement.' };
+        }
+        return { aManquePlace: true,
+          manquePlaceTxt: 'Ce navigateur a refusé d\u2019enregistrer ' + quoi + ' : il faut lib\u00e9rer '
+            + 'au moins ' + ko + ' Ko pour que cet enregistrement passe. Rien n\u2019a \u00e9t\u00e9 perdu de ce qui '
+            + 'est d\u00e9j\u00e0 en m\u00e9moire, mais la derni\u00e8re modification n\u2019y est pas.' };
+      })(),
       aCmdBandeau: !!s.scanEnCours && (s.vue || 'scan') !== 'scan',
       // ————— LE RAPPEL DE FIN DE SCAN —————
       ...(() => {

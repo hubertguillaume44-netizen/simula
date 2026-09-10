@@ -6,11 +6,26 @@ import { useSim } from "@/lib/store";
 
 export function JournalPanel() {
   const runs = useSim((s) => s.runs);
+  const manque = useSim((s) => s.manquePlace);
   const recharger = useSim((s) => s.rechargerRun);
   const supprimer = useSim((s) => s.supprimerRun);
 
+  const alerte = manque ? (
+    <Blueprint className="border-down/60 p-4">
+      <div className="kicker text-down">Enregistrement refusé</div>
+      <p className="mt-1 text-sm">
+        Ce navigateur a refusé d’enregistrer le journal : il faut libérer au moins{" "}
+        {Math.max(1, Math.round(manque.octets / 1024))} Ko pour que cet enregistrement
+        passe. Rien de ce qui est déjà en mémoire n’a été perdu, mais la dernière
+        modification n’y est pas.
+      </p>
+    </Blueprint>
+  ) : null;
+
   if (!runs.length) {
     return (
+      <div className="flex flex-col gap-4">
+        {alerte}
       <Blueprint className="p-8">
         <div className="kicker">Journal</div>
         <h2 className="mt-1 font-display text-3xl">Rien n’est encore sauvé</h2>
@@ -19,11 +34,13 @@ export function JournalPanel() {
           retrouver ici — et le recharger d’un clic.
         </p>
       </Blueprint>
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
+      {alerte}
       <div>
         <div className="kicker">Résultats sauvegardés</div>
         <h2 className="mt-1 font-display text-3xl">Vos stratégies testées</h2>

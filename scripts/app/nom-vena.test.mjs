@@ -30,8 +30,12 @@ test("l’ancien nom ne survit que dans la migration et l’import de sauvegarde
     /PREFIXE_ANCIEN|MIGRATION DU STOCKAGE|migrerCle\(|DB_ANCIEN|MIGRATION DE LA BASE|MIGRATION « simula/,
     /'simula\.spreads\.entree\.v1\.client\.fxpro'/,        // l'exemple du commentaire
     /"simula\.runs\.v1"|"simula\.onb\.v1"|"simula\.uploads\.v1"/,
-    // l'import d'une sauvegarde ancienne, sans date limite
+    // l'import d'une sauvegarde ancienne, sans date limite — reconnaissance comprise :
+    // un fichier que l'application a écrit ne doit jamais être refusé par elle
     /b\.outil !== 'simula'|b\.outil !== "simula"|sivula_chiffre|\.vena,\.sivula/,
+    /EXT_SAUVEGARDE = |'"outil":"simula"'/,
+    // LE REPLI DE LECTURE : il traduit le nom neuf vers l'ancien, c'est son objet même
+    /cleVersAncien|« vena\.X » → « simula\.X »|\^\(vena\|simula\)|replace\(\/\^vena\\\.\//,
     // le repli du script MT5 sur l'ancien dossier
     /Sivula\\\\symboles\.txt|ancien dossier Sivula|liste dans Sivula/,
   ];
@@ -43,6 +47,10 @@ test("l’ancien nom ne survit que dans la migration et l’import de sauvegarde
     // ce test énonce la règle, et CLAUDE.md l'écrit : tous deux doivent pouvoir nommer
     // l'ancien nom pour dire où il a le droit de survivre
     if (r === "scripts/app/nom-vena.test.mjs" || r === "CLAUDE.md") continue;
+    // ce test-là a la migration pour SUJET : il sème l'ancien préfixe pour vérifier
+    // qu'elle le déplace. L'exclure d'ici ne l'affaiblit pas — il ne décrit rien
+    // d'autre que le mécanisme que cette règle autorise.
+    if (r === "scripts/app/stockage-plein.test.mjs") continue;
     const lignes = readFileSync(p, "utf8").split("\n");
     lignes.forEach((l, i) => {
       if (!ANCIEN.test(l)) return;
@@ -137,25 +145,60 @@ test("un import ancien repose ses clés au nouveau préfixe", () => {
   assert.equal(defs, 1, "une seule traduction, vu " + defs);
 });
 
-test("la migration tourne avant la classe, et ne supprime rien", () => {
+test("la migration tourne avant la classe, et DÉPLACE au lieu de copier", () => {
+  // Le contrat a changé, et c'est une correction : copier exige deux fois la place et
+  // n'aboutit pas dans un stockage à moitié plein. Ce qui reste intangible, c'est qu'une
+  // valeur ne disparaisse jamais — d'où l'ordre imposé : écrire, RELIRE, puis supprimer.
   const src = readFileSync(path.join(RACINE, "Vena.dc.html"), "utf8");
   const iMig = src.indexOf("const MIGRATION = migrerStockage();");
   const iClasse = src.indexOf("class Component extends DCLogic {");
   assert.ok(iMig > 0 && iClasse > 0 && iMig < iClasse,
     "la migration doit s’exécuter avant la classe, donc avant la moindre lecture");
   const corps = src.slice(src.indexOf("function migrerStockage()"), iMig);
-  // rien n'est supprimé : l'ancien jeu reste au moins une version
-  assert.ok(!/localStorage\.removeItem\(ancienne\)/.test(corps),
-    "la migration ne doit jamais supprimer l’ancienne clé");
-  // la clé neuve fait foi
-  assert.match(corps, /if \(localStorage\.getItem\(neuve\) !== null\) continue;/,
-    "une clé neuve déjà présente ne doit pas être écrasée");
-  // relecture après écriture : un refus de quota est silencieux
-  assert.match(corps, /if \(localStorage\.getItem\(neuve\) !== v\)/,
-    "chaque copie doit être relue avant d’être comptée");
-  // la trace en dernier, et seulement si tout a réussi
-  assert.match(corps, /if \(!echecs\) \{/, "la trace ne doit pas se poser sur une migration partielle");
-  // les données avant les réglages
-  const iD = corps.indexOf("MIGRATION_DONNEES"), iR = corps.indexOf("MIGRATION_REGLAGES");
-  assert.ok(iD < iR && iD > -1, "les données doivent passer avant les réglages");
+
+  // la clé neuve fait foi, et dans ce cas l'ancienne N'EST PAS supprimée : les deux
+  // peuvent différer, et on n'efface pas une valeur qu'on n'a pas lue
+  const iFoi = corps.indexOf("if (STOCK_BRUT.getItem(neuve) !== null) continue;");
+  assert.ok(iFoi > 0, "une clé neuve déjà présente ne doit pas être écrasée");
+
+  // écrire, relire, PUIS supprimer — dans cet ordre, sans quoi une écriture tronquée
+  // détruirait le seul exemplaire
+  const iEcrit = corps.indexOf("STOCK_BRUT.setItem(neuve, v);");
+  const iRelu = corps.indexOf("if (STOCK_BRUT.getItem(neuve) !== v)");
+  const iSuppr = corps.indexOf("STOCK_BRUT.removeItem(ancienne);");
+  assert.ok(iEcrit > 0 && iRelu > iEcrit && iSuppr > iRelu,
+    "l’ordre écrire → relire → supprimer n’est plus tenu");
+
+  // la plus grosse d'abord : sinon c'est le scan de travail qui reste dehors
+  assert.match(corps, /anciennes\.sort\(\(a, b\) => \(poids\.get\(b\)/,
+    "les clés doivent être triées par taille décroissante");
+
+  // on n'insiste pas après un refus, et l'échec REMONTE : le compteur d'échecs existait
+  // déjà et personne ne le lisait
+  assert.match(corps, /if \(echec\) \{ restantes\.push\(ancienne\); continue; \}/,
+    "la boucle doit s’arrêter au premier refus");
+  assert.match(corps, /quotaEnAttente = \{ cle: echec\.cle/,
+    "un échec de migration doit atteindre l’écran, pas seulement la trace");
+
+  // la trace dit ce qui RESTE, pour qu'un second passage sache quoi finir
+  assert.match(corps, /restant: restantes\.length, restantOctets, fini: !restantes\.length/,
+    "la trace doit porter le compte et le poids de ce qui reste");
+
+  // la migration écrit en BRUT : lire à travers la façade lui ferait voir sa propre
+  // traduction et croire déplacé ce qu'elle n'a pas touché
+  assert.ok(!/[^_]localStorage\./.test(corps),
+    "la migration doit passer par STOCK_BRUT, jamais par la façade");
+});
+
+test("la façade de lecture ne ressuscite jamais une valeur neuve vide", () => {
+  const src = readFileSync(path.join(RACINE, "Vena.dc.html"), "utf8");
+  const i = src.indexOf("const localStorage = {");
+  assert.ok(i > 0, "la façade du stockage a disparu");
+  const corps = src.slice(i, src.indexOf("class Component extends DCLogic {"));
+  // la clé neuve fait foi MÊME VIDE : un « [] » écrit par l'application est une réponse
+  assert.match(corps, /if \(v !== null\) return v;/,
+    "le repli doit s’effacer dès que la clé neuve existe, fût-elle vide");
+  // et la suppression ne touche jamais la jumelle ancienne
+  assert.match(corps, /removeItem\(k\) \{ STOCK_BRUT\.removeItem\(k\); \}/,
+    "la façade ne doit supprimer que la clé demandée");
 });
