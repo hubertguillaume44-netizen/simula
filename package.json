@@ -22,7 +22,8 @@
     "app:solo": "node scripts/app/solo.mjs",
     "app": "npx --yes serve .",
     "app:verifier": "node scripts/app/ouvrir.mjs",
-    "app:aide": "node scripts/app/aide.mjs"
+    "app:aide": "node scripts/app/aide.mjs",
+    "site:icones": "node scripts/icones-vena.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
