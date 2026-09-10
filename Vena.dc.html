@@ -19042,6 +19042,13 @@ GROUPES = {
         const inv = s.inventaire;
         if (!inv || !inv.length) return { aInventaire: false, inventaire: [], inventaireNote: '' };
         return { aInventaire: true,
+          // UN ÉCRASEMENT NE PROTÈGE PAS DE CE QU'IL ÉCRASE. Le `...this.posteLocal(p)`
+          // de la fin remplace bien le nom et le détail des postes du localStorage, mais
+          // l'objet littéral est ÉVALUÉ AVANT. Un poste `conflit` ne porte pas de `n` —
+          // il porte `octetsNeuf` et `octetsAncien` — et la branche par défaut de la
+          // cascade s'exécutait quand même : `p.n.toLocaleString` jetait, et tout
+          // renderVals() tombait sur un écran rouge. Chaque lecture de `p` ici doit donc
+          // tenir pour TOUS les types, y compris ceux qu'elle ne décrit pas.
           inventaire: inv.map((p) => ({
             nom: p.type === 'horsIndex' ? 'Bougies enregistrées mais non listées'
               : p.type === 'orphelines' ? 'Bougies abandonnées (ancien espace)'
@@ -19058,13 +19065,13 @@ GROUPES = {
               : p.type === 'm1'
                 ? p.n + ' série(s) M1, rangées à part : elles ne servent qu\u2019à départager Véna et le robot MT5, jamais au scan. Les supprimer ne touche à rien d\u2019autre.'
               : p.type === 'hasard'
-                ? p.n.toLocaleString('fr-FR') + ' contrôles du hasard mémorisés. Les supprimer ne touche ni aux bougies ni aux scans : il faudra seulement relancer les contrôles.'
+                ? Number(p.n || 0).toLocaleString('fr-FR') + ' contrôles du hasard mémorisés. Les supprimer ne touche ni aux bougies ni aux scans : il faudra seulement relancer les contrôles.'
               : p.type === 'series'
                 ? p.n + ' séries enregistrées. Les supprimer libère beaucoup de place ; il faudra les redéposer pour scanner ce compte.'
-                : p.n.toLocaleString('fr-FR') + ' configurations mesurées. Les supprimer ne touche pas à vos bougies.',
+                : Number(p.n || 0).toLocaleString('fr-FR') + ' configurations mesurées. Les supprimer ne touche pas à vos bougies.',
             poids: this.taille(p.octets || 0),
             bouton: s.libEnCours === p.prefixe + '|' + p.type
-              ? 'Suppression… ' + (s.libFait || 0) + '/' + (s.libTotal || p.n)
+              ? 'Suppression… ' + (s.libFait || 0) + '/' + (s.libTotal || p.n || 0)
               : (this.state.libSuppr === p.prefixe + '|' + p.type ? 'Confirmer' : 'Supprimer'),
             aide: this.state.libSuppr === p.prefixe + '|' + p.type
               ? 'Cliquez à nouveau pour supprimer définitivement ce poste.'
