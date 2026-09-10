@@ -645,10 +645,36 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           <span style="font-size:11px;margin-inline-start:auto;font-variant-numeric:tabular-nums" class="text-muted">{{ tirJauge }}</span>
         </div>
         <span style="font-size:12px;line-height:1.55" class="text-muted">{{ tirRisquePhrase }}</span>
+        <!--
+          DEUX TIROIRS, DEUX JAUGES, ET ILS N'ONT RIEN À VOIR.
+
+          Le stockage du navigateur (`usage` / `quota`, plusieurs centaines de mégaoctets
+          à plusieurs gigaoctets) porte les bougies et les scans. localStorage a un
+          plafond FIXE de 5 Mo, non négociable, et n'entre pas dans `estimate()` : il
+          porte les index, les réglages et les barèmes.
+
+          Les mêler donnait deux jauges qui se contredisaient — une pastille « mémoire
+          presque pleine », vraie du petit tiroir, au-dessus d'un panneau annonçant
+          288 Mo de libre. Chacun dit maintenant sa mesure et son plafond.
+        -->
         <sc-if value="{{ aPlace }}" hint-placeholder-val="{{ true }}">
-          <div style="height:5px;background:var(--color-neutral-300)">
-            <div style="height:5px;background:{{ placeCouleur }};width:{{ placePart }}"></div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="height:5px;background:var(--color-neutral-300)">
+              <div style="height:5px;background:{{ placeCouleur }};width:{{ placePart }}"></div>
+            </div>
+            <span style="font-size:10.5px;font-variant-numeric:tabular-nums" class="text-muted">Stockage du navigateur — {{ placeTxt }}</span>
           </div>
+        </sc-if>
+        <sc-if value="{{ aPlaceLocale }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="height:5px;background:var(--color-neutral-300)">
+              <div style="height:5px;background:{{ placeLocaleCouleur }};width:{{ placeLocalePart }}"></div>
+            </div>
+            <span style="font-size:10.5px;font-variant-numeric:tabular-nums" class="text-muted">Petit tiroir, plafond fixe — {{ placeLocaleTxt }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ aPlaceIntegre }}" hint-placeholder-val="{{ false }}">
+          <span style="font-size:11px;line-height:1.55;color:var(--color-accent-700)">{{ placeIntegreTxt }}</span>
         </sc-if>
         <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
           <sc-if value="{{ aRedemander }}" hint-placeholder-val="{{ false }}">
@@ -15966,13 +15992,41 @@ GROUPES = {
       }
     } catch (e) {}
   }
+  // Le plafond de localStorage n'est PAS négociable et n'entre PAS dans `estimate()` :
+  // c'est un second tiroir, petit et fixe, qu'il faut peser et dire à part.
+  PLAFOND_LOCAL = 5 * 1024 * 1024;
+  poidsLocal() {
+    let o = 0, n = 0;
+    try {
+      for (let i = 0; i < STOCK_BRUT.length; i++) {
+        const k = STOCK_BRUT.key(i);
+        if (!estCleApp(k)) continue;
+        n++;
+        o += (k.length + (STOCK_BRUT.getItem(k) || '').length) * 2;
+      }
+    } catch (e) { return null; }
+    return { octets: o, cles: n, plafond: this.PLAFOND_LOCAL, part: o / this.PLAFOND_LOCAL };
+  }
   async mesurerPlace() {
     try {
       const e = await navigator.storage.estimate();
       if (!e || !e.quota) return null;
-      const p = { utilise: e.usage, quota: e.quota, part: e.usage / e.quota };
-      // ce que Véna détient : somme des postes de l'inventaire quand il est connu.
-      // Le chiffre du navigateur inclut le cache de la page et retarde la compaction.
+      // `usage` VIENT DU NAVIGATEUR, IL NE SE RECALCULE PAS.
+      //
+      // Le panneau annonçait la somme de l'inventaire : 11 Mo là où le navigateur en
+      // comptait 271 — un facteur 25. Un inventaire maison ne peut pas connaître le coût
+      // réel d'IndexedDB : surcoût par enregistrement, index, espace non encore rendu
+      // après suppression. Seul le navigateur le sait, et il le donne. L'inventaire
+      // garde son rôle — dire QUOI occupe la place — mais il ne décide plus du total.
+      const p = { utilise: e.usage, quota: e.quota, part: e.usage / e.quota,
+        local: this.poidsLocal(),
+        // ce que le navigateur attribue à IndexedDB, quand il le détaille
+        idb: (e.usageDetails && e.usageDetails.indexedDB) || null,
+        integre: this.dansIframe() };
+      // CE QUI EST IDENTIFIÉ, et rien de plus. La somme des postes ne prétend plus être
+      // l'occupation : elle dit combien de ce que le navigateur compte on sait nommer.
+      // L'écart est l'espace qu'IndexedDB n'a pas encore rendu — il se récupère parfois
+      // de lui-même, et le taire ferait passer l'inventaire pour faux.
       const inv = this.state.inventaire;
       if (inv && inv.length) p.aNous = inv.reduce((a, x) => a + (x.octets || 0), 0);
       else if (this.state.place && this.state.place.aNous !== undefined) p.aNous = this.state.place.aNous;
@@ -18859,7 +18913,7 @@ GROUPES = {
           };
         }
         const etatCourt = this.essai ? 'séries de démonstration'
-          : plein ? 'mémoire presque pleine'
+          : plein ? 'stockage du navigateur presque plein'
           : !auto ? 'ce navigateur'
           : (s.autoHeure ? 'enregistré à ' + s.autoHeure : 'enregistrement auto');
         return {
@@ -19232,22 +19286,53 @@ GROUPES = {
         // contracte quand le disque se remplit. Afficher « 319 Mo sur 274 Mo (117 %) »
         // n'a aucun sens, et la barre débordait de son rail.
         const sature = !!s.ecritureRefusee;
+        // LA JAUGE MONTRE CE QUE LE NAVIGATEUR COMPTE, pas ce que l'inventaire sait
+        // nommer. Elle annonçait 11 Mo sur 299 là où il en occupait 271 : l'utilisateur
+        // croyait avoir 288 Mo de libre quand il en avait 19, et ses écritures
+        // échouaient dans un tiroir annoncé vide.
+        const identifie = Number.isFinite(p.aNous) ? p.aNous : null;
+        // l'écart ne se dit que s'il compte : au-delà d'un dixième ET d'un mégaoctet
+        const ecart = identifie !== null && Number.isFinite(p.utilise)
+          && p.utilise - identifie > 1048576 && identifie < p.utilise * 0.9;
+        const loc = p.local;
         return { aPlace: true,
-          // la barre montre la part de VÉNA : c'est elle qu'on peut faire baisser
-          placePart: Math.min(100, p.aNous !== undefined && p.quota
-            ? Math.round(p.aNous / p.quota * 100) : pc) + '%',
-          placeCouleur: sature ? 'var(--color-accent-900)' : 'var(--color-accent)',
+          placePart: Math.min(100, pc) + '%',
+          placeCouleur: sature || pc >= 90 ? 'var(--color-accent-900)' : 'var(--color-accent)',
           // L'ÉCHELLE, sans quoi la barre ne dit rien : « 101 Mo » ne se juge pas, « 101 Mo
           // sur 2,1 Go » se juge d'un coup d'œil.
-          // la jauge remonte à côté de l'état de protection : les deux disent la même
-          // chose — c'est ce que le navigateur effacera d'abord
-          tirJauge: p.aNous !== undefined && p.quota
-            ? this.taille(p.aNous) + ' sur ' + this.taille(p.quota)
+          tirJauge: Number.isFinite(p.utilise) && p.quota
+            ? this.taille(p.utilise) + ' sur ' + this.taille(p.quota)
             : '',
-          placeTxt: (p.aNous !== undefined ? this.taille(p.aNous) + ' utilisés' : 'mesure en cours…')
-            + (p.quota ? ' sur ' + this.taille(p.quota) + ' disponibles' : '')
+          placeTxt: (Number.isFinite(p.utilise) ? this.taille(p.utilise) + ' utilisés' : 'mesure en cours…')
+            + (p.quota ? ' sur ' + this.taille(p.quota) + ' (' + pc + ' %)' : '')
+            // L'ÉCART EST DIT, PAS MASQUÉ. Ce qui manque, c'est l'espace qu'IndexedDB
+            // n'a pas encore rendu : il se récupère parfois de lui-même, et le taire
+            // ferait passer l'inventaire pour faux.
+            + (ecart ? ', dont ' + this.taille(identifie) + ' identifiés poste par poste — '
+                + 'le reste est de l\u2019espace qu\u2019IndexedDB n\u2019a pas encore rendu' : '')
             + (sature ? ' · le navigateur a refusé le dernier enregistrement : libérez de la place' : ''),
           placeDetail: 'bougies et scans',
+          // ————— LE PETIT TIROIR SE DIT À PART —————
+          // localStorage a un plafond FIXE de 5 Mo, non négociable, et n'entre pas dans
+          // `estimate()`. Le mêler au reste donnait deux jauges qui se contredisaient :
+          // une pastille « mémoire presque pleine » — vraie du petit tiroir — au-dessus
+          // d'un panneau annonçant 288 Mo de libre.
+          aPlaceLocale: !!loc,
+          placeLocalePart: loc ? Math.min(100, Math.round(loc.part * 100)) + '%' : '0%',
+          placeLocaleTxt: loc
+            ? this.taille(loc.octets) + ' sur ' + this.taille(loc.plafond)
+              + ' (' + Math.round(loc.part * 100) + ' %) · ' + loc.cles + ' clés'
+            : '',
+          placeLocaleCouleur: loc && loc.part > 0.8 ? 'var(--color-accent-900)' : 'var(--color-accent)',
+          // ————— LA VUE INTÉGRÉE RÉDUIT ET CLOISONNE LE STOCKAGE —————
+          // 290 Mo au lieu de plusieurs gigaoctets, et un espace qui n'est pas celui de
+          // l'adresse réelle. C'est la chose qu'il faut savoir avant de juger un chiffre.
+          aPlaceIntegre: !!p.integre,
+          placeIntegreTxt: 'Vue intégrée : ce navigateur y accorde un stockage RÉDUIT et '
+            + 'CLOISONNÉ — ' + (p.quota ? this.taille(p.quota) + ' ici, ' : '')
+            + 'contre plusieurs gigaoctets dans un onglet à part. Les données de cette vue '
+            + 'ne sont ni les mêmes ni aussi durables que celles de l\u2019adresse réelle : '
+            + 'ouvrez Véna dans son propre onglet pour travailler.',
           // La pastille d'état : « protégé » n'est pas un détail de confort, c'est la
           // différence entre des données qui survivent au remplissage du disque et des
           // données que le navigateur peut jeter sans le dire.
