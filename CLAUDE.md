@@ -75,9 +75,10 @@ supprimé : l'occupation réelle du navigateur est bien celle des deux.
 | `Export_H1_Vena.mq5`, `Vena_Releve.mq5` | scripts MT5 téléchargés par l'utilisateur |
 | `aide-index.json` | **artefact**, régénéré par `npm run app:aide` après tout changement de `title=` |
 
-Le dépôt GitHub s'appelle encore `hubertguillaume44-netizen/simula` : il se renomme
-depuis GitHub, pas depuis le code. Les deux liens qui le citent (`README.md`,
-`PASSATION.md`) suivront ce renommage-là.
+Le dépôt GitHub s'appelle `hubertguillaume44-netizen/vena`. Il a été renommé depuis
+GitHub, et les deux liens qui le citent (`README.md`, `PASSATION.md`) ont suivi. GitHub
+redirige l'ancienne adresse, mais un lien écrit dans le dépôt doit nommer la vraie :
+une redirection se retire le jour où quelqu'un recrée un dépôt sous l'ancien nom.
 
 ## Déploiement — la configuration vit dans le dépôt
 

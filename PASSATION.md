@@ -8,7 +8,7 @@ d'origine (`Tradingmoteur` : `moteur.py` + `blocs.py`). Il balaie des dizaines d
 de configurations sur les séries H1 déposées par l'utilisateur, en retient quelques
 dizaines, et exporte chaque configuration retenue en robot MetaTrader 5 (`.mq5`).
 
-Le dépôt de référence est **`hubertguillaume44-netizen/simula`, branche `main`** —
+Le dépôt de référence est **`hubertguillaume44-netizen/vena`, branche `main`** —
 TypeScript / React 19 / TanStack Start / Tailwind v4. Il fait foi. Les fichiers de cette
 passation sont l'implémentation JavaScript qui a servi à la mise au point du moteur ; ils
 ne sont pas à copier tels quels, mais leur **logique de calcul est la spécification**.

@@ -5,7 +5,7 @@ puis la juge : tranches, hors période, frais réels, robustesse, contrôle du h
 C'est un outil de mesure, pas un conseil en investissement — il ne prédit rien,
 ne passe aucun ordre et ne détient aucun fonds.
 
-Dépôt : [github.com/hubertguillaume44-netizen/simula](https://github.com/hubertguillaume44-netizen/simula)
+Dépôt : [github.com/hubertguillaume44-netizen/vena](https://github.com/hubertguillaume44-netizen/vena)
 
 ## Les fichiers qui comptent
 

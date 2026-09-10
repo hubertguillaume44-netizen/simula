@@ -34,8 +34,6 @@ test("l’ancien nom ne survit que dans la migration et l’import de sauvegarde
     /b\.outil !== 'simula'|b\.outil !== "simula"|sivula_chiffre|\.vena,\.sivula/,
     // le repli du script MT5 sur l'ancien dossier
     /Sivula\\\\symboles\.txt|ancien dossier Sivula|liste dans Sivula/,
-    // l'adresse du dépôt GitHub, qui n'est pas renommable depuis ici
-    /hubertguillaume44-netizen\/simula/,
   ];
   const fautes = [];
   for (const p of fichiers()) {
