@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { VenaMark } from "@/components/vena-mark";
 
 const LINKS = [
   { to: "/", label: "Accueil" },
@@ -20,8 +21,17 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           compact ? "max-w-[1480px]" : "max-w-6xl",
         )}
       >
-        <Link to="/" className="mr-auto flex items-baseline gap-3 no-underline text-ink">
-          <span className="font-display text-lg font-semibold tracking-wide">VÉNA</span>
+        {/* `items-center` et non `items-baseline` : un signe géométrique s'aligne sur
+            l'axe optique du mot, pas sur sa ligne de pied — sinon il flotte au-dessus.
+            `shrink-0` sur le signe ET sur le mot : à l'étroit, c'est la ligne
+            « Simulateur de stratégies trading » qui cède, jamais la marque. */}
+        <Link
+          to="/"
+          aria-label="Véna — accueil"
+          className="mr-auto flex items-center gap-3 no-underline text-ink"
+        >
+          <VenaMark taille="lg" className="h-6 w-6 shrink-0" />
+          <span className="shrink-0 font-display text-lg font-semibold tracking-wide">VÉNA</span>
           <span className="hidden text-[11px] uppercase tracking-[0.14em] text-muted sm:inline">
             Simulateur de stratégies trading
           </span>

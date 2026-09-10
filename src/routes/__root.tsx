@@ -19,11 +19,21 @@ export const Route = createRootRoute({
       },
       { name: "theme-color", content: "#ebeae6" },
     ],
+    // TROIS ICÔNES, ET NON UNE. Le signe existe en trois DESSINS, pas en trois tailles :
+    // le rapport de graisses du grand palier ne tient qu'au-dessus de 40 px, en dessous
+    // le jambage fin passe sous le pixel et il ne reste qu'un V ordinaire. `favicon-16`
+    // vient donc du palier `sm`, `favicon-32` du palier `md`, l'apple-touch du `lg`.
+    // Les consolider en une seule déclaration, ou en régénérer une en réduisant une
+    // autre, efface la marque là où elle est la plus vue. Du plus capable au plus bête :
+    // le SVG d'abord, puis les deux PNG.
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
+      // visait /__grok/icon-180.png, qui ne porte pas la marque
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
   component: () => (

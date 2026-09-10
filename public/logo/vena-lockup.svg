@@ -1,0 +1,20 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     Véna — le lockup : le signe (palier lg) et le mot.
+
+     À VECTORISER AVANT IMPRESSION. Le mot est ici du TEXTE VIVANT, dans une police
+     que le fichier ne transporte pas : chez un imprimeur, ou sur toute machine où
+     Barlow Condensed est absente, il sortira en Times. Avant tout envoi externe,
+     convertir le <text> en tracés (Illustrator : Texte > Vectoriser ; Inkscape :
+     Chemin > Objet en chemin).
+
+     Le chemin du signe est repris de src/components/vena-mark.tsx — une copie qui
+     dérive de ce fichier serait une seconde marque.
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 100" width="460" height="100">
+  <path fill="#1c1e20" d="M 6.00 15.73 L 13.77 15.73 L 42.88 70.31 L 71.99 15.73 L 94.00 15.73 L 57.44 84.27 L 35.43 84.27 L 39.00 77.60 Z"/>
+  <!-- Le mot est centré sur l’AXE OPTIQUE du signe, pas sur sa ligne de pied :
+       dominant-baseline=central sur le milieu de la boîte du signe. -->
+  <text x="132" y="50" dominant-baseline="central"
+        font-family="Barlow Condensed, Barlow, sans-serif" font-weight="600"
+        font-size="62" letter-spacing="0.15em" fill="#1c1e20">VÉNA</text>
+</svg>

@@ -1,0 +1,5 @@
+<!-- Véna — signe seul, palier sm. Chemin repris de src/components/vena-mark.tsx :
+     une copie qui dérive de ce fichier serait une seconde marque. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <path fill="#1c1e20" d="M 6.00 18.51 L 21.47 18.51 L 44.65 61.97 L 67.83 18.51 L 94.00 18.51 L 60.41 81.49 L 34.24 81.49 L 36.91 76.47 Z"/>
+</svg>
