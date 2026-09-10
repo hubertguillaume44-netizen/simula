@@ -24290,19 +24290,42 @@ GROUPES = {
           if (cle === 'demo') return n;
           return /^Compte/.test(n) ? n : 'Compte n\u00ba ' + (i + 1) + ' — ' + n;
         };
-        const ouverts = this.COURTIERS
-          .map(([cle], i) => [cle, i])
-          .filter(([cle]) => conf[cle] || cle === this.compteActif);
-        const vide = this.COURTIERS.findIndex(([c]) => !conf[c] && c !== this.compteActif);
+        // `map(([cle], i) => …)` déstructure : une ligne de COURTIERS qui ne serait pas
+        // un tableau — ou qui serait vide — rendrait `cle: undefined` sans rien dire,
+        // et l'option correspondante n'aurait ni valeur ni libellé. On écarte ces
+        // lignes-là ici, à la source, plutôt que de les laisser voyager.
+        const ouverts = (Array.isArray(this.COURTIERS) ? this.COURTIERS : [])
+          .map((ligne, i) => [Array.isArray(ligne) ? ligne[0] : null, i])
+          .filter(([cle]) => cle && (conf[cle] || cle === this.compteActif));
+        // même prudence que pour `ouverts` : `findIndex(([c]) => …)` déstructure, et une
+        // ligne qui n'est pas un tableau y jette — ce qui ferait tomber tout renderVals()
+        const vide = (Array.isArray(this.COURTIERS) ? this.COURTIERS : [])
+          .findIndex((ligne) => {
+            const c = Array.isArray(ligne) ? ligne[0] : null;
+            return !!c && !conf[c] && c !== this.compteActif;
+          });
         return {
           compteChoisi: this.compteActif,
           comptesOuverts: ouverts.map(([cle, i]) => ({
             cle, nom: nomDe(cle, i) + (conf[cle] ? '' : ' — aucun relevé'),
-          })),
+          })).filter((x) => x.cle && x.nom),
           // l'en-tête liste les mêmes comptes, plus la découverte : elle y est toujours
           // proposée, même sans y être déjà passé
+          // UNE ENTRÉE SANS CLÉ NE DOIT PAS PRODUIRE D'OPTION FANTÔME.
+          //
+          // Observé chez un utilisateur, en vue intégrée : le sélecteur ne portait
+          // qu'une option vide — valeur et libellé — plus « + Ajouter un compte… ». Un
+          // `<select>` dont la valeur ne correspond à aucune option retombe à "", si
+          // bien que l'en-tête n'annonçait plus aucun compte alors que le reste de
+          // l'écran nommait FxPro correctement.
+          //
+          // La cause reste à trouver. Cette garde ne la masque pas : elle change une
+          // panne SILENCIEUSE — un menu qui a l'air vide — en panne VISIBLE : il ne
+          // reste alors que « + Ajouter un compte… », ce que personne ne prend pour un
+          // état normal. Une option sans valeur, elle, ne peut rien sélectionner.
           comptesTete: [...ouverts.map(([cle, i]) => [cle, nomDe(cle, i) + (conf[cle] ? '' : ' — aucun relevé')]),
             ...(ouverts.some(([c]) => c === 'demo') ? [] : [['demo', this.nomCourtier('demo')]])]
+            .filter(([cle, nom]) => cle && nom)
             .map(([cle, nom]) => ({ cle, nom })),
           changerDeCompte: (e) => {
             const cle = e.target.value;
