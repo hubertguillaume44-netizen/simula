@@ -46,10 +46,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
               key={l.to}
               to={l.to}
               className={cn(
-                // `md` et non `sm` : mesurée, la rangée demande 732 px au minimum avec
-                // ces quatre liens et l'accroche réduite à rien. Les afficher dès 640 px
-                // mettait le bouton hors de l'écran — or il ne cède jamais.
-                "hidden px-2 py-2 text-sm no-underline md:inline",
+                "hidden px-2 py-2 text-sm no-underline sm:inline",
                 pathname === l.to ? "text-steel" : "text-ink hover:text-steel",
               )}
             >
