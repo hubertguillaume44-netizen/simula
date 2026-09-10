@@ -2201,8 +2201,13 @@
                           <span style="display:flex;flex-direction:column;gap:1px"><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Dû au hasard</span><span style="font-size:13px">{{ vl.hasTxt }}</span></span>
                           <span style="display:flex;flex-direction:column;gap:1px"><span style="font-size:10px;letter-spacing:.05em;text-transform:uppercase" class="text-muted">Part du portefeuille</span><span style="font-size:13px">{{ vl.partTxt }}</span></span>
                         </div>
+                        <!-- L'EXPORT N'EST PAS ICI, il est dans la colonne « Robot » de la
+                             rangée, toujours visible. `pfLigneOuv` ne tient qu'une clé : une
+                             ligne dépliée referme la précédente. Un export logé dans le dépli
+                             coûterait deux clics par robot au lieu d'un — six pour trois
+                             lignes — alors que l'export est justement ce qu'on fait à la
+                             chaîne une fois les lignes retenues. -->
                         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                          <button class="btn btn-primary" type="button" style="min-height:1.85rem;font-size:11px;padding-inline:12px" onClick="{{ vl.exporterRobot }}">Exporter le robot MT5</button>
                           <button class="btn btn-secondary" type="button" style="min-height:1.85rem;font-size:11px;padding-inline:11px" onClick="{{ vl.auBacktest }}">Rouvrir en Backtest</button>
                           <button class="btn btn-secondary" type="button" style="min-height:1.85rem;font-size:11px;padding-inline:11px" onClick="{{ basculerMesures }}">{{ mesuresTxt }}</button>
                           <button type="button" class="{{ vl.faireCls }}" style="cursor:pointer;border:none;font-family:var(--font-body);font-size:10px;padding:1px 6px;white-space:nowrap" title="{{ vl.faireAide }}" onClick="{{ vl.faire }}">{{ vl.faireTxt }}</button>
