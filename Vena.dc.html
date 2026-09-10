@@ -5919,8 +5919,23 @@ const localStorage = {
 async function migrerBase() {
   if (typeof indexedDB === 'undefined') return { fait: 0 };
   const ouvrir = (nom) => new Promise((ok, ko) => {
-    const r = indexedDB.open(nom, 2);
-    r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('h')) d.createObjectStore('h'); };
+    // LES DEUX MAGASINS, ET LA MÊME VERSION QUE `idb()`.
+    //
+    // Cette fonction tourne AU CHARGEMENT DU SCRIPT, avant que la classe existe — donc
+    // avant `idb()`. Elle ouvrait « vena.auto » en version 2 et n'y créait que « h » :
+    // c'est elle qui posait le schéma, et `idb()` retrouvait ensuite une base sans
+    // magasin « gros ». Toute écriture de scan échouait alors en silence (`grosSet`
+    // rendait `false`), l'application retombait sur le miroir localStorage, et ce miroir
+    // devenait le SEUL exemplaire — 3,27 Mo dans un magasin de 5 Mo. C'est la cause
+    // première de la perte, pas sa conséquence.
+    //
+    // Version 3 : les bases déjà créées en 2 sans « gros » sont réparées à l'ouverture.
+    const r = indexedDB.open(nom, 3);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('h')) d.createObjectStore('h');
+      if (!d.objectStoreNames.contains('gros')) d.createObjectStore('gros');
+    };
     r.onsuccess = () => ok(r.result);
     r.onerror = () => ko(r.error);
   });
@@ -10836,6 +10851,9 @@ GROUPES = {
     await this.chargerBaremes();
     await this.reprendreFichierAuto();
     await this.reprendreSeries();
+    // après reprendreSeries : la base est ouverte, et le scan courant est déjà chargé —
+    // déplacer un miroir ne change donc rien à ce que l'écran affiche
+    await this.migrerScansVersBase();
     this.protegerStockage();
     // Rattrapage des lignes validées avant que la photo des réglages existe : quand le
     // scan d'origine est encore en mémoire, on la fige maintenant. Sinon la ligne reste
@@ -12012,17 +12030,34 @@ GROUPES = {
     });
     return { scanC, courantC, archives };
   }
+  // UN FILET NE DOIT PAS COÛTER PLUS QUE CE QU'IL PROTÈGE.
+  //
+  // Le bloc complet vit dans IndexedDB, qui n'a pas de plafond. Ce miroir n'est qu'une
+  // copie de secours, pour le jour où le navigateur évince IndexedDB — il a déjà sauvé
+  // un scan, il reste. Mais à 4 000 lignes il pesait 3,27 Mo dans un magasin plafonné à
+  // 5 Mo : il occupait à lui seul les deux tiers de la place, et c'est lui qui a fait
+  // échouer la migration de préfixe et rendu le stockage invivable.
+  //
+  // D'où un budget en OCTETS et non en lignes : le poids d'une ligne varie avec le
+  // nombre de filtres et la longueur des noms, et un compte de lignes ne dit rien de la
+  // place prise. On descend les paliers jusqu'à tenir dedans.
+  MIROIR_MAX_OCTETS = 400 * 1024;
   // Copie de secours élaguée dans localStorage. Silencieuse — elle ne change rien à l'écran.
   miroirScan(scan, fiche) {
+    const cle = this.cle(this.CLE_SCAN);
     for (const max of [4000, 2000, 900, 400, 150]) {
       try {
         const { scanC, courantC, archives } = this.blocElague(scan, max);
-        localStorage.setItem(this.cle(this.CLE_SCAN),
-          JSON.stringify({ scan: scanC, fiche, date: new Date().toISOString(),
-            courant: courantC, testees: this.state.scanTestes || 0, archives, miroir: true }));
+        const texte = JSON.stringify({ scan: scanC, fiche, date: new Date().toISOString(),
+          courant: courantC, testees: this.state.scanTestes || 0, archives, miroir: true });
+        // deux octets par caractère : le stockage compte en UTF-16
+        if ((cle.length + texte.length) * 2 > this.MIROIR_MAX_OCTETS) continue;
+        localStorage.setItem(cle, texte);
         return scanC.length;
       } catch (e) { /* palier suivant */ }
     }
+    // Même le plus petit palier ne tient pas dans le budget : on n'écrit rien plutôt que
+    // de reprendre toute la place. Le scan est en entier dans IndexedDB.
     return 0;
   }
   // filet : si IndexedDB est indisponible, on retombe sur localStorage en élaguant
@@ -12226,6 +12261,68 @@ GROUPES = {
       }
     }
     return n + 2048;
+  }
+  // ————— SORTIR LES SCANS DU localStorage —————
+  //
+  // Le scan complet vit déjà dans IndexedDB ; ce qui pesait 3,27 Mo dans le magasin
+  // plafonné, c'était son MIROIR. Ceux qui sont déjà en place y restent tant que
+  // personne ne les déplace : ce sont eux qui remplissaient la boîte.
+  //
+  // Même discipline que la migration de préfixe : écrire, RELIRE et comparer, puis
+  // seulement supprimer la source. Un échec laisse la source intacte et se voit. Et tant
+  // qu'un miroir n'est pas déplacé, `lireScanComplet` continue de le lire là où il est —
+  // personne ne voit ses données disparaître pendant la transition.
+  async migrerScansVersBase() {
+    const cles = [];
+    try {
+      for (let i = 0; i < STOCK_BRUT.length; i++) {
+        const k = STOCK_BRUT.key(i);
+        if (!estCleApp(k)) continue;
+        const x = k.slice(k.startsWith(PREFIXE_ANCIEN) ? PREFIXE_ANCIEN.length : PREFIXE.length);
+        // « scan.v1.client.fxpro », jamais « scan.temoin » ni « scan.depart »
+        if (/^scan\.v1(\.|$)/.test(x)) cles.push({ k, x });
+      }
+    } catch (e) { return { fait: 0, restant: 0 }; }
+    if (!cles.length) return { fait: 0, restant: 0 };
+
+    let fait = 0;
+    const restantes = [];
+    for (const { k, x } of cles) {
+      const cleG = PREFIXE + x;   // la clé IndexedDB porte toujours le nom neuf
+      try {
+        const brut = STOCK_BRUT.getItem(k);
+        if (brut === null) continue;
+        const bloc = JSON.parse(brut);
+        const n = bloc && Array.isArray(bloc.scan) ? bloc.scan.length : 0;
+        if (!n) { restantes.push(k); continue; }
+        // Ce qui est DÉJÀ dans la base fait foi si elle en tient autant ou plus : le
+        // miroir est élagué par construction, le remonter écraserait le bloc complet.
+        const deja = this.decompacterBloc(await this.grosGet(cleG));
+        const nDeja = deja && Array.isArray(deja.scan) ? deja.scan.length : 0;
+        if (nDeja < n) {
+          if (!(await this.grosSet(cleG, this.compacterBloc(bloc)))) { restantes.push(k); continue; }
+        }
+        // RELIRE ET COMPARER AVANT DE SUPPRIMER. Tant que la base ne rend pas au moins
+        // autant de lignes que la source, la source est le seul exemplaire complet et
+        // elle ne bouge pas.
+        const relu = this.decompacterBloc(await this.grosGet(cleG));
+        const nRelu = relu && Array.isArray(relu.scan) ? relu.scan.length : 0;
+        if (nRelu < n) { restantes.push(k); continue; }
+        STOCK_BRUT.removeItem(k);
+        this.noterMenage({ t: Date.now(), cles: [k], restees: [], octets: (k.length + brut.length) * 2,
+          garder: null, versBase: cleG });
+        fait++;
+      } catch (e) { restantes.push(k); }
+    }
+    // ET ÇA SE VOIT quand ça échoue : un miroir qui reste, c'est de la place qui n'est
+    // pas rendue, et personne ne lisait ce compte.
+    if (restantes.length) {
+      let o = 0;
+      for (const k of restantes) { try { o += (k.length + (STOCK_BRUT.getItem(k) || '').length) * 2; } catch (e) {} }
+      this.setState({ manquePlace: { cle: restantes[0], octets: o, motif: 'migration',
+        restant: restantes.length, quand: Date.now() } });
+    }
+    return { fait, restant: restantes.length };
   }
   async lireScanComplet() {
     const gros = this.decompacterBloc(await this.grosGet(this.cle(this.CLE_SCAN)));
@@ -14971,7 +15068,10 @@ GROUPES = {
   // par l'utilisateur reçoit ensuite chaque modification, sans clic.
   idb() {
     return new Promise((ok, ko) => {
-      const r = indexedDB.open('vena.auto', 2);
+      // MÊME VERSION QUE `migrerBase`, qui ouvre cette base avant nous : deux versions
+      // différentes sur la même base font gagner celle qui passe la première, et la
+      // seconde ne voit jamais son schéma appliqué.
+      const r = indexedDB.open('vena.auto', 3);
       r.onupgradeneeded = () => {
         const db = r.result;
         if (!db.objectStoreNames.contains('h')) db.createObjectStore('h');
