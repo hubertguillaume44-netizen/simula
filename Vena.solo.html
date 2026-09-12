@@ -6079,6 +6079,243 @@ migrerBase();
 // Nommée et déclarée HORS de l'objet d'état : c'est ce qui rend la règle vérifiable.
 // scripts/app/pas-de-chiffre-perso.test.mjs refuse tout littéral >= 1000 dans l'état
 // initial, sans avoir à connaître le chiffre qu'il empêche d'y revenir.
+// ————— LES DIX SÉRIES D'EXEMPLE SONT ENGENDRÉES, JAMAIS LIVRÉES —————
+//
+// Aucune série d'exemple n'est un fichier. Tout vient d'ici : quelques kilooctets de
+// code, zéro octet de données, les mêmes séries pour tout le monde. Rien des exports
+// d'un utilisateur n'entre dans le produit — ce qui était le cas des quatre séries
+// `DEMO-*` livrées en CSV, dont personne ne pouvait plus dire d'où venaient les prix.
+//
+// LA GRAINE EST GELÉE. `vena-exemple-v1` ne se change pas : un scan enregistré hier
+// doit pouvoir être relu sur les mêmes bougies. Le jour où les séries doivent changer,
+// on publie une `v2` — on ne réécrit pas la v1.
+//
+// ON N'ÉCRIT RIEN. Elles vivent en mémoire, engendrées à la demande, une famille à la
+// fois. Jamais dans le stockage de l'utilisateur, jamais dans « Exporter mes données »,
+// jamais dans la jauge. C'est ce qui les distingue d'un compte : un compte porte des
+// données, celles-ci n'en sont pas.
+const GRAINE_EXEMPLE = 'vena-exemple-v1';
+
+// ————— LA SÉANCE, EN HEURES UTC PLEINES —————
+//
+// Une bougie H1 tient soixante minutes : une séance ne peut donc être qu'un nombre
+// ENTIER d'heures. Les actions ouvrent en réalité 6 h 30 — 6,5 bougies n'existent pas,
+// et une demi-bougie fabriquerait une cadence irrégulière que le scan lirait comme un
+// signal. Elles ouvrent ici 7 heures pleines.
+const SEANCES_EXEMPLE = {
+  continu7: { h: null, semaine: [0, 1, 2, 3, 4, 5, 6] },          // 24 h, 7 jours
+  continu5: { h: null, semaine: [1, 2, 3, 4, 5] },                // 24 h, lun–ven
+  large:    { h: [0, 22], semaine: [1, 2, 3, 4, 5] },             // 23 h, lun–ven
+  europe:   { h: [7, 20], semaine: [1, 2, 3, 4, 5] },             // 14 h, lun–ven
+  bourse:   { h: [13, 19], semaine: [1, 2, 3, 4, 5] },            // 7 h, jours de bourse
+};
+
+// ————— LES DIX FAMILLES —————
+//
+// Le ticker est manifestement inventé : personne ne peut confondre « VX-500 » avec un
+// indice réel, et c'est le but — ces prix ne sont ceux d'aucun marché.
+//
+// `beta` est la part du facteur macro COMMUN que la famille encaisse. C'est lui qui
+// rend un scan à dix instruments instructif : dix marches indépendantes n'apprendraient
+// rien sur la corrélation, qui est la première chose qu'un portefeuille doit regarder.
+// VX-OR porte un bêta négatif pour qu'une famille au moins aille à contre-courant.
+const EXEMPLES = [
+  // id,        libellé,     groupe,     séance,     vol/an, bêta, prix,   digits
+  ['vx-eur',   'VX-EUR',    'Devises',  'continu5', 0.08,  0.3,  1.0850, 5],
+  ['vx-yen',   'VX-YEN',    'Devises',  'continu5', 0.10,  0.4,  152.40, 3],
+  ['vx-40',    'VX-40',     'Indices',  'europe',   0.17,  0.9,  7620,   2],
+  ['vx-500',   'VX-500',    'Indices',  'large',    0.15,  1.0,  5180,   2],
+  ['vx-2000',  'VX-2000',   'Indices',  'large',    0.22,  1.2,  2090,   2],
+  ['vx-or',    'VX-OR',     'Métaux',   'large',    0.14, -0.2,  2340,   2],
+  ['vx-cu',    'VX-CU',     'Métaux',   'large',    0.22,  0.8,  4.180,  4],
+  ['vx-tech',  'VX-TECH',   'Actions',  'bourse',   0.40,  1.4,  186.50, 2],
+  ['vx-conso', 'VX-CONSO',  'Actions',  'bourse',   0.15,  0.6,  62.30,  2],
+  ['vx-btc',   'VX-BTC',    'Crypto',   'continu7', 0.60,  1.1,  61200,  1],
+];
+
+// ————— CINQ RÉGIMES, AU CALENDRIER FIXE —————
+//
+// Tirés au hasard, ils auraient donné trente-six mois d'une même humeur : un backtest
+// n'aurait eu ni rien à trouver, ni rien à perdre. Datés, ils donnent une histoire —
+// et la même pour tout le monde, ce qui rend une capture d'écran discutable.
+//
+// Les bornes sont des mois depuis le début. Le dernier régime tient jusqu'à la fin :
+// trois ans font trente-six mois, et un mois 36 n'existe pas.
+const REGIMES_EXEMPLE = [
+  [0, 10, 0.8, 0.05],    // calme haussier
+  [10, 14, 2.2, -0.35],  // choc baissier
+  [14, 23, 1.0, 0.12],   // reprise en tendance
+  [23, 29, 0.9, 0.0],    // range sans tendance
+  [29, 999, 1.2, 0.22],  // tendance accélérée
+];
+
+// ————— LES RÉGIMES NE DOIVENT PAS GONFLER LA VOLATILITÉ ANNONCÉE —————
+//
+// Mesuré : sans cette correction, une famille annoncée à 15 % en réalisait 28 %. Les
+// facteurs de régime (0,8 · 2,2 · 1,0 · 0,9 · 1,2) ont une moyenne quadratique de 1,17,
+// et le choc baissier — deux fois plus agité, mais court — pèse quatre fois plus que sa
+// durée dans la variance. Le tableau des dix familles aurait annoncé un chiffre, et les
+// bougies en auraient donné un autre : exactement le défaut qu'on reproche à un
+// backtest.
+//
+// La moyenne quadratique se CALCULE à partir de la table, elle ne s'écrit pas : changer
+// un régime demain corrigerait tout seul.
+const RMS_REGIMES = (() => {
+  let somme = 0, duree = 0;
+  for (const [deb, fin, f] of REGIMES_EXEMPLE) {
+    const d = Math.min(fin, 36) - deb;
+    if (d <= 0) continue;
+    somme += d * f * f; duree += d;
+  }
+  return duree ? Math.sqrt(somme / duree) : 1;
+})();
+
+/** Un condensé 32 bits d'une chaîne — sert à semer, jamais à sécuriser quoi que ce soit. */
+function grainDe(texte) {
+  let h = 2166136261;
+  for (let i = 0; i < texte.length; i++) {
+    h ^= texte.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Un tirage déterministe : même graine, même suite, sur toute machine.
+ * `mulberry32` — court, sans état caché, et de qualité suffisante pour des prix
+ * d'exemple. Il n'a RIEN à voir avec le tirage cryptographique des licences.
+ */
+function tirageExemple(graine) {
+  let a = graine >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Une loi normale centrée réduite, par Box-Muller. Deux uniformes, une normale. */
+function normale(rnd) {
+  let u = 0;
+  while (u === 0) u = rnd();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
+}
+
+/** Le régime d'un instant, par son mois depuis le début. */
+function regimeDe(mois) {
+  for (const [deb, fin, facteurVol, deriveAn] of REGIMES_EXEMPLE) {
+    if (mois >= deb && mois < fin) return { facteurVol, deriveAn };
+  }
+  return { facteurVol: 1, deriveAn: 0 };
+}
+
+/** La séance retient-elle cette heure ? */
+function dansSeance(seance, d) {
+  const s = SEANCES_EXEMPLE[seance];
+  if (!s.semaine.includes(d.getUTCDay())) return false;
+  if (!s.h) return true;
+  const h = d.getUTCHours();
+  return h >= s.h[0] && h <= s.h[1];
+}
+
+/** Le nombre d'heures de séance par an — sert à ramener une volatilité annuelle à l'heure. */
+function heuresParAn(seance) {
+  const s = SEANCES_EXEMPLE[seance];
+  const parJour = s.h ? (s.h[1] - s.h[0] + 1) : 24;
+  return parJour * s.semaine.length * 52;
+}
+
+/**
+ * LE FACTEUR MACRO COMMUN, engendré une fois pour toutes les familles.
+ *
+ * Il est tiré de la graine SEULE — pas du nom de la famille — pour que les dix
+ * encaissent le MÊME choc au même instant. C'est toute la différence entre dix marches
+ * indépendantes et un marché : sans lui, un portefeuille de dix lignes paraîtrait dix
+ * fois moins risqué qu'il ne l'est.
+ *
+ * Il est indexé par l'HEURE ABSOLUE depuis le début, et non par le rang de la bougie :
+ * les familles n'ont pas les mêmes séances, et deux bougies de même rang ne tomberaient
+ * pas au même moment.
+ */
+function facteurMacro(nHeures) {
+  const rnd = tirageExemple(grainDe(GRAINE_EXEMPLE + '|macro'));
+  const z = new Float64Array(nHeures);
+  for (let i = 0; i < nHeures; i++) z[i] = normale(rnd);
+  return z;
+}
+
+/**
+ * ENGENDRE UNE FAMILLE — trois ans de bougies H1, en mémoire.
+ *
+ * `debutMs` est le premier instant, aligné sur une heure pleine. Il est PASSÉ et non lu
+ * d'une horloge : une série qui changerait avec la date du jour ne serait pas
+ * reproductible, et un scan d'hier ne se relirait pas.
+ */
+function engendrerExemple(id, debutMs, macro) {
+  const fam = EXEMPLES.find((e) => e[0] === id);
+  if (!fam) return null;
+  const [, , , seance, volAn, beta, prix0, digits] = fam;
+  const ANS = 3;
+  const nHeures = ANS * 365 * 24;
+  const rnd = tirageExemple(grainDe(GRAINE_EXEMPLE + '|' + id));
+  // la volatilité annoncée est ANNUELLE : on la ramène à l'heure de séance, sinon une
+  // famille à séance courte serait deux fois plus agitée qu'annoncé
+  const volH = volAn / Math.sqrt(heuresParAn(seance));
+  // le bêta pondère le facteur commun ; on renormalise pour que la volatilité totale
+  // reste celle qu'on annonce, quel que soit le bêta
+  const norme = Math.sqrt(beta * beta + 1);
+  const arrondi = Math.pow(10, digits);
+  const t = [], o = [], h = [], l = [], c = [], v = [];
+  let p = prix0;
+  for (let i = 0; i < nHeures; i++) {
+    const ms = debutMs + i * 3600000;
+    const d = new Date(ms);
+    if (!dansSeance(seance, d)) continue;
+    const mois = Math.floor(i / (365 * 24 / 12));
+    const reg = regimeDe(mois);
+    const sigma = volH * reg.facteurVol / RMS_REGIMES;
+    // dérive ramenée à l'heure, comme la volatilité
+    const derive = Math.pow(1 + reg.deriveAn, 1 / heuresParAn(seance)) - 1;
+    const ouv = p;
+    // ————— L'INTÉRIEUR DE LA BOUGIE : QUATRE SOUS-PAS —————
+    // Sans eux, le haut et le bas seraient tirés séparément du chemin, et pourraient
+    // le contredire — un stop placé entre les deux se déclencherait ou non selon le
+    // caprice d'un tirage. Ici le chemin EST la bougie : H et L en sont le maximum et
+    // le minimum, par construction.
+    const SOUS = 4;
+    let x = p, hi = p, lo = p;
+    for (let k = 0; k < SOUS; k++) {
+      // ————— LE CHOC MACRO EST CELUI DE LA BOUGIE, PAS DE CHAQUE SOUS-PAS —————
+      // Il ne varie pas d'un sous-pas à l'autre — c'est le même instant — donc il
+      // s'additionne quatre fois au lieu de se moyenner. Mesuré : sans le diviser par
+      // √SOUS, une famille de bêta 1 réalisait 1,58 fois la volatilité annoncée. Le
+      // bruit propre, lui, est tiré à chaque sous-pas et se moyenne tout seul.
+      const z = (beta * macro[i] / Math.sqrt(SOUS) + normale(rnd)) / norme;
+      x = x * (1 + derive / SOUS + sigma * z / Math.sqrt(SOUS));
+      // un prix ne devient jamais nul ni négatif : un plancher très bas suffit, et il
+      // n'est jamais atteint aux volatilités du tableau
+      if (x < prix0 * 1e-3) x = prix0 * 1e-3;
+      if (x > hi) hi = x;
+      if (x < lo) lo = x;
+    }
+    p = x;
+    const ar = (y) => Math.round(y * arrondi) / arrondi;
+    const O = ar(ouv), C = ar(p);
+    // l'arrondi peut faire sortir H ou L du couple (O, C) : on le rattrape ici, sinon
+    // la garde de cohérence tomberait sur une bougie par millier
+    t.push(ms); o.push(O); c.push(C);
+    h.push(Math.max(ar(hi), O, C)); l.push(Math.min(ar(lo), O, C));
+    v.push(Math.round(800 + rnd() * 2400));
+  }
+  const s = SEANCES_EXEMPLE[seance];
+  const heuresSession = s.h
+    ? Array.from({ length: s.h[1] - s.h[0] + 1 }, (x2, i2) => s.h[0] + i2)
+    : Array.from({ length: 24 }, (x2, i2) => i2);
+  return { t, o, h, l, c, v, n: t.length, heuresSession, ecartees: 0 };
+}
+// ————— FIN DU GÉNÉRATEUR D'EXEMPLES —————
+
 const CAPITAL_DEFAUT = 10000; // exemple, pas un chiffre d'utilisateur
 
 class Component extends DCLogic {

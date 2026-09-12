@@ -235,6 +235,59 @@ l'artefact porte la même que la source.
 frais réécrit les dates de fichiers, et refuser de construire un dépôt fraîchement cloné
 serait un piège pire que l'oubli qu'on prévient.
 
+## Les séries d'exemple sont engendrées, jamais livrées
+
+**Aucune série d'exemple n'est un fichier.** Tout vient d'un générateur déterministe à
+graine fixe, en tête de `Vena.dc.html` : quelques kilooctets de code, zéro octet de
+données, les mêmes séries pour tout le monde. **Rien des exports d'un utilisateur n'entre
+dans le produit** — ce qui était le cas des quatre séries `DEMO-*` livrées en CSV, dont
+personne ne pouvait plus dire d'où venaient les prix.
+
+**La graine est gelée : `vena-exemple-v1`.** On ne la change pas — un scan enregistré
+hier doit se relire sur les mêmes bougies. Le jour où les séries doivent changer, on
+publie une `v2`.
+
+**On n'écrit rien.** Elles vivent en mémoire, engendrées à la demande, une famille à la
+fois. Jamais dans le stockage de l'utilisateur, jamais dans « Exporter mes données »,
+jamais dans la jauge. C'est ce qui les distingue d'un compte : un compte porte des
+données, celles-ci n'en sont pas.
+
+Les dix familles, avec leur séance, leur volatilité annuelle et leur bêta au facteur
+macro commun :
+
+| Ticker | Groupe | Séance | Vol./an | β |
+|---|---|---|---|---|
+| VX-EUR | Devises | 24 h, lun–ven | 8 % | 0,3 |
+| VX-YEN | Devises | 24 h, lun–ven | 10 % | 0,4 |
+| VX-40 | Indices | 14 h, lun–ven | 17 % | 0,9 |
+| VX-500 | Indices | 23 h, lun–ven | 15 % | 1,0 |
+| VX-2000 | Indices | 23 h, lun–ven | 22 % | 1,2 |
+| VX-OR | Métaux | 23 h, lun–ven | 14 % | −0,2 |
+| VX-CU | Métaux | 23 h, lun–ven | 22 % | 0,8 |
+| VX-TECH | Actions | 7 h, jours de bourse | 40 % | 1,4 |
+| VX-CONSO | Actions | 7 h, jours de bourse | 15 % | 0,6 |
+| VX-BTC | Crypto | 24 h, 7 j | 60 % | 1,1 |
+
+Identifiant machine en minuscules sans accent (`vx-eur`), libellé humain en capitales —
+la règle du nom, appliquée aux séries. Le ticker est manifestement inventé : personne ne
+doit confondre « VX-500 » avec un indice réel.
+
+**Un facteur macro COMMUN**, pondéré par le bêta, plus un bruit propre. Sans lui, un
+portefeuille de dix lignes paraîtrait dix fois moins risqué qu'il ne l'est. VX-OR porte
+un bêta négatif pour qu'une famille aille à contre-courant.
+
+**Cinq régimes au calendrier fixe** — calme haussier, choc baissier, reprise, range,
+tendance accélérée. Datés et non tirés au hasard : un backtest doit avoir quelque chose
+à trouver et quelque chose à perdre, et la même histoire pour tout le monde rend une
+capture d'écran discutable.
+
+`scripts/app/series-exemple.test.mjs` fait tourner LE VRAI générateur, extrait de la
+source. **La garde qui compte est l'absence d'artefact exploitable** : |autocorrélation|
+des rendements horaires < 0,08 à tous les retards de 1 à 48. Un motif répétable donnerait
+à un balayage un « signal » qui n'existe que dans le générateur, et le premier
+utilisateur qui le voit croirait que son idée fonctionne. Les autres gardes protègent le
+produit ; celle-ci protège l'honnêteté de la démonstration.
+
 ## Le test qui tient la convention
 
 `scripts/app/nom-vena.test.mjs` échoue si l'ancien nom réapparaît ailleurs que dans la
