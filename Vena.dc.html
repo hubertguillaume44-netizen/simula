@@ -6170,7 +6170,7 @@ class Component extends DCLogic {
     // Le TOP classe par R net, et la lecture haute donne toujours un meilleur R que la
     // basse : sans cette condition, le tamis retenait mécaniquement la version optimiste
     // de chaque configuration — celle sur laquelle on ne peut pas s'engager.
-    sPrudent: true, onbCache: false, exempleEtape: 0,
+    sPrudent: true,
     // la colonne du scan : quelle étape est ouverte, quel facteur est déplié
     etapeScan: 2, facteurOuvert: '', fenDetail: false, grillesVues: false, bsPanneau: '',
     // la valeur de l'en-tête de « Mes instruments » qu'on est en train de corriger
@@ -10249,60 +10249,6 @@ GROUPES = {
   // exporté des CSV depuis MetaEditor. Les quatre instruments fictifs et la présentation
   // existaient déjà, sans rien pour les relier — c'est ce déclencheur-là.
   //
-  // Le scan de démonstration est un VRAI calcul de quelques secondes, pas une animation :
-  // c'est lui qui prouve que l'outil fonctionne. Un faux chargement fait exactement
-  // l'inverse, et se voit tout de suite.
-  // La grille de l'exemple : la grille livrée, élargie aux deux types d'entrée et aux
-  // deux moyennes. Une vingtaine de milliers de combinaisons réellement mesurées —
-  // assez pour que le balayage dure, assez peu pour qu'on l'attende sans partir.
-  GRILLE_EXEMPLE = { gEntrees: ['croisement_ou_rebond', 'croisement_prix'],
-    gLignes: ['ema', 'ma'], gFiltres: ['aucun'], gSens: ['achat'],
-    gSecus: ['aucune'], gTemps: ['jamais'] };
-  // Les quatre instruments de l'exemple. On ne prend PAS les quatre premiers de la
-  // liste : le compte de découverte en annonce dix, dont quatre ne sont lus que si les
-  // fichiers de démonstration sont publiés à côté de l'application. Un exemple qui
-  // scanne des séries vides affiche quatre lignes à zéro R et prouve le contraire de ce
-  // qu'il devait prouver. On retient donc les premières qui portent vraiment des bougies.
-  async universExemple() {
-    const out = [];
-    for (const sym of this.SYM_DEMO) {
-      if (out.length >= 4) break;
-      let df = null;
-      try { df = await this.charger(sym); } catch (e) { df = null; }
-      if (df && df.n > 500) out.push(sym);
-    }
-    return out;
-  }
-  attendreEtat(test, msMax) {
-    return new Promise((ok) => {
-      const t0 = Date.now();
-      const voir = () => {
-        if (test() || Date.now() - t0 > msMax) { ok(test()); return; }
-        setTimeout(voir, 120);
-      };
-      voir();
-    });
-  }
-  async voirExemple() {
-    if (this._exempleEnRoute) return;
-    this._exempleEnRoute = true;
-    this.setState({ exempleEtape: 1, onbCache: true });
-    // 1. les quatre instruments. Ils vivent dans le compte de découverte, semé à son
-    // ouverture : y passer charge les bougies, le relevé de frais fictif et rien d'autre.
-    if (this.compteActif !== 'demo') {
-      this.changerCompte('demo');
-      await this.attendreEtat(() => !this.state.chargeCompte, 60000);
-    }
-    await this.attendreEtat(() => (this.state.deposes || []).length > 0, 30000);
-    const univers = await this.universExemple();
-    this._exempleEnRoute = false;
-    if (!univers.length) { this.setState({ exempleEtape: 0 }); return; }
-    // 2. le scan. La fiche s'ouvrira toute seule à la fin — étape 3.
-    this._exempleFiche = true;
-    this.setState({ vue: 'scan', exempleEtape: 2, univers, ut: 'H1',
-      ...this.GRILLE_V2, ...this.GRILLE_EXEMPLE, tradesMin: 40, segMin: 3 },
-      () => this.lancerScan(true));
-  }
   // Amplitude médiane d'une bougie, en % du prix. Sert de plancher de crédibilité à un
   // stop suiveur : en dessous, la sortie dépend du chemin intra-bougie que la donnée
   // H1 ne contient pas, et le résultat devient un artefact du fichier.
@@ -11127,14 +11073,12 @@ GROUPES = {
     const sauve = this.lirePf();
     const pfs = (sauve && sauve.pfs) ? sauve.pfs : [{ nom: 'Portefeuille principal', syms: base }];
     const favoris = sauve && sauve.favoris ? sauve.favoris : base;
-    let onbCache = false;
     let risqueVu = false;
     try {
-      onbCache = localStorage.getItem('vena.onboarding.vu') === '1';
       risqueVu = !!localStorage.getItem('vena.risque.v1');
     } catch (e) {}
     this.setState({ pret: true, runs: this.lireRuns(), pfs, favoris,
-      valides: (sauve && sauve.valides) || [], onbCache, risqueVu });
+      valides: (sauve && sauve.valides) || [], risqueVu });
     // Le backtest du démarrage coûte plusieurs secondes de fil principal : il n'est
     // lancé que si l'utilisateur est déjà sur cette vue. Sur les autres, il part à
     // l'ouverture de l'onglet Backtest.
@@ -14353,16 +14297,6 @@ GROUPES = {
       this.ecrireSession();
       // scan mené à son terme : plus rien à reprendre
       try { localStorage.removeItem(this.cle('vena.scan.depart')); } catch (e) {}
-      // Troisième étape de la démonstration : une configuration ouverte trade par trade.
-      // Le tableau seul ne prouve rien — c'est la liste des trades qui montre d'où vient
-      // le chiffre. On ne l'ouvre qu'après le scan de l'exemple, jamais après un scan
-      // ordinaire : personne n'a demandé qu'on le déplace.
-      if (this._exempleFiche) {
-        this._exempleFiche = false;
-        const best = [...(this.lignesScan || [])].sort((a, b) => b.total - a.total)[0];
-        this.setState({ exempleEtape: 3 });
-        if (best) this.ouvrirDetail(best);
-      }
       // LE CONTRÔLE DU HASARD S'ENCHAÎNE, il ne s'attend pas.
       //
       // Un scan garde le meilleur de cent mille essais : le hasard aussi produit un
@@ -23260,8 +23194,14 @@ GROUPES = {
       // hauteur d'écran devant le travail, à chaque ouverture, tant qu'aucun scan n'avait
       // tourné.
       //
-      // `onbCache` et la clé « vena.onboarding.vu » restent lus au chargement : une
-      // session enregistrée en porte encore la trace, et la lecture ne coûte rien.
+      // LE PARCOURS GUIDÉ EST PARTI AVEC LUI. « Scanner un exemple » était sa seule porte :
+      // voirExemple, universExemple, attendreEtat, GRILLE_EXEMPLE et les drapeaux
+      // exempleEtape / onbCache n'étaient plus atteignables par personne. Du code que rien
+      // n'appelle ne se contente pas de dormir — il se lit, il s'entretient, et il finit
+      // par égarer celui qui cherche par où passe une fonctionnalité qui n'existe plus.
+      //
+      // La clé « vena.onboarding.vu » n'est plus lue. Elle reste chez ceux qui l'ont :
+      // rien n'est effacé dans le navigateur de quelqu'un pour faire de la place à rien.
       // un seul chemin pour la démonstration : celui qui charge des séries lisibles,
       // lance un vrai scan et ouvre une configuration à la fin
       aDetail: !!d,
