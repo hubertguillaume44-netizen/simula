@@ -50,9 +50,15 @@ test("la constante existe, et porte une adresse qui n’est pas un nom civil", (
 
 test("le href ET le texte viennent de la même valeur", () => {
   const src = lire("Vena.dc.html");
-  // deux emplacements, et chacun lit les deux trous — jamais une adresse recopiée
+  // Chaque lien lit les DEUX trous — jamais une adresse recopiée. On ne compte plus les
+  // emplacements : un nombre en dur fait échouer le test le jour où l'adresse rend
+  // service à un endroit de plus, pour une raison qui n'a rien à voir avec ce qu'il
+  // éprouve. Ce qui compte, c'est qu'aucun lien ne porte une adresse écrite à la main.
   const liens = [...src.matchAll(/<a href="\{\{ mailContactHref \}\}">\{\{ mailContact \}\}<\/a>/g)];
-  assert.equal(liens.length, 2, `${liens.length} liens de contact, deux attendus`);
+  assert.ok(liens.length >= 1, "plus aucun lien de contact dans la page");
+  const enDur = [...src.matchAll(/<a[^>]*href="mailto:[^"]*"/g)];
+  assert.deepEqual(enDur.map((m) => m[0]), [],
+    "une adresse est écrite en dur dans un lien au lieu de venir de la constante");
   // et les deux trous sortent bien de la constante, pas d'une chaîne réécrite
   assert.match(src, /mailContact: MAIL_CONTACT,/);
   assert.match(src, /mailContactHref: 'mailto:' \+ MAIL_CONTACT,/);

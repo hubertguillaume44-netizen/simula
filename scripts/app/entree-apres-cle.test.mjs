@@ -36,8 +36,13 @@ function corpsVerifier() {
   assert.fail("licVerifier n’est pas refermée");
 }
 
-/** Exécute la vraie licVerifier sur un faux composant, et rend ce qu'elle a fait. */
-async function valider(resultat) {
+/**
+ * Exécute la vraie licVerifier sur un faux composant, et rend ce qu'elle a fait.
+ * `tab` est la PROVENANCE — d'où l'on colle. Depuis l'accueil on est encore dehors et
+ * la clé fait entrer ; depuis n'importe quelle page de l'outil on y est déjà, et
+ * sauter éjecterait quelqu'un de son travail.
+ */
+async function valider(resultat, tab = "accueil") {
   const trace = { etats: [], garde: [], sessions: 0 };
   const ctx = { console, Promise, String, Object };
   vm.createContext(ctx);
@@ -45,6 +50,7 @@ async function valider(resultat) {
   vm.runInContext(
     "var faux = {\n"
     + "  ENTREE: " + JSON.stringify(destination()) + ",\n"
+    + "  state: { tab: " + JSON.stringify(tab) + " },\n"
     + "  verifierLicence: async function () { return " + JSON.stringify(resultat) + "; },\n"
     + "  garderLicence: function (l) { trace.garde.push(l); },\n"
     + "  setState: function (o, apres) { trace.etats.push(o); if (apres) apres(); },\n"
@@ -69,6 +75,18 @@ test("un code valide fait ENTRER dans l’application", async () => {
   assert.equal(t.garde[0].email, "a@b.c");
 });
 
+test("coller depuis le tiroir ne déplace personne", async () => {
+  // Le tiroir s'ouvre depuis les trois pages de l'outil. Quelqu'un qui colle sa clé
+  // pendant qu'il travaille sur ses scans doit rester sur ses scans : la clé ouvre ce
+  // qui était fermé, elle ne décide pas où l'on va.
+  const t = await valider({ ok: true, plan: "annuel", fin: "2027-03-14", email: "a@b.c" }, "court");
+  const etat = Object.assign({}, ...t.etats);
+  assert.equal(etat.tab, undefined, "coller depuis l’outil ne doit pas changer d’onglet");
+  assert.equal(etat.vue, undefined, "ni de vue");
+  assert.equal(t.garde.length, 1, "la licence doit quand même être mémorisée");
+  assert.equal(t.sessions, 1, "et la session écrite");
+});
+
 test("un code refusé ne fait entrer nulle part", async () => {
   const t = await valider({ ok: false, motif: "signature" });
   const etat = Object.assign({}, ...t.etats);
@@ -86,7 +104,7 @@ test("on entre par la MÊME porte que « Ouvrir avec mes données »", async () 
     "le bouton n’appelle plus entrer() : il a sa propre destination");
   assert.match(SOURCE, /entrer\(\) \{ this\.setState\(\{ \.\.\.this\.ENTREE \}, \(\) => this\.ecrireSession\(\)\); \}/,
     "entrer() ne lit plus ENTREE, ou n’écrit plus la session");
-  assert.match(SOURCE, /licCodeSaisi: undefined,\n\s*\.\.\.this\.ENTREE \}/,
+  assert.match(SOURCE, /licCodeSaisi: undefined,\n\s*\.\.\.\(dehors \? this\.ENTREE : \{\}\) \}/,
     "la clé validée n’utilise plus ENTREE : elle a sa propre destination");
   const t = await valider({ ok: true, plan: "vie", fin: null, email: "a@b.c" });
   const etat = Object.assign({}, ...t.etats);
@@ -112,13 +130,39 @@ test("on arrive sur « Mes instruments », pas sur les conclusions", async () =>
     `on entre sur « ${g.nom} » : c’est là qu’on dépose le relevé et les bougies qu’il faut`);
 });
 
-test("le code ne se saisit qu’à un seul endroit : l’accueil", async () => {
-  // C'EST L'INVARIANT QUI REND LE SAUT LÉGITIME. Entrer dans l'application est le bon
-  // geste parce qu'on ne peut coller un code que depuis la vitrine. Poser un second champ
-  // ailleurs — dans l'Intendance, par exemple — ferait sauter quelqu'un qui est DÉJÀ
-  // dedans, et il faudrait alors une condition. Ce test le rappellera.
-  const champs = [...SOURCE.matchAll(/id="champCle"/g)];
-  assert.equal(champs.length, 1, `${champs.length} champs de code, un seul attendu`);
-  const boutons = [...SOURCE.matchAll(/onClick="\{\{ licVerifier \}\}"/g)];
-  assert.equal(boutons.length, 1, `${boutons.length} boutons de validation, un seul attendu`);
+test("le code se saisit à deux endroits, et le saut est gardé", () => {
+  // ————— L'INVARIANT A CHANGÉ, ET LA GARDE L'A REMPLACÉ —————
+  //
+  // Il n'y avait qu'un champ, sur l'accueil : entrer dans l'application après une clé
+  // valide était donc toujours le bon geste. Le tiroir en porte maintenant un second,
+  // pour le client qui revient sur une machine neuve et cherche où coller — et sauter
+  // depuis là éjecterait quelqu'un de son travail vers Mes instruments.
+  //
+  // Ce test ne compte plus les champs : il vérifie que le saut est CONDITIONNEL, et
+  // qu'il l'est sur la provenance. C'est la garde que l'ancien commentaire annonçait.
+  const champs = [...SOURCE.matchAll(/onClick="\{\{ licVerifier \}\}"/g)];
+  assert.ok(champs.length >= 1, "aucun bouton de validation de clé");
+
+  assert.match(SOURCE, /const dehors = this\.state\.tab === 'accueil';/,
+    "la provenance doit être lue au moment du clic, pas figée dans le producteur");
+  assert.match(SOURCE, /\.\.\.\(dehors \? this\.ENTREE : \{\}\)/,
+    "le saut vers l’entrée doit être conditionnel : depuis le tiroir, on reste où l’on est");
+  // et l'inconditionnel d'avant ne doit pas revenir par un chemin voisin
+  assert.ok(!/licCodeSaisi: undefined,\s*\n\s*\.\.\.this\.ENTREE \}/.test(SOURCE),
+    "le saut est redevenu inconditionnel");
+});
+
+test("la section licence du tiroir porte les deux besoins d’un client qui revient", () => {
+  // coller sa clé, et la retrouver. Pas de mot de passe, pas de compte : il n'y en a
+  // pas, et c'est l'argument de vente — voir le commentaire de la section.
+  const i2 = SOURCE.indexOf('<sc-if value="{{ aSecLic }}"');
+  assert.ok(i2 > 0, "la section licence du tiroir ne se délimite plus");
+  const sec = SOURCE.slice(i2, SOURCE.indexOf("</sc-if>", SOURCE.indexOf("espacesTiroir", i2)));
+  assert.match(sec, /id="tirLicEmail"/, "le courriel de l’achat doit se saisir dans le tiroir");
+  assert.match(sec, /id="tirLicCode"/, "la clé doit se coller dans le tiroir");
+  assert.match(sec, /onClick="\{\{ licVerifier \}\}"/, "le tiroir doit pouvoir ouvrir la clé");
+  assert.match(sec, /\{\{ mailContactHref \}\}/, "retrouver sa clé passe par l’adresse de contact");
+  // le prix est POINTÉ, jamais écrit : le site vend, l'application travaille
+  assert.match(sec, /href="\/tarifs"/, "un lien discret vers les tarifs du site");
+  assert.ok(!/\d+,\d\d\s*€/.test(sec), "aucun montant ne s’écrit dans l’outil");
 });

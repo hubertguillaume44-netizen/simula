@@ -742,6 +742,62 @@
                 <button type="button" class="lien" style="align-self:flex-start;font-size:11px" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
               </div>
             </sc-if>
+            <!--
+              ————— C'EST ICI QU'ON COLLE SA CLÉ —————
+
+              Un client qui revient sur une machine neuve a une question de trois mots :
+              OÙ JE COLLE. La réponse doit être au même endroit sur toutes les pages de
+              l'outil, et c'est la pastille du bandeau — donc ce tiroir, dont la section
+              licence s'ouvre la première.
+
+              Les deux besoins d'un client qui revient, et rien d'autre : coller sa clé,
+              et la retrouver quand il l'a perdue. Pas de mot de passe, pas de compte :
+              il n'y en a pas, et c'est l'argument de vente.
+
+              LE COURRIEL AVANT LA CLÉ : c'est l'ordre de l'achat, et les deux sont liés
+              — une clé seule ne s'ouvre pas. Chacun porte son libellé plutôt qu'un texte
+              d'attente qui disparaît à la première frappe.
+            -->
+            <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:11px;border-bottom:1px solid var(--color-divider)">
+                <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">J’ai une clé</span>
+                <div class="field">
+                  <label for="tirLicEmail">Courriel de l’achat</label>
+                  <input id="tirLicEmail" class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px" type="email" value="{{ licEmail }}" onChange="{{ setLicEmail }}">
+                </div>
+                <div class="field">
+                  <label for="tirLicCode">Clé de licence</label>
+                  <input id="tirLicCode" class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;font-variant-numeric:tabular-nums" type="text" value="{{ licCode }}" onChange="{{ setLicCode }}" placeholder="SIV1.…">
+                </div>
+                <!-- le refus se dit SOUS le champ, jamais en fenêtre : le champ est
+                     l'endroit où l'on corrige, et une fenêtre oblige à mémoriser le
+                     reproche avant de pouvoir y répondre -->
+                <sc-if value="{{ aLicMsg }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:9px;align-items:baseline;border-inline-start:3px solid var(--color-accent-900);padding:7px 0 7px 11px">
+                    <span class="tag tag-outline" style="font-size:9px;white-space:nowrap">Refusée</span>
+                    <span style="font-size:12px;line-height:1.5">{{ licMsg }}</span>
+                  </div>
+                </sc-if>
+                <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap">
+                  <button class="btn btn-primary" type="button" style="min-height:2.1rem;padding-inline:16px;font-size:13px" onClick="{{ licVerifier }}">Ouvrir</button>
+                  <span style="font-size:11px;line-height:1.5" class="text-muted">Elle se colle d’un bloc, sans espace.</span>
+                </div>
+                <span style="font-size:11px;line-height:1.5" class="text-muted">Vérifiée <strong>ici même</strong>, par sa signature : aucune requête ne part au moment où vous l’ouvrez.</span>
+              </div>
+            </sc-if>
+            <!--
+              LA RETROUVER. Pas de « lien à usage unique » : il faudrait un serveur qui
+              sache qui a acheté, et il n'y en a pas — c'est la contrepartie de « rien
+              n'est conservé sur vous, pas même votre achat ». Une porte peinte sur un
+              mur serait pire que l'adresse écrite en clair, qui, elle, fonctionne.
+              Ni obfusquée, ni remplacée par un formulaire : ni l'une ni l'autre
+              n'arrête un moissonneur sérieux, et les deux retirent le clic à quelqu'un
+              qui a déjà perdu sa clé — donc déjà contrarié.
+            -->
+            <div style="display:flex;flex-direction:column;gap:4px;padding-bottom:11px;border-bottom:1px solid var(--color-divider)">
+              <span style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Clé perdue, courriel égaré</span>
+              <span style="font-size:11.5px;line-height:1.55" class="text-muted">Écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a> depuis l’adresse de l’achat, ou en la citant. La clé est re-signée à l’identique et renvoyée — elle ne s’épuise pas et ne se révoque pas.</span>
+            </div>
             <!-- Chaque espace dit COMMENT ON Y ENTRE : c'est la seule information qui
                  les rend compréhensibles. Sans elle, trois noms et trois poids. -->
             <div style="display:flex;flex-direction:column">
@@ -757,6 +813,24 @@
               </sc-for>
             </div>
             <span style="font-size:11px;line-height:1.5" class="text-muted">Trois espaces étanches : rien ne passe de l'un à l'autre sans un export puis un import explicites.</span>
+            <!--
+              LE SEUL ENDROIT DE L'OUTIL OÙ LE PRIX EST MENTIONNÉ — et il n'y est pas
+              ÉCRIT, il y est POINTÉ. Celui qui ouvre ce tiroir sans clé est exactement
+              celui qui peut vouloir en acheter une ; l'y amener est un service, lui
+              vendre ici serait une deuxième page de vente à tenir d'accord avec celle
+              du site. Le site vend, l'application travaille.
+
+              Chemin ABSOLU et non une adresse complète : le test d'autonomie refuse
+              toute URL http(s) dans le fichier livré, et il a raison — `/tarifs` se
+              résout sur venapp.fr quand l'outil y est servi. Ouvert depuis un fichier
+              local, il ne mène nulle part : c'est dit.
+            -->
+            <!-- `padding-bottom` : les deux boutons flottants du coin bas-droit
+                 recouvrent la dernière ligne du tiroir quand la section licence est
+                 ouverte — mesuré à l'écran, pas supposé. -->
+            <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size:11px;line-height:1.5;padding-bottom:46px" class="text-muted">Pas encore de clé ? <a href="/tarifs" target="_blank" rel="noopener">Voir les tarifs</a> sur venapp.fr — {{ palierN }} instruments restent gratuits, sans limite de durée.</span>
+            </sc-if>
           </div>
         </sc-if>
 
@@ -18701,13 +18775,22 @@ GROUPES = {
               // données », et `ecrireSession` est ce que fait `go()` : on entre par la même
               // porte que le bouton, pas par une seconde qui finirait par diverger.
               //
-              // Le champ de code n'existe qu'à un seul endroit, l'accueil — donc entrer est
-              // toujours le bon geste ici. Un test le vérifie plutôt qu'une garde : le jour
-              // où on poserait un second champ ailleurs, il faudra revenir se demander si
-              // sauter dans l'application est encore souhaitable.
+              // ————— MAIS ON N'ENTRE QUE SI ON EST ENCORE DEHORS —————
+              //
+              // Ce jour est arrivé : le tiroir porte un second champ, pour le client qui
+              // revient sur une machine neuve et cherche où coller. Sauter alors serait
+              // le contraire d'un service — quelqu'un qui colle sa clé depuis Mes scans
+              // se retrouverait éjecté de son travail vers Mes instruments, sans l'avoir
+              // demandé.
+              //
+              // La garde tient à la PROVENANCE, pas au champ : depuis l'accueil, il n'y a
+              // rien derrière soi et entrer est le geste attendu ; ailleurs, on est déjà
+              // dedans et la clé ne fait qu'ouvrir ce qui était fermé. L'état est lu au
+              // moment du clic, pas à la construction du producteur.
+              const dehors = this.state.tab === 'accueil';
               this.setState({ lic: { ...r, email: r.email || email, code: code.replace(/\s+/g, '') },
                 licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined,
-                ...this.ENTREE }, () => this.ecrireSession());
+                ...(dehors ? this.ENTREE : {}) }, () => this.ecrireSession());
             } else {
               this.setState({ licMsg: { txt: this.licenceMotifTexte(r) } });
             }
@@ -19028,14 +19111,48 @@ GROUPES = {
               + (this.licenceMention() ? ' \u2014 L' + this.licenceMention().slice(1) + '.' : ''),
           };
         }
+        // ————— LA PASTILLE DIT LA LICENCE, SAUF QUAND ELLE DOIT ALERTER —————
+        //
+        // Elle portait l'espace de données. C'était la moins actionnable des trois
+        // informations qu'elle peut porter : on ne change pas d'espace en passant, alors
+        // qu'on vérifie souvent ce dont on dispose et jusqu'à quand.
+        //
+        // Deux régimes, et l'ORDRE compte. Une alerte est un état d'exception : stockage
+        // presque plein, ou aucune sauvegarde — elle passe devant, en accent-900,
+        // exactement comme avant. La licence est l'état permanent : c'est le défaut.
+        //
+        // Rien ne se perd. L'espace reste nommé dans l'infobulle et pesé dans le tiroir ;
+        // l'heure du dernier enregistrement automatique, qui quitte ici la pastille, y
+        // était déjà — « Le fichier de sauvegarde est à jour — dernière écriture à … ».
+        const licPast = (() => {
+          const l2 = s.lic;
+          if (!(l2 && l2.ok)) {
+            return this.PALIER_GRATUIT + ' instruments \u00b7 ce navigateur';
+          }
+          return this.nomPlan(l2.plan, 'court')
+            + (l2.fin ? ' \u00b7 jusqu\u2019au ' + l2.fin.split('-').reverse().join('/') : '');
+        })();
+        // SEUL `plein` PRÉEMPTE, et c'est une mesure qui l'a décidé. J'avais mis
+        // `plein || !auto` — or `!auto` (aucun fichier de sauvegarde choisi) est l'état
+        // NORMAL de tout navigateur neuf : la pastille n'aurait alors jamais montré la
+        // licence à celui qui vient justement de coller sa clé. Un état permanent ne
+        // peut pas être une exception.
+        //
+        // `!auto` garde sa couleur d'alerte — c'est un vrai risque, et l'infobulle
+        // l'explique en entier — mais il ne prend plus le libellé : le point dit le
+        // risque, le texte dit ce dont on dispose.
+        const alerte = plein;
         const etatCourt = this.essai ? 'séries de démonstration'
           : plein ? 'stockage du navigateur presque plein'
-          : !auto ? 'ce navigateur'
-          : (s.autoHeure ? 'enregistré à ' + s.autoHeure : 'enregistrement auto');
+          : licPast;
         return {
           espacesTiroir,
+          // le POINT dit le risque — stockage plein, ou aucune sauvegarde choisie — et il
+          // garde exactement les seuils d'avant. Le TEXTE, lui, dit l'état permanent.
           tiroirPastille: (plein || !auto) ? 'var(--color-accent-900)' : 'var(--color-accent)',
-          tiroirEtat: NOMS_ESP[esp] + ' \u00b7 ' + etatCourt,
+          // l'alerte nomme l'espace — c'est lui qui est en cause ; l'état permanent ne
+          // le nomme pas, il dit ce dont on dispose
+          tiroirEtat: (alerte || this.essai) ? NOMS_ESP[esp] + ' \u00b7 ' + etatCourt : etatCourt,
           tiroirAide: 'Espace de données : ' + NOMS_ESP[esp].toLowerCase() + '. '
             + (plein
             ? 'Le stockage du navigateur est presque plein : les prochains scans risquent de ne pas tenir.'

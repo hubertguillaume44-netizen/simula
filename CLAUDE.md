@@ -21,7 +21,7 @@ L'adresse du site est **venapp.fr**. Le suffixe est technique : il n'entre ni da
 logo, ni dans l'en-tête, ni dans les mails.
 
 Ne pas confondre avec les mots français **simulateur**, **simulation**, **simuler** :
-ce ne sont pas la marque, ils restent tels quels. La route `/simuler` aussi.
+ce ne sont pas la marque, ils restent tels quels.
 
 ## Ce qui ne change JAMAIS de nom
 
@@ -110,12 +110,17 @@ publié, présence des deux fonctions, et une redirection forcée par chemin dé
 | Adresse | Ce que c'est | Ce qu'elle promet |
 |---|---|---|
 | **`/app`** | `Vena.solo.html` servi tel quel, hors du routeur du site | « ouvrir mon outil » — cinq pages, le moteur complet, vos données |
-| **`/simuler`** | une page du site, en React | « voir comment ça raisonne » — quatre séries d'exemple |
+| **`/tarifs`** | une page du site, en React | « combien ça coûte » — trois formules, un comparatif, six objections |
 
-La démonstration a sa raison d'être : elle montre le raisonnement à quelqu'un qui n'a pas
-encore de données. Elle ne remplace pas le produit et ne doit pas s'en donner l'air —
-aucun lien vers `/simuler` ne promet le produit, et la page renvoie vers `/app` dès qu'il
-s'agit de mesurer ses propres exports.
+**Il n'y a plus qu'une démonstration, et c'est celle de l'outil.** Le site portait la
+sienne en React, sur `/simuler`, à côté de celle que l'application porte déjà avec le
+moteur entier : deux moteurs à tenir d'accord, et le jour où ils divergent c'est la
+vitrine qui ment sur le produit. Les séries de démonstration s'ouvrent dans `/app`.
+
+**Le site vend, l'application travaille.** Le prix vit sur `/tarifs` et nulle part
+ailleurs ; l'accueil n'en garde qu'un résumé de trois montants. Dans l'outil, le prix
+n'est jamais écrit — il est POINTÉ, par un lien discret en bas de la section licence du
+tiroir. Une seconde page de vente serait une seconde vérité à tenir à jour.
 
 `/app` n'étant pas une route du routeur, on y va par un `<a href>` : un `<Link>`
 tenterait une navigation interne vers une route qui n'existe pas.
