@@ -114,7 +114,11 @@ function tracesDuComposant() {
 
 test("le signe de l’en-tête de l’application est le palier md du composant", () => {
   const app = lire("Vena.dc.html");
-  const entete = app.match(/<button type="button" onClick="\{\{ goAccueil \}\}"[^>]*>(<svg[\s\S]*?<\/svg>)VÉNA<\/button>/);
+  // Le bouton est repéré par ce qu'il EST — le signe suivi du mot VÉNA — et non par le
+  // gestionnaire qu'il porte. Il pointait vers `goAccueil` ; la page de présentation
+  // ayant disparu, il ramène désormais à « Mes instruments », et ce test échouait pour
+  // une raison sans rapport avec le palier du signe, qui est son seul objet.
+  const entete = app.match(/<button type="button" onClick="\{\{ \w+ \}\}"[^>]*>(<svg[\s\S]*?<\/svg>)VÉNA<\/button>/);
   assert.ok(entete, "le signe n’est plus dans le bouton de marque de l’en-tête");
   const trace = entete[1].match(/\sd="([^"]+)"/);
   assert.ok(trace, "le signe de l’en-tête n’a pas de tracé");

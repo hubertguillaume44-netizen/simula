@@ -316,8 +316,11 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
            signe prend donc la couleur de l'en-tête quel que soit le thème — une couleur
            fixe le ferait disparaître sur le fond sombre.
            Palier `md` (fin 11 / plein 20), celui que la règle prescrit à 24 px.
-           Le bouton reste un bouton : `goAccueil` est une navigation interne. -->
-      <button type="button" onClick="{{ goAccueil }}" style="display:inline-flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Page d'accueil et code d'accès"><svg viewBox="0 0 100 100" width="24" height="24" style="display:block;flex:none" aria-hidden="true"><path fill="currentColor" d="M 6.00 17.63 L 19.45 17.63 L 44.50 64.60 L 69.55 17.63 L 94.00 17.63 L 59.48 82.37 L 35.02 82.37 L 37.77 77.21 Z"></path></svg>VÉNA</button>
+           Le bouton reste un bouton : c'est une navigation interne. Il ramenait à la
+           page de présentation ; celle-ci n'existe plus, et il ramène donc à « Mes
+           instruments » — l'accueil de l'outil. Un logo qui mène à une page blanche
+           est pire qu'un logo inerte. -->
+      <button type="button" onClick="{{ goCourt }}" style="display:inline-flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Revenir à Mes instruments"><svg viewBox="0 0 100 100" width="24" height="24" style="display:block;flex:none" aria-hidden="true"><path fill="currentColor" d="M 6.00 17.63 L 19.45 17.63 L 44.50 64.60 L 69.55 17.63 L 94.00 17.63 L 59.48 82.37 L 35.02 82.37 L 37.77 77.21 Z"></path></svg>VÉNA</button>
       <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
         <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
         <!--
@@ -1357,7 +1360,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             <strong style="font-size:13px;line-height:1.4">Déposer les bougies H1</strong>
             <span style="font-size:12px;line-height:1.55" class="text-muted">Glissez <code>Export_H1_Vena</code> sur un graphique : un CSV par instrument de la liste, et eux seuls, dans <code>MQL5\Files</code>. Déposez-les ici — le scan devient possible.</span>
             <sc-if value="{{ aPalierCompteur }}" hint-placeholder-val="{{ false }}">
-              <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}<sc-if value="{{ aPalierLien }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ goAccueil }}">page d'accueil</button>{{ palierCompteurFin }}</sc-if></span>
+              <span style="font-size:11px;line-height:1.5;color:{{ palierCouleur }}">{{ palierCompteur }}<sc-if value="{{ aPalierLien }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ ouvrirTiroir }}">le coller ici</button>{{ palierCompteurFin }}</sc-if></span>
             </sc-if>
             <label class="zdep">
               <span style="font-size:12.5px;line-height:1.4;color:var(--color-accent-700)">Déposer les bougies H1</span>
@@ -1434,7 +1437,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       <sc-if value="{{ aMessageDepot }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;width:100%">
           <sc-if value="{{ listeDepotVisible }}" hint-placeholder-val="{{ true }}">
-            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}<sc-if value="{{ aLienAccueil }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ goAccueil }}">page d'accueil</button>{{ messageDepotSuite }}</sc-if></span>
+            <span class="tag tag-accent" style="font-size:11px">{{ messageDepot }}<sc-if value="{{ aLienAccueil }}" hint-placeholder-val="{{ false }}"><button type="button" class="lien" style="font-size:11px;color:inherit;text-decoration:underline;text-underline-offset:2px" onClick="{{ ouvrirTiroir }}">le coller ici</button>{{ messageDepotSuite }}</sc-if></span>
           </sc-if>
           <sc-if value="{{ listeDepotMasquee }}" hint-placeholder-val="{{ false }}">
             <span class="tag tag-outline" style="font-size:11px">{{ resumeDepot }}</span>
@@ -8062,7 +8065,7 @@ GROUPES = {
                 + ', vos mesures restent en place ; reprenez un abonnement'
               // \u0001 marque l'endroit où « page d'accueil » devient cliquable :
               // le message est du texte, le rendu le coupe ici et y pose le lien
-              : 'un code d\u2019accès l\u2019ouvre sans limite, \u0001'));
+              : 'un code d\u2019accès l\u2019ouvre sans limite — \u0001'));
           continue;
         }
       }
@@ -11998,6 +12001,18 @@ GROUPES = {
       if (!b || typeof b !== 'object') return null;
       const p = {};
       for (const k of this.champsSession) if (b[k] !== undefined && b[k] !== null) p[k] = b[k];
+      // ————— UN ONGLET QUI N'EXISTE PLUS NE SE RESTAURE PAS —————
+      //
+      // `ecrireSession` refusait déjà d'ENREGISTRER « accueil ». Mais le garde-fou
+      // n'était qu'à l'écriture : une session posée par une version antérieure — donc
+      // par tout utilisateur d'avant la suppression de la page de présentation —
+      // ramenait `tab: 'accueil'`, pour lequel aucune page ne se rend. Écran blanc.
+      //
+      // La règle vaut pour toute valeur inconnue, pas seulement pour celle-là : ce qui
+      // entre depuis le stockage vient d'une version qu'on ne connaît pas, et se
+      // vérifie au moment où il entre. Un onglet qu'on ne sait pas rendre est écarté,
+      // et le défaut de `ENTREE` s'applique.
+      if (p.tab !== undefined && p.tab !== this.ENTREE.tab) delete p.tab;
       // la liste d'instruments ne se restaure jamais, même depuis une session écrite
       // par une version antérieure ou par un export réimporté
       delete p.univers;
@@ -19228,9 +19243,9 @@ GROUPES = {
         return { aPalierCompteur: true,
           palierCompteur: Math.min(persos.size, this.PALIER_GRATUIT) + ' sur '
             + this.PALIER_GRATUIT + ' instruments personnels du palier gratuit'
-            + (plein2 ? ' — un instrument de plus sera refusé ; un code d\u2019accès l\u2019ouvre sans limite (' : '.'),
+            + (plein2 ? ' — un instrument de plus sera refusé ; un code d\u2019accès l\u2019ouvre sans limite, ' : '.'),
           aPalierLien: plein2,
-          palierCompteurFin: plein2 ? ').' : '',
+          palierCompteurFin: plein2 ? '.' : '',
           palierCouleur: plein2 ? 'var(--color-accent-700)' : 'var(--color-neutral-700)' };
       })(),
       surChoixM1: (e) => this.deposerBougiesM1([...(e.target.files || [])]),
