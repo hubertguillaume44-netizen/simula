@@ -18771,8 +18771,26 @@ GROUPES = {
               // mémorisé localement : au prochain démarrage le code est revérifié,
               // pas cru sur parole — c'est la date qui décide, pas le souvenir
               this.garderLicence({ code: code.replace(/\s+/g, ''), email });
+              // ————— ON ENTRE, ON NE SE CONTENTE PAS DE CONFIRMER —————
+              //
+              // La validation posait la licence et restait sur l'accueil. L'écran annonçait
+              // alors un DROIT — le plan souscrit, l'import ouvert — sans donner d'ACCÈS :
+              // le client venait de faire exactement ce qu'on lui demandait,
+              // et se retrouvait devant rien. C'est le genre d'impasse qui fait écrire au
+              // vendeur le lendemain de l'achat, et elle ne se voit pas en la relisant :
+              // celui qui a écrit l'écran sait déjà où il faut cliquer ensuite.
+              //
+              // `tab: 'court'` est la destination de « Ouvrir avec mes données », et
+              // `ecrireSession` est ce que fait `go()` : on entre par LA MÊME porte que le
+              // bouton, pas par une seconde qui finirait par diverger de la première.
+              //
+              // Le champ de code n'existe qu'à un seul endroit, l'accueil — donc entrer est
+              // toujours le bon geste ici. Un test le vérifie plutôt qu'une garde : le jour
+              // où on poserait un second champ ailleurs, il faudra revenir se demander si
+              // sauter dans l'application est encore souhaitable.
               this.setState({ lic: { ...r, email: r.email || email, code: code.replace(/\s+/g, '') },
-                licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined });
+                licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined,
+                tab: 'court' }, () => this.ecrireSession());
             } else {
               this.setState({ licMsg: { txt: this.licenceMotifTexte(r) } });
             }
