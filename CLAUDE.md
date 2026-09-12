@@ -306,6 +306,17 @@ impossible « mes instruments qui ont des bougies », qui est la vue de travail.
 mesure à quelqu'un qui n'a rien déposé ; le second disparaîtrait au premier chargement, et
 avec lui la seule porte visible vers le champ de clé.
 
+## Les cinq règles, dans l'ordre où elles se servent
+
+Elles viennent toutes d'un défaut réel de ce dépôt, et chacune est détaillée plus bas.
+
+1. **Demander une intention pour prédire un résultat** — décider après, pas avant.
+2. **Toute garde de frontière se vérifie par mutation** — une sonde qui ne tombe jamais ne
+   prouve rien.
+3. **On interdit le code, pas le récit du code.**
+4. **Quand l'explication contredit l'étiquette, c'est l'étiquette qui est le défaut.**
+5. **Une affirmation sur un fichier se relit avant d'être rapportée.**
+
 ## Une garde d'étanchéité se pose à la frontière d'ÉCRITURE
 
 C'est la leçon d'un aller-retour, et elle vaut au-delà de ce chantier. La première garde
@@ -321,6 +332,11 @@ Le refus vit donc **au seul endroit par lequel une série entre dans le stockage
 
 `scripts/app/etancheite-exemples.test.mjs` fait tourner **le vrai code** contre un faux
 stockage, dans les trois espaces.
+
+**La sonde d'idempotence** passe la migration **deux fois** et compare le stockage entier
+entre les deux passages : le second ne doit rien retravailler, ni rebalayer les blocs de
+bougies. Une troisième sonde pose la marque d'avance et vérifie que la migration n'entre
+même pas — elle a fait son office une fois, elle ne surveille pas le stockage à vie.
 
 **Toute garde qui protège une frontière se vérifie par MUTATION.** On l'écrit, puis on
 casse le code exprès et on vérifie qu'elle tombe. Sans ça, on a écrit un commentaire
@@ -356,6 +372,18 @@ avant** :
 divergeait dans un cas que personne n'avait listé. Quand le résultat est observable,
 observez-le.
 
+### Une affirmation sur un fichier se relit avant d'être rapportée
+
+Un commentaire a été annoncé comme écrit alors que le script qui le posait s'était arrêté
+sur une substitution précédente **sans rien enregistrer**. Le rapport décrivait un fichier
+qui n'existait pas.
+
+« Les tests ne pouvaient pas l'attraper » n'est pas le bon diagnostic. **Une affirmation
+sur le contenu d'un fichier est une affirmation sur le disque**, et elle se revérifie par
+une lecture — jamais sur l'intention d'avoir écrit. Un script qui enchaîne des
+substitutions et s'arrête au milieu ne laisse aucune trace : il faut relire ce qu'on
+prétend avoir posé, avant de le dire.
+
 ### Quand l'explication doit contredire l'étiquette, c'est l'étiquette qui est le défaut
 
 Une étiquette est **actionnable par construction**. « Périmée » veut dire *refais ton
@@ -371,11 +399,6 @@ partage pas. Le seuil, lui, n'est **pas** exempté : `vieux` ne pilote que l'ét
 phrase et deux encres — aucun comportement — donc c'est le verdict qui change, pas la
 mesure. Les deux encres d'alerte suivent le verdict (`vieux && !estExemple(sel)`), sans
 quoi les dix porteraient la couleur d'alerte sans porter le mot.
-
-**La sonde d'idempotence** passe la migration **deux fois** et compare le stockage entier
-entre les deux passages : le second ne doit rien retravailler, ni rebalayer les blocs de
-bougies. Une troisième sonde pose la marque d'avance et vérifie que la migration n'entre
-même pas — elle a fait son office une fois, elle ne surveille pas le stockage à vie.
 
 ## Aucun mot relatif sur une fenêtre figée
 
@@ -394,12 +417,14 @@ le seul date-contre-aujourd'hui du fichier — `Date.now() - cv.t1 > 45 jours`, 
 producteur de la fiche — et **celui-là s'applique bien à elles** : elles passeront
 « périmées » quarante-cinq jours après leur dernière bougie.
 
-**C'est voulu, et ce n'est pas un défaut à corriger.** Le même mot désigne un export MT5
-qu'on a oublié de refaire, et c'est ce qu'il faut apprendre à lire. Ce qui serait
-malhonnête, c'est de laisser croire à un fichier à refaire : la ligne de diagnostic ajoute
-donc, pour une série d'exemple, que sa fenêtre est fixe et qu'il n'y a rien à réexporter.
-Ne pas confondre non plus avec les « chiffres périmés » (réglages changés) ni avec
-`aScansPerimes` (un scan antérieur à une livraison) : trois mécanismes, un seul mot.
+**Mais elles n'en portent pas le MOT** : le verdict est « fenêtre fixe » — voir « Quand
+l'explication doit contredire l'étiquette » plus haut. Ce paragraphe a d'abord dit
+l'inverse (« c'est voulu, ce n'est pas un défaut à corriger ») et il avait tort : le seuil
+est bien voulu, l'étiquette ne l'était pas.
+
+Ne pas confondre non plus avec les deux autres « périmé » du fichier : les « chiffres
+périmés » (réglages changés, `perime()`) et `aScansPerimes` (un scan antérieur à une
+livraison). **Trois mécanismes, un seul mot.**
 
 ## L'indicateur choisit son univers sur un RÉSULTAT, jamais sur une intention
 
