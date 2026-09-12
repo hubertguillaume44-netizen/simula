@@ -11,7 +11,23 @@ const LINKS = [
   { to: "/simuler", label: "Démonstration" },
 ] as const;
 
-export function SiteHeader({ compact = false }: { compact?: boolean }) {
+// ————— L'ACCENT VA À L'ACTION PRINCIPALE DE LA PAGE —————
+//
+// Dans le bandeau, « Ouvrir mon outil » est l'action principale par DÉFAUT : sur une
+// page qui n'en a pas de plus forte, c'est le seul geste possible, et il porte le fond
+// plein. Mais une page peut en avoir une plus forte — les Tarifs ont « Prendre
+// l'année » — et deux boutons pleins sur un même écran ne désignent plus rien : l'œil
+// ne sait plus lequel est LE geste.
+//
+// La page le dit alors elle-même, par `accentEntree={false}`, et l'entrée passe en
+// filet. Une règle, pas une exception : l'accent cède à qui en a un meilleur usage.
+export function SiteHeader({
+  compact = false,
+  accentEntree = true,
+}: {
+  compact?: boolean;
+  accentEntree?: boolean;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-paper/95 backdrop-blur-sm">
@@ -63,7 +79,12 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
               C'est ce bouton qu'un client qui a payé va chercher. */}
           <a
             href="/app"
-            className="inline-flex min-h-11 shrink-0 items-center bg-steel px-4 font-display text-sm font-semibold tracking-wide text-panel no-underline hover:bg-steel-ink"
+            className={cn(
+              "inline-flex min-h-11 shrink-0 items-center px-4 font-display text-sm font-semibold tracking-wide no-underline",
+              accentEntree
+                ? "bg-steel text-panel hover:bg-steel-ink"
+                : "border border-line text-ink hover:bg-ink/5",
+            )}
           >
             Ouvrir mon outil
           </a>

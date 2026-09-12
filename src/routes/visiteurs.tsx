@@ -55,6 +55,7 @@ function labelPage(p: string) {
   if (p === "/") return "Accueil";
   if (p === "/simuler") return "Simulateur";
   if (p === "/methode") return "Méthode";
+  if (p === "/tarifs") return "Tarifs";
   if (p === "/pourquoi") return "La démonstration";
   return p;
 }

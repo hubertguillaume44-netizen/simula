@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MethodeRouteImport } from './routes/methode'
 import { Route as PourquoiRouteImport } from './routes/pourquoi'
 import { Route as SimulerRouteImport } from './routes/simuler'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as VisiteursRouteImport } from './routes/visiteurs'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const SimulerRoute = SimulerRouteImport.update({
   path: '/simuler',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VisiteursRoute = VisiteursRouteImport.update({
   id: '/visiteurs',
   path: '/visiteurs',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/methode': typeof MethodeRoute
   '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
+  '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/methode': typeof MethodeRoute
   '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
+  '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,23 @@ export interface FileRoutesById {
   '/methode': typeof MethodeRoute
   '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
+  '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/methode' | '/pourquoi' | '/simuler' | '/visiteurs'
+  fullPaths:
+    '/' | '/methode' | '/pourquoi' | '/simuler' | '/tarifs' | '/visiteurs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/methode' | '/pourquoi' | '/simuler' | '/visiteurs'
-  id: '__root__' | '/' | '/methode' | '/pourquoi' | '/simuler' | '/visiteurs'
+  to: '/' | '/methode' | '/pourquoi' | '/simuler' | '/tarifs' | '/visiteurs'
+  id:
+    | '__root__'
+    | '/'
+    | '/methode'
+    | '/pourquoi'
+    | '/simuler'
+    | '/tarifs'
+    | '/visiteurs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +93,7 @@ export interface RootRouteChildren {
   MethodeRoute: typeof MethodeRoute
   PourquoiRoute: typeof PourquoiRoute
   SimulerRoute: typeof SimulerRoute
+  TarifsRoute: typeof TarifsRoute
   VisiteursRoute: typeof VisiteursRoute
 }
 
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimulerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/visiteurs': {
       id: '/visiteurs'
       path: '/visiteurs'
@@ -124,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   MethodeRoute: MethodeRoute,
   PourquoiRoute: PourquoiRoute,
   SimulerRoute: SimulerRoute,
+  TarifsRoute: TarifsRoute,
   VisiteursRoute: VisiteursRoute,
 }
 export const routeTree = rootRouteImport
