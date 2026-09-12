@@ -6202,6 +6202,25 @@ function normale(rnd) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
 }
 
+// ————— LES RÉGIMES BASCULENT D'UN COUP, ET C'EST ASSUMÉ —————
+//
+// J'ai cru voir un défaut et j'ai eu tort. À l'écran, la charnière du choc se lit comme
+// un coude synchronisé sur les dix familles — j'en ai conclu que le palier de
+// volatilité (×0,8 → ×2,2, à minuit le premier du mois) en était la cause, et j'ai posé
+// un fondu de quinze jours.
+//
+// Mesuré ensuite, sur quatre variantes — fondu de 15, 45 et 75 jours, et choc ramené à
+// ×1,7 : les quatre courbes sont INDISCERNABLES. Le coude ne venait pas de là.
+//
+// Il vient du facteur macro lui-même : vers le dixième mois, la marche partagée fait une
+// grande excursion, et les familles de bêta voisin la subissent ensemble. C'est le
+// facteur commun qui fonctionne — exactement ce qu'on lui demande, et ce qu'un vrai
+// marché fait en temps de crise.
+//
+// Les cinq régimes ne se lisent d'ailleurs PAS comme cinq segments droits : on ne peut
+// désigner à l'œil ni la bascule du range, ni celle de la tendance accélérée. Le fondu
+// aurait ajouté trente lignes pour un effet nul ; il est retiré.
+
 /** Le régime d'un instant, par son mois depuis le début. */
 function regimeDe(mois) {
   for (const [deb, fin, facteurVol, deriveAn] of REGIMES_EXEMPLE) {

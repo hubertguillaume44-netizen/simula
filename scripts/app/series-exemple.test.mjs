@@ -175,6 +175,36 @@ test("aucun artefact exploitable : |autocorrélation| < 0,08 aux retards 1 à 48
   assert.ok(pire.v < 0.08, `pire cas : ${pire.lib} au retard ${pire.k}`);
 });
 
+test("la baisse maximale est plausible pour la volatilité annoncée", () => {
+  // LA DIXIÈME GARDE, et elle manquait. Les neuf autres mesurent la volatilité et
+  // l'autocorrélation — aucune ne regarde la BAISSE. Or c'est par là qu'une série
+  // d'exemple se trahit : une défensive à 15 % qui perd 60 % se lit comme faux, et une
+  // famille qui ne recule jamais se lit comme une publicité.
+  //
+  // La borne est un ORDRE DE GRANDEUR, pas une loi : sur trois ans, le creux d'un actif
+  // vaut couramment une à deux fois et demie sa volatilité annuelle. En deçà de 0,6,
+  // la série monte sans jamais faire douter ; au-delà de 3, elle s'effondre au-delà de
+  // ce que sa volatilité annonce, et le chiffre du tableau devient un mensonge de plus.
+  const creux = (c) => {
+    let haut = -Infinity, pire = 0;
+    for (const x of c) {
+      if (x > haut) haut = x;
+      const d = (x - haut) / haut;
+      if (d < pire) pire = d;
+    }
+    return pire;
+  };
+  for (const [id, lib, , , volAn] of G.EXEMPLES) {
+    const d = Math.abs(creux(series.get(id).c));
+    const rapport = d / volAn;
+    assert.ok(rapport >= 0.6 && rapport <= 3,
+      `${lib} : creux de ${(d * 100).toFixed(1)} % pour ${(volAn * 100).toFixed(0)} % de volatilité `
+      + `— ${rapport.toFixed(2)} fois, hors de la plage 0,6 à 3`);
+    // et aucune famille ne doit perdre presque tout : même la crypto reste lisible
+    assert.ok(d < 0.85, `${lib} : creux de ${(d * 100).toFixed(1)} %, la série s’effondre`);
+  }
+});
+
 test("le facteur commun agit : les familles ne sont pas dix marches indépendantes", () => {
   // Sans lui, un portefeuille de dix lignes paraîtrait dix fois moins risqué qu'il ne
   // l'est — et un scan à dix instruments n'apprendrait rien sur la corrélation, qui est
