@@ -3,7 +3,23 @@ import { Blueprint } from "@/components/blueprint";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 
-export const Route = createFileRoute("/methode")({ component: Methode });
+export const Route = createFileRoute("/methode")({
+  // Le titre et la description sont PROPRES À CETTE PAGE. La racine en pose un
+  // jeu par défaut ; sans ce bloc, les cinq pages portaient le même, et quatre
+  // onglets ouverts devenaient indiscernables — Google, lui, réécrit les titres
+  // dupliqués, et c'est alors sa formulation qui s'affiche, plus la nôtre.
+  head: () => ({
+    meta: [
+      { title: "La méthode : cinq périodes, hors échantillon — Véna" },
+      {
+        name: "description",
+        content:
+          "Comment Véna découpe un historique en cinq périodes, retire celle qui a servi à choisir la configuration, et ce que les quatre pièges classiques coûtent en R.",
+      },
+    ],
+  }),
+  component: Methode,
+});
 
 const PIEGES = [
   {
@@ -35,42 +51,43 @@ function Methode() {
         </h1>
         <p className="mt-6 text-xl leading-relaxed text-ink/80">
           Vous avez trouvé une stratégie qui affiche une courbe régulière sur six ans. Vous la
-          passez en réel. Trois mois plus tard, elle perd. Ce n’est presque jamais de la
-          malchance : c’est une propriété mathématique de la façon dont vous l’avez trouvée.
+          passez en réel. Trois mois plus tard, elle perd. Ce n’est presque jamais de la malchance :
+          c’est une propriété mathématique de la façon dont vous l’avez trouvée.
         </p>
 
-        <h2 className="mt-14 font-display text-3xl">Le problème n’est pas la stratégie, c’est la recherche</h2>
+        <h2 className="mt-14 font-display text-3xl">
+          Le problème n’est pas la stratégie, c’est la recherche
+        </h2>
         <p className="mt-4 text-base leading-relaxed">
-          Quand vous testez une combinaison de réglages, vous mesurez une performance. Quand
-          vous en testez quatre cents, vous ne mesurez plus une performance : vous
-          sélectionnez un maximum. Et un maximum, sur des données bruitées, contient toujours
-          une part de chance.
+          Quand vous testez une combinaison de réglages, vous mesurez une performance. Quand vous en
+          testez quatre cents, vous ne mesurez plus une performance : vous sélectionnez un maximum.
+          Et un maximum, sur des données bruitées, contient toujours une part de chance.
         </p>
         <p className="mt-4 text-base leading-relaxed">
           C’est mécanique. Lancez quatre cents pièces cent fois chacune : l’une d’elles fera
-          nécessairement une série remarquable. Vous pourriez publier sa courbe. Elle ne vous
-          dit rien sur le prochain lancer.
+          nécessairement une série remarquable. Vous pourriez publier sa courbe. Elle ne vous dit
+          rien sur le prochain lancer.
         </p>
 
         <Blueprint className="mt-9 flex flex-col gap-3 p-6">
           <div className="kicker">La question à se poser</div>
           <p className="text-base">
             Non pas « combien cette configuration a-t-elle gagné ? », mais « aurais-je trouvé
-            quelque chose d’aussi beau en cherchant dans du bruit pur ? ». Si oui, votre
-            résultat n’est pas une découverte.
+            quelque chose d’aussi beau en cherchant dans du bruit pur ? ». Si oui, votre résultat
+            n’est pas une découverte.
           </p>
         </Blueprint>
 
         <h2 className="mt-14 font-display text-3xl">Le test qui départage</h2>
         <p className="mt-4 text-base leading-relaxed">
-          Découpez votre historique en cinq tranches consécutives. Une méthode réelle gagne
-          dans la plupart d’entre elles. Un résultat trouvé par hasard concentre son gain sur
-          une ou deux périodes fastes et perd ailleurs.
+          Découpez votre historique en cinq tranches consécutives. Une méthode réelle gagne dans la
+          plupart d’entre elles. Un résultat trouvé par hasard concentre son gain sur une ou deux
+          périodes fastes et perd ailleurs.
         </p>
         <p className="mt-4 text-base leading-relaxed">
-          Le vrai visage du surapprentissage ne prend pas toujours la forme d’une courbe trop
-          belle : le plus souvent, il ressemble à un résultat honnête qui ne se reproduit ni
-          sur la période suivante, ni sur l’instrument d’à côté.
+          Le vrai visage du surapprentissage ne prend pas toujours la forme d’une courbe trop belle
+          : le plus souvent, il ressemble à un résultat honnête qui ne se reproduit ni sur la
+          période suivante, ni sur l’instrument d’à côté.
         </p>
 
         <h2 className="mt-14 font-display text-3xl">Les quatre autres pièges</h2>
@@ -86,18 +103,17 @@ function Methode() {
         <h2 className="mt-14 font-display text-3xl">Ce qu’il reste quand on enlève tout ça</h2>
         <p className="mt-4 text-base leading-relaxed">
           Beaucoup moins de stratégies. C’est le but. Une méthode qui survit au découpage en
-          tranches, aux frais réels, à la règle de la bougie fermée et à un creux majoré de
-          moitié est une méthode dont vous connaissez enfin le coût. Vous ne saurez toujours
-          pas si elle gagnera — mais vous saurez ce que vous risquez, et pourquoi vous y
-          croyez.
+          tranches, aux frais réels, à la règle de la bougie fermée et à un creux majoré de moitié
+          est une méthode dont vous connaissez enfin le coût. Vous ne saurez toujours pas si elle
+          gagnera — mais vous saurez ce que vous risquez, et pourquoi vous y croyez.
         </p>
 
         <Blueprint className="mt-11 flex flex-col gap-4 p-7">
           <div className="kicker">Faire le test sur vos propres règles</div>
           <h3 className="font-display text-2xl">Véna applique ces contrôles par défaut</h3>
           <p className="text-sm text-muted">
-            Découpage en cinq tranches, frais du symbole déduits, signal sur bougie fermée,
-            creux affiché avant le gain. Vos exports horaires restent dans votre navigateur.
+            Découpage en cinq tranches, frais du symbole déduits, signal sur bougie fermée, creux
+            affiché avant le gain. Vos exports horaires restent dans votre navigateur.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>

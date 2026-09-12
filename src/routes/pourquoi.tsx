@@ -6,7 +6,23 @@ import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { computePreuve, type PreuveRow } from "@/lib/preuve";
 import { frNum, signedR } from "@/lib/format";
 
-export const Route = createFileRoute("/pourquoi")({ component: Pourquoi });
+export const Route = createFileRoute("/pourquoi")({
+  // Le titre et la description sont PROPRES À CETTE PAGE. La racine en pose un
+  // jeu par défaut ; sans ce bloc, les cinq pages portaient le même, et quatre
+  // onglets ouverts devenaient indiscernables — Google, lui, réécrit les titres
+  // dupliqués, et c'est alors sa formulation qui s'affiche, plus la nôtre.
+  head: () => ({
+    meta: [
+      { title: "Pourquoi mesurer avant de risquer — Véna" },
+      {
+        name: "description",
+        content:
+          "Une règle qui a l’air rentable sur tout l’historique ne l’est souvent plus une fois les frais comptés et la période de choix retirée. Véna montre l’écart, chiffré.",
+      },
+    ],
+  }),
+  component: Pourquoi,
+});
 
 function Pourquoi() {
   const [rows, setRows] = useState<PreuveRow[] | null>(null);
@@ -23,9 +39,9 @@ function Pourquoi() {
           Votre backtest est probablement faux.
         </h1>
         <p className="mt-6 max-w-prose text-lg text-ink/80">
-          Balayez assez de réglages et vous trouverez toujours une courbe qui monte. Véna
-          fait l’inverse du reste du marché : il calcule cette courbe, puis vous dit pourquoi
-          il ne faut pas y croire.
+          Balayez assez de réglages et vous trouverez toujours une courbe qui monte. Véna fait
+          l’inverse du reste du marché : il calcule cette courbe, puis vous dit pourquoi il ne faut
+          pas y croire.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild>
@@ -44,8 +60,8 @@ function Pourquoi() {
               Le meilleur résultat est le moins fiable
             </h2>
             <p className="mt-3 max-w-prose text-panel/80">
-              Classées par performance brute. La colonne des tranches découpe l’historique et
-              compte celles qui restent gagnantes. Lisez-la avant tout le reste.
+              Classées par performance brute. La colonne des tranches découpe l’historique et compte
+              celles qui restent gagnantes. Lisez-la avant tout le reste.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -63,7 +79,10 @@ function Pourquoi() {
               <tbody>
                 {rows
                   ? rows.map((r) => (
-                      <tr key={`${r.sym}-${r.periode}-${r.sl}`} className="border-b border-panel/15">
+                      <tr
+                        key={`${r.sym}-${r.periode}-${r.sl}`}
+                        className="border-b border-panel/15"
+                      >
                         <td className="py-3 pr-3 font-medium">
                           {r.sym}
                           <span className="ml-2 text-xs text-panel/50">
@@ -103,9 +122,9 @@ function Pourquoi() {
             </table>
           </div>
           <p className="max-w-prose text-panel/80">
-            Un outil de vente mettrait la première ligne en avant. Véna l’écarte si elle ne
-            tient pas hors période — et garde une ligne moins spectaculaire qui gagne dans
-            plusieurs tranches.
+            Un outil de vente mettrait la première ligne en avant. Véna l’écarte si elle ne tient
+            pas hors période — et garde une ligne moins spectaculaire qui gagne dans plusieurs
+            tranches.
           </p>
         </div>
       </section>
@@ -157,8 +176,8 @@ function Pourquoi() {
             <div className="kicker">Accès immédiat</div>
             <h4 className="font-display text-2xl">Testez une de vos propres stratégies</h4>
             <p className="text-sm text-muted">
-              Quatre instruments de démonstration, puis vos exports horaires en glisser-déposer.
-              Pas de liste d’attente. Pas de compte.
+              Quatre instruments de démonstration, puis vos exports horaires en glisser-déposer. Pas
+              de liste d’attente. Pas de compte.
             </p>
             <Button asChild className="self-start">
               <Link to="/simuler">Commencer avec les démos</Link>

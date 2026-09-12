@@ -10,7 +10,23 @@ import { useSim } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { Vue } from "@/lib/types";
 
-export const Route = createFileRoute("/simuler")({ component: Simuler });
+export const Route = createFileRoute("/simuler")({
+  // Le titre et la description sont PROPRES À CETTE PAGE. La racine en pose un
+  // jeu par défaut ; sans ce bloc, les cinq pages portaient le même, et quatre
+  // onglets ouverts devenaient indiscernables — Google, lui, réécrit les titres
+  // dupliqués, et c'est alors sa formulation qui s'affiche, plus la nôtre.
+  head: () => ({
+    meta: [
+      { title: "Voir Véna raisonner sur quatre séries — Véna" },
+      {
+        name: "description",
+        content:
+          "Une démonstration sur quatre séries d’exemple : la configuration, le résultat découpé, et ce qu’il en reste hors période. Vos propres données se mesurent dans l’application.",
+      },
+    ],
+  }),
+  component: Simuler,
+});
 
 const TABS: { id: Vue; label: string }[] = [
   { id: "backtest", label: "Backtest" },
@@ -37,11 +53,12 @@ function Simuler() {
           <div>
             <h1 className="font-display text-4xl md:text-5xl">Testez une règle, pas une courbe.</h1>
             <p className="mt-2 max-w-prose text-sm text-muted">
-              Une démonstration sur quatre séries d’exemple, pour montrer le raisonnement.
-              Pour mesurer vos propres exports horaires,{" "}
+              Une démonstration sur quatre séries d’exemple, pour montrer le raisonnement. Pour
+              mesurer vos propres exports horaires,{" "}
               <a href="/app" className="underline decoration-line underline-offset-2">
                 ouvrez l’application
-              </a>.
+              </a>
+              .
             </p>
             <div className="mt-2">
               <DuoRevoir />

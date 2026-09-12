@@ -5,6 +5,17 @@ import { Stat } from "@/components/vena/stat";
 import { visitStats } from "@/lib/visits";
 
 export const Route = createFileRoute("/visiteurs")({
+  // Le titre et la description sont PROPRES À CETTE PAGE. La racine en pose un
+  // jeu par défaut ; sans ce bloc, les cinq pages portaient le même, et quatre
+  // onglets ouverts devenaient indiscernables — Google, lui, réécrit les titres
+  // dupliqués, et c'est alors sa formulation qui s'affiche, plus la nôtre.
+  head: () => ({
+    meta: [
+      { title: "Visites — Véna" },
+      { name: "description", content: "Le compteur de visites du site." },
+    ],
+  }),
+
   loader: () => visitStats(),
   component: Visiteurs,
 });
@@ -60,8 +71,8 @@ function Visiteurs() {
           <div className="kicker">Fréquentation</div>
           <h1 className="mt-2 font-display text-5xl leading-none">Qui ouvre Véna</h1>
           <p className="mt-4 max-w-prose text-sm text-muted">
-            Pages vues et sessions dans cet onglet. Pas d’adresse IP, pas de nom. Le pays
-            vient du réseau (code à deux lettres). Cette page n’est pas comptée.
+            Pages vues et sessions dans cet onglet. Pas d’adresse IP, pas de nom. Le pays vient du
+            réseau (code à deux lettres). Cette page n’est pas comptée.
           </p>
         </div>
 
@@ -77,7 +88,9 @@ function Visiteurs() {
           {s.jours.length ? (
             <div
               className="mt-4 grid gap-1"
-              style={{ gridTemplateColumns: `repeat(${Math.max(s.jours.length, 1)}, minmax(0, 1fr))` }}
+              style={{
+                gridTemplateColumns: `repeat(${Math.max(s.jours.length, 1)}, minmax(0, 1fr))`,
+              }}
             >
               {s.jours.map((j) => (
                 <div key={j.jour} className="flex flex-col items-center gap-1">

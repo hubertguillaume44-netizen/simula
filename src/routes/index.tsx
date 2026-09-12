@@ -14,13 +14,12 @@ function Home() {
           Testez une règle avant d’y mettre un euro.
         </h1>
         <p className="mt-6 max-w-prose text-lg leading-relaxed text-ink/80">
-          Véna rejoue vos stratégies sur vos propres exports horaires, puis découpe
-          l’historique pour vérifier si le résultat tient hors de la période où il a été
-          trouvé.
+          Véna rejoue vos stratégies sur vos propres exports horaires, puis découpe l’historique
+          pour vérifier si le résultat tient hors de la période où il a été trouvé.
         </p>
         <p className="mt-3 max-w-prose text-sm text-muted">
-          Rien à installer, aucun compte. Vos fichiers restent dans votre navigateur : ils ne
-          sont jamais envoyés.
+          Rien à installer, aucun compte. Vos fichiers restent dans votre navigateur : ils ne sont
+          jamais envoyés.
         </p>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <Link to="/simuler" className="no-underline text-ink">
@@ -36,10 +35,12 @@ function Home() {
           <Link to="/methode" className="no-underline text-ink">
             <Blueprint className="flex h-full flex-col gap-3 p-6 transition-colors duration-150 hover:bg-steel-soft/40">
               <div className="kicker">Lire</div>
-              <div className="font-display text-2xl">Pourquoi un backtest brillant échoue en réel</div>
+              <div className="font-display text-2xl">
+                Pourquoi un backtest brillant échoue en réel
+              </div>
               <p className="text-sm text-muted">
-                Les cinq pièges qui fabriquent de belles courbes, et le test en cinq tranches
-                qui les démasque.
+                Les cinq pièges qui fabriquent de belles courbes, et le test en cinq tranches qui
+                les démasque.
               </p>
             </Blueprint>
           </Link>
@@ -48,8 +49,7 @@ function Home() {
               <div className="kicker">Comprendre</div>
               <div className="font-display text-2xl">Pourquoi ce tri change tout</div>
               <p className="text-sm text-muted">
-                La démonstration en un tableau : le meilleur chiffre est souvent le moins
-                fiable.
+                La démonstration en un tableau : le meilleur chiffre est souvent le moins fiable.
               </p>
             </Blueprint>
           </Link>
