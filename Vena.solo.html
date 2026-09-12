@@ -5423,7 +5423,20 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
   <sc-if value="{{ aideFlotte }}" hint-placeholder-val="{{ true }}">
   <div style="position:fixed;right:18px;bottom:18px;z-index:70;display:flex;gap:8px">
     <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:12px;background:var(--color-bg)" onClick="{{ ouvrirAide }}" title="Les explications de l’application, cherchables">? Aide</button>
-    <button class="btn btn-primary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:14px" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
+    <!-- EN FILET, COMME SON VOISIN. Cette paire flotte sur TOUTES les pages de l'outil :
+         un accent qui se présente partout ne désigne plus rien. Et « ? Aide » répond à
+         un besoin de celui qui lit ; « Donner mon avis » répond au nôtre — demandé, qui
+         plus est, à quelqu'un qui n'a parfois pas encore vu une seule mesure.
+
+         `background` : le même que le voisin, et pour la même raison — la paire flotte
+         au-dessus du contenu qui défile, et un fond transparent la rendrait illisible
+         dès qu'un tableau passe dessous. Ce n'est pas de l'ornement.
+
+         Pas de condition ici, contrairement à l'accent de la barre de tâche : celle-là
+         porte un geste de la page, qui existe ou n'existe pas. Ce bouton-ci n'en est
+         pas un, et un accent qui clignote au fil de la navigation est pire que l'un ou
+         l'autre état. -->
+    <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px;padding-inline:14px;background:var(--color-bg)" onClick="{{ ouvrirAvis }}">Donner mon avis</button>
   </div>
   </sc-if>
 
