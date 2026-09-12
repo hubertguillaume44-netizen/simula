@@ -105,15 +105,20 @@ for (const [quoi, table] of DEGRADES) {
 
 test("une table entièrement dégradée laisse une option UTILISABLE, jamais une vide", () => {
   // c'est la panne visible qu'on veut. Aucune ligne de COURTIERS n'est lisible, donc
-  // aucun compte de courtier n'entre — mais l'entrée de démonstration, elle, est un
-  // littéral : elle survit et reste sélectionnable. Un menu qui ne propose que la démo
-  // se remarque ; une option vide qui ne sélectionne rien ne se remarque pas.
+  // aucun compte ne peut en sortir — un littéral prend alors le relais et reste
+  // sélectionnable. Un menu qui ne propose qu'un compte se remarque ; une option vide
+  // qui ne sélectionne rien ne se remarque pas.
+  //
+  // CE FILET A ÉTÉ PERDU UNE FOIS, sans que personne ne le vise : il était porté par
+  // l'entrée du compte de démonstration, ajoutée d'office au menu. En retirant ce
+  // compte, on a retiré le filet — ce test l'a dit le jour même. Il est depuis écrit
+  // pour lui-même, et non comme l'effet de bord d'autre chose.
   const r = comptes([[], null, {}], { conf: {} });
   assert.ok(r.comptesTete.length > 0, "un menu entièrement vide serait une autre panne");
   for (const e of r.comptesTete) {
     assert.ok(e.cle && e.nom, `option fantôme : ${JSON.stringify(e)}`);
   }
-  assert.equal(r.comptesTete.map((x) => x.cle).join(","), "demo");
+  assert.equal(r.comptesTete.map((x) => x.cle).join(","), "fxpro");
 });
 
 test("le producteur ne jette pas sur une table dégradée", () => {

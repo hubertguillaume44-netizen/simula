@@ -321,8 +321,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
            instruments » — l'accueil de l'outil. Un logo qui mène à une page blanche
            est pire qu'un logo inerte. -->
       <button type="button" onClick="{{ goCourt }}" style="display:inline-flex;align-items:center;gap:12px;background:none;border:0;padding:0;font-family:var(--font-heading);font-size:19px;letter-spacing:.06em;color:inherit;cursor:pointer" title="Revenir à Mes instruments"><svg viewBox="0 0 100 100" width="24" height="24" style="display:block;flex:none" aria-hidden="true"><path fill="currentColor" d="M 6.00 17.63 L 19.45 17.63 L 44.50 64.60 L 69.55 17.63 L 94.00 17.63 L 59.48 82.37 L 35.02 82.37 L 37.77 77.21 Z"></path></svg>VÉNA</button>
-      <sc-if value="{{ aBoutonDemo }}" hint-placeholder-val="{{ false }}">
-        <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
+      <span style="width:1px;height:16px;background:color-mix(in srgb,var(--color-bg) 30%,transparent)"></span>
         <!--
           UN MENU EN <div>, ET PAS UN <select>.
 
@@ -358,7 +357,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             </span>
           </sc-if>
         </span>
-      </sc-if>
     </div>
     <sc-if value="{{ aBoutonTiroir }}" hint-placeholder-val="{{ false }}">
       <nav style="display:flex;gap:2px;align-items:stretch">
@@ -1089,8 +1087,9 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
           <span class="tag tag-outline">Version d'essai</span>
-          <span style="font-size:15px">Les quatre instruments « DEMO- » sont <strong>fictifs</strong> — des séries générées, pas de vrais marchés.</span>
+          <span style="font-size:15px">Les dix instruments « VX- » sont <strong>engendrés</strong> — des séries calculées, pas de vrais marchés.</span>
         </div>
+        <p class="card-body" style="margin:0;max-width:88ch"><strong>Sur ces trois ans, cet univers monte</strong> — un résultat flatteur y vient facilement, et il ne dira rien de votre idée. C’est un tirage, pas une promesse : Véna mesure, elle ne promet pas.</p>
         <p class="card-body" style="margin:0;max-width:88ch"><strong>Tant que vous n'avez pas importé les données de votre courtier, aucun backtest ne peut ressembler à votre situation réelle.</strong> Vos prix, vos horaires de session, votre spread et votre swap sont propres à votre compte : deux courtiers donnent deux résultats différents sur la même stratégie. Ces séries servent à comprendre l'outil, pas à décider. Le mode d'emploi d'import se trouve dans l'onglet <strong>Mes instruments</strong>, cadre « Produire ces fichiers depuis MT5 ».</p>
       </div>
     </sc-if>
@@ -1316,7 +1315,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
               </div>
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:3px;flex:none">
                 <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px" onClick="{{ collerMaCle }}">Coller ma clé</button>
-                <button class="btn btn-secondary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
+                <button class="btn btn-secondary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px" onClick="{{ voirLesExemples }}">Voir les séries d’exemple</button>
               </div>
             </div>
           </sc-if>
@@ -1325,7 +1324,7 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--color-accent-100);border:1px solid var(--color-accent);padding:12px 15px;margin-bottom:13px">
               <span style="font-size:13px;line-height:1.55;flex:1;min-width:38ch">Vous n’avez encore rien déposé. Regardez d’abord sur des séries d’exemple — le moteur est le même — ou produisez vos fichiers depuis MT5, ci-dessous.</span>
-              <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px;flex:none" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
+              <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px;flex:none" onClick="{{ voirLesExemples }}">Voir les séries d’exemple</button>
             </div>
           </sc-if>
         </sc-if>
@@ -1498,6 +1497,16 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbAvec }}" onChange="{{ setFbAvec }}">{{ fbAvecTxt }}</label>
             <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbSans }}" onChange="{{ setFbSans }}">{{ fbSansTxt }}</label>
             <label class="seg-opt"><input type="radio" name="filtreBougies" checked="{{ fbTous }}" onChange="{{ setFbTous }}">{{ fbTousTxt }}</label>
+          </div>
+          <!-- LA PROVENANCE, et c'est une DEUXIÈME question, pas une variante de la
+               première. « Avec bougies » demande ce qui est mesurable ; celle-ci demande
+               d'où ça vient. Les mélanger — un quatrième bouton « exemples » dans le
+               segment des bougies — aurait rendu impossible « mes instruments qui ont
+               des bougies », qui est la vue de travail. -->
+          <div class="seg" title="{{ provAide }}">
+            <label class="seg-opt"><input type="radio" name="filtreProv" checked="{{ provTous }}" onChange="{{ setProvTous }}">Tout</label>
+            <label class="seg-opt"><input type="radio" name="filtreProv" checked="{{ provVous }}" onChange="{{ setProvVous }}">{{ provVousTxt }}</label>
+            <label class="seg-opt"><input type="radio" name="filtreProv" checked="{{ provEx }}" onChange="{{ setProvEx }}">{{ provExTxt }}</label>
           </div>
           <div class="seg">
             <label class="seg-opt"><input type="radio" name="triCout" checked="{{ triMoins }}" onChange="{{ setTriMoins }}">Moins cher</label>
@@ -4824,9 +4833,9 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
             <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
               <span class="tag tag-outline">Données de démonstration</span>
-              <span style="font-size:14px">Les quatre instruments « DEMO- » sont <strong>fictifs</strong> : des marches aléatoires générées pour que vous puissiez essayer l'outil tout de suite.</span>
+              <span style="font-size:14px">Les dix instruments « VX- » sont <strong>engendrés</strong> : des séries calculées pour que vous puissiez essayer l'outil tout de suite.</span>
             </div>
-            <p class="card-body" style="margin:0">Aucune conclusion à en tirer sur un vrai marché. Pour des résultats qui valent quelque chose, importez vos propres données depuis l'onglet <strong>Mes instruments</strong>.</p>
+            <p class="card-body" style="margin:0">Aucune conclusion à en tirer sur un vrai marché. <strong>Sur ces trois ans, cet univers monte</strong> — un résultat flatteur y vient facilement, et il ne dira rien de votre idée. C’est un tirage, pas une promesse : Véna mesure, elle ne promet pas. Pour des résultats qui valent quelque chose, importez vos propres données depuis l'onglet <strong>Mes instruments</strong>.</p>
           </div>
 
           <div class="blueprint" style="padding:18px 20px;display:flex;flex-direction:column;gap:8px">
@@ -5376,6 +5385,12 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
               <input type="file" accept="application/json,.json,.vena,.sivula" onChange="{{ importerTout }}" style="display:none">
             </label>
           </div>
+          <!-- ————— D : LES DIX SÉRIES D'EXEMPLE SE MASQUENT, ELLES NE S'EFFACENT PAS —————
+               Un interrupteur et non un lien de suppression, parce qu'il n'y a RIEN à
+               supprimer : elles sont engendrées à chaque ouverture et ne pèsent pas un
+               octet. Un bouton « supprimer » aurait menti sur ce qu'il fait — et aurait
+               demandé une confirmation pour un geste sans conséquence. -->
+          <label class="radio" style="font-size:11px;color:var(--color-neutral-700)" title="{{ masqueExAide }}"><input type="checkbox" checked="{{ exemplesCaches }}" onChange="{{ basculerExemples }}"><span class="dot"></span>{{ masqueExTxt }}</label>
           <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
             <button type="button" class="lien" style="font-size:11px;color:var(--color-neutral-700)" onClick="{{ oublierSeries }}" title="Efface les bougies gardées dans ce navigateur. Vos fichiers d'origine restent sur votre disque.">effacer les séries gardées</button>
             <button type="button" class="lien" style="font-size:11px;color:var(--color-neutral-700)" onClick="{{ preparerDiagnosticClic }}" title="Prépare un fichier texte lisible — versions, stockage, dernières erreurs. Un téléchargement, aucun envoi.">fichier de diagnostic</button>
@@ -6132,18 +6147,29 @@ const SEANCES_EXEMPLE = {
 // rend un scan à dix instruments instructif : dix marches indépendantes n'apprendraient
 // rien sur la corrélation, qui est la première chose qu'un portefeuille doit regarder.
 // VX-OR porte un bêta négatif pour qu'une famille au moins aille à contre-courant.
+//
+// LES DEUX DERNIÈRES COLONNES SONT DES FRAIS, et elles suivent l'INSTRUMENT. Le compte
+// de démonstration d'avant portait son propre relevé : les frais d'une série d'exemple
+// dépendaient donc du compte depuis lequel on la regardait, ce qui n'a aucun sens — un
+// spread est une propriété de l'instrument, pas de l'onglet ouvert. Ici ils sont dans la
+// table, à côté de la volatilité, et se lisent d'où qu'on vienne.
+//
+// LE SPREAD EST EN POUR-CENT DU NOTIONNEL, pas en points. Un relevé de courtier brut
+// donne des points, que l'application convertit ensuite avec le prix ; l'écrire déjà
+// converti évite ce détour — et surtout évite qu'une série d'exemple reste « coût non
+// chiffrable » tant que la conversion n'a pas eu lieu. Le swap est annuel, en pour-cent.
 const EXEMPLES = [
-  // id,        libellé,     groupe,     séance,     vol/an, bêta, prix,   digits
-  ['vx-eur',   'VX-EUR',    'Devises',  'continu5', 0.08,  0.3,  1.0850, 5],
-  ['vx-yen',   'VX-YEN',    'Devises',  'continu5', 0.10,  0.4,  152.40, 3],
-  ['vx-40',    'VX-40',     'Indices',  'europe',   0.17,  0.9,  7620,   2],
-  ['vx-500',   'VX-500',    'Indices',  'large',    0.15,  1.0,  5180,   2],
-  ['vx-2000',  'VX-2000',   'Indices',  'large',    0.22,  1.2,  2090,   2],
-  ['vx-or',    'VX-OR',     'Métaux',   'large',    0.14, -0.2,  2340,   2],
-  ['vx-cu',    'VX-CU',     'Métaux',   'large',    0.22,  0.8,  4.180,  4],
-  ['vx-tech',  'VX-TECH',   'Actions',  'bourse',   0.40,  1.4,  186.50, 2],
-  ['vx-conso', 'VX-CONSO',  'Actions',  'bourse',   0.15,  0.6,  62.30,  2],
-  ['vx-btc',   'VX-BTC',    'Crypto',   'continu7', 0.60,  1.1,  61200,  1],
+  // id,        libellé,     groupe,     séance,     vol/an, bêta, prix,   dig, spread %, swap %/an
+  ['vx-eur',   'VX-EUR',    'Devises',  'continu5', 0.08,  0.3,  1.0850, 5,   0.012, -1.2],
+  ['vx-yen',   'VX-YEN',    'Devises',  'continu5', 0.10,  0.4,  152.40, 3,   0.013, -1.8],
+  ['vx-40',    'VX-40',     'Indices',  'europe',   0.17,  0.9,  7620,   2,   0.018, -3.4],
+  ['vx-500',   'VX-500',    'Indices',  'large',    0.15,  1.0,  5180,   2,   0.015, -3.1],
+  ['vx-2000',  'VX-2000',   'Indices',  'large',    0.22,  1.2,  2090,   2,   0.030, -3.8],
+  ['vx-or',    'VX-OR',     'Métaux',   'large',    0.14, -0.2,  2340,   2,   0.022, -3.6],
+  ['vx-cu',    'VX-CU',     'Métaux',   'large',    0.22,  0.8,  4.180,  4,   0.045, -4.2],
+  ['vx-tech',  'VX-TECH',   'Actions',  'bourse',   0.40,  1.4,  186.50, 2,   0.035, -2.8],
+  ['vx-conso', 'VX-CONSO',  'Actions',  'bourse',   0.15,  0.6,  62.30,  2,   0.030, -2.6],
+  ['vx-btc',   'VX-BTC',    'Crypto',   'continu7', 0.60,  1.1,  61200,  1,   0.080, -8.0],
 ];
 
 // ————— CINQ RÉGIMES, AU CALENDRIER FIXE —————
@@ -6449,6 +6475,60 @@ function engendrerExemple(id, debutMs, macro) {
     : Array.from({ length: 24 }, (x2, i2) => i2);
   return { t, o, h, l, c, v, n: t.length, heuresSession, ecartees: 0 };
 }
+
+// ————— LE CATALOGUE D'EXEMPLE, EN MÉMOIRE ET NULLE PART AILLEURS —————
+//
+// Le premier instant est une CONSTANTE, pas une horloge : une série qui glisserait avec
+// la date du jour ne serait pas reproductible, et un scan d'hier ne se relirait pas sur
+// les mêmes bougies.
+//
+// ELLE VIEILLIT, ET C'EST LE PRIX ASSUMÉ. Trois ans à partir d'ici, donc une dernière
+// bougie au 12 septembre 2026 : passé quarante-cinq jours de marché, la fiche affichera
+// « périmée » — le même mot que pour un export MT5 qu'on a oublié de refaire, et c'est
+// exactement ce qu'il faut apprendre à lire. La seule alternative serait de faire
+// glisser la fenêtre avec l'horloge, et alors un scan enregistré ne se relirait plus
+// jamais sur les mêmes bougies. La fenêtre fait partie de la version de la graine :
+// elle bouge quand la graine bouge, jamais entre deux.
+const DEBUT_EXEMPLES = Date.UTC(2023, 8, 13, 0, 0, 0);
+
+/** Les dix symboles affichés — le libellé humain de la table, en capitales. */
+const SYM_EXEMPLES = EXEMPLES.map(([, lib]) => lib);
+
+/** Un symbole vient-il du générateur, ou d'un fichier déposé ? */
+function estExemple(sym) { return SYM_EXEMPLES.includes(sym); }
+
+// Les séries vivent ici, engendrées au premier besoin et jamais écrites : ni par le
+// chemin qui garde les bougies déposées, ni par « Exporter mes données », ni dans la
+// jauge. Un compte porte des données, celles-ci n'en sont pas. Le cache est une variable
+// de module et non une clé de stockage — il disparaît avec l'onglet, ce qui est le but.
+let _exemplesFaits = null;
+function seriesExemple() {
+  if (_exemplesFaits) return _exemplesFaits;
+  const macro = facteurMacro(3 * 365 * 24);
+  _exemplesFaits = {};
+  for (const [id, lib] of EXEMPLES) _exemplesFaits[lib] = engendrerExemple(id, DEBUT_EXEMPLES, macro);
+  return _exemplesFaits;
+}
+
+/**
+ * LE RELEVÉ DE FRAIS DES DIX, calculé depuis la table — donc identique quel que soit le
+ * compte ouvert. C'est la correction de fond : un spread appartient à l'instrument.
+ */
+function baremeExemples() {
+  const table = {};
+  for (const [, lib, groupe, , , , prix0, digits, spreadPct, swapAn] of EXEMPLES) {
+    // `mt4: false` et `chiffre: true` : le relevé est DÉJÀ retraité, il n'attend aucun
+    // prix pour devenir lisible. Écrit en points, il serait resté « coût non chiffrable »
+    // jusqu'à ce qu'une conversion passe — et c'était le cas au premier essai.
+    table[lib] = { sym: lib, mt4: false, chiffre: true,
+      spread_pct: spreadPct, swapL: swapAn, swapS: swapAn * 0.5,
+      bid: prix0, notionnel: prix0, point: Math.pow(10, -digits), lot: 1, stopsLevel: 0,
+      desc: 'Série d\u2019exemple engendrée — ' + groupe, chemin: 'Séries d\u2019exemple',
+      devise: 'EUR' };
+  }
+  return table;
+}
+
 // ————— FIN DU GÉNÉRATEUR D'EXEMPLES —————
 
 const CAPITAL_DEFAUT = 10000; // exemple, pas un chiffre d'utilisateur
@@ -7810,10 +7890,16 @@ class Component extends DCLogic {
       "XPTUSD": "Prix de l'once de platine en dollars américains. Métal à la fois précieux et industriel, très dépendant de la demande automobile et d'une offre concentrée en Afrique du Sud.",
       "Copper": "Prix du cuivre, métal industriel de référence utilisé dans la construction, les réseaux électriques et l'électrification. Il sert souvent d'indicateur avancé de l'activité industrielle mondiale.",
       "BTCUSD": "Prix du bitcoin en dollars américains. Actif numérique à offre plafonnée à 21 millions d'unités, échangé 24 h/24, très volatil et sensible aux flux des produits cotés et aux conditions de liquidité.",
-      "DEMO-TECH": "Série de démonstration, entièrement fictive : une marche aléatoire calibrée pour ressembler à une valeur technologique volatile. Aucune conclusion de marché n'en découle.",
-      "DEMO-INDICE": "Série de démonstration, entièrement fictive : marche aléatoire calibrée pour ressembler à un indice large, avec une tendance lente et des creux modérés.",
-      "DEMO-BANQUE": "Série de démonstration, entièrement fictive : marche aléatoire calibrée pour ressembler à une valeur bancaire, cyclique et sensible aux chocs.",
-      "DEMO-CRYPTO": "Série de démonstration, entièrement fictive : marche aléatoire à très forte volatilité, façon crypto-actif. Sert uniquement à essayer l'outil."
+      "VX-EUR": "Série d'exemple engendrée, pas un marché réel. Calibrée comme une paire de devises majeure : 8 % de volatilité annuelle, séance continue du lundi au vendredi, faible sensibilité au facteur commun.",
+      "VX-YEN": "Série d'exemple engendrée, pas un marché réel. Une seconde paire de devises, un peu plus agitée que VX-EUR (10 % l'an) et un peu plus sensible au facteur commun.",
+      "VX-40": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un indice européen : 17 % de volatilité annuelle, séance de quatorze heures, forte sensibilité au facteur commun.",
+      "VX-500": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un grand indice large : 15 % l'an, et c'est elle qui porte exactement le facteur commun (bêta 1,0).",
+      "VX-2000": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un indice de petites capitalisations : 22 % l'an, et elle amplifie le facteur commun (bêta 1,2).",
+      "VX-OR": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un métal de réserve : 14 % l'an, et surtout un bêta NÉGATIF — c'est la seule famille qui va à contre-courant des neuf autres.",
+      "VX-CU": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un métal industriel : 22 % l'an, et une sensibilité franche au facteur commun.",
+      "VX-TECH": "Série d'exemple engendrée, pas un marché réel. La plus agitée des actions : 40 % de volatilité annuelle, sept heures de séance, et la plus forte sensibilité au facteur commun (bêta 1,4).",
+      "VX-CONSO": "Série d'exemple engendrée, pas un marché réel. Une action défensive : 15 % l'an et un bêta de 0,6 — elle encaisse moins que les autres.",
+      "VX-BTC": "Série d'exemple engendrée, pas un marché réel. Calibrée comme un crypto-actif : 60 % de volatilité annuelle et une séance ouverte sept jours sur sept."
   };
 
   NOMS = {
@@ -8003,10 +8089,16 @@ class Component extends DCLogic {
       "XPTUSD": "Platine (once)",
       "Copper": "Cuivre",
       "BTCUSD": "Bitcoin / Dollar US",
-      "DEMO-TECH": "Démo — valeur technologique",
-      "DEMO-INDICE": "Démo — indice",
-      "DEMO-BANQUE": "Démo — valeur bancaire",
-      "DEMO-CRYPTO": "Démo — crypto"
+      "VX-EUR": "Exemple — devise majeure",
+      "VX-YEN": "Exemple — seconde devise",
+      "VX-40": "Exemple — indice européen",
+      "VX-500": "Exemple — grand indice large",
+      "VX-2000": "Exemple — petites capitalisations",
+      "VX-OR": "Exemple — métal de réserve",
+      "VX-CU": "Exemple — métal industriel",
+      "VX-TECH": "Exemple — action technologique",
+      "VX-CONSO": "Exemple — action défensive",
+      "VX-BTC": "Exemple — crypto-actif"
   };
 
   // ————— LE SUFFIXE DE FLUX N'EST PLUS LE NOM D'UN COURTIER —————
@@ -8021,9 +8113,6 @@ class Component extends DCLogic {
   ALIAS_FLUX = { FXPRO: 'fxpro' }; // alias HISTORIQUE : des fichiers portent déjà ce nom
   /** Le suffixe à écrire dans un nom de fichier pour rattacher une série à ce compte. */
   suffixeFlux(cle) {
-    // le bac à sable ne reçoit jamais de vrai fichier : son libellé ferait un suffixe
-    // long et illisible pour rien
-    if (cle === 'demo') return 'DEMO';
     const brut = String(this.nomCourtier(cle) || '');
     // « Compte nº 2 » → C2 : court, sans accent, et il ne ressemble à aucun code de place
     const n = brut.match(/^Compte\s*n[\u00ba\u00b0o]?\s*(\d+)/i);
@@ -8152,7 +8241,7 @@ class Component extends DCLogic {
   }
   nomComplet(sym) {
     // Mémoïsé : appelé une fois par ligne de tableau, il refaisait à chaque rendu une
-    // recherche dans SEMIS, une résolution de flux et trois essais de clé. Sur un
+    // recherche dans la table d'exemple, une résolution de flux et trois essais de clé. Sur un
     // historique de plusieurs milliers de lignes, c'était une part visible du temps de
     // rendu pour un résultat qui ne change jamais pour un symbole donné.
     this._nomCache = this._nomCache || new Map();
@@ -8162,10 +8251,6 @@ class Component extends DCLogic {
     return v;
   }
   nomCompletCalc(sym) {
-    // les instruments engendrés du bac à sable portent leur libellé, sinon la cellule
-    // répétait le ticker : « DEMO-ENERGIE DEMO-ENERGIE »
-    const semis = this.SEMIS.find(([n]) => n === sym);
-    if (semis && semis[6]) return semis[6];
     const f = this.fluxDe(sym);
     const k = this.cleFiche(f.base);
     const nom = this.NOMS[sym] || this.NOMS[f.base] || this.NOMS[k] || f.base;
@@ -8188,7 +8273,7 @@ class Component extends DCLogic {
       : /^X(AU|PT|AG)USD$/.test(sym) || sym === 'Copper' ? 'Matière première'
       : sym === 'BTCUSD' ? 'Crypto-actif'
       : groupe === 'Indices' ? 'Indice boursier'
-      : sym.startsWith('DEMO-') ? 'Série de démonstration, fictive'
+      : estExemple(sym) ? 'Série d\u2019exemple engendrée'
       : 'Instrument';
     return { rubrique: place + ' · ' + groupe,
       texte: this.FICHES[sym] || this.FICHES[k] || 'Pas encore de description pour cet instrument.' };
@@ -8232,21 +8317,6 @@ GROUPES = {
   };
 
   get essai() { return !!this.props.essai; }
-  DEMO = ['DEMO-TECH', 'DEMO-INDICE', 'DEMO-BANQUE', 'DEMO-CRYPTO'];
-  // Instruments engendrés pour le compte de découverte : nom, prix de départ, volatilité
-  // horaire, dérive annuelle, spread en points, swap annuel. Aucun ne prétend représenter
-  // un marché réel — c'est un terrain d'essai, pas une source de vérité.
-  SEMIS_V = 2;
-  SEMIS = [
-    ['DEMO-AUTO', 62, 0.011, 0.06, 12, -3.4, 'Démo — automobile'],
-    ['DEMO-ENERGIE', 78, 0.014, -0.03, 16, -4.1, 'Démo — énergie'],
-    ['DEMO-SANTE', 145, 0.008, 0.09, 10, -2.8, 'Démo — santé'],
-    ['DEMO-LUXE', 610, 0.012, 0.12, 22, -3.0, 'Démo — luxe'],
-    ['DEMO-FOREX', 1.085, 0.004, 0.01, 8, -1.2, 'Démo — devise'],
-    ['DEMO-METAL', 2340, 0.009, 0.07, 26, -3.6, 'Démo — métal'],
-  ];
-  get SYM_DEMO() { return [...this.DEMO, ...this.SEMIS.map(([s]) => s)]; }
-
   // Le catalogue n'est plus une liste maison : c'est le relevé du compte actif, avec
   // les noms du courtier et ses propres familles (Forex\Major, Stocks\United States…).
   // Chaque compte parle donc la langue de son courtier, sans table d'alias.
@@ -8254,7 +8324,7 @@ GROUPES = {
     // filet de sécurité : toute ré-entrée pendant le calcul rend le catalogue statique
     // au lieu de relancer le calcul. Un cycle ici casse la page entière.
     if (this._grpEnCours) return this._grpCache || this.GROUPES;
-    if (this.essai) return { 'Données de démonstration': this.DEMO };
+    if (this.essai) return { 'Séries d\u2019exemple': [...SYM_EXEMPLES] };
     const cle = this.compteActif === 'tous' ? this.COURTIERS[0][0] : this.compteActif;
     const table = (this.baremes || {})[cle];
     const dep = this.state.deposes || [];
@@ -8458,8 +8528,8 @@ GROUPES = {
       // personnelles se ferme. La démo n'est jamais comptée.
       if (!this.state.deverrouille && !this.licenceActive) {
         const persos = new Set([...(this.state.deposes || []), ...ajoutes]
-          .filter((x) => !this.SYM_DEMO.includes(x)));
-        if (!this.SYM_DEMO.includes(sym) && !persos.has(sym) && persos.size >= this.PALIER_GRATUIT) {
+          .filter((x) => !estExemple(x)));
+        if (!estExemple(sym) && !persos.has(sym) && persos.size >= this.PALIER_GRATUIT) {
           const lm = this.state.lic;
           refuser(f.name, 'palier gratuit : ' + this.PALIER_GRATUIT
             + ' instruments personnels — '
@@ -8634,8 +8704,7 @@ GROUPES = {
     ['compte2', 'Compte nº 2', null],
     ['compte3', 'Compte nº 3', null],
     ['compte4', 'Compte nº 4', null],
-    ['compte5', 'Compte nº 5', null],
-    ['demo', 'Compte démo — données fictives', null]];
+    ['compte5', 'Compte nº 5', null]];
 
   // relevé MT4 complet d'un courtier : spread, swap long et court, description
   analyserBareme(txt) {
@@ -8810,7 +8879,6 @@ GROUPES = {
       } catch (e) { /* courtier sans relevé : la colonne reste vide */ }
     }
     this.completerMt4();
-    if (this.compteActif === 'demo') this.semerDecouverte();
     // l'inventaire d'abord : c'est lui qui pose le total détenu que la jauge affiche
     this.inventaireStockage(true).then(() => this.mesurerPlace());
     this.reclamerPersistance();
@@ -8997,7 +9065,18 @@ GROUPES = {
   // compte choisi en haut de page : « tous » = vue comparative, sinon un seul espace
   // par défaut, le compte nº 1 : c'est l'onglet coché au chargement, et cle() y range
   // déjà les données — l'état et l'écran disent donc la même chose
-  get compteActif() { return this.state.ongCourtier || this.COURTIERS[0][0]; }
+  // ————— UNE LISTE BLANCHE, PAS UNE LISTE NOIRE —————
+  // Le compte de découverte a disparu de la table, mais une session enregistrée le
+  // désigne peut-être encore : `ongCourtier: 'demo'` pointait alors sur un compte qui
+  // n'existe plus, et l'écran se vidait sans un mot — la panne exacte qu'on a déjà
+  // servie une fois en retirant une page sans garder la porte. On ne liste donc pas ce
+  // qui est mort, on valide ce qui est vivant : tout ce que la table ne porte pas
+  // retombe sur le compte nº 1.
+  get compteActif() {
+    const c = this.state.ongCourtier;
+    if (c === 'tous') return c;
+    return this.COURTIERS.some(([k]) => k === c) ? c : this.COURTIERS[0][0];
+  }
   CLE_NOMS = 'vena.noms.comptes.v1';
   lireNoms() {
     try { return JSON.parse(localStorage.getItem(this.CLE_NOMS) || '{}') || {}; } catch (e) { return {}; }
@@ -9011,8 +9090,6 @@ GROUPES = {
     if (this._configCache) return this._configCache;
     const out = {};
     for (const [c] of this.COURTIERS) {
-      // le compte de découverte porte toujours son propre relevé, semé au premier accès
-      if (c === 'demo') { out[c] = true; continue; }
       let ok = false;
       try {
         for (const esp of ['.perso', '.client', '.essai']) {
@@ -9299,7 +9376,6 @@ GROUPES = {
     const cle = this.compteActif;
     if (cle === 'tous') return 'vos comptes';
     const nom = this.nomCourtier(cle);
-    if (cle === 'demo') return nom;
     const i = this.COURTIERS.findIndex(([c]) => c === cle);
     return /^Compte/.test(nom) ? nom : 'nº ' + (i + 1) + ' — ' + nom;
   }
@@ -9361,7 +9437,6 @@ GROUPES = {
     coutLimite: 60, recherche: '', rechCourtier: '', symFiche: null,
   };
   changerCompte(cle) {
-    if (cle !== 'demo') this._semisFait = false;
     const tCharge = Date.now();
     // aucune écriture de scan tant que les lignes et la clé ne désignent pas le même compte
     this._enChangement = true;
@@ -9400,7 +9475,7 @@ GROUPES = {
       const scan = await this.lireScanComplet();
       if (scan) this.appliquerScan(this.reprendreScan(scan));
       else this.poserScan(null, null, { archives: [], scanVu: null, cumulSuppr: false, fiche: null, symOuvert: null, symTout: null });
-      const base = this.essai ? [...this.DEMO] : [...this.PORTEFEUILLE];
+      const base = this.essai ? [...SYM_EXEMPLES] : [...this.PORTEFEUILLE];
       this.setState({
         ...session,
         ...(reg ? { regimes: reg } : {}),
@@ -9431,7 +9506,7 @@ GROUPES = {
   // instrument que ce compte n'a pas. Une sélection vide est préférable à une sélection
   // silencieusement empruntée à un autre compte.
   universDuCompte(liste) {
-    const dispo = new Set([...this.SYMBOLES, ...this.SYM_DEMO]);
+    const dispo = new Set([...this.SYMBOLES, ...SYM_EXEMPLES]);
     const gardes = (liste || []).filter((x) => dispo.has(x));
     return gardes;
   }
@@ -9656,7 +9731,15 @@ GROUPES = {
     this._serieSet = null;
     this._memo = {};
   }
+  // Le relevé des dix séries d'exemple, calculé une fois depuis la table du générateur.
+  get BAREME_EXEMPLES() { return this._barEx || (this._barEx = baremeExemples()); }
+
   ligneCourtier(cle, symBrut) {
+    // ————— LES FRAIS D'UNE SÉRIE D'EXEMPLE NE DÉPENDENT PAS DE L'ONGLET OUVERT —————
+    // Le compte de découverte portait son propre relevé : le spread de la même série
+    // changeait selon le compte depuis lequel on la regardait, et disparaissait dès
+    // qu'on en ouvrait un autre. Un spread est une propriété de l'instrument.
+    if (estExemple(symBrut)) return this.BAREME_EXEMPLES[symBrut] || null;
     const tb = (this.baremes || {})[cle];
     if (!tb) return null;
     this._cacheL = this._cacheL || new Map();
@@ -10381,98 +10464,54 @@ GROUPES = {
       principal: liste.find((x) => x.cle === this.COURTIERS[0][0] && x.connu) || null };
   }
 
-  // ————— compte de découverte : bougies et relevé engendrés une seule fois —————
-  // Le visiteur doit pouvoir tout toucher — filtres, scans, portefeuille — sans fournir
-  // de fichier et sans jamais croiser ses propres données. Un compte à part le donne
-  // gratuitement : le cloisonnement par compte fait déjà l'étanchéité.
-  bougiesFictives(prixDep, volH, deriveAn, graine) {
-    // marche aléatoire déterministe : le même compte de découverte pour tout le monde,
-    // et un résultat reproductible d'une visite à l'autre
-    let x = graine || 1;
-    // Math.imul et pas `*` : le produit d'un entier de 31 bits par 1 103 515 245 dépasse
-    // les 53 bits exacts d'un double, les bits de poids faible sont perdus avant le ET
-    // binaire, et le générateur dégénère pour certaines graines. Mesuré : la série
-    // « énergie » partait de 78 pour finir à 5,6 millions, avec une dérive annoncée
-    // NÉGATIVE — l'exemple affichait alors + 2 800 R sur un instrument fictif, ce qui
-    // décrédibilise l'outil au lieu de le montrer. Avec le produit 32 bits exact, la
-    // même série finit à 131.
-    const rnd = () => { x = (Math.imul(x, 1103515245) + 12345) & 0x7fffffff; return x / 0x7fffffff; };
-    const N = 12000;                        // ~500 jours de bougies horaires
-    const t0 = Date.now() - N * 3600000;
-    const th = [], o = [], h = [], l = [], c = [], v = [];
-    let p = prixDep;
-    const derive = Math.pow(1 + deriveAn, 1 / (365 * 24)) - 1;
-    for (let i = 0; i < N; i++) {
-      const d = new Date(t0 + i * 3600000);
-      const jour = d.getUTCDay();
-      if (jour === 0 || jour === 6) continue;   // pas de séance le week-end
-      // deux tirages sommés : une marche un peu moins anguleuse qu'un tirage seul
-      const choc = (rnd() + rnd() - 1) * volH;
-      const ouv = p;
-      p = Math.max(prixDep * 0.05, p * (1 + derive + choc));
-      const hi = Math.max(ouv, p) * (1 + rnd() * volH * 0.4);
-      const lo = Math.min(ouv, p) * (1 - rnd() * volH * 0.4);
-      th.push(d.getTime()); o.push(ouv); h.push(hi); l.push(lo); c.push(p);
-      v.push(Math.round(800 + rnd() * 2400));
-    }
-    return { t: th, o, h, l, c, v, n: th.length, heuresSession: Array.from({ length: 24 }, (x, i2) => i2), ecartees: 0 };
-  }
-  async semerDecouverte() {
-    if (this.compteActif !== 'demo' || this._semisFait) return;
-    this._semisFait = true;
-    let idx = [];
-    try { idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]'); } catch (e) {}
-    // Les séries engendrées portent une version : quand le générateur change, celles
-    // déjà en mémoire sont refaites, sinon un compte ouvert avant garderait des prix
-    // aberrants pour toujours. Ne concerne QUE le compte de découverte — aucune bougie
-    // déposée par l'utilisateur n'est touchée.
-    let vSemis = 0;
-    try { vSemis = Number(localStorage.getItem(this.cle('vena.semis.v')) || 0); } catch (e) {}
-    const refaire = vSemis < this.SEMIS_V;
-    const manquants = this.SYM_DEMO.filter((x) => !idx.includes(x)
-      || (refaire && !this.DEMO.includes(x)));
-    // les quatre séries livrées se lisent, les six autres s'engendrent
-    for (const sym of manquants) {
-      let brut = null;
-      if (this.DEMO.includes(sym)) {
-        try { brut = await this.M.chargerCsv('demo/' + sym + '_H1.csv'); } catch (e) { brut = null; }
-      } else {
-        const s = this.SEMIS.find(([n]) => n === sym);
-        if (s) brut = this.bougiesFictives(s[1], s[2], s[3], sym.length * 7919 + s[1] * 31);
-      }
+  // ————— LES DIX SÉRIES D'EXEMPLE ENTRENT EN MÉMOIRE, PAS DANS UN COMPTE —————
+  //
+  // Ce qu'il y avait avant : un SIXIÈME COMPTE, « démo », avec ses bougies écrites dans
+  // le navigateur, son relevé de frais à lui, et un semis versionné pour les refaire
+  // quand le générateur changeait. Trois défauts, et aucun n'était cosmétique.
+  //
+  //   · il occupait une place de compte dans un sélecteur qui en offre cinq ;
+  //   · ses bougies pesaient dans la jauge et partaient dans « Exporter mes données »,
+  //     alors que personne n'a besoin de sauvegarder des séries reproductibles ;
+  //   · ses frais appartenaient au compte : le spread d'une série changeait selon
+  //     l'onglet depuis lequel on la regardait.
+  //
+  // Maintenant elles sont EN MÉMOIRE, visibles depuis n'importe quel compte, et leurs
+  // frais viennent de la table du générateur. Rien n'est écrit, donc rien n'est à
+  // migrer, à exporter, ni à peser — et « supprimer » n'a plus besoin d'être définitif.
+  poserExemples() {
+    if (!this.M) return;
+    const tout = seriesExemple();
+    this.dfs = this.dfs || {};
+    this.diag = this.diag || {};
+    this._couvEx = this._couvEx || {};
+    for (const sym of SYM_EXEMPLES) {
+      const brut = tout[sym];
       if (!brut) continue;
-      this.dfs = this.dfs || {};
-      this.diag = this.diag || {};
-      this.diag[sym] = { session: brut.heuresSession, ecartees: brut.ecartees || 0 };
+      this.diag[sym] = { session: brut.heuresSession, ecartees: 0 };
       this.dfs[sym] = this.M.decouper(brut, this.DEBUT);
-      await this.garderSerie(sym, brut);
-    }
-    // un relevé fictif, pour que les coûts et le classement aient un sens
-    const dejaLa = (this.baremes || {})['demo'];
-    if (!dejaLa || dejaLa.__semis !== 2) {
-      const table = {};
-      const frais = [
-        ...this.DEMO.map((s) => [s, 14, -3.2]),
-        ...this.SEMIS.map(([s, , , , pts, swap]) => [s, pts, swap]),
-      ];
-      for (const [sym, pts, swap] of frais) {
-        const df = (this.dfs || {})[sym];
-        const bid = df && df.c && df.c.length ? df.c[df.c.length - 1] : 100;
-        const point = bid > 500 ? 0.01 : (bid > 10 ? 0.001 : 0.00001);
-        table[sym] = { sym, mt4: true, spreadPts: pts, point, lot: 1, bid,
-          swapType: 2, swapLongLot: swap, swapShortLot: swap * 0.5,
-          desc: 'Instrument fictif du compte de découverte', chemin: 'Découverte', devise: 'EUR',
-          chiffre: false, spread_pct: 0, swapL: 0, swapS: 0, notionnel: 0 };
+      if (!this._couvEx[sym]) {
+        try { this._couvEx[sym] = this.couvertureSerie(brut) || undefined; } catch (e) {}
       }
-      table.__semis = 2;
-      await this.poserBareme('demo', table);
     }
-    try { localStorage.setItem(this.cle('vena.semis.v'), String(this.SEMIS_V)); } catch (e) {}
-    this.setState({ deposes: [...this.SYM_DEMO], seriesRev: (this.state.seriesRev || 0) + 1 },
-      // le catalogue du compte de découverte n'existe qu'ici : c'est le premier moment
-      // où l'instrument du Backtest peut être recadré sur lui
-      () => this.recadrerBtSym());
+    this.setState((p) => ({
+      deposes: [...new Set([...(p.deposes || []), ...SYM_EXEMPLES])],
+      seriesRev: (p.seriesRev || 0) + 1 }), () => this.recadrerBtSym());
   }
+
+  // Les retirer de la vue. Rien n'est effacé — il n'y a rien à effacer — donc le geste
+  // se défait en reposant les dix. C'est ce qui distingue une série engendrée d'un
+  // fichier déposé : la seconde se supprime pour de bon, la première se masque.
+  retirerExemples() {
+    for (const sym of SYM_EXEMPLES) {
+      if (this.dfs) delete this.dfs[sym];
+      if (this.diag) delete this.diag[sym];
+    }
+    this.setState((p) => ({
+      deposes: (p.deposes || []).filter((x) => !estExemple(x)),
+      seriesRev: (p.seriesRev || 0) + 1 }), () => this.recadrerBtSym());
+  }
+
   // ————— L'AIDE —————
   //
   // Rien à rédiger : le contenu existe déjà, dans les attributs `title=` de la page.
@@ -10647,20 +10686,26 @@ GROUPES = {
     this.dfs = this.dfs || {};
     this.diag = this.diag || {};
     if (this.dfs[sym] !== undefined) return this.dfs[sym];
-    // AUCUNE série n'est livrée avec l'application, hors démonstration. Lire un fichier
-    // de `data/` reviendrait à publier l'historique d'un compte réel avec le logiciel —
-    // et à redistribuer des données sous licence courtier. Une série manquante se
-    // dépose, elle ne se précharge pas.
-    if (!this.DEMO.includes(sym)) { this.dfs[sym] = null; return null; }
-    try {
-      const brut = await this.M.chargerCsv('demo/' + sym + '_H1.csv');
-      this.diag[sym] = { session: brut.heuresSession, ecartees: brut.ecartees };
-      this.dfs[sym] = this.M.decouper(brut, this.DEBUT);
-    } catch (e) { this.dfs[sym] = null; }
-    // une série fraîchement lue donne un prix : elle peut débloquer la conversion des
-    // spreads d'un instrument que le catalogue du compte ne porte pas
-    if (this.dfs[sym]) this.completerMt4();
-    return this.dfs[sym];
+    // AUCUNE série n'est livrée avec l'application — pas même celles d'exemple, qui
+    // sont ENGENDRÉES. Lire un fichier de `data/` reviendrait à publier l'historique
+    // d'un compte réel avec le logiciel, et à redistribuer des données sous licence
+    // courtier. Une série manquante se dépose, elle ne se précharge pas.
+    //
+    // LES DIX SÉRIES D'EXEMPLE SONT LA SEULE EXCEPTION, et elles ne viennent d'aucun
+    // fichier : elles s'engendrent ici même, à la demande, et ne sont jamais écrites.
+    if (estExemple(sym)) {
+      const brut = seriesExemple()[sym];
+      if (brut) {
+        this.diag[sym] = { session: brut.heuresSession, ecartees: 0 };
+        this.dfs[sym] = this.M.decouper(brut, this.DEBUT);
+        // une série fraîchement lue donne un prix : elle peut débloquer la conversion
+        // des spreads d'un instrument que le catalogue du compte ne porte pas
+        this.completerMt4();
+        return this.dfs[sym];
+      }
+    }
+    this.dfs[sym] = null;
+    return null;
   }
 
   // base de calcul : H1 brut, ou UT supérieure reconstruite par resampling
@@ -11221,7 +11266,7 @@ GROUPES = {
   };
   // vrai quand il y a quelque chose à perdre et que rien ne le protège
   avertirSansSauvegarde() {
-    if (this.essai || this.compteActif === 'demo') return false;
+    if (this.essai) return false;
     if (this.handleAuto && !this.state.autoAttente) return false;
     const aPerdre = (this.lignesScan || []).length > 0
       || ((this.state.deposes || []).length > 0)
@@ -11407,7 +11452,7 @@ GROUPES = {
     if (!this.state.btSym || !this.SYMBOLES.includes(this.state.btSym)) {
       const cat = this.SYMBOLES;
       this.setState({
-        btSym: this.essai ? this.DEMO[0]
+        btSym: this.essai ? SYM_EXEMPLES[0]
           : (cat.find((x) => this.aSerieChargee(x)) || cat[0] || 'AAPL.US'),
         univers: this.state.univers,
       });
@@ -11444,7 +11489,7 @@ GROUPES = {
       }
     } catch (e) {}
     await this.charger(this.state.btSym);
-    const base = this.essai ? [...this.DEMO] : [...this.PORTEFEUILLE];
+    const base = this.essai ? [...SYM_EXEMPLES] : [...this.PORTEFEUILLE];
     const sauve = this.lirePf();
     const pfs = (sauve && sauve.pfs) ? sauve.pfs : [{ nom: 'Portefeuille principal', syms: base }];
     const favoris = sauve && sauve.favoris ? sauve.favoris : base;
@@ -12033,7 +12078,7 @@ GROUPES = {
   get champsSession() {
     return [...this.REGLAGES, '_grilleV2', '_penteV3', '_trailV4', '_echV3', 'ouvH1', 'ouvH2', 'ouvH3', 'ouvH4', 'ouvMt5', 'ouvSymb', 'ouvTele', 'ouvMarc',
       'ouvVali', 'ouvCout', 'ouvSecu', 'ouvGril', 'ouvFlux', 'triCout', 'tab', 'vueLecture',
-      'filtreBougies', 'familleFiltre', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
+      'filtreBougies', 'filtreProv', 'exemplesCaches', 'familleFiltre', 'aTele', 'gPeriodes', 'gSls', 'gRrs', 'tradesMin', 'segMin',
       // 'univers' n'est PAS restauré : la liste d'instruments repart vide à chaque
       // ouverture, pour qu'un scan ne reprenne jamais une sélection oubliée
       'vue', 'derniereVue', 'modeTable', 'ouvLot', 'sonScan', 'tri', 'ddMax', 'winMin', 'oosMin', 'zoneMarche',
@@ -15496,7 +15541,7 @@ GROUPES = {
     // en essai, l'univers se limite strictement aux séries de démonstration :
     // aucune requête vers data/, le site est publiable sans les exports du courtier
     const carte = this.secteursDeZone(z);
-    const actions = this.essai ? this.DEMO : Object.keys(carte);
+    const actions = this.essai ? [...SYM_EXEMPLES] : Object.keys(carte);
     const indices = this.essai ? [] : this.ZONES[z].indices;
     const mesures = [];
     // les séries complètes, gardées le temps du calcul : elles servent à la frise du
@@ -16193,12 +16238,24 @@ GROUPES = {
   // enregistrée avant cette version), et se range dans un petit index à part : la liste
   // affiche la barre de cent vingt-sept instruments, elle ne peut pas ouvrir cent
   // vingt-sept séries pour cela.
+  // ————— LA COUVERTURE DES SÉRIES D'EXEMPLE SE CALCULE, ELLE NE S'ENREGISTRE PAS —————
+  //
+  // Elle se lit en surcouche et se retire à l'écriture. Sans la première moitié, les dix
+  // séries affichaient « couverture non relevée » à jamais : la couverture ne se relève
+  // qu'au chargement d'une série DÉPOSÉE, et elles ne le sont pas. Sans la seconde, elles
+  // se seraient écrites dans le stockage au premier relevé d'une vraie série — la carte
+  // lue est celle qu'on réécrit — et des données engendrées auraient fini dans la
+  // sauvegarde de l'utilisateur, ce que tout ce chantier cherche à éviter.
   lireCouv() {
-    try { return JSON.parse(localStorage.getItem(this.cle(this.CLE_COUV)) || '{}') || {}; }
-    catch (e) { return {}; }
+    let m = {};
+    try { m = JSON.parse(localStorage.getItem(this.cle(this.CLE_COUV)) || '{}') || {}; }
+    catch (e) { m = {}; }
+    return Object.assign({}, this._couvEx || {}, m);
   }
   ecrireCouv(m) {
-    try { localStorage.setItem(this.cle(this.CLE_COUV), JSON.stringify(m || {})); } catch (e) {}
+    const propre = {};
+    for (const k of Object.keys(m || {})) if (!estExemple(k)) propre[k] = m[k];
+    try { localStorage.setItem(this.cle(this.CLE_COUV), JSON.stringify(propre)); } catch (e) {}
   }
   noterCouv(sym, couv) {
     const m = this.lireCouv();
@@ -16240,6 +16297,60 @@ GROUPES = {
   // Les séries déposées avant le cloisonnement vivaient dans l'espace commun : le
   // compte nº 1 les adopte une fois, index et blocs IndexedDB compris. Sans cela,
   // sélectionner son propre compte principal viderait le plan de travail.
+  // ————— A5 : LE COMPTE DE DÉCOUVERTE REND SA PLACE —————
+  //
+  // C'EST LE SEUL GESTE IRRÉVERSIBLE DE L'OPÉRATION, et il n'efface que des données
+  // ENGENDRÉES : les bougies du compte « démo » venaient d'une marche aléatoire à graine
+  // fixe, son relevé de frais d'un littéral. Rien de ce qu'un utilisateur a produit
+  // n'est touché — ni ses dépôts, ni ses scans, ni ses portefeuilles, ni son journal.
+  // La règle du dépôt (« rien n'est supprimé ») protège le travail de quelqu'un ; elle
+  // ne demande pas de garder pour toujours quelques mégaoctets qu'un générateur refait
+  // en une seconde, sur un compte qui n'existe plus et vers lequel aucune porte ne mène.
+  //
+  // ELLE EST IDEMPOTENTE, par une MARQUE et non par l'absence de clés : une migration
+  // qui se juge à « il ne reste rien à faire » repart à zéro à chaque chargement, et
+  // rebalaye tout le stockage pour rien. La marque est GLOBALE — les clés du compte
+  // démo portent leur espace dans leur nom, donc un seul passage les voit toutes.
+  //
+  // ELLE NE SUPPRIME QUE CE QUI SE TERMINE PAR « .demo ». Un suffixe, jamais un
+  // fragment : `.demo` en fin de clé, ou `.demo|` pour les blocs de bougies. Chercher
+  // « demo » n'importe où aurait emporté la clé d'un utilisateur qui aurait nommé un
+  // compte « demo-perso », et ce genre de faute ne se voit qu'après.
+  MARQUE_SANS_DEMO = 'vena.migr.demo.v1';
+  async retirerCompteDemo() {
+    try { if (localStorage.getItem(this.MARQUE_SANS_DEMO)) return 0; } catch (e) { return 0; }
+    let octets = 0;
+    // 1. les clés simples du compte démo, tous espaces confondus
+    const aJeter = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!estCleApp(k)) continue;
+        if (/\.demo$/.test(k)) aJeter.push(k);
+      }
+    } catch (e) { return 0; }
+    // 2. les index de séries, lus AVANT d'être retirés : sans eux on ne saurait plus
+    //    quels blocs de bougies aller chercher, et ils resteraient orphelins pour
+    //    toujours — la panne exacte qui a laissé 147 séries et 97 Mo derrière elle.
+    const blocs = [];
+    for (const k of aJeter) {
+      if (!k.startsWith(this.CLE_SERIES)) continue;
+      try {
+        for (const sym of JSON.parse(localStorage.getItem(k) || '[]')) blocs.push(k + '|' + sym);
+      } catch (e) {}
+    }
+    // 3. les bougies d'abord, l'index ensuite
+    for (const cle of blocs) await this.grosSet(cle, null);
+    // 4. puis les clés simples
+    for (const k of aJeter) {
+      try { octets += (localStorage.getItem(k) || '').length; localStorage.removeItem(k); } catch (e) {}
+    }
+    // 5. la marque EN DERNIER : une interruption au milieu laisse la marque absente, le
+    //    chargement suivant reprend, et ce qui est déjà parti ne se retrouve pas deux fois
+    try { localStorage.setItem(this.MARQUE_SANS_DEMO, String(Date.now())); } catch (e) {}
+    return blocs.length + aJeter.length;
+  }
+
   async migrerSeriesCommunes() {
     if (this.compteActif !== 'tous' && this.compteActif !== this.COURTIERS[0][0]) return;
     const kCompte = this.cle(this.CLE_SERIES), kCommun = this.cleGlobale(this.CLE_SERIES);
@@ -17248,11 +17359,15 @@ GROUPES = {
     return suite;
   }
   async reprendreSeries() {
+    await this.retirerCompteDemo();
     await this.migrerSeriesCommunes();
     await this.reconcilierSeries();
     await this.purgerDoublonsSeries();
     let idx = [];
     try { idx = JSON.parse(localStorage.getItem(this.cle(this.CLE_SERIES)) || '[]'); } catch (e) {}
+    // Les dix séries d'exemple entrent AVANT la sortie anticipée : un compte sans
+    // aucune série déposée est précisément celui qui en a le plus besoin.
+    if (!this.state.exemplesCaches) this.poserExemples();
     if (!idx.length || !this.M) return 0;
     const couvVues = this.lireCouv();
     let couvNeuves = false;
@@ -17371,9 +17486,9 @@ GROUPES = {
   // UNE FOIS. Refusée, elle ne revient pas : c'est le bandeau permanent qui prend le
   // relais, et lui ne bloque rien.
   CLE_FILET = 'vena.filet.propose.v1';
-  // Des données réelles : au moins un instrument déposé qui n'est pas une démonstration.
+  // Des données réelles : au moins un instrument déposé qui ne vient pas du générateur.
   aDonneesReelles() {
-    return (this.state.deposes || []).some((x) => !this.SYM_DEMO.includes(x));
+    return (this.state.deposes || []).some((x) => !estExemple(x));
   }
   // Un filet en place : le fichier sur disque, OU la protection accordée par le
   // navigateur. L'un des deux suffit — pas de rappel de zèle.
@@ -18077,7 +18192,7 @@ GROUPES = {
   calcMarche() {
     if (!this.M || !this.dfs) return;
     const M = this.M;
-    const liste = this.symsSuivis.length ? this.symsSuivis : (this.essai ? this.DEMO : this.PORTEFEUILLE);
+    const liste = this.symsSuivis.length ? this.symsSuivis : (this.essai ? SYM_EXEMPLES : this.PORTEFEUILLE);
     // les indicateurs journaliers ne bougent pas entre deux clics : on les garde en cache
     this._cacheM = this._cacheM || new Map();
     const rows = liste.map((sym) => {
@@ -18999,8 +19114,7 @@ GROUPES = {
         // le second chiffre n'a de sens que si un relevé de courtier est chargé :
         // sinon c'est le catalogue de démonstration, et « 10 avec une clé » sur une
         // page de vente est un chiffre faux — « tous » est vrai pour tout le monde
-        const nCat = (this.compteActif !== 'demo' && (this.baremes || {})[this.compteActif])
-          ? this.SYMBOLES.length : 0;
+        const nCat = (this.baremes || {})[this.compteActif] ? this.SYMBOLES.length : 0;
         return {
           clsEntreeCle: 'hb' + (surCle ? ' on' : ''),
           clsEntreeCompte: 'hb' + (surCle ? '' : ' on'),
@@ -19161,13 +19275,8 @@ GROUPES = {
             : '',
           fermerAchatMsg: () => this.setState({ achatMsg: null }) };
       })(),
-      // la présentation porte déjà son propre « Essayer sans rien fournir »
-      aBoutonDemo: tab !== 'accueil',
-      // pleine encre quand on y est, voilé sinon : même grammaire que les onglets de nav
-      voileDemo: this.compteActif === 'demo' ? '1' : '.62',
       // le compte de découverte est un compte comme les autres : rien de spécial à
       // faire, il suffit d'y aller
-      ouvrirDecouverte: () => this.setState({ tab: 'court' }, () => { this.ecrireSession(); this.changerCompte('demo'); }),
       // Intendance dans un tiroir : une seule pastille d'état dans l'en-tête remplace
       // quatre bandeaux permanents au-dessus du contenu de travail.
       aBoutonTiroir: tab !== 'accueil',
@@ -19306,7 +19415,7 @@ GROUPES = {
         // parle d'un travail en cours à quelqu'un qui n'a pas encore commencé —
         // et il occupait le bas de la page de vente.
         const montrer = tab !== 'accueil'
-          && !auto && aPerdre && !this.essai && this.compteActif !== 'demo';
+          && !auto && aPerdre && !this.essai;
         const integre = this.dansIframe();
         const info = this.lireSauvInfo();
         const t = Math.max(info.t, s.sauvDate || 0);
@@ -19699,7 +19808,7 @@ GROUPES = {
         if (this.state.deverrouille || this.licenceActive) {
           return { aPalierCompteur: false, palierCompteur: '', palierCouleur: '' };
         }
-        const persos = new Set((s.deposes || []).filter((x) => !this.SYM_DEMO.includes(x)));
+        const persos = new Set((s.deposes || []).filter((x) => !estExemple(x)));
         const plein2 = persos.size >= this.PALIER_GRATUIT;
         return { aPalierCompteur: true,
           palierCompteur: Math.min(persos.size, this.PALIER_GRATUIT) + ' sur '
@@ -22268,7 +22377,7 @@ GROUPES = {
         // les instruments que VOUS suivez : ils portent l'étoile des secteurs et peuplent
         // le tableau nommé
         const suivis = new Set(this.symsSuivis.length ? this.symsSuivis
-          : (this.essai ? this.SYM_DEMO : this.PORTEFEUILLE));
+          : (this.essai ? SYM_EXEMPLES : this.PORTEFEUILLE));
         const clesV = new Set(this.normValides(s.valides).map((x) => x.ticker || x.sym));
         const scannes = new Set((this.lignesScan || []).map((x) => x.sym));
         const etatLigne = (sym) => clesV.has(sym)
@@ -24955,6 +25064,51 @@ GROUPES = {
       setFbTous: () => this.setState({ filtreBougies: 'tous', coutLimite: 60 }, () => this.ecrireSession()),
       setFbAvec: () => this.setState({ filtreBougies: 'avec', coutLimite: 60 }, () => this.ecrireSession()),
       setFbSans: () => this.setState({ filtreBougies: 'sans', coutLimite: 60 }, () => this.ecrireSession()),
+      // ————— C : D'OÙ VIENT CETTE LIGNE —————
+      // Dix séries engendrées au milieu de deux mille instruments de courtier se
+      // confondent avec eux : la colonne « Groupe » les nomme, mais il faut lire chaque
+      // ligne. Trois boutons répondent d'un coup, et le décompte dit ce qu'on perd.
+      ...(() => {
+        const dep = (s.deposes || []);
+        const nVous = dep.filter((x) => !estExemple(x)).length;
+        const nEx = dep.filter((x) => estExemple(x)).length;
+        const pv = s.filtreProv || 'tous';
+        return {
+          provTous: pv === 'tous',
+          provVous: pv === 'vous',
+          provEx: pv === 'exemple',
+          provVousTxt: 'Les vôtres' + (nVous ? ' (' + nVous + ')' : ''),
+          provExTxt: 'Séries d\u2019exemple' + (nEx ? ' (' + nEx + ')' : ''),
+          provAide: 'Les vôtres viennent de vos fichiers MT5. Les séries d\u2019exemple sont '
+            + 'engendrées par Véna : elles ne pèsent rien dans ce navigateur, ne partent pas '
+            + 'dans vos sauvegardes, et ne comptent pas dans le palier gratuit. Sur ces trois '
+            + 'ans, cet univers d\u2019exemple MONTE — un résultat flatteur y vient facilement, '
+            + 'et il ne dira rien de votre idée.',
+          setProvTous: () => this.setState({ filtreProv: 'tous', coutLimite: 60 }, () => this.ecrireSession()),
+          setProvVous: () => this.setState({ filtreProv: 'vous', coutLimite: 60 }, () => this.ecrireSession()),
+          setProvEx: () => this.setState({ filtreProv: 'exemple', coutLimite: 60 }, () => this.ecrireSession()),
+        };
+      })(),
+      // ————— D : L'INTERRUPTEUR, ET POURQUOI CE N'EST PAS UN BOUTON « SUPPRIMER » —————
+      // Rien n'est écrit, donc rien ne peut être effacé : le geste ne peut être que
+      // réversible, et l'interface doit le dire plutôt que de promettre une suppression
+      // qu'elle ne fait pas. Seul le CHOIX est enregistré — un booléen dans la session,
+      // pas les séries.
+      exemplesCaches: !!s.exemplesCaches,
+      masqueExTxt: s.exemplesCaches
+        ? 'séries d\u2019exemple masquées — décochez pour les revoir'
+        : 'masquer les dix séries d\u2019exemple',
+      masqueExAide: 'Elles sont engendrées à chaque ouverture et ne pèsent aucun octet : '
+        + 'les masquer ne libère rien, et les revoir ne coûte rien non plus. '
+        + 'Masquez-les quand vos propres instruments sont en place et que vous ne voulez '
+        + 'plus les voir dans vos listes.',
+      basculerExemples: () => {
+        const cache = !this.state.exemplesCaches;
+        this.setState({ exemplesCaches: cache, coutLimite: 60 }, () => {
+          this.ecrireSession();
+          if (cache) this.retirerExemples(); else this.poserExemples();
+        });
+      },
       triMoins: (s.triCout || 'moins') === 'moins',
       triCher: s.triCout === 'cher',
       setTriMoins: () => this.setState({ triCout: 'moins', coutLimite: 60 }, () => this.ecrireSession()),
@@ -25038,10 +25192,7 @@ GROUPES = {
           nomSaisi: this.compteActif === 'tous' ? '' : perso,
           renommer: (e) => this.renommerCompte(cle, e.target.value),
           aRenommer: this.compteActif !== 'tous',
-          // le bac à sable ne se renomme pas : il porte toujours son propre relevé, donc
-          // conf['demo'] est vrai et la condition l'écarte déjà — on le redit pour que
-          // personne ne « simplifie » la condition en oubliant pourquoi elle tient
-          aInviteNom: this.compteActif !== 'tous' && cle !== 'demo' && !perso && !configures[cle],
+          aInviteNom: this.compteActif !== 'tous' && !perso && !configures[cle],
           placeholderNom: this.nomCourtier(cle),
           suffixeCompte: this.suffixeFlux(cle),
           // ————— LE BANDEAU DE COMPTE VIDE —————
@@ -25055,7 +25206,17 @@ GROUPES = {
           // présentes, démonstration comprise : dès qu'on ouvre les exemples, le bandeau
           // s'efface tout seul. Pas de drapeau « déjà vu » à ranger quelque part — un
           // état qui se déduit ne se désynchronise pas.
-          aCompteVide: !(this.state.deposes || []).length,
+          // LES SÉRIES D'EXEMPLE NE SONT PAS UN DÉPÔT. Elles sont dans `deposes` parce
+      // qu'elles sont utilisables, mais le bandeau d'arrivée doit dire « vous n'avez
+      // encore rien déposé » : les compter le ferait disparaître au premier chargement,
+      // et la seule porte visible vers le champ de clé avec lui.
+      aCompteVide: !(this.state.deposes || []).filter((x) => !estExemple(x)).length,
+      // Les dix séries sont DÉJÀ dans la liste — elles n'ont plus de compte à ouvrir.
+      // Le bouton ne change donc pas d'espace, il filtre la liste sur elles : c'est la
+      // différence entre « allez ailleurs » et « c'est là, regardez ».
+      voirLesExemples: () => this.setState({ tab: 'court', vue: 'courtiers',
+        recherche: 'VX-', exemplesCaches: false },
+        () => { this.ecrireSession(); this.poserExemples(); }),
           // ————— LA SECONDE PORTE : OÙ L'ON POSE SA CLÉ EN ARRIVANT —————
           //
           // En retirant la page de présentation, j'ai retiré la seule place où « J'ai
@@ -25091,8 +25252,6 @@ GROUPES = {
         const conf = this.comptesConfigures();
         const nomDe = (cle, i) => {
           const n = this.nomCourtier(cle);
-          // le bac à sable n'est pas un compte de courtier de plus
-          if (cle === 'demo') return n;
           return /^Compte/.test(n) ? n : 'Compte n\u00ba ' + (i + 1) + ' — ' + n;
         };
         // `map(([cle], i) => …)` déstructure : une ligne de COURTIERS qui ne serait pas
@@ -25128,9 +25287,17 @@ GROUPES = {
           // panne SILENCIEUSE — un menu qui a l'air vide — en panne VISIBLE : il ne
           // reste alors que « + Ajouter un compte… », ce que personne ne prend pour un
           // état normal. Une option sans valeur, elle, ne peut rien sélectionner.
-          comptesTete: [...ouverts.map(([cle, i]) => [cle, nomDe(cle, i) + (conf[cle] ? '' : ' — aucun relevé')]),
-            ...(ouverts.some(([c]) => c === 'demo') ? [] : [['demo', this.nomCourtier('demo')]])]
-            .filter(([cle, nom]) => cle && nom)
+          // LE DERNIER RECOURS EST UN LITTÉRAL, et il vient de disparaître une fois.
+          // Il était porté par l'entrée du compte de démonstration, ajoutée d'office :
+          // quand aucune ligne de COURTIERS n'était lisible, elle seule survivait et le
+          // menu restait utilisable. En retirant ce compte, on a retiré le filet sans
+          // s'en apercevoir — le test l'a dit. Il est donc écrit pour lui-même : si
+          // rien n'est lisible, le compte nº 1 entre quand même, nommé en clair.
+          comptesTete: (() => {
+            const base = ouverts.map(([cle, i]) => [cle, nomDe(cle, i) + (conf[cle] ? '' : ' — aucun relevé')])
+              .filter(([cle, nom]) => cle && nom);
+            return base.length ? base : [['fxpro', 'Compte n\u00ba 1']];
+          })()
             .map(([cle, nom]) => ({ cle, nom,
               fond: cle === this.compteActif ? 'var(--color-accent-100)' : 'transparent',
               choisir: () => {
@@ -25142,7 +25309,13 @@ GROUPES = {
           compteTeteTxt: (() => {
             const liste = [...ouverts.map(([cle, i]) => [cle, nomDe(cle, i)])];
             const a = liste.find(([c]) => c === this.compteActif);
-            return a ? a[1] : (liste[0] ? liste[0][1] : this.nomCourtier('demo'));
+            if (a) return a[1];
+            if (liste[0]) return liste[0][1];
+            // COURTIERS illisible : on ne va PAS y chercher une clé pour la nommer —
+            // c'est exactement là que le producteur jetait, et un rendu qui jette vide
+            // la page entière au lieu de dégrader une ligne.
+            const t0 = Array.isArray(this.COURTIERS) ? this.COURTIERS[0] : null;
+            return Array.isArray(t0) && t0[0] ? this.nomCourtier(t0[0]) : 'Compte n\u00ba 1';
           })(),
           chevronComptes: s.menuComptes ? '\u25be' : '\u25b8',
           changerDeCompte: (e) => {
@@ -25318,6 +25491,9 @@ GROUPES = {
           if (q && !(sym.toLowerCase().includes(q)
             || this.nomComplet(sym).toLowerCase().includes(q))) return false;
           if (fam && famDe.get(sym) !== fam) return false;
+          const pv = s.filtreProv || 'tous';
+          if (pv === 'vous' && estExemple(sym)) return false;
+          if (pv === 'exemple' && !estExemple(sym)) return false;
           if (s.masquerChers && !cochesAv.has(sym)) {
             const o = ordinal.get(sym);
             if (o !== null && o > seuilCher) return false;

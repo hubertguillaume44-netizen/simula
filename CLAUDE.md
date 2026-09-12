@@ -262,26 +262,87 @@ où les tendances meurent avant la fin — exactement ce qu'un balayage de crois
 moyennes est censé trouver, ou ne pas trouver. Le critère a l'air d'un cadrage, c'est un
 réglage du marché.
 
+## Le compte de découverte n'existe plus
+
+Il était le **sixième compte** d'un sélecteur qui en offre cinq, avec ses bougies écrites
+dans le navigateur, son relevé de frais à lui et un semis versionné. Trois défauts, et
+aucun n'était cosmétique : il occupait une place de compte ; ses bougies pesaient dans la
+jauge et partaient dans « Exporter mes données » ; et **ses frais appartenaient au
+compte**, si bien que le spread d'une série changeait selon l'onglet depuis lequel on la
+regardait.
+
+Les dix séries d'exemple vivent maintenant **en mémoire**, visibles depuis n'importe quel
+compte, et leur relevé vient de la table du générateur — deux colonnes, spread en pour-cent
+du notionnel et swap annuel. Écrit en points, il restait « coût non chiffrable » jusqu'à ce
+qu'une conversion de prix passe : le relevé d'exemple est donc marqué `mt4: false` et
+`chiffre: true`, c'est-à-dire **déjà retraité**.
+
+**`compteActif` est une liste blanche.** Une session enregistrée désigne peut-être encore
+`ongCourtier: 'demo'`. Une liste noire ne protège que du cas qu'on a pensé ; la prochaine
+clé morte viderait l'écran sans un mot, exactement comme le jour où la page d'accueil a été
+retirée sans garder la porte.
+
+**La couverture des séries d'exemple se calcule et ne s'enregistre pas.** Elle est lue en
+surcouche de la carte et **retirée à l'écriture** : la carte lue est celle qu'on réécrit,
+donc sans ce filtre elles se seraient enregistrées au premier relevé d'une vraie série.
+
+**`retirerCompteDemo()` est le seul geste irréversible de l'opération**, et il n'efface que
+des données engendrées. Il est idempotent **par une marque** — juger à « il ne reste rien à
+faire » rebalaie tout le stockage à chaque chargement. Il ne prend que les clés se
+terminant par `.demo` : un suffixe, jamais un fragment, sans quoi un compte que l'utilisateur
+aurait nommé « demo-perso » partirait avec. Et il lit les index de séries **avant** de les
+effacer, sinon leurs blocs de bougies restent inatteignables — la panne qui a déjà laissé
+147 séries et 97 Mo derrière elle.
+
+**Masquer n'est pas supprimer.** L'interrupteur du tiroir retire les dix de la vue et les
+repose ; il n'efface rien, parce qu'il n'y a rien d'écrit. Un bouton « supprimer » mentirait
+sur ce qu'il fait. Seul le choix est enregistré, un booléen dans la session.
+
+**Le filtre de provenance est une deuxième question**, pas une variante de « avec bougies » :
+l'une demande ce qui est mesurable, l'autre d'où ça vient. Les fondre en un segment rendrait
+impossible « mes instruments qui ont des bougies », qui est la vue de travail.
+
+**Ni le palier gratuit ni le bandeau d'arrivée ne les comptent.** Le premier fermerait la
+mesure à quelqu'un qui n'a rien déposé ; le second disparaîtrait au premier chargement, et
+avec lui la seule porte visible vers le champ de clé.
+
+## Cet univers d'exemple monte, et l'application le dit
+
+Sur ces trois ans, la médiane des dix familles finit à **+39 %**, quatre au-dessus de
++100 %. Un balayage y trouvera facilement un résultat flatteur, et l'utilisateur
+l'attribuera à son idée.
+
+**Ce n'est pas un défaut de conception, et ça ne se corrige pas dans les données.** La
+dérive attendue par la table des régimes vaut 14,3 % × σ — négligeable devant σ√3. C'est un
+tirage du facteur commun, pas un biais : rééquilibrer la table des dérives serait un remède
+faux sur une cause inexistante, et rechoisir la graine un réglage du marché (voir plus
+haut).
+
+**Ce qui reste est un devoir de dire.** La phrase vit à deux endroits de l'interface, là où
+les séries s'expliquent — le bandeau des données de démonstration et l'infobulle du filtre
+de provenance. C'est l'éthique de l'outil : **il mesure, il ne promet pas.** Et c'est moins
+cher que n'importe quelle correction de données.
+
 **On n'écrit rien.** Elles vivent en mémoire, engendrées à la demande, une famille à la
 fois. Jamais dans le stockage de l'utilisateur, jamais dans « Exporter mes données »,
 jamais dans la jauge. C'est ce qui les distingue d'un compte : un compte porte des
 données, celles-ci n'en sont pas.
 
-Les dix familles, avec leur séance, leur volatilité annuelle et leur bêta au facteur
-macro commun :
+Les dix familles, avec leur séance, leur volatilité annuelle, leur bêta au facteur macro
+commun, et leurs frais — qui suivent l'instrument, jamais le compte :
 
-| Ticker | Groupe | Séance | Vol./an | β |
-|---|---|---|---|---|
-| VX-EUR | Devises | 24 h, lun–ven | 8 % | 0,3 |
-| VX-YEN | Devises | 24 h, lun–ven | 10 % | 0,4 |
-| VX-40 | Indices | 14 h, lun–ven | 17 % | 0,9 |
-| VX-500 | Indices | 23 h, lun–ven | 15 % | 1,0 |
-| VX-2000 | Indices | 23 h, lun–ven | 22 % | 1,2 |
-| VX-OR | Métaux | 23 h, lun–ven | 14 % | −0,2 |
-| VX-CU | Métaux | 23 h, lun–ven | 22 % | 0,8 |
-| VX-TECH | Actions | 7 h, jours de bourse | 40 % | 1,4 |
-| VX-CONSO | Actions | 7 h, jours de bourse | 15 % | 0,6 |
-| VX-BTC | Crypto | 24 h, 7 j | 60 % | 1,1 |
+| Ticker | Groupe | Séance | Vol./an | β | Spread | Swap/an |
+|---|---|---|---|---|---|---|
+| VX-EUR | Devises | 24 h, lun–ven | 8 % | 0,3 | 0,012 % | −1,2 % |
+| VX-YEN | Devises | 24 h, lun–ven | 10 % | 0,4 | 0,013 % | −1,8 % |
+| VX-40 | Indices | 14 h, lun–ven | 17 % | 0,9 | 0,018 % | −3,4 % |
+| VX-500 | Indices | 23 h, lun–ven | 15 % | 1,0 | 0,015 % | −3,1 % |
+| VX-2000 | Indices | 23 h, lun–ven | 22 % | 1,2 | 0,030 % | −3,8 % |
+| VX-OR | Métaux | 23 h, lun–ven | 14 % | −0,2 | 0,022 % | −3,6 % |
+| VX-CU | Métaux | 23 h, lun–ven | 22 % | 0,8 | 0,045 % | −4,2 % |
+| VX-TECH | Actions | 7 h, jours de bourse | 40 % | 1,4 | 0,035 % | −2,8 % |
+| VX-CONSO | Actions | 7 h, jours de bourse | 15 % | 0,6 | 0,030 % | −2,6 % |
+| VX-BTC | Crypto | 24 h, 7 j | 60 % | 1,1 | 0,080 % | −8,0 % |
 
 Identifiant machine en minuscules sans accent (`vx-eur`), libellé humain en capitales —
 la règle du nom, appliquée aux séries. Le ticker est manifestement inventé : personne ne

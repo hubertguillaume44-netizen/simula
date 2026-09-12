@@ -66,8 +66,12 @@ test("une clé posée fait disparaître le bandeau d’arrivée", () => {
   assert.match(APP, /licValide: !!\(lic && lic\.ok\),/);
   assert.match(APP, /licSaisie: !\(lic && lic\.ok\),/);
   // et le bandeau entier disparaît dès qu'un relevé est déposé
-  assert.match(APP, /aCompteVide: !\(this\.state\.deposes \|\| \[\]\)\.length,/,
-    "le bandeau doit se déduire de `deposes`, pas d’un drapeau enregistré");
+  // ET IL SE DÉDUIT DE `deposes`, jamais d'un drapeau enregistré — mais en n'y comptant
+  // QUE ce qui a été déposé. Les dix séries d'exemple y figurent aussi, parce qu'elles
+  // sont utilisables ; les compter ferait disparaître le bandeau au premier chargement,
+  // et avec lui la seule porte visible vers le champ de clé.
+  assert.match(APP, /aCompteVide: !\(this\.state\.deposes \|\| \[\]\)\.filter\(\(x\) => !estExemple\(x\)\)\.length,/,
+    "le bandeau doit se déduire de `deposes`, sans compter les séries d’exemple");
 
   // aucun prix n'entre dans l'application : /tarifs en reste seule maîtresse
   assert.ok(!/\d+,\d\d\s*€/.test(bloc), "un montant s’est glissé dans le bandeau");

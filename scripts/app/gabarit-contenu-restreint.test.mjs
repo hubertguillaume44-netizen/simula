@@ -28,13 +28,27 @@ const RESTREINTS = new Set(["select", "table", "thead", "tbody", "tfoot", "tr", 
 const AUTOFERMANTS = new Set(["br", "hr", "img", "input", "meta", "link", "source", "track",
   "area", "base", "col", "embed", "param", "wbr"]);
 
+// ————— LES COMMENTAIRES NE SONT PAS DU BALISAGE —————
+//
+// L'analyseur de ce test empile les balises au fil du texte. Il lisait donc aussi celles
+// des COMMENTAIRES — et le commentaire qui explique pourquoi le menu de comptes n'est
+// plus un `<select>` en contient un, cité en exemple. Ce faux `<select>` restait empilé
+// et tout ce qui suivait dans le fichier passait pour être dedans.
+//
+// Ça ne s'était jamais vu parce qu'une `</sc-if>` proche le dépilait par ricochet : le
+// dépilement remonte jusqu'à la balise de même nom et jette tout ce qui traîne au-dessus.
+// En retirant cette condition, devenue toujours vraie, le compte a sauté de 25 à 27 sans
+// qu'une seule balise ait bougé. Les commentaires sont donc effacés d'abord, en gardant
+// les sauts de ligne pour que les numéros de ligne rapportés restent justes.
+const NU = SOURCE.replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, " "));
+
 /** Toute balise de gabarit dont le PARENT DIRECT restreint son contenu. */
 function occurrences() {
   const pile = [];
   const out = [];
   const re = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   let m;
-  while ((m = re.exec(SOURCE))) {
+  while ((m = re.exec(NU))) {
     const [, fermant, nom, , auto] = m;
     const t = nom.toLowerCase();
     if (fermant) {
@@ -43,7 +57,7 @@ function occurrences() {
     }
     if ((t === "sc-for" || t === "sc-if") && RESTREINTS.has(pile[pile.length - 1])) {
       out.push({ quoi: t, parent: pile[pile.length - 1],
-        ligne: SOURCE.slice(0, m.index).split("\n").length });
+        ligne: NU.slice(0, m.index).split("\n").length });
     }
     if (!auto && !AUTOFERMANTS.has(t)) pile.push(t);
   }
@@ -76,8 +90,13 @@ test("le cliquet ne remonte pas : aucun ajout dans les conteneurs déjà touché
 
 test("l’en-tête n’a plus de <select> : son menu de comptes est en <div>", () => {
   // le seul défaut confirmé : le sélecteur de comptes n'affichait qu'une option vide
-  const entete = SOURCE.slice(SOURCE.indexOf("<sc-if value=\"{{ aBoutonDemo }}\""),
+  // La borne haute était `{{ aBoutonDemo }}`, la condition qui gardait ce menu hors de
+  // la page de présentation. Cette page a disparu, la condition avec elle, et la
+  // délimitation rendait alors une chaîne VIDE — un test qui passe sur rien du tout.
+  // Elle s'accroche donc au bouton lui-même, qui est ce qu'on mesure.
+  const entete = SOURCE.slice(SOURCE.indexOf("{{ basculerMenuComptes }}") - 400,
     SOURCE.indexOf("<sc-if value=\"{{ aBoutonTiroir }}\""));
+  assert.ok(entete.length > 400, "l’en-tête ne se délimite plus");
   // sans les commentaires HTML : celui qui explique le défaut a le droit de nommer la
   // balise qu’on bannit, le balisage non
   const sansNotes = entete.replace(/<!--[\s\S]*?-->/g, "");

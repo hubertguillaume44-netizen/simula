@@ -155,8 +155,8 @@ test("sur un profil vierge, le menu n’annonce aucun nom de courtier", () => {
   vm.runInContext("var faux = {\n"
     + "  COURTIERS: " + JSON.stringify(COURTIERS) + ",\n"
     + "  compteActif: 'fxpro',\n"
-    // profil vierge : rien de déposé, aucun nom saisi, seul le bac à sable porte le sien
-    + "  comptesConfigures() { return { demo: true }; },\n"
+    // profil vierge : rien de déposé, aucun nom saisi, aucun relevé nulle part
+    + "  comptesConfigures() { return {}; },\n"
     + "  nomCourtier(cle) { var c = this.COURTIERS.find(function (l) { return l[0] === cle; });"
     + "    return c ? c[1] : 'vos comptes'; },\n"
     + "  changerCompte() {},\n"
@@ -168,17 +168,25 @@ test("sur un profil vierge, le menu n’annonce aucun nom de courtier", () => {
     "JSON.stringify(faux.produire({ menuComptes: false }).comptesTete.map("
     + "function (x) { return { cle: x.cle, nom: x.nom }; }))", ctx));
   const libelles = tete.map((x) => x.nom);
-  assert.ok(libelles.length >= 2, `${libelles.length} entrées au menu, deux attendues`);
+  // UNE ENTRÉE SUFFIT, et c'est un changement assumé. Le menu en portait deux d'office
+  // sur un profil vierge — le compte nº 1 et le bac à sable, ajouté quoi qu'il arrive.
+  // Le bac à sable a disparu, donc il reste le compte actif, plus « + Ajouter un
+  // compte… » qui n'est pas un compte. Ce que ce test garde, c'est qu'aucune entrée ne
+  // nomme une maison de courtage : le nombre n'a jamais été le sujet.
+  assert.ok(libelles.length >= 1, `${libelles.length} entrées au menu, au moins une attendue`);
   for (const l of libelles) {
     // « — aucun relevé » est un état, pas un nom : on l'ôte avant de juger la forme
     assert.match(l.replace(/ — aucun relevé$/, ""), FORME, `« ${l} » nomme une maison`);
   }
   assert.match(r.compteTeteTxt, FORME, `le bouton annonce « ${r.compteTeteTxt} »`);
 
-  // et le bac à sable est le SEUL compte porteur de données sur un profil vierge
+  // ET AUCUN COMPTE NE PORTE DE DONNÉES SUR UN PROFIL VIERGE. Le bac à sable en
+  // portait, lui : il était le sixième compte de la table et semait ses propres bougies.
+  // Les dix séries d'exemple ne sont plus un compte — elles vivent en mémoire, visibles
+  // depuis n'importe lequel — donc un profil vierge est vraiment vierge.
   const avecDonnees = tete.filter((x) => !/ — aucun relevé$/.test(x.nom));
-  assert.deepEqual(avecDonnees.map((x) => x.cle), ["demo"],
-    "un compte autre que la démo porte des données sur un profil vierge");
+  assert.deepEqual(avecDonnees.map((x) => x.cle), [],
+    "un compte porte des données sur un profil vierge, alors que rien n’a été déposé");
 });
 
 // ————— LE TEST QUI PROTÈGE LES DONNÉES DÉJÀ ÉCRITES —————

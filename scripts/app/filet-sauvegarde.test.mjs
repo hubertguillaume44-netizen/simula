@@ -36,9 +36,13 @@ test("la proposition ne part ni sur des démos, ni deux fois, ni par-dessus un f
   assert.match(corps, /await this\.reclamerPersistance\(false\);/);
 });
 
-test("« des données réelles » exclut les démonstrations", () => {
+test("« des données réelles » exclut les séries d’exemple", () => {
+  // Le compte de démonstration a disparu : les dix séries d'exemple sont maintenant
+  // visibles depuis n'importe quel compte, et c'est leur PROVENANCE qui les écarte.
+  // Sans cette exclusion, le filet de sauvegarde se proposerait à quelqu'un qui n'a
+  // rien à perdre — dix séries que le générateur refait à l'identique.
   const corps = bloc("aDonneesReelles() {", "  // Un filet en place");
-  assert.match(corps, /!this\.SYM_DEMO\.includes\(x\)/);
+  assert.match(corps, /!estExemple\(x\)/);
 });
 
 test("un seul des deux filets suffit — pas de rappel de zèle", () => {
