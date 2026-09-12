@@ -16,6 +16,13 @@ import vm from "node:vm";
 
 const SOURCE = readFileSync(new URL("../../Vena.dc.html", import.meta.url), "utf8");
 
+/** LA destination d'entrée, telle qu'elle est écrite dans le source. */
+function destination() {
+  const m = /ENTREE = \{ tab: '([a-z]+)', vue: '([a-z]+)' \};/.exec(SOURCE);
+  assert.ok(m, "ENTREE a disparu, ou a changé de forme");
+  return { tab: m[1], vue: m[2] };
+}
+
 /** Le corps de licVerifier, délimité par accolades appariées. */
 function corpsVerifier() {
   const i = SOURCE.indexOf("          licVerifier: async () => {");
@@ -37,6 +44,7 @@ async function valider(resultat) {
   ctx.trace = trace;
   vm.runInContext(
     "var faux = {\n"
+    + "  ENTREE: " + JSON.stringify(destination()) + ",\n"
     + "  verifierLicence: async function () { return " + JSON.stringify(resultat) + "; },\n"
     + "  garderLicence: function (l) { trace.garde.push(l); },\n"
     + "  setState: function (o, apres) { trace.etats.push(o); if (apres) apres(); },\n"
@@ -71,17 +79,37 @@ test("un code refusé ne fait entrer nulle part", async () => {
 });
 
 test("on entre par la MÊME porte que « Ouvrir avec mes données »", async () => {
-  // deux chemins vers deux onglets différents finiraient par diverger sans que rien ne
-  // le signale : le bouton mènerait quelque part, la clé ailleurs
-  const m = /goCourt: this\.go\('([a-z]+)'\)/.exec(SOURCE);
-  assert.ok(m, "goCourt a disparu ou a changé de forme");
+  // deux chemins vers deux destinations finiraient par diverger sans que rien ne le
+  // signale : celui qui change l'une ne pense pas à l'autre. D'où UNE constante, lue par
+  // les deux — le test vérifie qu'aucun des deux ne la contourne.
+  assert.match(SOURCE, /goCourt: \(e\) => \{[^}]*this\.entrer\(\); \}/,
+    "le bouton n’appelle plus entrer() : il a sa propre destination");
+  assert.match(SOURCE, /entrer\(\) \{ this\.setState\(\{ \.\.\.this\.ENTREE \}, \(\) => this\.ecrireSession\(\)\); \}/,
+    "entrer() ne lit plus ENTREE, ou n’écrit plus la session");
+  assert.match(SOURCE, /licCodeSaisi: undefined,\n\s*\.\.\.this\.ENTREE \}/,
+    "la clé validée n’utilise plus ENTREE : elle a sa propre destination");
   const t = await valider({ ok: true, plan: "vie", fin: null, email: "a@b.c" });
   const etat = Object.assign({}, ...t.etats);
-  assert.equal(etat.tab, m[1],
-    `la clé mène à « ${etat.tab} », le bouton à « ${m[1] }» : deux portes, deux endroits`);
-  // et go() écrit la session : la clé doit faire pareil, sinon les deux chemins ne
-  // laissent pas le même souvenir
-  assert.match(SOURCE, /go\(tab\) \{ return \(e\) => \{[^}]*this\.setState\(\{ tab \}, \(\) => this\.ecrireSession\(\)\)/);
+  assert.deepEqual({ tab: etat.tab, vue: etat.vue }, destination(),
+    "la clé ne mène pas où ENTREE le dit");
+});
+
+test("on arrive sur « Mes instruments », pas sur les conclusions", async () => {
+  // LA VRAIE EXIGENCE N'EST PAS UNE CHAÎNE, C'EST UN GROUPE D'ONGLETS. On atterrissait sur
+  // « Mes décisions » parce que l'état initial porte vue: 'marche'. Or on n'entre pas dans
+  // un outil de mesure par ses conclusions : le premier jour, il n'y en a aucune. Le test
+  // lit donc la table des groupes dans le source et vérifie à quel groupe mène ENTREE —
+  // renommer une vue ne le trompera pas, déplacer une vue d'un groupe à l'autre non plus.
+  const i = SOURCE.indexOf("        const GROUPES = [");
+  assert.ok(i > 0, "la table des groupes ne se délimite plus");
+  const bloc = SOURCE.slice(i, SOURCE.indexOf("\n        ];", i));
+  const groupes = [...bloc.matchAll(/\['[a-z]+', '([^']+)', '[^']*',\s*\[([\s\S]*?)\]\]/g)]
+    .map((m) => ({ nom: m[1], vues: [...m[2].matchAll(/\['([a-z]+)',/g)].map((v) => v[1]) }));
+  assert.ok(groupes.length >= 3, `${groupes.length} groupes lus, trois attendus`);
+  const g = groupes.find((x) => x.vues.includes(destination().vue));
+  assert.ok(g, `« ${destination().vue} » n’appartient à aucun groupe d’onglets`);
+  assert.equal(g.nom, "Mes instruments",
+    `on entre sur « ${g.nom} » : c’est là qu’on dépose le relevé et les bougies qu’il faut`);
 });
 
 test("le code ne se saisit qu’à un seul endroit : l’accueil", async () => {

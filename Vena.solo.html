@@ -932,9 +932,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           </div>
         </sc-if>
 
-        <sc-if value="{{ aRevoirPresentation }}" hint-placeholder-val="{{ false }}">
-          <button type="button" class="rep" style="border-top:1px solid var(--color-divider)" onClick="{{ revoirPresentation }}"><span style="font-size:12px;flex:1"><strong>Revoir la présentation</strong></span><span style="font-size:11px" class="text-muted">▸</span></button>
-        </sc-if>
       </div>
 
       <sc-if value="{{ aRevenues }}" hint-placeholder-val="{{ false }}">
@@ -1213,34 +1210,6 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
       </div>
     </sc-if>
 
-    <sc-if value="{{ aOnboarding }}" hint-placeholder-val="{{ false }}">
-      <section class="card blueprint" style="padding:24px 26px;gap:16px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div>
-          <div class="card-kicker">Premier passage</div>
-          <h3 style="margin:0;font-family:var(--font-heading);font-size:28px;line-height:1.1;letter-spacing:-.005em">Véna teste une stratégie, il ne la trouve pas pour vous</h3>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qu'il fait</div>
-            <p class="card-body" style="margin:0">Il rejoue une configuration sur votre historique, découpe le résultat en cinq périodes et vous montre ce qui reste quand on retire la partie qui a servi à la choisir.</p>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce qu'il ne fait pas</div>
-            <p class="card-body" style="margin:0">Aucune prédiction, aucun signal, aucune promesse de rendement. Un bon backtest ne dit pas que ça marchera : il dit à quel point vous pourriez vous tromper.</p>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase" class="text-muted">Ce dont il a besoin</div>
-            <p class="card-body" style="margin:0">Vos propres données H1 en CSV, exportées de votre courtier. Vos spreads et vos horaires de session ne ressemblent à ceux de personne d'autre.</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-secondary" type="button" style="min-height:2.6rem" onClick="{{ lancerExemple }}">Scanner un exemple</button>
-          <button class="btn btn-secondary" type="button" style="min-height:2.6rem" onClick="{{ allerImporter }}">Importer mes données</button>
-          <button class="btn btn-ghost" type="button" onClick="{{ masquerOnboarding }}">Je connais, masquer</button>
-        </div>
-      </section>
-    </sc-if>
 
     <div id="om-fil" style="position:sticky;top:{{ filTop }};z-index:30;background:var(--color-bg);border-bottom:1px solid var(--color-divider);margin:0 -32px;padding:8px 32px;display:flex;gap:14px 26px;align-items:baseline;flex-wrap:wrap;align-self:stretch">
       <sc-if value="{{ aSousOnglets }}" hint-placeholder-val="{{ true }}">
@@ -17846,6 +17815,20 @@ GROUPES = {
   // l'onglet est persisté avec la session : recharger revient là où on travaillait
   go(tab) { return (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ tab }, () => this.ecrireSession()); }; }
 
+  // ————— ENTRER, C'EST ARRIVER SUR SES DONNÉES —————
+  //
+  // On atterrissait sur « Mes décisions » : l'état initial porte `vue: 'marche'`, qui
+  // appartient au troisième groupe. Or on n'entre pas dans un outil de mesure par ses
+  // conclusions — on n'en a aucune le premier jour. « Mes instruments » est la première
+  // chose à faire et la seule qui ait du sens sans données : c'est là qu'on dépose le
+  // relevé et les bougies.
+  //
+  // La destination vit à UN endroit. La clé validée et le bouton « Ouvrir avec mes
+  // données » la lisent tous les deux : deux littéraux auraient fini par désigner deux
+  // pages, et rien ne l'aurait signalé — celui qui change l'un ne pense pas à l'autre.
+  ENTREE = { tab: 'court', vue: 'courtiers' };
+  entrer() { this.setState({ ...this.ENTREE }, () => this.ecrireSession()); }
+
   get prive() { return !this.essai; }
   // ————— LES TROIS PAGES PATRIMOINE ONT ÉTÉ RETIRÉES —————
   // « Aperçu », « Immo » et « Marchés » étaient le vestige du tableau de bord d'origine :
@@ -18816,9 +18799,9 @@ GROUPES = {
               // vendeur le lendemain de l'achat, et elle ne se voit pas en la relisant :
               // celui qui a écrit l'écran sait déjà où il faut cliquer ensuite.
               //
-              // `tab: 'court'` est la destination de « Ouvrir avec mes données », et
-              // `ecrireSession` est ce que fait `go()` : on entre par LA MÊME porte que le
-              // bouton, pas par une seconde qui finirait par diverger de la première.
+              // `this.ENTREE` est LA destination, celle que lit aussi « Ouvrir avec mes
+              // données », et `ecrireSession` est ce que fait `go()` : on entre par la même
+              // porte que le bouton, pas par une seconde qui finirait par diverger.
               //
               // Le champ de code n'existe qu'à un seul endroit, l'accueil — donc entrer est
               // toujours le bon geste ici. Un test le vérifie plutôt qu'une garde : le jour
@@ -18826,7 +18809,7 @@ GROUPES = {
               // sauter dans l'application est encore souhaitable.
               this.setState({ lic: { ...r, email: r.email || email, code: code.replace(/\s+/g, '') },
                 licMsg: null, licEmailSaisie: undefined, licCodeSaisi: undefined,
-                tab: 'court' }, () => this.ecrireSession());
+                ...this.ENTREE }, () => this.ecrireSession());
             } else {
               this.setState({ licMsg: { txt: this.licenceMotifTexte(r) } });
             }
@@ -19175,7 +19158,7 @@ GROUPES = {
       goAccueil: this.go('accueil'),
       isCourt: tab === 'court',
       curCourt: tab === 'court' ? 'page' : undefined,
-      goCourt: this.go('court'),
+      goCourt: (e) => { if (e && e.preventDefault) e.preventDefault(); this.entrer(); },
       essai: this.essai, complet: this.prive,
       ...(() => {
         const d = s.dlgValid;
@@ -23302,23 +23285,21 @@ GROUPES = {
           voirNouveaute: () => this.setState({ tiroir: true }),
         };
       })(),
-      // Le cadre « Votre compte est vide — c'est normal » a été retiré : la page dit déjà
-      // ce qu'il faut déposer, et « Scanner un exemple » reste offert par la présentation
-      // juste en dessous. `voirExemple` vit toujours, appelée par `lancerExemple`.
-      aOnboarding: !!s.pret && !s.onbCache && !this.aScanData && !(s.runs && s.runs.length),
-      masquerOnboarding: () => {
-        try { localStorage.setItem('vena.onboarding.vu', '1'); } catch (e) {}
-        this.setState({ onbCache: true });
-      },
-      allerImporter: () => this.setState({ vue: 'backtest', onbCache: true }),
-      aRevoirPresentation: !!s.pret && !!s.onbCache,
-      revoirPresentation: () => {
-        try { localStorage.removeItem('vena.onboarding.vu'); } catch (e) {}
-        this.setState({ onbCache: false });
-      },
+      // ————— LE BANDEAU DE PREMIER PASSAGE A ÉTÉ RETIRÉ —————
+      //
+      // Il expliquait ce que fait l'outil au-dessus de la page de travail, et « Revoir la
+      // présentation » le rallumait. Les deux sont partis ensemble : un bouton qui rallume
+      // ce qui n'existe plus est pire que pas de bouton du tout.
+      //
+      // Ce qu'il disait n'est pas perdu — la page de vente le dit, et « Mes instruments »
+      // porte la marche à suivre. Ce qu'il coûtait, en revanche, était réel : une pleine
+      // hauteur d'écran devant le travail, à chaque ouverture, tant qu'aucun scan n'avait
+      // tourné.
+      //
+      // `onbCache` et la clé « vena.onboarding.vu » restent lus au chargement : une
+      // session enregistrée en porte encore la trace, et la lecture ne coûte rien.
       // un seul chemin pour la démonstration : celui qui charge des séries lisibles,
       // lance un vrai scan et ouvre une configuration à la fin
-      lancerExemple: () => this.voirExemple(),
       aDetail: !!d,
       fermerDetail: () => this.setState({ detail: null, fenMotifOuvert: null }),
       dSym: d ? d.sym : '',
