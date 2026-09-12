@@ -145,23 +145,15 @@ function Home() {
             de page ; ils y demandaient un effort de lecture avant tout intérêt. */}
         <div className="mt-16 flex flex-col gap-6">
           <div className="kicker">Pour aller plus loin</div>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <Link to="/methode" className="no-underline text-ink">
               <Blueprint className="flex h-full flex-col gap-2 p-6 transition-colors duration-150 hover:bg-steel-soft/40">
                 <div className="font-display text-xl">
-                  Pourquoi un backtest brillant échoue en réel
+                  Votre backtest est probablement faux
                 </div>
                 <p className="text-sm text-muted">
-                  Les cinq pièges qui fabriquent de belles courbes, et le test en cinq tranches qui
-                  les démasque.
-                </p>
-              </Blueprint>
-            </Link>
-            <Link to="/pourquoi" className="no-underline text-ink">
-              <Blueprint className="flex h-full flex-col gap-2 p-6 transition-colors duration-150 hover:bg-steel-soft/40">
-                <div className="font-display text-xl">Pourquoi ce tri change tout</div>
-                <p className="text-sm text-muted">
-                  La démonstration en un tableau : le meilleur chiffre est souvent le moins fiable.
+                  Les pièges qui fabriquent de belles courbes, le test en cinq tranches qui les
+                  démasque, et le tableau qui le montre.
                 </p>
               </Blueprint>
             </Link>

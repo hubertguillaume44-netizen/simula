@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MethodeRouteImport } from './routes/methode'
-import { Route as PourquoiRouteImport } from './routes/pourquoi'
 import { Route as SimulerRouteImport } from './routes/simuler'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as VisiteursRouteImport } from './routes/visiteurs'
@@ -24,11 +23,6 @@ const IndexRoute = IndexRouteImport.update({
 const MethodeRoute = MethodeRouteImport.update({
   id: '/methode',
   path: '/methode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PourquoiRoute = PourquoiRouteImport.update({
-  id: '/pourquoi',
-  path: '/pourquoi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimulerRoute = SimulerRouteImport.update({
@@ -50,7 +44,6 @@ const VisiteursRoute = VisiteursRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/methode': typeof MethodeRoute
-  '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
   '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
@@ -58,7 +51,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/methode': typeof MethodeRoute
-  '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
   '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
@@ -67,31 +59,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/methode': typeof MethodeRoute
-  '/pourquoi': typeof PourquoiRoute
   '/simuler': typeof SimulerRoute
   '/tarifs': typeof TarifsRoute
   '/visiteurs': typeof VisiteursRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/methode' | '/pourquoi' | '/simuler' | '/tarifs' | '/visiteurs'
+  fullPaths: '/' | '/methode' | '/simuler' | '/tarifs' | '/visiteurs'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/methode' | '/pourquoi' | '/simuler' | '/tarifs' | '/visiteurs'
-  id:
-    | '__root__'
-    | '/'
-    | '/methode'
-    | '/pourquoi'
-    | '/simuler'
-    | '/tarifs'
-    | '/visiteurs'
+  to: '/' | '/methode' | '/simuler' | '/tarifs' | '/visiteurs'
+  id: '__root__' | '/' | '/methode' | '/simuler' | '/tarifs' | '/visiteurs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MethodeRoute: typeof MethodeRoute
-  PourquoiRoute: typeof PourquoiRoute
   SimulerRoute: typeof SimulerRoute
   TarifsRoute: typeof TarifsRoute
   VisiteursRoute: typeof VisiteursRoute
@@ -111,13 +93,6 @@ declare module '@tanstack/react-router' {
       path: '/methode'
       fullPath: '/methode'
       preLoaderRoute: typeof MethodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pourquoi': {
-      id: '/pourquoi'
-      path: '/pourquoi'
-      fullPath: '/pourquoi'
-      preLoaderRoute: typeof PourquoiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simuler': {
@@ -147,7 +122,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MethodeRoute: MethodeRoute,
-  PourquoiRoute: PourquoiRoute,
   SimulerRoute: SimulerRoute,
   TarifsRoute: TarifsRoute,
   VisiteursRoute: VisiteursRoute,

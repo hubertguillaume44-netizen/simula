@@ -1,11 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Blueprint } from "@/components/blueprint";
 import { Button } from "@/components/ui/button";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
+import { computePreuve, type PreuveRow } from "@/lib/preuve";
+import { frNum, signedR } from "@/lib/format";
 
 export const Route = createFileRoute("/methode")({
   // Le titre et la description sont PROPRES À CETTE PAGE. La racine en pose un
-  // jeu par défaut ; sans ce bloc, les cinq pages portaient le même, et quatre
+  // jeu par défaut ; sans ce bloc, les pages du site portaient le même, et deux
   // onglets ouverts devenaient indiscernables — Google, lui, réécrit les titres
   // dupliqués, et c'est alors sa formulation qui s'affiche, plus la nôtre.
   head: () => ({
@@ -20,6 +23,26 @@ export const Route = createFileRoute("/methode")({
   }),
   component: Methode,
 });
+
+// ————— UNE SEULE PAGE, PARCE QU'IL N'Y AVAIT QU'UNE SEULE THÈSE —————
+//
+// « Méthode » et « Pourquoi » défendaient le même argument sous deux titres qui
+// commençaient tous deux par « pourquoi ». Deux entrées de bandeau qu'on ne pouvait pas
+// distinguer sans les avoir déjà lues — et, séparés, chacun était incomplet :
+//
+//   · Méthode tenait le RAISONNEMENT (on sélectionne un maximum, pas une performance)
+//     et l'illustrait par une métaphore de pièces lancées. Elle expliquait sans montrer.
+//   · Pourquoi tenait la PREUVE — le tableau des cinq configurations, calculé par le
+//     vrai moteur — sans le raisonnement qui la rend lisible. Elle montrait sans
+//     expliquer.
+//
+// Réunis, l'argument est posé, puis démontré au milieu de la page. Pas une ligne n'a été
+// réécrite : ce sont les paragraphes des deux pages, remis dans cet ordre.
+//
+// Ce qui N'A PAS été repris, et pourquoi : les trois cartes « Une stratégie est une
+// configuration / Le creux avant le gain / Vos données, vos règles » décrivaient le
+// fonctionnement du produit, pas la thèse. Elles n'ont pas leur place dans une
+// démonstration, et l'application les dit déjà là où elles servent.
 
 const PIEGES = [
   {
@@ -40,14 +63,29 @@ const PIEGES = [
   },
 ];
 
+const RIEN = [
+  "Aucun signal d’achat. Le moteur teste des règles, il ne vous dit pas quoi acheter aujourd’hui.",
+  "Aucune promesse de rendement. Les résultats passés d’une règle ne sont pas un revenu futur.",
+  "Aucune gestion de votre argent. Vous gardez vos comptes, vos ordres et vos décisions.",
+  "Aucun classement flatteur. Une configuration qui ne tient pas hors période est marquée comme telle, même si elle affiche le meilleur chiffre.",
+];
+
 function Methode() {
+  const [rows, setRows] = useState<PreuveRow[] | null>(null);
+  useEffect(() => {
+    setRows(computePreuve());
+  }, []);
+
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
       <SiteHeader />
-      <article className="mx-auto w-full max-w-3xl px-5 py-16 md:px-8 md:py-24">
+
+      <article className="mx-auto w-full max-w-3xl px-5 pb-12 pt-16 md:px-8 md:pt-24">
         <div className="kicker">Méthode</div>
-        <h1 className="mt-3 font-display text-5xl leading-none md:text-6xl">
-          Pourquoi un backtest brillant échoue en réel
+        {/* Le titre vient de l'ancienne page « Pourquoi » : c'est le plus direct des
+            deux, et il énonce la thèse au lieu de l'annoncer. */}
+        <h1 className="mt-3 max-w-[18ch] font-display text-5xl leading-none md:text-6xl">
+          Votre backtest est probablement faux.
         </h1>
         <p className="mt-6 text-xl leading-relaxed text-ink/80">
           Vous avez trouvé une stratégie qui affiche une courbe régulière sur six ans. Vous la
@@ -77,8 +115,95 @@ function Methode() {
             n’est pas une découverte.
           </p>
         </Blueprint>
+      </article>
 
-        <h2 className="mt-14 font-display text-3xl">Le test qui départage</h2>
+      {/* LA PREUVE, AU MILIEU DE LA PAGE. Elle vivait sur l'autre page : le raisonnement
+          ci-dessus n'avait rien à montrer, et ce tableau n'avait rien pour se faire
+          lire. Le tri par gain brut est GÊNANT et c'est l'argument même : un outil de
+          vente mettrait la première ligne en avant. */}
+      <section className="bg-steel-ink text-panel">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-16 md:px-8">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-panel/70">
+              Cinq configurations, un même moteur
+            </div>
+            <h2 className="mt-2 font-display text-3xl text-panel md:text-4xl">
+              Le meilleur résultat est le moins fiable
+            </h2>
+            <p className="mt-3 max-w-prose text-panel/80">
+              Classées par performance brute, comme le ferait n’importe quel outil. La colonne des
+              tranches découpe l’historique en cinq et compte celles qui restent gagnantes. Lisez-la
+              avant tout le reste.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="text-[11px] uppercase tracking-wider text-panel/60">
+                <tr className="border-b border-panel/20">
+                  <th className="py-2 pr-3 text-left font-medium">Instrument</th>
+                  <th className="px-3 py-2 text-right font-medium">Trades</th>
+                  <th className="px-3 py-2 text-right font-medium">R total</th>
+                  <th className="px-3 py-2 text-right font-medium">Pire creux</th>
+                  <th className="px-3 py-2 text-right font-medium">Tranches</th>
+                  <th className="py-2 pl-3 text-left font-medium">Verdict</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows
+                  ? rows.map((r) => (
+                      <tr key={`${r.sym}-${r.periode}-${r.sl}`} className="border-b border-panel/15">
+                        <td className="py-3 pr-3 font-medium">
+                          {r.sym}
+                          <span className="ml-2 text-xs text-panel/50">
+                            P{r.periode} · SL {frNum(r.sl, 1)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-right tabular">{r.n}</td>
+                        <td className="px-3 py-3 text-right tabular">{signedR(r.total, 1)}</td>
+                        <td className="px-3 py-3 text-right tabular">{signedR(r.dd, 1)}</td>
+                        {/* UNE VALEUR QU'ON N'A PAS S'ÉCRIT « — », JAMAIS ZÉRO. Sous le
+                            seuil de trades, le découpage en tranches ne mesure rien :
+                            « 0 / 5 » se lirait « elle perd partout », alors qu'on ne
+                            sait pas. */}
+                        <td className="px-3 py-3 text-right tabular">
+                          {r.segTotal > 0 ? `${r.positifs} / ${r.segTotal}` : "—"}
+                        </td>
+                        <td
+                          className={
+                            r.tone === "up"
+                              ? "py-3 pl-3 text-up-soft"
+                              : r.tone === "down"
+                                ? "py-3 pl-3 text-down-soft"
+                                : "py-3 pl-3 text-warn-soft"
+                          }
+                        >
+                          {r.verdict}
+                        </td>
+                      </tr>
+                    ))
+                  : Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="border-b border-panel/15">
+                        <td className="py-3 text-panel/50">Calcul…</td>
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                        <td />
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="max-w-prose text-panel/80">
+            Un outil de vente mettrait la première ligne en avant : c’est le plus gros chiffre de la
+            page. Véna l’écarte si elle ne tient pas hors période — et garde une ligne moins
+            spectaculaire qui gagne dans plusieurs tranches.
+          </p>
+        </div>
+      </section>
+
+      <article className="mx-auto w-full max-w-3xl px-5 py-12 md:px-8 md:py-16">
+        <h2 className="font-display text-3xl">Le test qui départage</h2>
         <p className="mt-4 text-base leading-relaxed">
           Découpez votre historique en cinq tranches consécutives. Une méthode réelle gagne dans la
           plupart d’entre elles. Un résultat trouvé par hasard concentre son gain sur une ou deux
@@ -99,32 +224,45 @@ function Methode() {
             </div>
           ))}
         </div>
-
-        <h2 className="mt-14 font-display text-3xl">Ce qu’il reste quand on enlève tout ça</h2>
-        <p className="mt-4 text-base leading-relaxed">
-          Beaucoup moins de stratégies. C’est le but. Une méthode qui survit au découpage en
-          tranches, aux frais réels, à la règle de la bougie fermée et à un creux majoré de moitié
-          est une méthode dont vous connaissez enfin le coût. Vous ne saurez toujours pas si elle
-          gagnera — mais vous saurez ce que vous risquez, et pourquoi vous y croyez.
-        </p>
-
-        <Blueprint className="mt-11 flex flex-col gap-4 p-7">
-          <div className="kicker">Faire le test sur vos propres règles</div>
-          <h3 className="font-display text-2xl">Véna applique ces contrôles par défaut</h3>
-          <p className="text-sm text-muted">
-            Découpage en cinq tranches, frais du symbole déduits, signal sur bougie fermée, creux
-            affiché avant le gain. Vos exports horaires restent dans votre navigateur.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <a href="/app">Ouvrir mon outil</a>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link to="/pourquoi">En savoir plus</Link>
-            </Button>
-          </div>
-        </Blueprint>
       </article>
+
+      <section className="border-t border-line">
+        <div className="mx-auto grid w-full max-w-5xl gap-10 px-5 py-16 md:grid-cols-2 md:px-8">
+          <div>
+            <h2 className="font-display text-3xl">Ce que Véna ne fait pas</h2>
+            <div className="mt-5 flex flex-col text-sm leading-relaxed">
+              {RIEN.map((t) => (
+                <div key={t} className="border-t border-line py-4">
+                  {t}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* DEUX BOUTONS DEVIENNENT UN. Les deux pages finissaient sur des appels
+              différents — « En savoir plus » menait à l'autre moitié de cet argument,
+              « Commencer avec les démos » à une démonstration qui n'existe plus. Reste
+              le seul geste possible, avec sa contrepartie écrite dessus. */}
+          <Blueprint className="flex flex-col gap-4 p-7">
+            <div className="kicker">Ce qu’il reste quand on enlève tout ça</div>
+            <h3 className="font-display text-2xl">Beaucoup moins de stratégies. C’est le but.</h3>
+            <p className="text-base leading-relaxed">
+              Une méthode qui survit au découpage en tranches, aux frais réels, à la règle de la
+              bougie fermée et à un creux majoré de moitié est une méthode dont vous connaissez
+              enfin le coût. Vous ne saurez toujours pas si elle gagnera — mais vous saurez ce que
+              vous risquez, et pourquoi vous y croyez.
+            </p>
+            <p className="text-sm text-muted">
+              Véna applique ces contrôles par défaut : découpage en cinq tranches, frais du symbole
+              déduits, signal sur bougie fermée, creux affiché avant le gain. Vos exports horaires
+              restent dans votre navigateur.
+            </p>
+            <Button asChild className="mt-1 self-start">
+              <a href="/app">Ouvrir mon outil — trois instruments gratuits</a>
+            </Button>
+          </Blueprint>
+        </div>
+      </section>
       <SiteFooter />
     </div>
   );

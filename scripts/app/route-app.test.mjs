@@ -5,7 +5,7 @@
 // qui paie ne pouvait pas l'ouvrir.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
 const RACINE = new URL("../../", import.meta.url).pathname;
@@ -50,8 +50,13 @@ test("la démonstration reste distincte, et ne se donne pas pour le produit", ()
   // …et deux entrées ne peuvent pas porter le même mot
   assert.ok(!/label: "La démonstration"/.test(entete),
     "deux entrées portant « démonstration » se confondraient");
-  // aucun lien vers /simuler ne doit promettre le produit
-  for (const f of ["src/routes/index.tsx", "src/routes/pourquoi.tsx", "src/routes/methode.tsx"]) {
+  // aucun lien vers /simuler ne doit promettre le produit. La liste des pages est LUE,
+  // pas écrite ici : une liste en dur laisse passer toute page créée après elle, et
+  // fait échouer le test sur une page supprimée — pour une raison qui n'a rien à voir
+  // avec ce qu'il éprouve.
+  for (const f of readdirSync(new URL("../../src/routes/", import.meta.url))
+    .filter((n) => n.endsWith(".tsx") && n !== "__root.tsx" && n !== "simuler.tsx")
+    .map((n) => "src/routes/" + n)) {
     const txt = lire(f);
     for (const m of txt.matchAll(/<Link to="\/simuler"[^>]*>([^<]*)</g)) {
       const libelle = m[1].trim();

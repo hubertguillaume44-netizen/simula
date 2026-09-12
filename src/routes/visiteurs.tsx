@@ -56,7 +56,10 @@ function labelPage(p: string) {
   if (p === "/simuler") return "Simulateur";
   if (p === "/methode") return "Méthode";
   if (p === "/tarifs") return "Tarifs";
-  if (p === "/pourquoi") return "La démonstration";
+  // Pages retirées. Le libellé RESTE : des visites sont déjà enregistrées sous ces
+  // chemins, et les effacer de la table les afficherait en brut dans un relevé qui,
+  // lui, remonte à avant la refonte.
+  if (p === "/pourquoi") return "Pourquoi (fondue dans Méthode)";
   return p;
 }
 

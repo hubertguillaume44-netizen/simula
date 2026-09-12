@@ -2,13 +2,26 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { VenaMark, palierPour } from "@/components/vena-mark";
 
+// ————— TROIS ENTRÉES, ET LE BOUTON —————
+//
+// Il y en avait quatre pour cinq pages, dont deux jumelles. « Méthode » et
+// « Pourquoi » défendaient la même thèse sous deux titres commençant tous deux par
+// « pourquoi » : rien dans le bandeau ne permettait de les distinguer, et choisir
+// entre elles demandait de les avoir déjà lues. Elles fondent en une.
+//
+// « Démonstration » menait à une seconde démonstration, en React, à côté de celle que
+// l'application porte déjà avec le moteur entier. Deux démonstrations, c'est une de
+// trop à tenir à jour et une de trop à choisir.
+//
+// « Tarifs » prend la place libérée : c'est la question qu'un visiteur se pose après
+// « c'est quoi », et aucune entrée n'y menait.
 const LINKS = [
   { to: "/", label: "Accueil" },
   { to: "/methode", label: "Méthode" },
-  { to: "/pourquoi", label: "Pourquoi" },
   // « Démonstration » et non « Simulateur » : cette page montre le raisonnement sur des
   // séries d'exemple. Le produit s'ouvre par le bouton, à droite.
   { to: "/simuler", label: "Démonstration" },
+  { to: "/tarifs", label: "Tarifs" },
 ] as const;
 
 // ————— L'ACCENT VA À L'ACTION PRINCIPALE DE LA PAGE —————
