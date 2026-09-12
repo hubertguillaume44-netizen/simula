@@ -25764,11 +25764,39 @@ GROUPES = {
               const a0 = new Date(cv.t0).getUTCFullYear(), a1 = new Date(cv.t1).getUTCFullYear();
               for (let y = a0; y <= a1 && annees.length < 12; y++) annees.push(String(y));
             }
-            // périmée : la dernière bougie a plus de 45 jours de marché
+            // ————— LE SEUL TEST DATE-CONTRE-AUJOURD'HUI DU FICHIER —————
+            //
+            // Il s'applique aussi aux séries d'exemple : leur fenêtre est écrite dans le
+            // générateur et ne bouge pas, donc elles franchiront ce seuil quarante-cinq
+            // jours après leur dernière bougie — le 27 octobre 2026 pour la v2.
+            //
+            // `vieux` ne pilote QUE l'étiquette, la phrase de diagnostic et deux encres.
+            // Aucun comportement, aucun calcul : il n'y a donc rien à exempter ici, et
+            // c'est le VERDICT qui change juste en dessous, pas le seuil.
+            //
+            // Ne pas confondre avec les deux autres « périmé » du fichier : les
+            // « chiffres périmés » (réglages changés, `perime()`) et `aScansPerimes`
+            // (un scan antérieur à une livraison). Trois mécanismes, un seul mot.
             const vieux = cv ? (Date.now() - cv.t1) > 45 * 86400000 : false;
             const etat = !la ? ['absente', 'tag tag-outline']
               : !cv ? ['couverture non relevée', 'tag tag-outline']
-              : vieux ? ['périmée', 'tag tag-neutral'] : ['à jour', 'tag tag-accent'];
+              // ————— « PÉRIMÉE » EST UN VERDICT ACTIONNABLE, ET UNE SÉRIE D'EXEMPLE
+              //         N'A AUCUNE ACTION —————
+              //
+              // Le premier correctif gardait le mot et ajoutait, en dessous, « il n'y a
+              // rien à réexporter ». QUAND L'EXPLICATION DOIT CONTREDIRE L'ÉTIQUETTE,
+              // C'EST L'ÉTIQUETTE QUI EST LE DÉFAUT. « Périmée » veut dire « refais ton
+              // export » ; à partir du 27 octobre 2026 il y en aurait eu dix, sur le
+              // premier écran, pour toujours — et toute capture faite après cette date
+              // aurait montré dix alertes que personne ne peut lever.
+              //
+              // « Fenêtre fixe » enseigne exactement la même chose avec les dates à
+              // côté : qu'une série a une fenêtre, et qu'un scan s'arrête à sa fin. Ce
+              // qu'un export oublié a de particulier, c'est qu'on peut le REFAIRE — et
+              // c'est précisément ce que l'exemple ne partage pas.
+              : vieux ? (estExemple(sel) ? ['fenêtre fixe', 'tag tag-outline']
+                                         : ['périmée', 'tag tag-neutral'])
+              : ['à jour', 'tag tag-accent'];
             const nTrous = cv && cv.trous ? cv.trous.length : 0;
             const e = (this._parSym || new Map()).get(sel);
             const best = e && e.best;
@@ -25801,9 +25829,10 @@ GROUPES = {
                     + '. Le scan le traverse sans le savoir : les deux bougies de part et d’autre sont considérées comme consécutives, ce qui peut inventer un signal. À vérifier dans votre export MT5.'
                   : vieux
                     ? 'La série s’arrête le ' + jour(cv.t1) + '. Un scan lancé aujourd’hui ne mesurera rien après cette date — c’est ainsi qu’un instrument couvre six ans et son voisin deux.'
-                      + (estExemple(sel) ? ' Celle-ci est une série d’exemple : sa fenêtre est FIXE, engendrée une fois pour toutes. Il n’y a rien à réexporter — elle vieillira, et c’est normal.' : '')
+                      + (estExemple(sel) ? ' Celle-ci est engendrée : sa fenêtre est fixe par construction, et elle s’éloigne d’autant plus qu’on s’éloigne de la livraison. Rien à faire — c’est le prix de séries identiques pour tout le monde.' : '')
                     : (cv ? 'Aucun trou : la série est continue du premier au dernier jour.' : ''),
-              fTrouCouleur: (!la || nTrous || vieux) ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
+              // l'encre d'alerte suit le verdict : pas d'action possible, pas d'alerte
+              fTrouCouleur: (!la || nTrous || (vieux && !estExemple(sel))) ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
               aFBougies: la,
               fSupprTxt: this.state.serieSuppr === sel ? 'Confirmer la suppression' : 'Supprimer ces bougies',
               fSupprAide: this.state.serieSuppr === sel
@@ -25867,7 +25896,7 @@ GROUPES = {
                     + (nTrous ? ' · ' + this.pl(nTrous, 'trou', 'trous') : (vieux ? '' : ' · complet'))
                     + (vieux ? ' — la série s\u2019arrête là' : '')
                   : 'Bougies présentes — la couverture se relève au prochain chargement de la série.',
-              fBndBougiesCoul: (!la || nTrous || vieux) ? 'var(--color-accent-900)' : 'var(--color-text)',
+              fBndBougiesCoul: (!la || nTrous || (vieux && !estExemple(sel))) ? 'var(--color-accent-900)' : 'var(--color-text)',
               ...(() => {
                 const lp = c.liste.find((o) => o.cle === this.COURTIERS[0][0] && o.connu)
                   || c.liste.find((o) => o.connu) || null;

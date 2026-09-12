@@ -329,10 +329,48 @@ couverture fuyait. Vérifié ici : désancrer la sélection des clés, retirer l
 marque, retirer le refus de `garderSerie`, ou décider du repli de l'indicateur avant le
 relevé font tomber chacun le test correspondant.
 
-**Et une garde sur du code se lit sans les commentaires.** Le commentaire qui raconte une
-garde précédente la NOMME — c'est son travail. Un test qui lit le fichier brut échoue
-dessus, comme l'analyseur de gabarit qui empilait un `<select>` cité dans une note. Ce
-qu'on interdit, c'est le code, pas le récit du code.
+### On interdit le code, pas le récit du code
+
+C'est le piège de **toute garde qui lit du source**, et il s'est présenté trois fois en une
+séance : l'analyseur de gabarit empilait un `<select>` cité dans un commentaire ; une garde
+sur `calcRegime` échouait sur son propre commentaire, celui qui nomme `this.essai` pour
+raconter l'erreur ; et la garde d'écriture du générateur tombait sur le nom d'une fonction
+cité dans une note.
+
+Le commentaire qui raconte une garde précédente la **nomme** — c'est son travail. Une garde
+qui lit du source doit donc retirer les commentaires avant de juger, ou s'accrocher à une
+forme que la prose ne peut pas imiter.
+
+### Le défaut a un nom : demander une INTENTION pour prédire un RÉSULTAT
+
+Il a été réparé trois fois de suite, toujours par le même geste — **décider après, pas
+avant** :
+
+| Où | L'intention demandée | Le résultat voulu |
+|---|---|---|
+| Garde d'étanchéité | « le générateur écrit-il ? » | « quelque chose d'engendré entre-t-il dans le stockage ? » |
+| `this.essai` | « a-t-il payé ? » | « y a-t-il quelque chose à mesurer ? » |
+| `aMoi` | « a-t-il déposé ? » | idem |
+
+À chaque fois l'intention était un **proxy plausible** du résultat, et à chaque fois elle
+divergeait dans un cas que personne n'avait listé. Quand le résultat est observable,
+observez-le.
+
+### Quand l'explication doit contredire l'étiquette, c'est l'étiquette qui est le défaut
+
+Une étiquette est **actionnable par construction**. « Périmée » veut dire *refais ton
+export* ; sur une série d'exemple il n'y a pas d'action, et à partir du 27 octobre 2026 il
+y en aurait eu dix, sur le premier écran, pour toujours — toute capture faite après cette
+date montrant dix alertes que personne ne peut lever. Un premier correctif avait gardé le
+mot en ajoutant « il n'y a rien à réexporter » juste en dessous : c'était le signal.
+
+Le verdict devient donc **« fenêtre fixe »**, qui enseigne la même chose avec les dates à
+côté — qu'une série a une fenêtre et qu'un scan s'arrête à sa fin. Ce qu'un export oublié a
+de particulier, c'est qu'on peut le **refaire**, et c'est précisément ce que l'exemple ne
+partage pas. Le seuil, lui, n'est **pas** exempté : `vieux` ne pilote que l'étiquette, une
+phrase et deux encres — aucun comportement — donc c'est le verdict qui change, pas la
+mesure. Les deux encres d'alerte suivent le verdict (`vieux && !estExemple(sel)`), sans
+quoi les dix porteraient la couleur d'alerte sans porter le mot.
 
 **La sonde d'idempotence** passe la migration **deux fois** et compare le stockage entier
 entre les deux passages : le second ne doit rien retravailler, ni rebalayer les blocs de

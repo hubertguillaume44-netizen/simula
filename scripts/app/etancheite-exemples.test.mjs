@@ -240,3 +240,28 @@ test("l’indicateur choisit son univers sur un RÉSULTAT, jamais sur une intent
   assert.ok(iRepli > iReel,
     "le repli doit suivre le relevé : décidé avant, il redevient une intention");
 });
+
+test("une série d’exemple ne porte jamais un verdict qu’on ne peut pas lever", () => {
+  // QUAND L'EXPLICATION DOIT CONTREDIRE L'ÉTIQUETTE, C'EST L'ÉTIQUETTE QUI EST LE
+  // DÉFAUT. Le premier correctif gardait « périmée » et ajoutait en dessous « il n'y a
+  // rien à réexporter ». Une étiquette est actionnable par construction : « périmée »
+  // veut dire refais ton export. À partir du 27 octobre 2026 il y en aurait eu dix, sur
+  // le premier écran, pour toujours — et toute capture faite après aurait montré dix
+  // alertes que personne ne peut lever.
+  const corps = methode("async calcRegime(zone) {"); // simple vérification que le fichier est lisible
+  assert.ok(corps.length > 0);
+
+  // le verdict, et les DEUX encres d'alerte qui le suivaient sans le dire
+  assert.match(APP, /vieux \? \(estExemple\(sel\) \? \['fenêtre fixe', 'tag tag-outline'\]/,
+    "une série d’exemple porte encore « périmée »");
+  const encres = [...APP.matchAll(/\(!la \|\| nTrous \|\| \(vieux && !estExemple\(sel\)\)\)/g)];
+  assert.equal(encres.length, 2,
+    `${encres.length} encres suivent le verdict, deux attendues — `
+    + "fTrouCouleur et fBndBougiesCoul passaient en accent-900 sur `vieux` seul, "
+    + "donc les dix exemples auraient porté la couleur d’alerte sans porter le mot");
+
+  // et le seuil lui-même n'est PAS exempté : il ne pilote aucun comportement, c'est le
+  // verdict qui change, pas la mesure
+  assert.match(APP, /const vieux = cv \? \(Date\.now\(\) - cv\.t1\) > 45 \* 86400000 : false;/,
+    "le seuil a été modifié : c’était le verdict qu’il fallait renommer, pas la mesure");
+});
