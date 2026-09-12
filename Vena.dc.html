@@ -347,14 +347,10 @@
       pastille n'en donnait qu'un extrait tronqué. Deux annonces de la même fin, dont
       une amputée : c'est l'amputée qui part.
     -->
-    <!-- l'accueil n'a pas d'onglets : la place à droite reçoit ses deux entrées.
-         Pas de troisième, et aucun « créer un compte » — le compte naît de l'achat. -->
-    <sc-if value="{{ isAccueil }}" hint-placeholder-val="{{ false }}">
-      <span style="margin-inline-start:auto;align-self:center;display:flex;gap:9px;align-items:center">
-        <button class="{{ clsEntreeCle }}" type="button" onClick="{{ versEntreeCle }}" title="Coller la clé reçue à l'achat : elle s'ouvre ici même, sans compte et sans réseau.">J'ai une clé</button>
-        <button class="{{ clsEntreeCompte }}" type="button" onClick="{{ versEntreeCompte }}" title="Retrouver sa clé, son échéance, ses factures.">Espace client</button>
-      </span>
-    </sc-if>
+    <!-- La paire « J'ai une clé » / « Espace client » vivait ici, et n'apparaissait que
+         sur la page de présentation — celle qui n'existe plus. Les deux mènent au même
+         endroit désormais : la section licence du tiroir, ouverte par la pastille
+         ci-dessous, présente sur les trois pages et non sur une seule. -->
     <!-- la pastille tient DANS le rang des onglets : un bloc à elle faisait un
          second rang de bandeau bleu pour une seule information -->
     <sc-if value="{{ aPastille }}" hint-placeholder-val="{{ false }}">
@@ -986,217 +982,29 @@
     </aside>
   </sc-if>
 
-  <sc-if value="{{ isAccueil }}" hint-placeholder-val="{{ true }}">
-  <main style="display:flex;flex-direction:column">
+  <!--
+    ————— LA PAGE DE PRÉSENTATION N'EST PLUS DANS L'OUTIL —————
 
-    <section style="padding:96px 32px 104px;display:flex;flex-direction:column;align-items:center;gap:26px;text-align:center">
-      <h1 style="margin:0;font-family:var(--font-heading);font-size:76px;line-height:.98;letter-spacing:-.015em;max-width:24ch">Vos règles. Vos données. Le chiffre exact.</h1>
-      <p style="margin:0;max-width:62ch;font-size:17px;line-height:1.55">Véna rejoue la stratégie que vous décrivez sur vos propres historiques de prix, frais de votre courtier compris. Il ne prédit rien : il mesure ce que votre méthode aurait donné, et à quel point ce résultat est fragile.</p>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
-        <button class="btn btn-primary blueprint" type="button" style="min-height:3rem;padding-inline:32px;font-size:16px" onClick="{{ ouvrirDecouverte }}" title="Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          Essayer sans rien fournir
-        </button>
-        <button class="btn btn-secondary" type="button" style="min-height:3rem;padding-inline:26px;font-size:15px" onClick="{{ goCourt }}">Ouvrir avec mes données</button>
-      </div>
-    </section>
+    Deux cent dix lignes de vitrine vivaient ici : une accroche, quatre sections de
+    vente, les trois colonnes de tarif, le champ de clé et l'encart « espace client ».
+    C'était une SECONDE page de vente, à tenir d'accord avec celle du site — et deux
+    vérités sur un prix divergent toujours, muettement.
 
-    <section style="background:var(--color-accent-900);color:var(--color-bg);padding:88px 32px;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center">
-      <div style="font-family:var(--font-heading);font-size:132px;line-height:.9;letter-spacing:-.02em">9,8 M</div>
-      <h2 style="margin:0;font-family:var(--font-heading);font-size:40px;line-height:1.1;max-width:26ch">Configurations mesurées en vingt minutes</h2>
-      <p style="margin:0;max-width:62ch;font-size:16px;line-height:1.55;opacity:.85">Chiffre relevé sur un ordinateur portable ordinaire, tous ses cœurs en travail. Vous ne testez pas une idée à la fois : vous balayez toutes les variantes d'un coup, et vous lisez ce qui en ressort classé.</p>
-    </section>
+    Le site vend, l'application travaille. Chaque chose a retrouvé un seul endroit :
 
-    <section style="padding:88px 32px;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center">
-      <h2 style="margin:0;font-family:var(--font-heading);font-size:40px;line-height:1.1;max-width:26ch">Le coût réel, pas le coût théorique</h2>
-      <p style="margin:0;max-width:62ch;font-size:16px;line-height:1.55">Spread, commission et portage viennent de votre propre relevé, ramenés à la part du risque qu'ils consomment sur un trade. Une stratégie rentable brute et perdante nette se voit à la première ligne.</p>
-      <table class="table" style="font-size:14px;width:auto;min-width:380px;text-align:left">
-        <thead><tr><th>Instrument</th><th style="text-align:right">Coût / R</th></tr></thead>
-        <tbody>
-          <tr><td>EUR / USD</td><td style="text-align:right"><strong style="font-family:var(--font-heading)">2,9 %</strong></td></tr>
-          <tr><td>Or</td><td style="text-align:right"><strong style="font-family:var(--font-heading)">4,8 %</strong></td></tr>
-          <tr><td>LVMH</td><td style="text-align:right"><strong style="font-family:var(--font-heading)">8,9 %</strong></td></tr>
-        </tbody>
-      </table>
-      <span style="font-size:14px;max-width:56ch;color:var(--color-neutral-700)">Tenir LVMH coûte trois fois l'euro-dollar. Même stratégie, résultat différent.</span>
-    </section>
+      · le prix et les formules  → /tarifs, sur le site ;
+      · coller sa clé, la retrouver, l'adresse de contact → la section licence du
+        tiroir, ouverte par la pastille du bandeau, au même endroit sur les trois
+        pages de l'outil ;
+      · les mentions légales et la confidentialité → le pied de page, qui les porte
+        déjà sur TOUTES les pages et non sur celle-ci seulement ;
+      · « essayer sans rien fournir » → le bandeau de compte vide, ci-dessous dans
+        « Mes instruments », là où l'on est quand on n'a rien déposé.
 
-    <section style="background:var(--color-accent-900);color:var(--color-bg);padding:88px 32px;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center">
-      <div style="font-family:var(--font-heading);font-size:132px;line-height:.9;letter-spacing:-.02em">0</div>
-      <h2 style="margin:0;font-family:var(--font-heading);font-size:40px;line-height:1.1;max-width:26ch">Aucun fichier envoyé, aucun compte, aucun mouchard</h2>
-      <p style="margin:0;max-width:62ch;font-size:16px;line-height:1.55;opacity:.85">Vos historiques et vos résultats sont lus et calculés sur votre ordinateur, et n'en sortent jamais. En contrepartie leur sauvegarde vous appartient : l'export complet tient dans un fichier.</p>
-    </section>
-
-    <section style="padding:84px 32px;display:flex;flex-direction:column;align-items:center;gap:30px">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
-        <h2 style="margin:0;font-family:var(--font-heading);font-size:44px;line-height:1.08;max-width:30ch">Trois instruments gratuits, sur vos propres données</h2>
-        <p style="margin:0;max-width:66ch;font-size:15px;line-height:1.6;color:var(--color-neutral-700)">Déposez vos exports, chiffrez vos frais, lancez de vrais scans sur trois instruments — sans payer, sans compte à créer. Vous décidez après avoir vu vos chiffres, pas sur une promesse.</p>
-      </div>
-
-      <sc-if value="{{ aAchatMsg }}" hint-placeholder-val="{{ false }}">
-        <div class="blueprint" style="padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;max-width:1060px;width:100%;border-color:var(--color-accent)">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <span style="font-size:13px;line-height:1.55;flex:1;min-width:34ch">{{ achatMsgTxt }}</span>
-          <button class="btn btn-secondary" type="button" style="min-height:2.2rem;font-size:12px" onClick="{{ goCourt }}">Commencer gratuitement</button>
-          <button class="btn btn-ghost" type="button" style="min-height:2.2rem;font-size:12px" onClick="{{ fermerAchatMsg }}">Fermer</button>
-        </div>
-      </sc-if>
-      <p style="margin:0;max-width:82ch;font-size:12.5px;line-height:1.6;color:var(--color-neutral-700);text-align:center"><strong style="color:var(--color-text)">Compatibilité.</strong> Chrome, Edge ou Firefox recommandés. Sur Safari, exportez après chaque session : ce navigateur efface le stockage local d'un site après plusieurs jours sans visite. Et Véna n'est pas fait pour un téléphone — un scan demande plus de mémoire qu'un mobile n'en accorde, et le bandeau n'est pas dessiné pour ces largeurs.</p>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;width:100%;max-width:1060px">
-        <div class="blueprint" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Découverte</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1">Gratuit</strong>
-            <span style="font-size:12px;color:var(--color-neutral-700)">sans limite de durée</span>
-          </div>
-          <div style="height:1px;background:var(--color-divider)"></div>
-          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-            <li>Trois instruments à vous</li>
-            <li>Un compte de courtier</li>
-            <li>Scans, backtests et portefeuille complets</li>
-            <li>Le compte de démonstration, sans limite</li>
-          </ul>
-          <button class="btn btn-secondary" type="button" style="min-height:2.5rem;margin-top:auto" onClick="{{ goCourt }}">Commencer</button>
-        </div>
-
-        <div class="blueprint" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-neutral-700)">Mensuel</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1;font-variant-numeric:tabular-nums">{{ prixMois }} €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / mois</span></strong>
-            <span style="font-size:12px;color:var(--color-neutral-700)">résiliable à tout moment</span>
-            <sc-if value="{{ aLancement }}" hint-placeholder-val="{{ true }}">
-              <span style="font-size:12px;line-height:1.5;color:var(--color-accent-700)">{{ mentionLancement }}</span>
-            </sc-if>
-          </div>
-          <div style="height:1px;background:var(--color-divider)"></div>
-          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-            <li>Instruments illimités</li>
-            <li>Jusqu'à cinq comptes de courtier</li>
-            <li>Actualités et agenda par instrument</li>
-            <li>Mises à jour incluses</li>
-          </ul>
-          <button class="btn btn-secondary" type="button" style="min-height:2.5rem;margin-top:auto" onClick="{{ acheterMois }}">Prendre l'abonnement</button>
-        </div>
-
-        <div class="blueprint" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px;border-color:var(--color-accent)">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <span style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Annuel · deux mois offerts</span>
-            <strong style="font-family:var(--font-heading);font-size:40px;line-height:1;font-variant-numeric:tabular-nums">{{ prixAn }} €<span style="font-size:17px;font-family:var(--font-body);color:var(--color-neutral-700)"> / an</span></strong>
-            <span style="font-size:12px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums">{{ prixAnDetail }}</span>
-            <sc-if value="{{ aLancement }}" hint-placeholder-val="{{ true }}">
-              <span style="font-size:12px;line-height:1.5;color:var(--color-accent-700)">{{ mentionLancement }}</span>
-            </sc-if>
-          </div>
-          <div style="height:1px;background:var(--color-divider)"></div>
-          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.7">
-            <li>Tout le mensuel</li>
-            <li>Un an de mises à jour</li>
-            <li>Réponse à vos questions par courriel</li>
-          </ul>
-          <button class="btn btn-primary" type="button" style="min-height:2.5rem;margin-top:auto" onClick="{{ acheterAn }}">Prendre l'année</button>
-        </div>
-
-      </div>
-
-      <div id="entree-client" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;width:100%;max-width:1060px;align-items:start">
-
-        <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:10px;border:1px solid {{ bordEntreeCle }}">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
-            <strong style="font-family:var(--font-heading);font-size:19px">J'ai une clé</strong>
-            <span class="tag tag-accent" style="font-size:9px">le plus rapide</span>
-          </div>
-          <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
-            <span style="font-size:13px;line-height:1.55">{{ licEtatTxt }}</span>
-            <button type="button" class="lien" style="align-self:flex-start" onClick="{{ licRetirer }}" title="Oublie le code sur cet ordinateur. Rien d'autre n'est effacé — recollez-le quand vous voudrez.">oublier le code sur cet ordinateur</button>
-          </sc-if>
-          <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
-            <span style="font-size:12px;line-height:1.55;color:var(--color-neutral-700)">Collez la clé reçue par courriel, avec l'adresse utilisée à l'achat. Elle s'ouvre ici même, sans compte et sans réseau : elle est signée, l'application la vérifie seule avec la clé publique embarquée dans cette page.</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <input class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;width:210px" type="email" value="{{ licEmail }}" onChange="{{ setLicEmail }}" placeholder="e-mail d'achat">
-              <input id="champCle" class="input" style="min-height:2.1rem;height:2.1rem;font-size:13px;padding:0 9px;flex:1;min-width:230px;font-variant-numeric:tabular-nums" type="text" value="{{ licCode }}" onChange="{{ setLicCode }}" placeholder="SIV1.…">
-              <button class="btn btn-primary" type="button" style="min-height:2.1rem;padding-inline:16px" onClick="{{ licVerifier }}">Ouvrir</button>
-            </div>
-            <sc-if value="{{ aLicMsg }}" hint-placeholder-val="{{ false }}">
-              <span style="font-size:12px;line-height:1.55;color:{{ licMsgEncre }}">{{ licMsg }}</span>
-            </sc-if>
-            <span style="font-size:11px;line-height:1.5" class="text-muted">Elle se colle d'un bloc, sans espace. Perdue ? Voyez « Espace client », ci-contre.</span>
-          </sc-if>
-        </div>
-
-        <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:10px;border:1px solid {{ bordEntreeCompte }}">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <strong style="font-family:var(--font-heading);font-size:19px">Espace client</strong>
-          <p style="margin:0;font-size:12.5px;line-height:1.55" class="text-muted">Retrouver sa clé, voir son échéance, reprendre un abonnement.</p>
-          <!--
-            PAS DE FORMULAIRE QUI NE MÈNE NULLE PART. Il n'y a aujourd'hui aucun
-            serveur de comptes : Véna est un fichier, et la page promet plus bas
-            que rien n'est stocké sur l'acheteur, pas même son achat. Un champ
-            « mot de passe » ici serait une porte peinte sur un mur. Ce qui EXISTE
-            est écrit à la place, et c'est déjà la réponse à « clé perdue ».
-          -->
-          <span style="font-size:12.5px;line-height:1.55">Il n'y a pas de compte à ouvrir : <strong>rien n'est conservé sur vous, pas même votre achat</strong> — c'est la contrepartie de la promesse ci-dessous.</span>
-          <span style="font-size:12.5px;line-height:1.55" class="text-muted">Clé perdue ou courriel égaré : écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a>. Elle est re-signée à l'identique et renvoyée — une clé ne s'épuise pas et ne se révoque pas.</span>
-          <span style="font-size:11.5px;line-height:1.5;padding-top:8px;border-top:1px solid var(--color-divider)" class="text-muted">Pas encore client ? La clé s'obtient à l'achat, ci-dessus — rien à créer avant.</span>
-        </div>
-      </div>
-
-      <!--
-        LA PROMESSE RESTE SUR LA PAGE, pas dans les mentions légales : c'est
-        l'argument, il se lit avant l'achat ou il ne sert à rien.
-      -->
-      <div class="card blueprint" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;width:100%;max-width:1060px;border:1px solid var(--color-accent)">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <span style="font-size:10px;letter-spacing:.12em;text-transform:uppercase" class="text-muted">Ce qu'un compte ne contiendrait pas</span>
-        <p style="margin:0;font-size:13px;line-height:1.6;max-width:88ch"><strong>Une clé porte votre licence, rien d'autre.</strong> <span class="text-muted">Vos séries, vos scans et vos portefeuilles restent dans votre navigateur : ils ne montent jamais nulle part. L'application ne demande jamais de connexion pour mesurer, et une clé collée sans compte reste valable — elle se vérifie hors ligne.</span></p>
-      </div>
-
-      <div class="card blueprint" style="padding:17px 20px;display:flex;flex-direction:column;gap:12px;width:100%;max-width:1060px">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-          <strong style="font-family:var(--font-heading);font-size:19px">Sans clé, l'application mesure quand même</strong>
-          <span class="tag tag-outline" style="font-size:9px">palier gratuit</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px">
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:var(--font-heading);font-size:29px;line-height:1;font-variant-numeric:tabular-nums">{{ palierN }}</span>
-            <span style="font-size:11.5px;line-height:1.45" class="text-muted">instruments à vous, sans limite de durée. Les séries de démonstration ne comptent pas.</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:var(--font-heading);font-size:29px;line-height:1;font-variant-numeric:tabular-nums">{{ palierAvecCle }}</span>
-            <span style="font-size:11.5px;line-height:1.45" class="text-muted">{{ palierAvecCleTxt }}</span>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:3px">
-            <span style="font-family:var(--font-heading);font-size:29px;line-height:1">0</span>
-            <span style="font-size:11.5px;line-height:1.45" class="text-muted">donnée perdue à l'expiration : mesures, portefeuilles et journaux restent en place.</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:100%;max-width:1060px;padding-top:6px">
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce qu'il vous faut.</strong> <strong style="color:var(--color-text)">MetaTrader 5</strong> chez votre courtier — c'est la seule plateforme que Véna lit : les deux outils qu'elle vous fait installer sont des scripts MQL5, et ce sont eux qui produisent les bougies. <strong style="color:var(--color-text)">Ni cTrader, ni TradingView, ni relevé de courtier au format maison</strong> : mieux vaut le savoir avant d'acheter qu'après. Un export de symboles MetaTrader 4 est accepté pour les frais, mais les bougies viennent de MT5. Aucune programmation : glisser un script sur un graphique, puis déposer les fichiers ici. Véna ne se connecte pas à votre compte de trading et ne passe aucun ordre.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Ce que vous achetez.</strong> Un code à coller une fois, qui débloque l'import sans limite. Paiement par Revolut ; le code arrive par courriel, signé — l'application le vérifie sans rien envoyer nulle part. Code perdu ou mail égaré : écrivez à <a href="{{ mailContactHref }}">{{ mailContact }}</a>, il sera renvoyé à la main — rien n'est stocké sur vous, pas même votre achat.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Remboursement.</strong> Quatorze jours, sans justification — c'est votre droit de rétractation.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">À votre nom, sur vos machines.</strong> La licence couvre vos machines personnelles — fixe et portable. Elle est nominative : votre adresse s'affiche dans l'application et signe les robots et fichiers exportés (une case permet de la retirer d'un résultat que vous partagez). Et ce que vous achetez est un outil de mesure, pas un contenu : un code emprunté ne donne accès à aucune bibliothèque, aucun signal, aucun résultat — seulement au droit de mesurer ses propres séries, à exporter soi-même depuis son propre MetaTrader, avec ses propres relevés de frais.</p>
-        <p style="margin:0;font-size:12px;line-height:1.6;color:var(--color-neutral-700)"><strong style="color:var(--color-text)">Trois portes, toutes facultatives.</strong> Une sauvegarde chiffrée dont vous détenez seul la phrase ; un compteur d'usage anonyme, <strong style="color:var(--color-text)">éteint par défaut</strong>, avec un bouton qui montre exactement ce qui part avant que ça parte ; et un fichier de diagnostic qui se télécharge et ne s'envoie jamais tout seul. Aucune ne conditionne l'usage du logiciel — et à part elles, rien ne quitte votre navigateur.</p>
-      </div>
-    </section>
-
-    <section style="padding:88px 32px 100px;display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center">
-      <h2 style="margin:0;font-family:var(--font-heading);font-size:44px;line-height:1.08;max-width:28ch">Un export, une règle, dix minutes</h2>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
-        <button class="btn btn-primary" type="button" style="min-height:2.9rem;padding-inline:28px;font-size:15px" onClick="{{ ouvrirDecouverte }}">Essayer sans rien fournir</button>
-        <button class="btn btn-secondary" type="button" style="min-height:2.9rem;padding-inline:24px;font-size:15px" onClick="{{ goCourt }}">Ouvrir avec mes données</button>
-      </div>
-      <p style="margin:0;max-width:56ch;font-size:14px;line-height:1.6;color:var(--color-neutral-700)">Un outil de mesure, pas un conseil : la mention complète est en bas de page.</p>
-    </section>
-
-  </main>
-  </sc-if>
+    On n'entre donc plus par une vitrine : `/app` ouvre directement sur « Mes
+    instruments ». Quelqu'un qui ouvre l'outil veut travailler ; s'il voulait lire
+    l'argumentaire, il serait resté sur le site.
+  -->
   <sc-if value="{{ aPriveMsg }}" hint-placeholder-val="{{ false }}">
     <div style="background:var(--color-accent-100);border-bottom:1px solid var(--color-accent);padding:8px 32px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <span style="font-size:12px;line-height:1.5;flex:1;min-width:32ch"><strong>Fenêtre de navigation privée :</strong> tout ce que vous ferez ici sera effacé à la fermeture de la fenêtre. Pour garder une mesure, exportez-la avant de fermer.</span>
@@ -1269,7 +1077,12 @@
         <sc-if value="{{ aBarreTache }}" hint-placeholder-val="{{ false }}">
           <span style="width:1px;height:18px;background:var(--color-divider);flex:none"></span>
           <span style="font-size:12px;line-height:1.4;color:var(--color-text)">{{ barreTacheTxt }}</span>
-          <button class="btn btn-primary" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:14px" onClick="{{ barreTache }}">{{ barreTacheBouton }}</button>
+          <!-- L'ACCENT VA À L'ACTION PRINCIPALE, et il cède quand la page en a une plus
+               forte. Sur un compte vide, le bandeau porte le seul geste qui ait du sens
+               sans données ; deux boutons pleins à l'écran ne désigneraient plus rien.
+               Dès qu'un relevé est déposé, la barre reprend l'accent — c'est alors elle
+               qui dit la prochaine chose à faire. -->
+          <button class="{{ barreTacheCls }}" type="button" style="min-height:1.9rem;font-size:12px;padding-inline:14px" onClick="{{ barreTache }}">{{ barreTacheBouton }}</button>
         </sc-if>
         <!--
           LE PANNEAU ANCRÉ : 430 px sous la mention, pas un bandeau, pas une modale.
@@ -1433,6 +1246,19 @@
           renommer le compte change la façon de nommer ses CSV de second flux. Le dire
           après coup vaudrait un fichier mal rattaché.
         -->
+        <!--
+          DEUX LIGNES, ET UNE SEULE ACTION PLEINE. Il remplace l'écran de présentation
+          supprimé : celui-ci argumentait sur trois écrans, celui-là dit ce qu'on peut
+          faire maintenant. La seconde possibilité — produire ses fichiers depuis MT5 —
+          n'a pas de bouton parce que son cadre est juste dessous : deux boutons pour
+          deux gestes dont l'un est déjà à l'écran ne désigneraient plus rien.
+        -->
+        <sc-if value="{{ aCompteVide }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--color-accent-100);border:1px solid var(--color-accent);padding:12px 15px;margin-bottom:13px">
+            <span style="font-size:13px;line-height:1.55;flex:1;min-width:38ch">Vous n’avez encore rien déposé. Regardez d’abord sur des séries d’exemple — le moteur est le même — ou produisez vos fichiers depuis MT5, ci-dessous.</span>
+            <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px;flex:none" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
+          </div>
+        </sc-if>
         <sc-if value="{{ aInviteNom }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:0 0 12px;margin-bottom:12px;border-bottom:1px solid var(--color-divider)">
             <span style="font-size:12.5px;line-height:1.5;flex:1;min-width:24ch">Ce compte n’a pas encore de nom. Donnez-lui celui de <strong>votre</strong> courtier : il s’affichera partout dans l’application, et sert de suffixe (<code>{{ suffixeCompte }}</code>) pour distinguer les fichiers de ce compte.</span>
@@ -6173,7 +5999,22 @@ migrerBase();
 const CAPITAL_DEFAUT = 10000; // exemple, pas un chiffre d'utilisateur
 
 class Component extends DCLogic {
-  state = { tab: 'accueil', capital: CAPITAL_DEFAUT, risquePct: 1, vue: 'marche',
+  // ————— ENTRER, C'EST ARRIVER SUR SES DONNÉES —————
+  //
+  // On atterrissait sur « Mes décisions » : l'état initial portait `vue: 'marche'`, qui
+  // appartient au troisième groupe. Or on n'entre pas dans un outil de mesure par ses
+  // conclusions — on n'en a aucune le premier jour. « Mes instruments » est la première
+  // chose à faire et la seule qui ait du sens sans données : c'est là qu'on dépose le
+  // relevé et les bougies.
+  //
+  // La destination vit à UN endroit, et `state` la LIT au lieu de la recopier. Elle est
+  // déclarée avant lui exprès : les champs de classe s'initialisent dans l'ordre où ils
+  // sont écrits, donc `this.ENTREE` doit exister quand `state` se construit. Trois
+  // littéraux — l'état initial, la clé validée, le bouton d'entrée — auraient fini par
+  // désigner trois pages, et rien ne l'aurait signalé : celui qui change l'un ne pense
+  // pas aux autres.
+  ENTREE = { tab: 'court', vue: 'courtiers' };
+  state = { ...this.ENTREE, capital: CAPITAL_DEFAUT, risquePct: 1,
     pret: false, btEntree: 'croisement_ou_rebond', btLigne: 'ema', btPeriode: 26,
     btSL: 1.0, btRR: 2.5, nuitsSaisi: null, btMtf: true, btBE: true, btDelai: 0, btFenDeb: 0, btFenFin: 0, btFrais: true, conf: null, confMsg: '', bande: null,
     fRsi: false, fRsiSeuil: 50, fAdx: false, fAdxSeuil: 20, fNuage: false,
@@ -17787,18 +17628,6 @@ GROUPES = {
   // l'onglet est persisté avec la session : recharger revient là où on travaillait
   go(tab) { return (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ tab }, () => this.ecrireSession()); }; }
 
-  // ————— ENTRER, C'EST ARRIVER SUR SES DONNÉES —————
-  //
-  // On atterrissait sur « Mes décisions » : l'état initial porte `vue: 'marche'`, qui
-  // appartient au troisième groupe. Or on n'entre pas dans un outil de mesure par ses
-  // conclusions — on n'en a aucune le premier jour. « Mes instruments » est la première
-  // chose à faire et la seule qui ait du sens sans données : c'est là qu'on dépose le
-  // relevé et les bougies.
-  //
-  // La destination vit à UN endroit. La clé validée et le bouton « Ouvrir avec mes
-  // données » la lisent tous les deux : deux littéraux auraient fini par désigner deux
-  // pages, et rien ne l'aurait signalé — celui qui change l'un ne pense pas à l'autre.
-  ENTREE = { tab: 'court', vue: 'courtiers' };
   entrer() { this.setState({ ...this.ENTREE }, () => this.ecrireSession()); }
 
   get prive() { return !this.essai; }
@@ -18536,6 +18365,10 @@ GROUPES = {
           aBarreTache: !!tache,
           barreTacheTxt: tache ? tache.txt : '',
           barreTacheBouton: tache ? tache.bouton : '',
+          // `deposes` vide = le bandeau de compte vide est à l'écran, et c'est LUI qui
+          // porte l'accent. Le même signal des deux côtés : un second drapeau aurait
+          // fini par dire le contraire du premier.
+          barreTacheCls: (this.state.deposes || []).length ? 'btn btn-primary' : 'btn btn-secondary',
           barreTache: tache ? tache.go : () => {},
         };
       })(),
@@ -24686,6 +24519,18 @@ GROUPES = {
           aInviteNom: this.compteActif !== 'tous' && cle !== 'demo' && !perso && !configures[cle],
           placeholderNom: this.nomCourtier(cle),
           suffixeCompte: this.suffixeFlux(cle),
+          // ————— LE BANDEAU DE COMPTE VIDE —————
+          //
+          // Il remplace la page de présentation supprimée, mais il ne la refait pas : la
+          // vitrine argumentait, celui-ci ne dit que les DEUX gestes possibles quand on
+          // n'a rien déposé — regarder sur des séries d'exemple, ou produire ses fichiers
+          // depuis MT5, dont le cadre est juste dessous.
+          //
+          // « Rien déposé » se lit sur `deposes`, qui porte les séries réellement
+          // présentes, démonstration comprise : dès qu'on ouvre les exemples, le bandeau
+          // s'efface tout seul. Pas de drapeau « déjà vu » à ranger quelque part — un
+          // état qui se déduit ne se désynchronise pas.
+          aCompteVide: !(this.state.deposes || []).length,
         };
       })(),
       // le relevé déposé va toujours au compte actif : plus de choix à faire

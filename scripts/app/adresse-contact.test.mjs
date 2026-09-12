@@ -77,13 +77,19 @@ test("l’adresse n’est ni obfusquée ni remplacée par un formulaire", () => 
 
 // ————— LES DEUX FAUX POSITIFS À NE PAS ATTRAPER —————
 
-test("« e-mail d’achat » est un intitulé, pas une adresse", () => {
+test("le champ du courriel d’achat existe encore, et n’est pas une adresse", () => {
   const src = lire("Vena.dc.html");
-  // le champ existe et doit continuer d'exister : ce test échouerait si on l'avait
-  // supprimé par zèle en croyant retirer une adresse
-  // l'apostrophe est celle du fichier : droite dans le placeholder, courbe ailleurs
-  assert.match(src, /placeholder="e-mail d['’]achat"/,
-    "l’intitulé du champ d’achat a disparu — ce n’était pas une adresse");
+  // LE CHAMP DOIT CONTINUER D'EXISTER : ce test échouerait si on l'avait supprimé par
+  // zèle en croyant retirer une adresse. Il n'est plus reconnu à son texte d'attente —
+  // il porte désormais un LIBELLÉ, qui ne disparaît pas à la première frappe — mais à
+  // son identifiant, qui est ce à quoi le libellé s'attache.
+  assert.match(src, /<label for="tirLicEmail">Courriel de l['’]achat<\/label>/,
+    "le champ du courriel d’achat a disparu — ce n’était pas une adresse");
+  assert.match(src, /id="tirLicEmail"[^>]*type="email"/,
+    "le champ doit rester un champ de courriel");
+  // et l'intitulé n'est pas une adresse : c'est ce que le test principal éprouve déjà,
+  // on le redit ici pour qu'un lecteur sache que sa présence n'est pas un oubli
+  assert.ok(!/Courriel de l['’]achat[^<]*@/.test(src), "une adresse s’est glissée dans l’intitulé");
 });
 
 test("la mention nominative de licence porte l’adresse de l’ACHETEUR, pas la nôtre", () => {

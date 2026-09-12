@@ -113,27 +113,6 @@
    ]
   },
   {
-   "terme": "Ce qu'un compte ne contiendrait pas",
-   "texte": "Capital, risque et stop — c’est ce que vaut 1 R partout dans l’application. Cliquez pour régler.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "Ce qu'un compte ne contiendrait pas",
-   "texte": "Le nom de ce compte, tel que vous le lisez. Il reste dans votre navigateur.",
-   "vues": [
-    "Mes instruments"
-   ]
-  },
-  {
-   "terme": "Ce qu'un compte ne contiendrait pas",
-   "texte": "L’installation des scripts, une fois — puis les quatre gestes de chaque mise à jour : relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.",
-   "vues": [
-    "Mes instruments"
-   ]
-  },
-  {
    "terme": "Ce que ça rend en tout",
    "texte": "Ce que le capital devient sur toute la période, gains réinvestis.",
    "vues": [
@@ -358,20 +337,6 @@
    ]
   },
   {
-   "terme": "Espace client",
-   "texte": "Retrouver sa clé, son échéance, ses factures.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "Essayer sans rien fournir",
-   "texte": "Dix instruments fictifs déjà chargés, avec leurs frais : scannez, changez les filtres, montez un portefeuille. Aucun fichier à fournir.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
    "terme": "Exporter",
    "texte": "Télécharge l'Expert Advisor MQL5 de cette configuration.",
    "vues": [
@@ -428,6 +393,27 @@
    ]
   },
   {
+   "terme": "Fichier de diagnostic — sans réseau",
+   "texte": "Capital, risque et stop — c’est ce que vaut 1 R partout dans l’application. Cliquez pour régler.",
+   "vues": [
+    "Toutes les pages"
+   ]
+  },
+  {
+   "terme": "Fichier de diagnostic — sans réseau",
+   "texte": "Le nom de ce compte, tel que vous le lisez. Il reste dans votre navigateur.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
+   "terme": "Fichier de diagnostic — sans réseau",
+   "texte": "L’installation des scripts, une fois — puis les quatre gestes de chaque mise à jour : relevé, liste, bougies H1, bougies M1. Le glisser-déposer marche sur toute la page, cadre replié compris.",
+   "vues": [
+    "Mes instruments"
+   ]
+  },
+  {
    "terme": "Filtre balayé retenu",
    "texte": "Parmi les conditions balayées, celle que la configuration retenue a effectivement gardée. Trois têtes qui gardent trois conditions différentes ne se lisent pas comme trois têtes qui gardent la même.",
    "vues": [
@@ -446,20 +432,6 @@
    "texte": "Choisir les instruments balayés — la liste des cochés, la recherche et les familles s’ouvrent dessous.",
    "vues": [
     "Nouveau scan"
-   ]
-  },
-  {
-   "terme": "J'ai une clé",
-   "texte": "Coller la clé reçue à l'achat : elle s'ouvre ici même, sans compte et sans réseau.",
-   "vues": [
-    "Toutes les pages"
-   ]
-  },
-  {
-   "terme": "J'ai une clé Espace client",
-   "texte": "Une nouveauté n’a pas été lue",
-   "vues": [
-    "Toutes les pages"
    ]
   },
   {
