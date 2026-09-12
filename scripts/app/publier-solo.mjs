@@ -72,5 +72,25 @@ if (absents.length) {
   console.warn("               Déposez ces fichiers dans public/ (public/_ds/…) : Vite les publiera.");
 }
 
+// 5. LA DATE EST-ELLE CELLE DE CE QU'ON PUBLIE ? `VERSION_APP` part avec chaque rapport
+//    d'avis et chaque diagnostic : c'est la seule chose qui dise quelle version
+//    l'utilisateur avait sous les yeux. Oubliée, elle ne se contente pas d'être inutile,
+//    elle MENT — et un rapport qui ment sur sa version fait chercher un défaut là où il
+//    n'est plus.
+//
+//    C'est un AVERTISSEMENT, pas un arrêt : la date de dernière écriture d'un fichier ne
+//    survit pas à un clone, et refuser de construire un dépôt fraîchement cloné serait
+//    un piège pire que l'oubli qu'on prévient. Même parti que l'habillage ci-dessus :
+//    une panne silencieuse est le seul défaut qu'on ne corrige jamais.
+const jour = (d) => String(d.getFullYear() % 100).padStart(2, "0")
+  + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+const ecritLe = jour(statSync(SOURCE).mtime);
+if (vSource < ecritLe) {
+  console.warn(`[publier-solo] ATTENTION : l'application annonce la version ${vSource},`);
+  console.warn(`               mais Vena.dc.html a été écrit le ${ecritLe}.`);
+  console.warn("               Les rapports d'avis et les diagnostics porteront une date fausse.");
+  console.warn("               Pour dater : npm run app:version && npm run app:solo");
+}
+
 const mo = (statSync(SORTIE).size / 1048576).toFixed(2);
 console.log(`[publier-solo] dist/app/index.html — ${mo} Mo, version ${vSource}, servi tel quel sous /app.`);

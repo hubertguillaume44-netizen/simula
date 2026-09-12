@@ -78,6 +78,9 @@ supprimé : l'occupation réelle du navigateur est bien celle des deux.
 | `Export_H1_Vena.mq5`, `Vena_Releve.mq5` | scripts MT5 téléchargés par l'utilisateur |
 | `aide-index.json` | **artefact**, régénéré par `npm run app:aide` après tout changement de `title=` |
 
+À chaque livraison : `npm run app:version` avant `npm run app:solo` — voir « La version
+affichée est une date » plus bas.
+
 Le dépôt GitHub s'appelle `hubertguillaume44-netizen/vena`. Il a été renommé depuis
 GitHub, et les deux liens qui le citent (`README.md`, `PASSATION.md`) ont suivi. GitHub
 redirige l'ancienne adresse, mais un lien écrit dans le dépôt doit nommer la vraie :
@@ -189,6 +192,32 @@ variable manque : une protection qui disparaît avec sa configuration ne protèg
 
 Elle couvre `/api/licence` : **le webhook Revolut recevra 401 tant qu'elle est en place**.
 À traiter le jour où le paiement s'ouvre, avec la liste `OUVERTS` de `protection.js`.
+
+## La version affichée est une date, et elle part avec les rapports
+
+`VERSION_APP` n'est pas un ornement du pied de page. Elle voyage avec **chaque rapport
+d'avis** et **chaque fichier de diagnostic** : c'est la seule chose qui dise quelle
+version l'utilisateur avait sous les yeux quand il a vu ce qu'il rapporte. Restée à
+`260905` pendant que l'application changeait de fond en comble, elle ne se contentait
+pas d'être inutile — elle **mentait**, et un rapport qui ment sur sa version fait
+chercher un défaut là où il n'est plus.
+
+**À chaque livraison :** `npm run app:version` (pose la date du jour, format AAMMJJ),
+puis `npm run app:solo`. `npm run app:version -- --voir` dit ce qui est posé sans rien
+écrire. Deux livraisons le même jour portent le même numéro : la journée est la
+granularité utile.
+
+**Ne pas la confondre avec `MOTEUR_V`.** Celle-là est une clé de cache : la changer
+PÉRIME les résultats enregistrés de tout le monde. `VERSION_APP` est une étiquette, elle
+ne conditionne aucun calcul — c'est pour ça qu'on peut la bouger sans précaution, et
+aussi pour ça qu'on l'oublie. `scripts/app/version-datee.test.mjs` interdit qu'elles se
+confondent, et vérifie que la date existe, qu'elle n'est pas dans l'avenir, et que
+l'artefact porte la même que la source.
+
+**L'oubli se voit à la construction.** `publier-solo.mjs` avertit quand `Vena.dc.html` a
+été écrit après la date qu'il annonce. C'est un avertissement et non un arrêt : un clone
+frais réécrit les dates de fichiers, et refuser de construire un dépôt fraîchement cloné
+serait un piège pire que l'oubli qu'on prévient.
 
 ## Le test qui tient la convention
 
