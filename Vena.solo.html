@@ -1292,11 +1292,42 @@ window.__sivAide = {"entrees":[{"terme":"? Aide","texte":"Les explications de l�
           n'a pas de bouton parce que son cadre est juste dessous : deux boutons pour
           deux gestes dont l'un est déjà à l'écran ne désigneraient plus rien.
         -->
+        <!--
+          DEUX PORTES QUAND IL N'Y A PAS DE CLÉ. En retirant la page de présentation,
+          j'ai retiré la seule place où « J'ai une clé » était visible : quelqu'un qui
+          vient de payer arrivait ici sans voir où coller. Le bandeau porte donc le
+          geste — mais il ne COPIE pas le champ, il y MÈNE. Un seul champ de clé dans
+          toute l'application, celui du tiroir.
+
+          `licSaisie` et `licValide` sont les producteurs du TIROIR : deux lecteurs, un
+          seul signal. Rien de nouveau n'est enregistré — c'est un état ajouté qui a
+          produit l'écran blanc.
+
+          Le bandeau COIFFE la page, il ne la remplace pas : les quatre gestes de MT5
+          restent visibles au premier coup d'œil, pour qui n'a pas de clé à coller.
+        -->
         <sc-if value="{{ aCompteVide }}" hint-placeholder-val="{{ true }}">
-          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--color-accent-100);border:1px solid var(--color-accent);padding:12px 15px;margin-bottom:13px">
-            <span style="font-size:13px;line-height:1.55;flex:1;min-width:38ch">Vous n’avez encore rien déposé. Regardez d’abord sur des séries d’exemple — le moteur est le même — ou produisez vos fichiers depuis MT5, ci-dessous.</span>
-            <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px;flex:none" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
-          </div>
+          <sc-if value="{{ licSaisie }}" hint-placeholder-val="{{ true }}">
+            <div class="blueprint" style="background:var(--color-accent-100);padding:17px 19px 18px;margin-bottom:14px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap">
+              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="flex:1 1 440px;min-width:0">
+                <strong style="display:block;font-family:var(--font-heading);font-size:23px;line-height:1.12;margin-bottom:5px">Votre clé est dans le courriel de l’achat</strong>
+                <span style="font-size:13px;line-height:1.55;max-width:62ch;display:block">Collez-la pour ouvrir votre espace — ou regardez d’abord sur des séries d’exemple : le moteur est le même, la mesure est la même. Rien n’est perdu en changeant d’avis.</span>
+              </div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:3px;flex:none">
+                <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px" onClick="{{ collerMaCle }}">Coller ma clé</button>
+                <button class="btn btn-secondary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
+              </div>
+            </div>
+          </sc-if>
+          <!-- Une clé posée mais rien de déposé : le bandeau d'origine, mot pour mot.
+               Il n'y a plus qu'un geste possible, il garde donc l'accent. -->
+          <sc-if value="{{ licValide }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--color-accent-100);border:1px solid var(--color-accent);padding:12px 15px;margin-bottom:13px">
+              <span style="font-size:13px;line-height:1.55;flex:1;min-width:38ch">Vous n’avez encore rien déposé. Regardez d’abord sur des séries d’exemple — le moteur est le même — ou produisez vos fichiers depuis MT5, ci-dessous.</span>
+              <button class="btn btn-primary" type="button" style="min-height:2.4rem;font-size:13px;padding-inline:16px;flex:none" onClick="{{ ouvrirDecouverte }}">Voir sur des séries d’exemple</button>
+            </div>
+          </sc-if>
         </sc-if>
         <sc-if value="{{ aInviteNom }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:0 0 12px;margin-bottom:12px;border-bottom:1px solid var(--color-divider)">
@@ -10956,9 +10987,14 @@ GROUPES = {
     // abonnement résilié s'éteint tout seul, sans révocation à gérer
     (async () => {
       const lm = this.lireLicence();
-      if (!lm || !lm.code) return;
-      const r = await this.verifierLicence(lm.code, lm.email);
-      this.setState({ lic: { ...r, email: r.email || lm.email, code: lm.code } });
+      if (lm && lm.code) {
+        const r = await this.verifierLicence(lm.code, lm.email);
+        this.setState({ lic: { ...r, email: r.email || lm.email, code: lm.code } });
+      }
+      // APRÈS la vérification, et pas avant : la licence mémorisée se revérifie en
+      // asynchrone, et lire « aucune clé » trop tôt ouvrirait le tiroir au nez de
+      // quelqu'un qui en a une.
+      this.repereLicence();
     })();
     const M = await import(window.__siv.moteur);
     this.M = M;
@@ -17694,6 +17730,42 @@ GROUPES = {
 
   entrer() { this.setState({ ...this.ENTREE }, () => this.ecrireSession()); }
 
+  // ————— ARRIVER DES TARIFS, SA CLÉ EN MAIN —————
+  //
+  // Le lien de la page des tarifs vers l'application porte `#licence`. Un FRAGMENT, et
+  // non un paramètre : il ne part jamais au serveur, donc il ne croise ni la
+  // redirection Netlify de `/app` ni aucune question de chaîne de requête. C'est aussi
+  // ce qu'il est vraiment — une destination dans la page, pas une donnée.
+  //
+  // Il ne s'enregistre NULLE PART : ni dans la session, ni dans un drapeau « déjà vu ».
+  // C'est un état ajouté qui a produit l'écran blanc ; celui-ci vit le temps d'un
+  // montage et disparaît.
+  REPERE_LICENCE = 'licence';
+  repereLicence() {
+    try {
+      if ((location.hash || '').slice(1) !== this.REPERE_LICENCE) return;
+      // NETTOYÉ D'ABORD, et quoi qu'il arrive. Laissé en place, un rechargement — ou
+      // pire, un favori posé sur cette adresse — rouvrirait le tiroir indéfiniment.
+      history.replaceState(null, '', location.pathname + location.search);
+      // une clé est déjà posée : le repère a fait son temps, il n'y a rien à ouvrir
+      const l = this.state.lic;
+      if (l && l.ok) return;
+      this.ouvrirLicence();
+    } catch (e) { /* un navigateur sans history : le repère reste, rien ne casse */ }
+  }
+
+  // Le tiroir, sur la section Licence dépliée, curseur dans le champ du courriel —
+  // l'ordre de l'achat, et le premier des deux. Sans le focus, on demande un clic de
+  // plus à quelqu'un qui en a déjà fait deux pour arriver là.
+  ouvrirLicence() {
+    this.setState({ tiroir: true, tiroirOnglet: 'donnees', tirSec: 'lic' });
+    this.diagnosticStockage(); this.peserEspaces();
+    setTimeout(() => {
+      const c = document.getElementById('tirLicEmail');
+      if (c) { try { c.focus(); } catch (e) {} }
+    }, 60);
+  }
+
   get prive() { return !this.essai; }
   // ————— LES TROIS PAGES PATRIMOINE ONT ÉTÉ RETIRÉES —————
   // « Aperçu », « Immo » et « Marchés » étaient le vestige du tableau de bord d'origine :
@@ -17701,10 +17773,24 @@ GROUPES = {
   // données personnelles, sur des pages devenues inatteignables — aucun bouton n'appelait
   // plus goApercu, et le cadenas n'avait plus d'ouverture. Une session enregistrée avant
   // ce retrait peut encore porter leur onglet : elle retombe sur Trading.
+  //
+  // « accueil » les a rejointes au retrait de la page de présentation, et c'est ici que
+  // ça se dit. Cet accesseur est LE SEUL entonnoir par lequel tout le rendu passe : les
+  // clics et le stockage ont chacun leur garde, mais une valeur qui les contournerait
+  // arriverait quand même ici — et un onglet qu'on ne sait pas rendre donne un écran
+  // blanc, pas un message.
+  //
+  // Une LISTE BLANCHE, et non une liste des morts. La seconde demande qu'on pense à y
+  // inscrire chaque page supprimée, le jour où on la supprime ; c'est exactement ce que
+  // j'ai oublié de faire, et l'écran blanc en est sorti. La première n'oublie rien :
+  // tout ce qui n'est pas rendable retombe sur l'entrée.
+  // La liste des onglets qu'on SAIT rendre. Il n'y en a qu'un aujourd'hui ; il s'écrit
+  // quand même en liste, pour que le jour où il y en a deux se règle par une entrée de
+  // plus et non par une réécriture de la règle.
+  TABS_RENDUS = ['court'];
   get tabVu() {
     const t = this.state.tab;
-    if (t === 'accueil') return 'accueil';
-    return (t === 'apercu' || t === 'immo' || t === 'marches') ? 'court' : t;
+    return this.TABS_RENDUS.includes(t) ? t : this.ENTREE.tab;
   }
   // Le cadenas (boîte de code, déverrouillage) est parti avec les pages patrimoine.
   // `deverrouille` et sa restauration au démarrage restent : ils décident de l'ESPACE DE
@@ -18524,7 +18610,6 @@ GROUPES = {
           ouvrirAide: () => this.setState({ aideOuverte: true }),
         };
       })(),
-      isAccueil: tab === 'accueil',
       // ————— LES DEUX ENTRÉES DE L'ACCUEIL —————
       //
       // « J'ai une clé » d'abord : c'est le geste le plus fréquent, et le seul qui
@@ -18732,6 +18817,11 @@ GROUPES = {
       // toujours sur « Vos données » : l'onglet mémorisé faisait retomber chaque
       // réouverture sur le Journal, sans chemin de retour évident
       ouvrirTiroir: () => { this.setState({ tiroir: true, tiroirOnglet: 'donnees' }); this.diagnosticStockage(); this.peserEspaces(); },
+      // « Coller ma clé » ouvre le MÊME tiroir, sur la section Licence dépliée, et pose
+      // le curseur dans le champ du courriel — l'ordre de l'achat, et le premier des
+      // deux. Sans le focus, on demande un troisième clic à quelqu'un qui en a déjà
+      // fait deux pour arriver là.
+      collerMaCle: () => this.ouvrirLicence(),
       // le bandeau de quota renvoie à l'inventaire, qui sait libérer poste par poste :
       // c'est l'utilisateur qui choisit ce qu'il libère, pas nous
       voirCeQuiOccupe: () => {
@@ -19067,7 +19157,6 @@ GROUPES = {
         };
       })(),
       aEnTetePage: false,
-      goAccueil: this.go('accueil'),
       isCourt: tab === 'court',
       curCourt: tab === 'court' ? 'page' : undefined,
       goCourt: (e) => { if (e && e.preventDefault) e.preventDefault(); this.entrer(); },
@@ -24595,6 +24684,26 @@ GROUPES = {
           // s'efface tout seul. Pas de drapeau « déjà vu » à ranger quelque part — un
           // état qui se déduit ne se désynchronise pas.
           aCompteVide: !(this.state.deposes || []).length,
+          // ————— LA SECONDE PORTE : OÙ L'ON POSE SA CLÉ EN ARRIVANT —————
+          //
+          // En retirant la page de présentation, j'ai retiré la seule place où « J'ai
+          // une clé » était VISIBLE. Le champ existe toujours — il est dans le tiroir —
+          // mais quelqu'un qui vient de payer arrive sur Mes instruments et ne voit
+          // aucun endroit où coller. On rétablit le GESTE, pas la page.
+          //
+          // Le bandeau ne COPIE pas le champ, il y MÈNE : deux champs seraient deux
+          // états à tenir d'accord, et c'est le motif des deux derniers correctifs.
+          //
+          // Deux signaux, et les deux EXISTENT déjà : `deposes` (rien déposé) et `lic`
+          // (aucune clé). Aucun drapeau « déjà vu », aucune valeur d'onglet de plus —
+          // c'est ce genre d'état ajouté qui a produit l'écran blanc. Les deux
+          // s'effacent d'eux-mêmes : une clé posée, ou un relevé déposé, et le bandeau
+          // n'a plus lieu d'être.
+          //
+          // L'état de la licence ne reçoit PAS un troisième nom ici : `licSaisie` et
+          // `licValide` le portent déjà, et c'est le tiroir qui les lit. Deux lecteurs,
+          // un seul signal — un « sansLicence » de plus aurait été le même défaut, en
+          // plus petit.
         };
       })(),
       // le relevé déposé va toujours au compte actif : plus de choix à faire

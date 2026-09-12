@@ -128,6 +128,22 @@ tiroir. Une seconde page de vente serait une seconde vérité à tenir à jour.
 `/app` n'étant pas une route du routeur, on y va par un `<a href>` : un `<Link>`
 tenterait une navigation interne vers une route qui n'existe pas.
 
+**Le repère d'arrivée est `/app#licence`, et c'est le seul.** Les colonnes payantes de
+`/tarifs` le portent ; il ouvre le tiroir de l'application sur la section Licence,
+curseur dans le champ du courriel. Un **fragment** et non un paramètre : il ne part
+jamais au serveur, donc il ne croise pas la redirection `/app` → `/app/index.html`.
+
+`repereLicence()` le **nettoie** (`history.replaceState`) dès qu'il l'a lu, avant toute
+décision — sans quoi un rechargement, ou un favori posé sur cette adresse, rouvrirait le
+tiroir indéfiniment. Il n'est lu qu'APRÈS la revérification de la licence, qui est
+asynchrone : le lire plus tôt ouvrirait le tiroir au nez de quelqu'un qui a déjà sa clé.
+Il ne s'enregistre nulle part — ni session, ni drapeau « déjà vu ».
+
+**Un seul champ de clé dans toute l'application**, celui du tiroir. Le bandeau de compte
+vide y MÈNE, il ne le copie pas : deux champs seraient deux états à tenir d'accord.
+`scripts/app/ou-poser-sa-cle.test.mjs` tient les trois points — un seul champ, le repère
+nettoyé, et le bandeau qui s'efface dès qu'une clé est posée.
+
 **La construction REFAIT l'application avant de la publier.** `npm run build` appelle
 `scripts/app/publier-solo.mjs`, qui relance `solo.mjs`, vérifie que la version de
 l'artefact est celle de `Vena.dc.html`, puis copie dans `dist/app/index.html`. Publier le

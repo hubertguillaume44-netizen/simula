@@ -33,6 +33,18 @@ export const Route = createFileRoute("/tarifs")({
 // « cinquante premiers abonnés » n'est PAS reprise ici : dans une colonne qui promet
 // par ailleurs quatorze jours de rétractation, une rareté chiffrée se lit comme une
 // pression à décider vite, et les deux se contredisent à voix haute.
+// ————— LE REPÈRE D'ARRIVÉE —————
+//
+// `#licence` ouvre le tiroir de l'application sur la section Licence, curseur dans le
+// champ du courriel. Un FRAGMENT et non un paramètre : il ne part jamais au serveur,
+// donc il ne croise pas la redirection Netlify de `/app`. L'application le NETTOIE dès
+// qu'elle l'a lu (`repereLicence`) — sans quoi un rechargement, ou un favori posé sur
+// cette adresse, rouvrirait le tiroir indéfiniment.
+//
+// Il ne va QUE sur les colonnes payantes. Quelqu'un qui commence par le gratuit n'a pas
+// de clé : lui ouvrir le champ où la coller serait lui demander ce qu'il n'a pas.
+const VERS_CLE = "/app#licence";
+
 const FORMULES = [
   {
     cle: "gratuit",
@@ -47,6 +59,7 @@ const FORMULES = [
       "Les séries de démonstration, sans limite",
     ],
     action: "Commencer",
+    vers: "/app",
     avant: false,
   },
   {
@@ -62,6 +75,7 @@ const FORMULES = [
       "Mises à jour incluses",
     ],
     action: "Prendre l’abonnement",
+    vers: VERS_CLE,
     avant: false,
   },
   {
@@ -72,6 +86,7 @@ const FORMULES = [
     sous: "soit 12,42 € par mois — au lieu de 179,88 €",
     lignes: ["Tout le mensuel", "Un an de mises à jour", "Réponse à vos questions par courriel"],
     action: "Prendre l’année",
+    vers: VERS_CLE,
     avant: true,
   },
 ] as const;
@@ -198,7 +213,7 @@ function Tarifs() {
                 variant={f.avant ? "primary" : "secondary"}
                 className="mt-auto justify-center"
               >
-                <a href="/app">{f.action}</a>
+                <a href={f.vers}>{f.action}</a>
               </Button>
             </Blueprint>
           ))}
