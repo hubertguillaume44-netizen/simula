@@ -18,9 +18,6 @@ import { VenaMark, palierPour } from "@/components/vena-mark";
 const LINKS = [
   { to: "/", label: "Accueil" },
   { to: "/methode", label: "Méthode" },
-  // « Démonstration » et non « Simulateur » : cette page montre le raisonnement sur des
-  // séries d'exemple. Le produit s'ouvre par le bouton, à droite.
-  { to: "/simuler", label: "Démonstration" },
   { to: "/tarifs", label: "Tarifs" },
 ] as const;
 

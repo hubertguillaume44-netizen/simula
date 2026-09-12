@@ -131,13 +131,17 @@ function Home() {
             <Button asChild>
               <a href="/app">Commencer — trois instruments gratuits</a>
             </Button>
-            <Link to="/simuler" className="text-sm underline decoration-line underline-offset-2">
-              ou voir la démonstration, sans rien fournir
+            <Link to="/tarifs" className="text-sm underline decoration-line underline-offset-2">
+              ou voir les tarifs
             </Link>
           </div>
+          {/* LA DÉMONSTRATION EST DANS L'OUTIL. Le site en portait une seconde, en
+              React, sur quatre séries : deux démonstrations à tenir à jour, et une de
+              trop à choisir. Celle de l'application tourne sur le moteur entier — les
+              séries d'exemple s'y ouvrent sans rien déposer. */}
           <p className="text-sm text-muted">
-            La démonstration tourne sur quatre séries fictives : elle montre le raisonnement, pas un
-            résultat de marché.
+            Rien à fournir pour regarder : les séries de démonstration s’ouvrent dans l’outil, sur
+            le même moteur que vos propres fichiers.
           </p>
         </div>
 
@@ -157,12 +161,11 @@ function Home() {
                 </p>
               </Blueprint>
             </Link>
-            <Link to="/simuler" className="no-underline text-ink">
+            <Link to="/tarifs" className="no-underline text-ink">
               <Blueprint className="flex h-full flex-col gap-2 p-6 transition-colors duration-150 hover:bg-steel-soft/40">
-                <div className="font-display text-xl">Scan, backtest et journal</div>
+                <div className="font-display text-xl">Ce que ça coûte, en détail</div>
                 <p className="text-sm text-muted">
-                  Quatre instruments d’exemple, pour voir comment l’outil raisonne avant d’y mettre
-                  les vôtres.
+                  Le comparatif des trois formules, et les six questions qu’on pose avant de payer.
                 </p>
               </Blueprint>
             </Link>

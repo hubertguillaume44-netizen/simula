@@ -59,7 +59,7 @@ test("le défi est un en-tête HTTP valide — pas d’accent", async () => {
 });
 
 test("tout est couvert : la racine, /app, et les deux fonctions", async () => {
-  for (const c of ["/", "/app", "/app/index.html", "/simuler", "/api/licence", "/api/usage",
+  for (const c of ["/", "/app", "/app/index.html", "/tarifs", "/api/licence", "/api/usage",
                    "/assets/index.js", "/_ds/industry-x/styles.css"]) {
     const r = await appeler({ variable: BON, entete: null, chemin: c });
     assert.equal(r.statut, 401, c + " doit être protégé");

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Blueprint } from "@/components/blueprint";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { Stat } from "@/components/vena/stat";
+import { Stat } from "@/components/stat";
 import { visitStats } from "@/lib/visits";
 
 export const Route = createFileRoute("/visiteurs")({
@@ -53,13 +53,13 @@ function labelOrigine(r: string) {
 
 function labelPage(p: string) {
   if (p === "/") return "Accueil";
-  if (p === "/simuler") return "Simulateur";
   if (p === "/methode") return "Méthode";
   if (p === "/tarifs") return "Tarifs";
-  // Pages retirées. Le libellé RESTE : des visites sont déjà enregistrées sous ces
+  // Pages retirées. Les libellés RESTENT : des visites sont déjà enregistrées sous ces
   // chemins, et les effacer de la table les afficherait en brut dans un relevé qui,
   // lui, remonte à avant la refonte.
   if (p === "/pourquoi") return "Pourquoi (fondue dans Méthode)";
+  if (p === "/simuler") return "Démonstration (retirée)";
   return p;
 }
 

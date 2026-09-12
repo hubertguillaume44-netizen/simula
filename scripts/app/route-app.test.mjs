@@ -42,32 +42,43 @@ test("le bouton d’entrée du site ouvre l’application", () => {
     "le bouton principal de l’accueil doit ouvrir l’application");
 });
 
-test("la démonstration reste distincte, et ne se donne pas pour le produit", () => {
+test("la démonstration vit dans l’application, et nulle part ailleurs", () => {
+  // ————— IL Y EN AVAIT DEUX —————
+  // Le site portait sa propre démonstration en React, sur quatre séries, à côté de
+  // celle que l'application porte déjà avec le moteur entier. Deux démonstrations, ce
+  // sont deux moteurs à tenir d'accord — et le jour où ils divergent, c'est la vitrine
+  // qui ment sur le produit. Ce test tenait la SÉPARATION des deux ; il tient
+  // maintenant qu'il n'y en a plus qu'une.
   const entete = lire("src/components/site-header.tsx");
-  // elle garde son entrée…
-  assert.match(entete, /\{ to: "\/simuler", label: "Démonstration" \}/,
-    "la démonstration doit garder une entrée, sous son nom");
-  // …et deux entrées ne peuvent pas porter le même mot
-  assert.ok(!/label: "La démonstration"/.test(entete),
-    "deux entrées portant « démonstration » se confondraient");
-  // aucun lien vers /simuler ne doit promettre le produit. La liste des pages est LUE,
-  // pas écrite ici : une liste en dur laisse passer toute page créée après elle, et
-  // fait échouer le test sur une page supprimée — pour une raison qui n'a rien à voir
-  // avec ce qu'il éprouve.
+  assert.ok(!/to: "\/simuler"/.test(entete),
+    "le bandeau ne doit plus proposer une démonstration qui n’existe pas");
+
+  // aucune page ne doit pointer vers la route disparue : un lien mort dans la vitrine
   for (const f of readdirSync(new URL("../../src/routes/", import.meta.url))
-    .filter((n) => n.endsWith(".tsx") && n !== "__root.tsx" && n !== "simuler.tsx")
+    .filter((n) => n.endsWith(".tsx"))
     .map((n) => "src/routes/" + n)) {
     const txt = lire(f);
-    for (const m of txt.matchAll(/<Link to="\/simuler"[^>]*>([^<]*)</g)) {
-      const libelle = m[1].trim();
-      if (!libelle) continue;
-      assert.ok(/démo|démonstration/i.test(libelle),
-        f + " : « " + libelle + " » mène à la démonstration mais promet le produit");
+    // `visiteurs.tsx` garde le CHEMIN dans sa table de libellés : des visites y sont
+    // enregistrées, et l'effacer les afficherait en brut. Ce n'est pas un lien.
+    for (const m of txt.matchAll(/<Link to="([^"]+)"/g)) {
+      assert.notEqual(m[1], "/simuler", f + " : lien vers une route supprimée");
     }
   }
-  // et la page de démonstration ne promet pas de lire vos fichiers
-  const demo = lire("src/routes/simuler.tsx");
-  assert.ok(!/glissez vos\s*\n?\s*CSV/i.test(demo),
-    "la démonstration ne doit pas promettre ce que fait l’application");
-  assert.match(demo, /href="\/app"/, "elle doit renvoyer vers l’application");
+
+  // et le fichier de route lui-même n’est plus là
+  assert.throws(() => lire("src/routes/simuler.tsx"),
+    "src/routes/simuler.tsx doit avoir disparu avec la démonstration");
+});
+
+test("le bandeau tient trois entrées, et l’accent cède à la page", () => {
+  const entete = lire("src/components/site-header.tsx");
+  const labels = [...entete.matchAll(/\{ to: "([^"]+)", label: "([^"]+)" \}/g)].map((m) => m[2]);
+  assert.deepEqual(labels, ["Accueil", "Méthode", "Tarifs"],
+    "trois entrées, dans cet ordre — voir le commentaire de LINKS");
+  // la règle : l'accent va à l'action principale de la page ; dans le bandeau il est le
+  // défaut, et il cède quand la page en a une plus forte
+  assert.match(entete, /accentEntree = true/, "l’entrée porte l’accent par défaut");
+  const tarifs = lire("src/routes/tarifs.tsx");
+  assert.match(tarifs, /<SiteHeader accentEntree=\{false\} \/>/,
+    "les Tarifs ont leur propre action pleine : l’entrée doit céder l’accent");
 });

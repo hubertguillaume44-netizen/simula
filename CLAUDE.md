@@ -60,8 +60,11 @@ milieu laisse la trace absente : le chargement suivant reprend depuis le début,
 clés déjà copiées sont sautées. Chaque espace étanche (`.essai`, `.client`, `.perso`) et
 chaque compte migrent séparément, puisque le suffixe fait partie de la clé.
 
-Le site (`src/lib/store.ts`, `src/lib/uploads.ts`) a **ses propres** clés et sa propre
-base : elles ont leur migration, sur la même règle.
+**Le site ne stocke plus rien.** Il avait ses propres clés et sa propre base
+(`src/lib/store.ts`, `src/lib/uploads.ts`) pour une démonstration en React, à côté de
+celle que l'application porte déjà. Les deux fichiers sont partis avec elle : le seul
+stockage du navigateur est désormais celui de l'application, et la migration ci-dessus
+est la seule à tenir.
 
 Les balayages de clés (`estCleApp`) comptent **les deux jeux** tant que l'ancien n'est pas
 supprimé : l'occupation réelle du navigateur est bien celle des deux.
