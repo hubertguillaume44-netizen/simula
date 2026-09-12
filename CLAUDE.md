@@ -243,9 +243,24 @@ données, les mêmes séries pour tout le monde. **Rien des exports d'un utilisa
 dans le produit** — ce qui était le cas des quatre séries `DEMO-*` livrées en CSV, dont
 personne ne pouvait plus dire d'où venaient les prix.
 
-**La graine est gelée : `vena-exemple-v1`.** On ne la change pas — un scan enregistré
-hier doit se relire sur les mêmes bougies. Le jour où les séries doivent changer, on
-publie une `v2`.
+**La graine est gelée, versionnée — jamais choisie : `vena-exemple-v2`.**
+
+*Gelée* : un scan enregistré hier doit se relire sur les mêmes bougies. *Versionnée* : le
+jour où le générateur change, les bougies changent, et le numéro suit. La `v2` date du
+lissage et de la dispersion des régimes ; la `v1` était l'escalier commun aux dix
+familles. Le test échoue à chaque changement du générateur, exprès — il oblige à décider
+si les bougies ont bougé, et à le dire, plutôt qu'à s'en apercevoir le jour où un scan
+enregistré ne se relit plus.
+
+*Jamais choisie*, et c'est la partie qui demande de l'attention. On a proposé de
+rechoisir la graine sur un critère de **présentation** — que la dernière clôture de
+chaque famille tombe dans les 80 % centraux de son amplitude — au motif qu'un tel critère
+ne parle pas de performance. **Mesuré sur vingt-quatre graines : deux le satisfont.** Une
+propriété rare n'est pas un cadrage. Une clôture au bord de l'amplitude est la signature
+d'une tendance qui a tenu jusqu'au bout ; exiger que les dix l'évitent retient les univers
+où les tendances meurent avant la fin — exactement ce qu'un balayage de croisements de
+moyennes est censé trouver, ou ne pas trouver. Le critère a l'air d'un cadrage, c'est un
+réglage du marché.
 
 **On n'écrit rien.** Elles vivent en mémoire, engendrées à la demande, une famille à la
 fois. Jamais dans le stockage de l'utilisateur, jamais dans « Exporter mes données »,
@@ -281,12 +296,52 @@ tendance accélérée. Datés et non tirés au hasard : un backtest doit avoir q
 à trouver et quelque chose à perdre, et la même histoire pour tout le monde rend une
 capture d'écran discutable.
 
+**Ils arrivent en rampe, et pas le même jour pour tous.** Le profil de régime était un
+escalier COMMUN : à une heure connue d'avance, la même pour tout le monde à jamais, la
+volatilité des dix familles triplait d'un coup. Un balayage de sortie de volatilité —
+l'usage même de l'outil — se serait déclenché là, sur une propriété du générateur.
+
+Deux corrections, qui ne font pas la même chose. Le profil est **lissé** : convolution
+exacte de l'escalier par un cosinus surélevé sur ±trois semaines, donc aucun angle ni au
+début ni à la fin de la rampe — la volatilité met six semaines à tripler, ce qu'une crise
+met réellement. Et son entrée est **dispersée** : chaque famille démarre sa rampe avec son
+propre décalage, de zéro à soixante jours, tiré de sa graine. C'est la dispersion qui
+compte. Un vrai marché a des crises communes ; il n'a pas le maximum absolu de variance de
+chaque instrument le même jour du calendrier. Le facteur macro n'est pas touché : les
+corrélations de rendements (0,54 entre les deux indices) et le contre-courant de VX-OR
+restent entiers.
+
+**La dérive d'un régime se mesure en volatilités, pas en pour-cent.** La table est écrite
+pour une référence à 15 % de volatilité annuelle, et chaque famille l'encaisse au prorata
+de la sienne. Appliquée telle quelle, elle retirait 35 % par an à une devise annoncée à
+8 % comme à une action annoncée à 40 % : la devise creusait 3,9 fois sa volatilité
+annuelle quand les neuf autres tenaient entre 0,7 et 2,6 fois la leur. Le calcul passe par
+le **logarithme** — −35 % multipliés par quatre donneraient −140 %, un prix négatif, et
+des `NaN` dans toute la série.
+
 `scripts/app/series-exemple.test.mjs` fait tourner LE VRAI générateur, extrait de la
 source. **La garde qui compte est l'absence d'artefact exploitable** : |autocorrélation|
 des rendements horaires < 0,08 à tous les retards de 1 à 48. Un motif répétable donnerait
 à un balayage un « signal » qui n'existe que dans le générateur, et le premier
 utilisateur qui le voit croirait que son idée fonctionne. Les autres gardes protègent le
 produit ; celle-ci protège l'honnêteté de la démonstration.
+
+**Et la garde jumelle, sur la variance.** L'autocorrélation mesure une dépendance dans la
+MOYENNE des rendements : un changement de VARIANCE lui est invisible — 0,049 passait
+pendant que l'escalier était là. La volatilité annoncée ne le voit pas non plus, c'est une
+moyenne sur trois ans. La onzième garde mesure donc, toutes les douze bougies, le rapport
+des volatilités réalisées sur les 240 bougies suivantes et les 240 précédentes, et exige
+que **les dates des dix maxima s'étalent sur au moins trente jours** — 47,8 aujourd'hui,
+deux sur l'escalier. Elle porte sur l'étalement et non sur la hauteur du rapport : un
+seuil sur la hauteur interdirait la fonction (un régime de volatilité existe, c'est voulu)
+en croyant interdire le défaut (qu'il soit synchrone). 240 bougies valent dix jours pour
+une devise et trente-quatre pour une action — cette fenêtre compare deux régimes entiers,
+et reste au-dessus de 1,8 quel que soit le lissage, mesuré sur cinq largeurs de fondu.
+
+**Ce défaut ne se voit pas à l'œil, et on a perdu un tour à essayer.** Des fondus de 15,
+45 et 75 jours donnaient des tracés indiscernables ; on en avait conclu qu'il n'y avait
+rien. C'était mesurer la mauvaise grandeur : deux courbes indiscernables peuvent porter
+des profils de variance opposés. La forme n'est pas la statistique.
 
 ## Le test qui tient la convention
 

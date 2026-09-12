@@ -31,7 +31,7 @@ async function charger() {
   assert.ok(i > 0 && j > i, "le bloc du générateur ne se délimite plus dans Vena.dc.html");
   const code = SOURCE.slice(i, j)
     + "\nexport { GRAINE_EXEMPLE, EXEMPLES, SEANCES_EXEMPLE, REGIMES_EXEMPLE,"
-    + " engendrerExemple, facteurMacro };";
+    + " engendrerExemple, facteurMacro, regimeDe, decalageRegime };";
   return import("data:text/javascript;base64," + Buffer.from(code, "utf8").toString("base64"));
 }
 
@@ -61,10 +61,17 @@ function autocorrelation(r, k) {
   return den ? num / den : 0;
 }
 
-test("la graine est gelée, et la table porte dix familles", () => {
-  // On ne change pas une graine : un scan enregistré hier doit se relire sur les mêmes
-  // bougies. Le jour où les séries doivent changer, on publie une v2.
-  assert.equal(G.GRAINE_EXEMPLE, "vena-exemple-v1");
+test("la graine est gelée, versionnée, et la table porte dix familles", () => {
+  // ON NE CHOISIT PAS UNE GRAINE, ON LA VERSIONNE. Gelée, parce qu'un scan enregistré
+  // hier doit se relire sur les mêmes bougies. Versionnée, parce que le jour où le
+  // générateur change, les bougies changent : le numéro suit, et la rupture devient
+  // visible au lieu de silencieuse. La v2 date du lissage et de la dispersion des
+  // régimes ; la v1 était l'escalier commun aux dix familles.
+  //
+  // Ce test échoue donc à CHAQUE changement du générateur, et c'est voulu : il oblige à
+  // décider si les bougies ont bougé — et à le dire — plutôt qu'à s'en apercevoir le
+  // jour où un scan enregistré ne se relit plus.
+  assert.equal(G.GRAINE_EXEMPLE, "vena-exemple-v2");
   assert.equal(G.EXEMPLES.length, 10, "dix familles attendues");
   const ids = G.EXEMPLES.map((e) => e[0]);
   assert.deepEqual([...new Set(ids)], ids, "deux familles portent le même identifiant");
@@ -181,10 +188,19 @@ test("la baisse maximale est plausible pour la volatilité annoncée", () => {
   // d'exemple se trahit : une défensive à 15 % qui perd 60 % se lit comme faux, et une
   // famille qui ne recule jamais se lit comme une publicité.
   //
-  // La borne est un ORDRE DE GRANDEUR, pas une loi : sur trois ans, le creux d'un actif
-  // vaut couramment une à deux fois et demie sa volatilité annuelle. En deçà de 0,6,
-  // la série monte sans jamais faire douter ; au-delà de 3, elle s'effondre au-delà de
-  // ce que sa volatilité annonce, et le chiffre du tableau devient un mensonge de plus.
+  // L'ÉCHELLE EST σ√T, PAS σ. La première écriture de cette garde comparait le creux de
+  // TROIS ANS à la volatilité d'UN an, avec une plage 0,6–3 relevée sur les dix familles
+  // d'alors. C'est deux fautes : une marche aléatoire s'écarte en √T, donc le creux de
+  // trois ans se compare à σ√3 ; et une borne relevée sur dix observations d'un seul
+  // tirage n'est pas une borne, c'est une description de ce tirage — au changement de
+  // graine, `VX-EUR` sortait à 3,54 sans que rien ne soit cassé.
+  //
+  // La borne vient donc du calcul et non du relevé : pour une marche sans dérive, le
+  // creux attendu sur [0, T] vaut environ 1,25 σ√T. Les régimes en ajoutent dans les
+  // deux sens — une dérive baissière le creuse, une dérive haussière le comble — d'où
+  // une plage large, 0,3 à 2,5. En deçà, la série monte sans jamais faire douter ;
+  // au-delà, elle s'effondre plus que sa volatilité ne l'annonce, et le chiffre du
+  // tableau devient un mensonge de plus.
   const creux = (c) => {
     let haut = -Infinity, pire = 0;
     for (const x of c) {
@@ -196,10 +212,10 @@ test("la baisse maximale est plausible pour la volatilité annoncée", () => {
   };
   for (const [id, lib, , , volAn] of G.EXEMPLES) {
     const d = Math.abs(creux(series.get(id).c));
-    const rapport = d / volAn;
-    assert.ok(rapport >= 0.6 && rapport <= 3,
+    const rapport = d / (volAn * Math.sqrt(3));
+    assert.ok(rapport >= 0.3 && rapport <= 2.5,
       `${lib} : creux de ${(d * 100).toFixed(1)} % pour ${(volAn * 100).toFixed(0)} % de volatilité `
-      + `— ${rapport.toFixed(2)} fois, hors de la plage 0,6 à 3`);
+      + `— ${rapport.toFixed(2)} fois σ√3, hors de la plage 0,3 à 2,5`);
     // et aucune famille ne doit perdre presque tout : même la crypto reste lisible
     assert.ok(d < 0.85, `${lib} : creux de ${(d * 100).toFixed(1)} %, la série s’effondre`);
   }
@@ -231,6 +247,88 @@ test("le facteur commun agit : les familles ne sont pas dix marches indépendant
   // VX-OR porte un bêta négatif pour qu'une famille aille à contre-courant
   const or = cor(parDate("vx-500"), parDate("vx-or"));
   assert.ok(or < 0, `VX-OR devrait aller à contre-courant, corrélation ${or.toFixed(2)}`);
+});
+
+test("les dix familles n’entrent pas en crise le même jour", () => {
+  // ————— LA ONZIÈME GARDE, ET C'EST LA PLUS DIFFICILE À VOIR —————
+  //
+  // Le profil de régime était un escalier COMMUN : à une heure connue d'avance, la même
+  // pour tout le monde à jamais, la volatilité des dix familles triplait d'un coup. Un
+  // balayage de sortie de volatilité — l'usage même de l'outil — se serait déclenché là,
+  // sur une propriété du générateur et non d'un marché.
+  //
+  // AUCUNE DES DIX AUTRES GARDES NE LE VOIT. L'autocorrélation mesure une dépendance
+  // dans la MOYENNE des rendements, et reste aveugle à un changement de VARIANCE :
+  // 0,049 passait pendant que l'escalier était là. La volatilité annoncée est une
+  // moyenne sur trois ans, donc elle passe aussi. Le creux ne regarde que le prix.
+  //
+  // ON A D'ABORD CHERCHÉ CE DÉFAUT À L'ŒIL, sur l'allure des courbes : des fondus de 15,
+  // 45 et 75 jours donnaient des tracés indiscernables, on a conclu qu'il n'y avait rien
+  // et on a retiré le fondu. C'était mesurer la mauvaise grandeur. Deux courbes
+  // indiscernables peuvent porter des profils de variance opposés — la forme n'est pas
+  // la statistique.
+  //
+  // LA MESURE : toutes les douze bougies, le rapport des volatilités réalisées sur les
+  // 240 bougies suivantes et les 240 précédentes. Son maximum absolu tombe, pour chaque
+  // famille, à l'entrée du choc — c'est voulu, un régime de volatilité EXISTE. Ce qui
+  // n'est pas voulu, c'est que les dix dates soient la même : sur l'escalier commun
+  // elles tenaient dans DEUX jours, `VX-OR` et son bêta négatif compris — une excursion
+  // de prix partagée ne peut pas produire ça, la variance dépend de l'amplitude du
+  // facteur et non de son signe.
+  //
+  // LA GARDE PORTE DONC SUR L'ÉTALEMENT, pas sur la hauteur du rapport. Un seuil sur la
+  // hauteur interdirait la fonction (un régime de volatilité) en croyant interdire le
+  // défaut (qu'il soit synchrone) : 240 bougies valent dix jours pour une devise et
+  // trente-quatre pour une action, donc cette fenêtre compare deux régimes entiers et
+  // reste au-dessus de 1,8 quel que soit le lissage — mesuré sur cinq largeurs de fondu.
+  const N = 240, PAS = 12;
+  const ecartType = (a) => {
+    let m = 0; for (const x of a) m += x; m /= a.length;
+    let s2 = 0; for (const x of a) s2 += (x - m) * (x - m);
+    return Math.sqrt(s2 / (a.length - 1));
+  };
+  const dates = [];
+  for (const [id, lib] of G.EXEMPLES) {
+    const df = series.get(id), r = rendements(df);
+    let haut = 0, quand = -1;
+    for (let k = N; k + N <= r.length; k += PAS) {
+      const rap = ecartType(r.slice(k, k + N)) / ecartType(r.slice(k - N, k));
+      if (rap > haut) { haut = rap; quand = k; }
+    }
+    assert.ok(quand > 0, `${lib} : trop court pour la mesure`);
+    dates.push(df.t[quand + 1]);
+  }
+  const etalement = (Math.max(...dates) - Math.min(...dates)) / 86400000;
+  assert.ok(etalement >= 30,
+    `les dix maxima de variance tiennent en ${etalement.toFixed(1)} jours — un vrai marché a `
+    + `des crises communes, il n’a pas le maximum de variance de chaque instrument le même jour`);
+});
+
+test("le profil de régime ne fait pas de marche, et chaque famille a la sienne", () => {
+  // Le complément déterministe de la garde précédente : celle-là mesure un ÉCHANTILLON
+  // de prix, avec son bruit d'estimation ; celle-ci mesure le PROFIL, qui n'en a pas.
+  // Les deux peuvent tomber pour des raisons différentes, et c'est le but.
+  const MOIS_H = 365 * 24 / 12;
+  let pire = 0;
+  for (const [id, lib] of G.EXEMPLES) {
+    const dec = G.decalageRegime(id);
+    for (let h = 0; h + 24 <= 3 * 365 * 24; h += 24) {
+      const a = G.regimeDe(h / MOIS_H, dec).facteurVol;
+      const b = G.regimeDe((h + 24) / MOIS_H, dec).facteurVol;
+      const v = Math.abs(b / a - 1);
+      if (v > pire) pire = v;
+      assert.ok(v < 0.10,
+        `${lib} : la volatilité change de ${(v * 100).toFixed(1)} % en vingt-quatre heures`);
+    }
+  }
+  assert.ok(pire > 0.001, "le profil ne bouge plus du tout : les cinq régimes ont disparu");
+
+  // et les dix décalages sont bien DISTINCTS — un tirage qui les collerait tous à zéro
+  // remettrait l'escalier commun sans qu'aucune autre garde ne le dise
+  const decs = G.EXEMPLES.map(([id]) => G.decalageRegime(id));
+  const jours = decs.map((d) => d * 365 / 12);
+  assert.ok(Math.max(...jours) - Math.min(...jours) > 20,
+    `les dix entrées en régime tiennent en ${(Math.max(...jours) - Math.min(...jours)).toFixed(1)} jours`);
 });
 
 test("le générateur ne lit aucune horloge et n’écrit nulle part", () => {

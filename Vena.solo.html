@@ -6086,15 +6086,28 @@ migrerBase();
 // d'un utilisateur n'entre dans le produit — ce qui était le cas des quatre séries
 // `DEMO-*` livrées en CSV, dont personne ne pouvait plus dire d'où venaient les prix.
 //
-// LA GRAINE EST GELÉE. `vena-exemple-v1` ne se change pas : un scan enregistré hier
-// doit pouvoir être relu sur les mêmes bougies. Le jour où les séries doivent changer,
-// on publie une `v2` — on ne réécrit pas la v1.
+// LA GRAINE EST GELÉE, ET ELLE SE VERSIONNE — elle ne se CHOISIT jamais.
+//
+// Gelée : un scan enregistré hier doit pouvoir être relu sur les mêmes bougies. Le jour
+// où le générateur change, les bougies changent, et le numéro suit — c'est ce qui rend
+// la rupture VISIBLE au lieu de silencieuse. La `v2` date du lissage et de la dispersion
+// des régimes ; la `v1` était l'escalier commun aux dix familles. On ne réécrit pas la v1.
+//
+// JAMAIS CHOISIE, et la nuance n'est pas de principe. On a proposé de rechoisir la
+// graine sur un critère de PRÉSENTATION — que la dernière clôture de chaque famille
+// tombe dans les 80 % centraux de son amplitude — au motif qu'il ne parle pas de
+// performance. Mesuré sur vingt-quatre graines : DEUX le satisfont. Une propriété rare
+// n'est pas un cadrage. Une clôture au bord de l'amplitude est la SIGNATURE d'une
+// tendance qui a tenu jusqu'au bout ; exiger que les dix l'évitent retient les univers
+// où les tendances meurent avant la fin — exactement ce qu'un balayage de croisements
+// de moyennes est censé trouver, ou ne pas trouver. Le critère a l'air d'un cadrage ;
+// c'est un réglage du marché.
 //
 // ON N'ÉCRIT RIEN. Elles vivent en mémoire, engendrées à la demande, une famille à la
 // fois. Jamais dans le stockage de l'utilisateur, jamais dans « Exporter mes données »,
 // jamais dans la jauge. C'est ce qui les distingue d'un compte : un compte porte des
 // données, celles-ci n'en sont pas.
-const GRAINE_EXEMPLE = 'vena-exemple-v1';
+const GRAINE_EXEMPLE = 'vena-exemple-v2';
 
 // ————— LA SÉANCE, EN HEURES UTC PLEINES —————
 //
@@ -6149,27 +6162,6 @@ const REGIMES_EXEMPLE = [
   [29, 999, 1.2, 0.22],  // tendance accélérée
 ];
 
-// ————— LES RÉGIMES NE DOIVENT PAS GONFLER LA VOLATILITÉ ANNONCÉE —————
-//
-// Mesuré : sans cette correction, une famille annoncée à 15 % en réalisait 28 %. Les
-// facteurs de régime (0,8 · 2,2 · 1,0 · 0,9 · 1,2) ont une moyenne quadratique de 1,17,
-// et le choc baissier — deux fois plus agité, mais court — pèse quatre fois plus que sa
-// durée dans la variance. Le tableau des dix familles aurait annoncé un chiffre, et les
-// bougies en auraient donné un autre : exactement le défaut qu'on reproche à un
-// backtest.
-//
-// La moyenne quadratique se CALCULE à partir de la table, elle ne s'écrit pas : changer
-// un régime demain corrigerait tout seul.
-const RMS_REGIMES = (() => {
-  let somme = 0, duree = 0;
-  for (const [deb, fin, f] of REGIMES_EXEMPLE) {
-    const d = Math.min(fin, 36) - deb;
-    if (d <= 0) continue;
-    somme += d * f * f; duree += d;
-  }
-  return duree ? Math.sqrt(somme / duree) : 1;
-})();
-
 /** Un condensé 32 bits d'une chaîne — sert à semer, jamais à sécuriser quoi que ce soit. */
 function grainDe(texte) {
   let h = 2166136261;
@@ -6202,31 +6194,133 @@ function normale(rnd) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd());
 }
 
-// ————— LES RÉGIMES BASCULENT D'UN COUP, ET C'EST ASSUMÉ —————
+// ————— LA VOLATILITÉ NE FAIT PAS DE MARCHE D'ESCALIER, NI LE MÊME JOUR POUR TOUS —————
 //
-// J'ai cru voir un défaut et j'ai eu tort. À l'écran, la charnière du choc se lit comme
-// un coude synchronisé sur les dix familles — j'en ai conclu que le palier de
-// volatilité (×0,8 → ×2,2, à minuit le premier du mois) en était la cause, et j'ai posé
-// un fondu de quinze jours.
+// Le profil brut est un escalier : ×0,8 jusqu'au dixième mois, puis ×2,2 à la seconde
+// près, À LA MÊME HEURE POUR LES DIX FAMILLES. C'est un DÉFAUT, et le plus exploitable
+// qui soit — une heure connue d'avance, la même pour tout le monde à jamais, où la
+// volatilité de tout l'univers triple d'un coup. Un balayage de sortie de volatilité
+// est précisément l'usage de l'outil : il se déclencherait là, sur une propriété du
+// générateur et non d'un marché.
 //
-// Mesuré ensuite, sur quatre variantes — fondu de 15, 45 et 75 jours, et choc ramené à
-// ×1,7 : les quatre courbes sont INDISCERNABLES. Le coude ne venait pas de là.
+// L'AUTOCORRÉLATION NE LE VOIT PAS. Elle mesure une dépendance dans la MOYENNE des
+// rendements ; un changement de VARIANCE lui est invisible. 0,049 passait pendant que
+// l'escalier était là. La volatilité annoncée ne le voit pas non plus : c'est une
+// moyenne sur trois ans. Trois gardes, trois grandeurs, et aucune ne remplace l'autre.
 //
-// Il vient du facteur macro lui-même : vers le dixième mois, la marche partagée fait une
-// grande excursion, et les familles de bêta voisin la subissent ensemble. C'est le
-// facteur commun qui fonctionne — exactement ce qu'on lui demande, et ce qu'un vrai
-// marché fait en temps de crise.
+// LE DÉTOUR QU'IL NE FAUT PAS REFAIRE. On a d'abord cherché ce défaut À L'ŒIL, sur
+// l'allure des courbes : un fondu de 15, 45, 75 jours donnait des tracés indiscernables,
+// on a conclu qu'il n'y avait rien et on a retiré le fondu. C'était mesurer la mauvaise
+// grandeur — deux courbes indiscernables peuvent porter des profils de variance opposés.
+// La forme n'est pas la statistique.
 //
-// Les cinq régimes ne se lisent d'ailleurs PAS comme cinq segments droits : on ne peut
-// désigner à l'œil ni la bascule du range, ni celle de la tendance accélérée. Le fondu
-// aurait ajouté trente lignes pour un effet nul ; il est retiré.
+// LA MESURE QUI LE VOIT : toutes les douze bougies, le rapport des volatilités réalisées
+// sur les 240 bougies suivantes et les 240 précédentes. Sur le profil en escalier, le
+// maximum absolu de chaque famille tombait au RANG 1 sur ses quinze cents mesures, et
+// les dix dates tenaient dans deux jours. `VX-OR` porte un bêta négatif : son prix va à
+// contre-courant des neuf autres, et son maximum tombait pourtant le même jour — une
+// excursion de prix partagée ne peut pas produire ça, la variance dépend de l'amplitude
+// du facteur et non de son signe. Un multiplicateur de régime commun, lui, le produit
+// exactement.
+//
+// DEUX CORRECTIONS, ET ELLES NE FONT PAS LA MÊME CHOSE :
+//
+//   · le profil est LISSÉ — moyenne mobile de l'escalier sur trois semaines de part et
+//     d'autre, par un noyau en cosinus surélevé, pente nulle aux deux bouts, donc aucun
+//     angle là où le lissage commence ni là où il finit. La volatilité met un mois à
+//     tripler, ce qu'une crise met réellement ;
+//
+//   · son entrée est DISPERSÉE — chaque famille démarre sa rampe avec son propre
+//     décalage, de zéro à soixante jours, tiré de sa graine. C'est la correction qui compte.
+//     Un vrai marché a des crises communes ; il n'a pas le maximum absolu de variance de
+//     chaque instrument le même jour du calendrier. Le facteur macro n'est PAS touché :
+//     les corrélations de rendements et le contre-courant de `VX-OR` restent entiers.
+//
+// CE QUE LE LISSAGE SEUL NE FERAIT PAS : ramener ce rapport sous un seuil fixe. Il ne le
+// peut pas — 240 bougies valent dix jours pour une devise et trente-quatre pour une
+// action, donc cette fenêtre compare deux régimes ENTIERS. Elle mesure « il existe un
+// régime de volatilité », qui est voulu. La garde porte donc sur l'ÉTALEMENT des dix
+// dates, qui est le défaut, et non sur la hauteur du rapport, qui est la fonction.
+const LISSAGE_MOIS = 0.75;
+const DISPERSION_JOURS = 60;
+const MOIS_EN_HEURES = 365 * 24 / 12;
+const DERIVE_VOL_REF = 0.15;  // la volatilité pour laquelle REGIMES_EXEMPLE est écrite
 
-/** Le régime d'un instant, par son mois depuis le début. */
-function regimeDe(mois) {
-  for (const [deb, fin, facteurVol, deriveAn] of REGIMES_EXEMPLE) {
-    if (mois >= deb && mois < fin) return { facteurVol, deriveAn };
+/**
+ * De combien de mois une famille retarde son entrée en régime. Tiré de sa graine, donc
+ * fixe : la dispersion est reproductible, ce n'est pas un bruit de plus.
+ */
+function decalageRegime(id) {
+  const u = tirageExemple(grainDe(GRAINE_EXEMPLE + '|entree|' + id))();
+  return u * DISPERSION_JOURS / (365 / 12);
+}
+
+/**
+ * La masse du noyau à gauche de `x` — `x` en mois, compté depuis le centre du lissage.
+ *
+ * Le noyau est un cosinus surélevé sur ±`LISSAGE_MOIS` : il vaut zéro aux deux bouts,
+ * donc le profil lissé n'a d'angle ni là où le lissage commence, ni là où il finit.
+ */
+function poidsCumul(x) {
+  const u = x / LISSAGE_MOIS;
+  if (u <= -1) return 0;
+  if (u >= 1) return 1;
+  return (u + Math.sin(Math.PI * u) / Math.PI + 1) / 2;
+}
+
+/**
+ * Le régime d'un instant pour une famille : l'escalier, lissé et décalé.
+ *
+ * L'INTÉGRALE EST EXACTE, et ce n'est pas un raffinement. On a d'abord échantillonné le
+ * noyau en neuf points : le profil « lissé » restait un escalier de neuf marches, dont
+ * la plus haute faisait bondir la volatilité de 20 % en vingt-quatre heures — le défaut
+ * qu'on venait de corriger, divisé par neuf. Le profil brut étant constant par
+ * morceaux, la convolution se calcule sans erreur : la masse du noyau tombée dans
+ * chaque régime, multipliée par la valeur de ce régime.
+ */
+function regimeDe(mois, decalage) {
+  const c = mois - (decalage || 0);
+  let sv = 0, sd = 0, masse = 0;
+  for (let k = 0; k < REGIMES_EXEMPLE.length; k++) {
+    const [deb, fin, facteurVol, deriveAn] = REGIMES_EXEMPLE[k];
+    // ————— LE PREMIER RÉGIME REMONTE AVANT LE DÉBUT —————
+    // Une famille qui retarde son entrée de quarante-cinq jours lit le profil à des mois
+    // NÉGATIFS. Sans cette borne, le noyau n'y trouvait aucune masse, on retombait sur
+    // une valeur par défaut de 1,0, et la volatilité chutait de 20 % en une journée au
+    // vingt et unième jour de la série : l'escalier qu'on venait de retirer, remis à
+    // l'autre bout. Le monde ne commence pas avec la série — il était calme avant.
+    const bas = k === 0 ? -999 : deb;
+    const m = poidsCumul(fin - c) - poidsCumul(bas - c);
+    if (m <= 0) continue;
+    sv += m * facteurVol; sd += m * deriveAn; masse += m;
   }
-  return { facteurVol: 1, deriveAn: 0 };
+  return masse > 0 ? { facteurVol: sv / masse, deriveAn: sd / masse }
+    : { facteurVol: 1, deriveAn: 0 };
+}
+
+// ————— LES RÉGIMES NE DOIVENT PAS GONFLER LA VOLATILITÉ ANNONCÉE —————
+//
+// Mesuré : sans cette correction, une famille annoncée à 15 % en réalisait 28 %. Les
+// facteurs de régime (0,8 · 2,2 · 1,0 · 0,9 · 1,2) ont une moyenne quadratique de 1,17,
+// et le choc baissier — deux fois plus agité, mais court — pèse quatre fois plus que sa
+// durée dans la variance. Le tableau des dix familles aurait annoncé un chiffre, et les
+// bougies en auraient donné un autre : exactement le défaut qu'on reproche à un
+// backtest.
+//
+// Elle se CALCULE, elle ne s'écrit pas : changer un régime demain corrigerait tout seul.
+// Et elle se calcule sur le profil LISSÉ ET DÉCALÉ de CETTE famille, par échantillonnage
+// — dès qu'on lisse, la moyenne pondérée par les durées ne vaut plus, et un décalage
+// déplace ce qui tombe dans les trois ans. Une valeur par famille, retenue au premier
+// calcul : dix intégrales de dix-huit cents points, une fois pour toute la session.
+const RMS_REGIMES = new Map();
+function rmsRegimes(decalage) {
+  const cle = String(decalage);
+  if (RMS_REGIMES.has(cle)) return RMS_REGIMES.get(cle);
+  let somme = 0, n = 0;
+  for (let m = 0; m < 36; m += 0.02) { const f = regimeDe(m, decalage).facteurVol; somme += f * f; n++; }
+  const v = n ? Math.sqrt(somme / n) : 1;
+  RMS_REGIMES.set(cle, v);
+  return v;
 }
 
 /** La séance retient-elle cette heure ? */
@@ -6278,6 +6372,9 @@ function engendrerExemple(id, debutMs, macro) {
   const ANS = 3;
   const nHeures = ANS * 365 * 24;
   const rnd = tirageExemple(grainDe(GRAINE_EXEMPLE + '|' + id));
+  // le décalage d'entrée en régime de CETTE famille, et la normalisation qui va avec
+  const dec = decalageRegime(id);
+  const rms = rmsRegimes(dec);
   // la volatilité annoncée est ANNUELLE : on la ramène à l'heure de séance, sinon une
   // famille à séance courte serait deux fois plus agitée qu'annoncé
   const volH = volAn / Math.sqrt(heuresParAn(seance));
@@ -6291,11 +6388,30 @@ function engendrerExemple(id, debutMs, macro) {
     const ms = debutMs + i * 3600000;
     const d = new Date(ms);
     if (!dansSeance(seance, d)) continue;
-    const mois = Math.floor(i / (365 * 24 / 12));
-    const reg = regimeDe(mois);
-    const sigma = volH * reg.facteurVol / RMS_REGIMES;
-    // dérive ramenée à l'heure, comme la volatilité
-    const derive = Math.pow(1 + reg.deriveAn, 1 / heuresParAn(seance)) - 1;
+    // le mois est FRACTIONNAIRE : arrondi à l'entier, le profil lissé redeviendrait un
+    // escalier — de marches mensuelles au lieu d'une seule, ce qui n'est pas mieux
+    const mois = i / MOIS_EN_HEURES;
+    const reg = regimeDe(mois, dec);
+    const sigma = volH * reg.facteurVol / rms;
+    // ————— LA DÉRIVE D'UN RÉGIME SE MESURE EN VOLATILITÉS, PAS EN POUR-CENT —————
+    //
+    // Elle était appliquée telle quelle aux dix familles : le choc baissier retirait
+    // 35 % par an à une devise annoncée à 8 % de volatilité comme à une action annoncée
+    // à 40 %. Mesuré : la devise creusait 31,5 %, soit 3,9 fois sa volatilité annuelle,
+    // quand les neuf autres tenaient entre 0,7 et 2,6 fois la leur. Une paire de devises
+    // ne tombe pas d'un tiers ; ce n'était pas un tirage malheureux, c'était une dérive
+    // qui ignorait à qui elle s'appliquait.
+    //
+    // La table est donc écrite POUR UNE RÉFÉRENCE à 15 % de volatilité, et chaque
+    // famille l'encaisse au prorata de la sienne : à volatilité quadruple, tendance
+    // quadruple, donc même rapport signal sur bruit. C'est la seule façon de comparer
+    // une dérive d'un instrument à l'autre.
+    //
+    // Le passage par le LOGARITHME n'est pas un détail de forme : −35 % par an
+    // multipliés par quatre donneraient −140 %, un prix négatif et des NaN dans toute la
+    // série. Un taux logarithmique se multiplie sans jamais sortir des réels positifs.
+    const muAn = Math.log(1 + reg.deriveAn) * (volAn / DERIVE_VOL_REF);
+    const derive = Math.expm1(muAn / heuresParAn(seance));
     const ouv = p;
     // ————— L'INTÉRIEUR DE LA BOUGIE : QUATRE SOUS-PAS —————
     // Sans eux, le haut et le bas seraient tirés séparément du chemin, et pourraient
