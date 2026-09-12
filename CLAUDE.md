@@ -306,6 +306,50 @@ impossible « mes instruments qui ont des bougies », qui est la vue de travail.
 mesure à quelqu'un qui n'a rien déposé ; le second disparaîtrait au premier chargement, et
 avec lui la seule porte visible vers le champ de clé.
 
+## Une garde d'étanchéité se pose à la frontière d'ÉCRITURE
+
+C'est la leçon d'un aller-retour, et elle vaut au-delà de ce chantier. La première garde
+vérifiait que le **générateur** n'écrit nulle part : elle passait, et la fuite était chez
+le **consommateur** — `ecrireCouv` réécrivait la carte de couverture qu'il venait de lire,
+séries d'exemple comprises. *La carte lue est celle qu'on réécrit.* Un producteur propre
+ne prouve rien sur ce que le reste du programme fait de ce qu'il produit.
+
+Le refus vit donc **au seul endroit par lequel une série entre dans le stockage** —
+`garderSerie`, avant que la clé ne soit construite — et à la seconde frontière qu'est
+`noterCouv`. Posé là, il vaut pour les trois espaces étanches (`.perso`, `.client`,
+`.essai`) et les cinq comptes sans qu'on ait à les énumérer.
+
+`scripts/app/etancheite-exemples.test.mjs` fait tourner **le vrai code** contre un faux
+stockage, dans les trois espaces. Ses sondes ont été vérifiées par mutation : casser
+l'ancrage de la sélection, retirer la lecture de la marque, ou retirer le refus de
+`garderSerie` fait tomber le test correspondant.
+
+**La sonde d'idempotence** passe la migration **deux fois** et compare le stockage entier
+entre les deux passages : le second ne doit rien retravailler, ni rebalayer les blocs de
+bougies. Une troisième sonde pose la marque d'avance et vérifie que la migration n'entre
+même pas — elle a fait son office une fois, elle ne surveille pas le stockage à vie.
+
+## Aucun mot relatif sur une fenêtre figée
+
+L'indicateur de régime, mesuré sur les séries d'exemple, travaille sur une fenêtre écrite
+dans le générateur. « hier » y désigne la veille de **cette** date, pas la veille
+d'aujourd'hui, et l'écart grandit à chaque jour qui passe : au bout de six mois, « hier »
+annoncerait une veille vieille de six mois. Le régime porte donc `surExemples`, et les
+trois chiffres de la veille comme la frise se datent **en toutes lettres** — « au 11
+septembre 2026 » — pendant que `zBougie` ajoute « séries d'exemple, fenêtre fixe ». Sur
+des bougies à soi, fraîches par construction, « hier » reste juste et se lit mieux.
+
+**Le filtre des 48 h ne les écarte jamais**, et c'était la fausse crainte : `tFin` est la
+dernière bougie du lot mesuré, donc leur propre dernière bougie. Elles ne seront pas
+étiquetées « périmées ». Le défaut était l'inverse — aucune alerte, et des mots relatifs.
+
+**L'indicateur demande « ai-je des séries à moi », pas « ai-je payé ».** Le garde était
+`this.essai` : quelqu'un qui avait payé et n'avait rien importé prenait l'univers réel,
+dont **aucune série n'est livrée avec l'application** — zéro mesure, indicateur muet —
+pendant que celui qui n'avait pas payé en voyait un. **Payer donnait moins le premier
+jour.** Depuis que les dix séries sont visibles depuis n'importe quel compte, la licence
+n'a plus rien à voir avec la question.
+
 ## Cet univers d'exemple monte, et l'application le dit
 
 Sur ces trois ans, la médiane des dix familles finit à **+39 %**, quatre au-dessus de

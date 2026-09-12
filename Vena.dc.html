@@ -15502,11 +15502,23 @@ GROUPES = {
     const z = zone || this.state.zoneMarche || 'us';
     this.setState({ regimeEnCours: true, regimeZone: z });
     const M = this.M;
-    // en essai, l'univers se limite strictement aux séries de démonstration :
-    // aucune requête vers data/, le site est publiable sans les exports du courtier
+    // ————— LA QUESTION EST « AI-JE DES SÉRIES À MOI », PAS « AI-JE PAYÉ » —————
+    //
+    // Le garde était `this.essai`. Conséquence mesurée : quelqu'un qui a payé et n'a
+    // encore rien importé prenait l'univers réel, dont `charger` ne rend AUCUNE série —
+    // rien n'est livré avec l'application — donc zéro mesure et un indicateur muet ;
+    // pendant que celui qui n'a pas payé, lui, en voyait un. Payer donnait moins le
+    // premier jour.
+    //
+    // Depuis que les dix séries d'exemple sont visibles depuis n'importe quel compte,
+    // la licence n'a plus rien à voir avec la question. Reste le cas de quelqu'un qui a
+    // déposé des séries dont aucune ne figure dans la carte sectorielle de la zone :
+    // l'indicateur reste muet pour lui, comme avant, et la page le dit déjà par
+    // « aucune bougie mesurée ».
     const carte = this.secteursDeZone(z);
-    const actions = this.essai ? [...SYM_EXEMPLES] : Object.keys(carte);
-    const indices = this.essai ? [] : this.ZONES[z].indices;
+    const aMoi = (this.state.deposes || []).some((x) => !estExemple(x));
+    const actions = aMoi ? Object.keys(carte) : [...SYM_EXEMPLES];
+    const indices = aMoi ? this.ZONES[z].indices : [];
     const mesures = [];
     // les séries complètes, gardées le temps du calcul : elles servent à la frise du
     // score, qui se calcule une fois ici et se relit ensuite
@@ -15618,6 +15630,10 @@ GROUPES = {
       const e = parJour.get(jours[jours.length - 2]);
       return { score: scoreDe(e), breadth: fr1(e.au / e.n * 100) + ' %',
         median: sg1(medDe(e.v)),
+        // LE JOUR, ET PAS SEULEMENT LES CHIFFRES. Sur une fenêtre figée, « hier » ment
+        // d'autant plus qu'on s'éloigne de la livraison — au bout de six mois, il
+        // annonce une veille vieille de six mois. Le jour permet de le dire en absolu.
+        jour: jours[jours.length - 2],
         indices: e.ni ? e.ia + ' / ' + e.ni : '—' };
     })();
     const scoresH = hist.map((x) => x[1]);
@@ -15625,6 +15641,9 @@ GROUPES = {
     const bas = hist.reduce((a2, x) => (a2 === null || x[1] < a2[1] ? x : a2), null);
     this.setState({ regimeEnCours: false, regimes: { ...(this.state.regimes || {}), [z]: {
       score, n: mesures.length,
+      // mesuré sur les séries d'exemple : leur fenêtre est FIXE, donc aucun mot relatif
+      // ne doit être écrit à côté de ces chiffres
+      surExemples: !aMoi,
       zone: z, date: new Date().toISOString(),
       // L'HEURE DE LA DERNIÈRE BOUGIE, pas celle du calcul : si l'export a trois semaines,
       // le score affiché est celui d'il y a trois semaines.
@@ -16222,6 +16241,8 @@ GROUPES = {
     try { localStorage.setItem(this.cle(this.CLE_COUV), JSON.stringify(propre)); } catch (e) {}
   }
   noterCouv(sym, couv) {
+    // même frontière, même refus : la couverture d'une série engendrée se recalcule
+    if (estExemple(sym)) return;
     const m = this.lireCouv();
     if (couv) m[sym] = couv; else delete m[sym];
     this.ecrireCouv(m);
@@ -17247,7 +17268,21 @@ GROUPES = {
     if (!muet) this.setState({ messageDepot: compteRendu });
     return compteRendu;
   }
+  // ————— L'ÉTANCHÉITÉ SE POSE À LA FRONTIÈRE D'ÉCRITURE —————
+  //
+  // La leçon a coûté un aller-retour. La première garde vérifiait que le GÉNÉRATEUR
+  // n'écrit nulle part : elle testait le producteur, alors que la fuite était chez le
+  // CONSOMMATEUR — `ecrireCouv` réécrivait la carte qu'il venait de lire, exemples
+  // compris. Un producteur propre ne prouve rien sur ce que le reste du programme fait
+  // de ce qu'il produit.
+  //
+  // Le refus vit donc ICI, au seul endroit par lequel une série entre dans le stockage,
+  // et il vaut pour les trois espaces (`.perso`, `.client`, `.essai`) et les cinq
+  // comptes sans avoir à y penser : la clé est construite plus bas, le refus est décidé
+  // plus haut. Une série d'exemple qui arriverait ici serait un défaut d'appel, pas une
+  // demande légitime — on la refuse au lieu de l'écrire.
   async garderSerie(sym, brut) {
+    if (estExemple(sym)) return false;
     this._serieSet = null;
     const ok = await this.grosSet(this.cle(this.CLE_SERIES) + '|' + sym,
       { sym, brut: this.compacter(brut), date: Date.now() });
@@ -22299,6 +22334,9 @@ GROUPES = {
         };
         const moisAnnee = (j) => new Date(j * 86400000)
           .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        // un jour entier, en toutes lettres : sert partout où un mot relatif serait faux
+        const jourPlein = (j) => new Date(j * 86400000)
+          .toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         // ————— LE VERDICT, calculé depuis le score et la médiane —————
         //
         // La section empilait deux titres de 28 px pour dire la même chose, puis un
@@ -22422,17 +22460,34 @@ GROUPES = {
           })(),
           aTitres: !!(rz && rz.titres && rz.titres.some((x) => suivis.has(x.sym))),
           zVerdict: verdict, zSousTitre: sousTitre,
-          zBougie: rz ? 'bougies jusqu\u2019à ' + heure(rz.tFin) : 'aucune bougie mesurée',
+          zBougie: rz
+            ? 'bougies jusqu\u2019à ' + heure(rz.tFin)
+              + (rz.surExemples ? ' \u00b7 séries d\u2019exemple, fenêtre fixe' : '')
+            : 'aucune bougie mesurée',
           zEnTete: rz ? (this.ZONES[s.zoneMarche] || this.ZONES.us).nom.toUpperCase()
             + ' \u00b7 bougies jusqu\u2019à ' + heure(rz.tFin) : '',
           ...frise,
           friseTxt: rz && H
-            ? rz.score + ' aujourd\u2019hui \u00b7 médiane ' + rz.medHist
+            ? rz.score + (rz.surExemples ? ' au ' + heure(rz.tFin) : ' aujourd\u2019hui')
+              + ' \u00b7 médiane ' + rz.medHist
               + (rz.bas ? ' \u00b7 plus bas ' + rz.bas.score + ' en ' + moisAnnee(rz.bas.jour) : '')
             : '',
-          zVeilleBreadth: rz && rz.veille ? 'hier ' + rz.veille.breadth : '',
-          zVeilleMedian: rz && rz.veille ? 'hier ' + rz.veille.median : '',
-          zVeilleIndices: rz && rz.veille ? 'hier ' + rz.veille.indices : '',
+          // ————— AUCUN MOT RELATIF SUR UNE FENÊTRE FIGÉE —————
+          // Les séries d'exemple s'arrêtent à une date écrite dans le générateur. « hier »
+          // y désigne la veille de CETTE date, pas la veille d'aujourd'hui — et l'écart
+          // grandit à chaque jour qui passe. Sur ses propres bougies, fraîches par
+          // construction, « hier » reste juste et se lit mieux.
+          ...(() => {
+            const abs = rz && rz.surExemples;
+            const q = abs && rz.veille && rz.veille.jour
+              ? 'au ' + jourPlein(rz.veille.jour) + ' '
+              : 'hier ';
+            return {
+              zVeilleBreadth: rz && rz.veille ? q + rz.veille.breadth : '',
+              zVeilleMedian: rz && rz.veille ? q + rz.veille.median : '',
+              zVeilleIndices: rz && rz.veille ? q + rz.veille.indices : '',
+            };
+          })(),
           // les séries écartées, nommées, avec leur dernière date
           aPerimees: !!(rz && rz.perimees && rz.perimees.length),
           perimeesTxt: rz && rz.perimees && rz.perimees.length
