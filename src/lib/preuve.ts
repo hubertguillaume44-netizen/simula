@@ -1,7 +1,7 @@
 import { demoSeries } from "@/lib/demo";
-import { DEFAULT_SETTINGS, runBacktest, toScanRow } from "@/lib/engine";
+import { DEFAULT_SETTINGS, controles, runBacktest, toScanRow } from "@/lib/engine";
 import { verdict } from "@/lib/format";
-import type { ScanRow } from "@/lib/types";
+import type { Controle, ScanRow } from "@/lib/types";
 
 export type PreuveRow = ScanRow & { verdict: string; tone: "up" | "warn" | "down" | "muted" };
 
@@ -62,4 +62,46 @@ export function computePreuve(): PreuveRow[] {
     return { ...r, verdict: v.label, tone: v.tone };
   });
   return cached;
+}
+
+// ————— LA MESURE DE L'ACCUEIL, CALCULÉE ET NON ÉCRITE —————
+//
+// L'accueil montre une mesure à côté de son titre. Elle ne peut pas être un chiffre
+// tapé dans le JSX : un nombre en dur devient faux le jour où le moteur change, et il
+// n'y a rien pour le signaler — la vitrine se met alors à décrire un produit qui
+// n'existe plus. Celle-ci sort du VRAI moteur, sur les séries de démonstration, par le
+// même chemin que le tableau de la page Méthode.
+//
+// QUELLE LIGNE. Celle du plus gros gain brut PARMI CELLES QUI ÉCHOUENT à un contrôle —
+// c'est-à-dire le plus beau chiffre que Véna refuse de retenir. C'est tout l'argument :
+// une carte qui passerait cinq contrôles sur cinq ferait publicité, et l'intérêt est
+// précisément que l'outil contredise son propriétaire.
+//
+// La règle est un TRI, pas un choix écrit : si un jour toutes les configurations
+// passent, on retombe sur la première et la carte reste vraie — elle montrera alors
+// cinq contrôles tenus, ce qui sera le cas. On ne fabrique pas un échec.
+export type Vitrine = {
+  row: PreuveRow;
+  controles: Controle[];
+  passes: number;
+  total: number;
+};
+
+export function vitrine(): Vitrine | null {
+  const rows = computePreuve();
+  if (!rows.length) return null;
+  const echoue = (r: PreuveRow) => controles(r).some((x) => x.ok === false);
+  // `computePreuve()` trie déjà par gain brut décroissant : la première qui échoue est
+  // donc la plus grosse de celles-là.
+  const row = rows.find(echoue) ?? rows[0]!;
+  const c = controles(row);
+  // `ok === null` = non mesurable. Ni réussite ni échec : il ne compte pas au total,
+  // et sa valeur s'écrit « — ».
+  const mesures = c.filter((x) => x.ok !== null);
+  return {
+    row,
+    controles: c,
+    passes: mesures.filter((x) => x.ok === true).length,
+    total: mesures.length,
+  };
 }
