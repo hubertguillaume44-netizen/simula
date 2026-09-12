@@ -24,11 +24,24 @@
  */
 
 // ————— CE QUI RESTE OUVERT —————
-// Rien aujourd'hui. À PRÉVOIR : le jour où un lien de paiement Revolut renverra vers une
-// page de confirmation, cette page devra figurer ici — un client qui vient de payer ne
-// peut pas se heurter à un mot de passe. Exemple, à décommenter le moment venu :
+//
+// `/api/licence` EST LA SEULE ENTRÉE QUI NE PEUT PAS DEMANDER UN MOT DE PASSE.
+//
+// C'est le webhook du paiement : Revolut l'appelle de serveur à serveur, sans navigateur,
+// sans personne devant l'écran. Il n'a aucun moyen de présenter des identifiants. Derrière
+// la protection il recevait 401, et un 401 sur un webhook ne se voit pas — l'argent est
+// encaissé, la licence n'est jamais délivrée, et c'est le client qui le découvre.
+//
+// Le laisser ouvert n'affaiblit rien : la fonction `licence.mjs` ne signe que ce qu'elle a
+// vérifié, et la clé privée n'est ni ici ni dans le dépôt. La protection de ce fichier
+// couvre une VITRINE en construction, pas un secret.
+//
+// À PRÉVOIR : le jour où un lien de paiement Revolut renverra vers une page de
+// confirmation, cette page devra figurer ici aussi — un client qui vient de payer ne peut
+// pas se heurter à un mot de passe. Les quatre adresses sont dans le tableau de bord
+// Revolut ; elles ne s'inventent pas. Exemple, à compléter le moment venu :
 //   "/merci", "/paiement/confirme",
-const OUVERTS = [];
+const OUVERTS = ["/api/licence"];
 
 // Le nom de la variable à créer dans Netlify. Format : « identifiant:motdepasse ».
 const VARIABLE = "VENA_ACCES";

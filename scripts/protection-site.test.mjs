@@ -58,19 +58,44 @@ test("le défi est un en-tête HTTP valide — pas d’accent", async () => {
   }
 });
 
-test("tout est couvert : la racine, /app, et les deux fonctions", async () => {
-  for (const c of ["/", "/app", "/app/index.html", "/tarifs", "/api/licence", "/api/usage",
+test("tout est couvert, SAUF le webhook de paiement", async () => {
+  for (const c of ["/", "/app", "/app/index.html", "/tarifs", "/api/usage",
                    "/assets/index.js", "/_ds/industry-x/styles.css"]) {
     const r = await appeler({ variable: BON, entete: null, chemin: c });
     assert.equal(r.statut, 401, c + " doit être protégé");
   }
 });
 
+test("/api/licence répond SANS mot de passe — c’est un webhook, pas une page", async () => {
+  // CE TEST DISAIT L'INVERSE, et il figeait un défaut connu. Revolut appelle cette
+  // adresse de serveur à serveur : pas de navigateur, personne devant l'écran, aucun
+  // moyen de présenter des identifiants. Derrière la protection elle rendait 401 — et un
+  // 401 sur un webhook NE SE VOIT PAS : l'argent est encaissé, la licence n'est jamais
+  // délivrée, et c'est le client qui le découvre.
+  //
+  // Ce n'est pas un trou : `licence.mjs` ne signe que ce qu'elle a vérifié, et la clé
+  // privée n'est ni dans ce fichier ni dans le dépôt. La protection couvre une vitrine
+  // en construction, pas un secret.
+  const r = await appeler({ variable: BON, entete: null, chemin: "/api/licence" });
+  assert.equal(r.statut, 200,
+    "/api/licence doit passer sans identifiants, sinon le webhook du paiement prend 401");
+  // et le voisinage NE s'ouvre pas avec lui : seuls ce chemin et ses sous-chemins
+  for (const c of ["/api/licencex", "/api", "/api/usage"]) {
+    const r2 = await appeler({ variable: BON, entete: null, chemin: c });
+    assert.equal(r2.statut, 401, c + " s’est ouvert avec le webhook");
+  }
+});
+
 test("le mécanisme d’exclusion fonctionne, pour le jour où il servira", async () => {
-  // aujourd’hui la liste est vide ; une page de confirmation de paiement devra y entrer.
-  // On éprouve le mécanisme sur une copie, pour qu’il ne soit pas du code mort.
-  const src = lire("netlify/edge-functions/protection.js").replace("const OUVERTS = [];",
-    'const OUVERTS = ["/merci"];');
+  // La liste porte le webhook ; une page de confirmation de paiement devra y entrer aussi.
+  // On éprouve le mécanisme sur une copie, avec une entrée qui n'y est pas encore.
+  //
+  // La substitution s'accroche à la DÉCLARATION, pas à son contenu : écrite
+  // `"const OUVERTS = [];"`, elle ne remplaçait plus rien dès que la liste s'est peuplée,
+  // et le test tombait en annonçant « /merci : attendu 200 » — un message qui ne désigne
+  // pas la cause.
+  const src = lire("netlify/edge-functions/protection.js")
+    .replace(/const OUVERTS = \[[^\]]*\];/, 'const OUVERTS = ["/merci"];');
   const url = "data:text/javascript;base64," + Buffer.from(src, "utf8").toString("base64");
   globalThis.Netlify = { env: { get: () => BON } };
   const mod = await import(url);
