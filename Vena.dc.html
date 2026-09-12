@@ -15502,46 +15502,57 @@ GROUPES = {
     const z = zone || this.state.zoneMarche || 'us';
     this.setState({ regimeEnCours: true, regimeZone: z });
     const M = this.M;
-    // ————— LA QUESTION EST « AI-JE DES SÉRIES À MOI », PAS « AI-JE PAYÉ » —————
+    // ————— LE CHOIX SE FAIT SUR UN RÉSULTAT, PAS SUR UNE INTENTION —————
     //
-    // Le garde était `this.essai`. Conséquence mesurée : quelqu'un qui a payé et n'a
-    // encore rien importé prenait l'univers réel, dont `charger` ne rend AUCUNE série —
-    // rien n'est livré avec l'application — donc zéro mesure et un indicateur muet ;
-    // pendant que celui qui n'a pas payé, lui, en voyait un. Payer donnait moins le
-    // premier jour.
+    // Deux corrections successives au même endroit, et la première déplaçait le défaut
+    // au lieu de le fermer.
     //
-    // Depuis que les dix séries d'exemple sont visibles depuis n'importe quel compte,
-    // la licence n'a plus rien à voir avec la question. Reste le cas de quelqu'un qui a
-    // déposé des séries dont aucune ne figure dans la carte sectorielle de la zone :
-    // l'indicateur reste muet pour lui, comme avant, et la page le dit déjà par
-    // « aucune bougie mesurée ».
+    // Le garde était `this.essai` : quelqu'un qui avait payé sans rien importer prenait
+    // l'univers réel, dont `charger` ne rend AUCUNE série — rien n'est livré avec
+    // l'application — donc zéro mesure et un indicateur muet, pendant que celui qui
+    // n'avait pas payé en voyait un. PAYER DONNAIT MOINS.
+    //
+    // Le garde est devenu « ai-je des séries à moi ». Même défaut, autre nom : il passe
+    // à vrai dès UN dépôt, même un seul instrument absent de la carte sectorielle de la
+    // zone. L'indicateur se taisait alors pour quelqu'un qui en avait un la veille —
+    // DÉPOSER DONNAIT MOINS, et la régression était causée par le geste qu'on lui
+    // demande de faire.
+    //
+    // Les deux gardes demandaient une INTENTION (as-tu payé, as-tu déposé) pour prédire
+    // un RÉSULTAT (y aura-t-il quelque chose à mesurer). On mesure d'abord, on décide
+    // ensuite : si le relevé de l'univers réel ne rend rien, on retombe sur les dix
+    // séries d'exemple et la page le dit — « séries d'exemple, fenêtre fixe » se lit,
+    // un écran vide ne se lit pas.
     const carte = this.secteursDeZone(z);
-    const aMoi = (this.state.deposes || []).some((x) => !estExemple(x));
-    const actions = aMoi ? Object.keys(carte) : [...SYM_EXEMPLES];
-    const indices = aMoi ? this.ZONES[z].indices : [];
-    const mesures = [];
     // les séries complètes, gardées le temps du calcul : elles servent à la frise du
     // score, qui se calcule une fois ici et se relit ensuite
-    const series = [];
-    for (const sym of [...actions, ...indices]) {
-      await this.charger(sym);
-      const df = this.dfs[sym];
-      if (!df || df.n < 210) continue;
-      const d1 = M.resampler(df, 'D1');
-      if (d1.n < 205) continue;
-      const last = d1.c[d1.n - 1];
-      const sma = M.sma(d1.c, 200);
-      const m200 = sma[d1.n - 1];
-      const v20 = d1.n > 20 ? (last / d1.c[d1.n - 21] - 1) * 100 : NaN;
-      mesures.push({ sym, secteur: carte[sym] || 'Indice',
-        auDessus: m200 ? last > m200 : false, v20, indice: indices.includes(sym),
-        // % au-dessus ou en dessous de la MM200, et l'heure de la dernière bougie :
-        // sans elle, une série figée depuis trois semaines passe pour un titre stable
-        vsM200: m200 ? (last / m200 - 1) * 100 : NaN,
-        dernier: df.t[df.n - 1] });
-      series.push({ sym, t: d1.t, c: d1.c, n: d1.n, sma, indice: indices.includes(sym) });
-      await new Promise((r) => setTimeout(r, 0));
-    }
+    const mesures = [], series = [];
+    const relever = async (actions, indices) => {
+      mesures.length = 0; series.length = 0;
+      for (const sym of [...actions, ...indices]) {
+        await this.charger(sym);
+        const df = this.dfs[sym];
+        if (!df || df.n < 210) continue;
+        const d1 = M.resampler(df, 'D1');
+        if (d1.n < 205) continue;
+        const last = d1.c[d1.n - 1];
+        const sma = M.sma(d1.c, 200);
+        const m200 = sma[d1.n - 1];
+        const v20 = d1.n > 20 ? (last / d1.c[d1.n - 21] - 1) * 100 : NaN;
+        mesures.push({ sym, secteur: carte[sym] || 'Indice',
+          auDessus: m200 ? last > m200 : false, v20, indice: indices.includes(sym),
+          // % au-dessus ou en dessous de la MM200, et l'heure de la dernière bougie :
+          // sans elle, une série figée depuis trois semaines passe pour un titre stable
+          vsM200: m200 ? (last / m200 - 1) * 100 : NaN,
+          dernier: df.t[df.n - 1] });
+        series.push({ sym, t: d1.t, c: d1.c, n: d1.n, sma, indice: indices.includes(sym) });
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      return mesures.length;
+    };
+    let surExemples = false;
+    await relever(Object.keys(carte), this.ZONES[z].indices);
+    if (!mesures.length) { surExemples = true; await relever([...SYM_EXEMPLES], []); }
     if (!mesures.length) { this.setState({ regimeEnCours: false }); return; }
     // ————— LES SÉRIES PÉRIMÉES SORTENT DU CALCUL —————
     //
@@ -15643,7 +15654,7 @@ GROUPES = {
       score, n: mesures.length,
       // mesuré sur les séries d'exemple : leur fenêtre est FIXE, donc aucun mot relatif
       // ne doit être écrit à côté de ces chiffres
-      surExemples: !aMoi,
+      surExemples,
       zone: z, date: new Date().toISOString(),
       // L'HEURE DE LA DERNIÈRE BOUGIE, pas celle du calcul : si l'export a trois semaines,
       // le score affiché est celui d'il y a trois semaines.
@@ -25754,6 +25765,7 @@ GROUPES = {
                     + '. Le scan le traverse sans le savoir : les deux bougies de part et d’autre sont considérées comme consécutives, ce qui peut inventer un signal. À vérifier dans votre export MT5.'
                   : vieux
                     ? 'La série s’arrête le ' + jour(cv.t1) + '. Un scan lancé aujourd’hui ne mesurera rien après cette date — c’est ainsi qu’un instrument couvre six ans et son voisin deux.'
+                      + (estExemple(sel) ? ' Celle-ci est une série d’exemple : sa fenêtre est FIXE, engendrée une fois pour toutes. Il n’y a rien à réexporter — elle vieillira, et c’est normal.' : '')
                     : (cv ? 'Aucun trou : la série est continue du premier au dernier jour.' : ''),
               fTrouCouleur: (!la || nTrous || vieux) ? 'var(--color-accent-900)' : 'var(--color-neutral-500)',
               aFBougies: la,

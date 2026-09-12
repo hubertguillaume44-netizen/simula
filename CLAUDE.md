@@ -320,9 +320,19 @@ Le refus vit donc **au seul endroit par lequel une série entre dans le stockage
 `.essai`) et les cinq comptes sans qu'on ait à les énumérer.
 
 `scripts/app/etancheite-exemples.test.mjs` fait tourner **le vrai code** contre un faux
-stockage, dans les trois espaces. Ses sondes ont été vérifiées par mutation : casser
-l'ancrage de la sélection, retirer la lecture de la marque, ou retirer le refus de
-`garderSerie` fait tomber le test correspondant.
+stockage, dans les trois espaces.
+
+**Toute garde qui protège une frontière se vérifie par MUTATION.** On l'écrit, puis on
+casse le code exprès et on vérifie qu'elle tombe. Sans ça, on a écrit un commentaire
+exécutable — c'est précisément pourquoi la garde du générateur passait pendant que la
+couverture fuyait. Vérifié ici : désancrer la sélection des clés, retirer la lecture de la
+marque, retirer le refus de `garderSerie`, ou décider du repli de l'indicateur avant le
+relevé font tomber chacun le test correspondant.
+
+**Et une garde sur du code se lit sans les commentaires.** Le commentaire qui raconte une
+garde précédente la NOMME — c'est son travail. Un test qui lit le fichier brut échoue
+dessus, comme l'analyseur de gabarit qui empilait un `<select>` cité dans une note. Ce
+qu'on interdit, c'est le code, pas le récit du code.
 
 **La sonde d'idempotence** passe la migration **deux fois** et compare le stockage entier
 entre les deux passages : le second ne doit rien retravailler, ni rebalayer les blocs de
@@ -339,16 +349,38 @@ trois chiffres de la veille comme la frise se datent **en toutes lettres** — �
 septembre 2026 » — pendant que `zBougie` ajoute « séries d'exemple, fenêtre fixe ». Sur
 des bougies à soi, fraîches par construction, « hier » reste juste et se lit mieux.
 
-**Le filtre des 48 h ne les écarte jamais**, et c'était la fausse crainte : `tFin` est la
-dernière bougie du lot mesuré, donc leur propre dernière bougie. Elles ne seront pas
-étiquetées « périmées ». Le défaut était l'inverse — aucune alerte, et des mots relatifs.
+**Deux « périmées » différentes, et il faut les distinguer.** Le filtre des 48 h de
+`calcRegime` n'écarte JAMAIS les séries d'exemple : `tFin` est la dernière bougie du lot
+mesuré, donc leur propre dernière bougie. Mais la fiche d'instrument porte un AUTRE test,
+le seul date-contre-aujourd'hui du fichier — `Date.now() - cv.t1 > 45 jours`, dans le
+producteur de la fiche — et **celui-là s'applique bien à elles** : elles passeront
+« périmées » quarante-cinq jours après leur dernière bougie.
 
-**L'indicateur demande « ai-je des séries à moi », pas « ai-je payé ».** Le garde était
-`this.essai` : quelqu'un qui avait payé et n'avait rien importé prenait l'univers réel,
-dont **aucune série n'est livrée avec l'application** — zéro mesure, indicateur muet —
-pendant que celui qui n'avait pas payé en voyait un. **Payer donnait moins le premier
-jour.** Depuis que les dix séries sont visibles depuis n'importe quel compte, la licence
-n'a plus rien à voir avec la question.
+**C'est voulu, et ce n'est pas un défaut à corriger.** Le même mot désigne un export MT5
+qu'on a oublié de refaire, et c'est ce qu'il faut apprendre à lire. Ce qui serait
+malhonnête, c'est de laisser croire à un fichier à refaire : la ligne de diagnostic ajoute
+donc, pour une série d'exemple, que sa fenêtre est fixe et qu'il n'y a rien à réexporter.
+Ne pas confondre non plus avec les « chiffres périmés » (réglages changés) ni avec
+`aScansPerimes` (un scan antérieur à une livraison) : trois mécanismes, un seul mot.
+
+## L'indicateur choisit son univers sur un RÉSULTAT, jamais sur une intention
+
+Deux corrections successives au même endroit, et **la première déplaçait le défaut au lieu
+de le fermer** — il portait même le nom.
+
+| Garde | Ce qu'elle cassait |
+|---|---|
+| `this.essai` | Payer sans rien importer donnait l'univers réel, dont **aucune série n'est livrée** : zéro mesure, indicateur muet, pendant que le non-payant en voyait un. **Payer donnait moins.** |
+| « ai-je des séries à moi » | Vrai dès **un** dépôt, même d'un instrument absent de la carte sectorielle. L'indicateur se taisait pour quelqu'un qui en avait un la veille. **Déposer donnait moins** — et la régression venait du geste qu'on lui demande de faire. |
+
+Les deux demandaient une **intention** (as-tu payé, as-tu déposé) pour prédire un
+**résultat** (y aura-t-il quelque chose à mesurer). On relève donc l'univers réel, et
+**seulement s'il ne rend rien** on retombe sur les dix séries d'exemple, `surExemples` à
+vrai. La page dit alors « séries d'exemple, fenêtre fixe » — ça se lit ; un écran vide ne
+se lit pas.
+
+C'est le même déplacement que celui de la garde d'étanchéité : **décider après, pas
+avant.**
 
 ## Cet univers d'exemple monte, et l'application le dit
 

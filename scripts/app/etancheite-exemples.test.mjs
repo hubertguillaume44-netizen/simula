@@ -206,7 +206,7 @@ test("l’indicateur de régime se date en absolu sur les séries d’exemple", 
   // Leur fenêtre est écrite dans le générateur : « hier » y désigne la veille de CETTE
   // date, pas la veille d'aujourd'hui, et l'écart grandit à chaque jour qui passe. Au
   // bout de six mois, « hier » annonce une veille vieille de six mois.
-  assert.match(APP, /surExemples: !aMoi,/,
+  assert.match(APP, /\n      surExemples,\n/,
     "le régime ne dit plus s’il a été mesuré sur les séries d’exemple");
   assert.match(APP, /const abs = rz && rz\.surExemples;/);
   assert.match(APP, /'au ' \+ jourPlein\(rz\.veille\.jour\) \+ ' '/,
@@ -215,13 +215,28 @@ test("l’indicateur de régime se date en absolu sur les séries d’exemple", 
     "la frise annonce encore « aujourd’hui » sur une fenêtre figée");
 });
 
-test("l’indicateur demande « ai-je des séries à moi », pas « ai-je payé »", () => {
-  // Le garde était `this.essai`. Quelqu'un qui avait payé et n'avait rien importé
-  // prenait l'univers réel, dont aucune série n'est livrée : zéro mesure, indicateur
-  // muet — pendant que celui qui n'avait pas payé en voyait un. Payer donnait moins.
-  const corps = methode("async calcRegime(zone) {");
-  assert.match(corps, /const aMoi = \(this\.state\.deposes \|\| \[\]\)\.some\(\(x\) => !estExemple\(x\)\);/);
-  assert.match(corps, /const actions = aMoi \? Object\.keys\(carte\) : \[\.\.\.SYM_EXEMPLES\];/);
-  assert.ok(!/this\.essai \? \[\.\.\.SYM_EXEMPLES\]/.test(corps),
-    "la licence décide encore de l’univers de l’indicateur");
+test("l’indicateur choisit son univers sur un RÉSULTAT, jamais sur une intention", () => {
+  // DEUX CORRECTIONS SUCCESSIVES AU MÊME ENDROIT, et la première déplaçait le défaut.
+  //
+  //   · `this.essai` : payer sans rien importer donnait l'univers réel, dont aucune
+  //     série n'est livrée — zéro mesure, indicateur muet. PAYER DONNAIT MOINS.
+  //   · « ai-je des séries à moi » : vrai dès UN dépôt, même un instrument absent de la
+  //     carte sectorielle. L'indicateur se taisait pour quelqu'un qui en avait un la
+  //     veille. DÉPOSER DONNAIT MOINS — et la régression venait du geste qu'on demande.
+  //
+  // Les deux demandaient une INTENTION pour prédire un RÉSULTAT. On mesure d'abord.
+  // SANS LES COMMENTAIRES. Le commentaire qui raconte les deux gardes précédentes les
+  // NOMME — il doit les nommer, c'est son travail. Un test qui lirait le fichier brut
+  // échouerait dessus, exactement comme l'analyseur de gabarit qui empilait un <select>
+  // cité dans une note. Ce qu'on interdit, c'est le CODE, pas le récit du code.
+  const corps = methode("async calcRegime(zone) {").replace(/^\s*\/\/.*$/gm, "");
+  assert.ok(!/this\.essai/.test(corps), "la licence décide encore de l’univers");
+  assert.ok(!/const aMoi =/.test(corps), "une intention décide encore de l’univers");
+
+  // le premier relevé porte sur l'univers réel, le repli sur les exemples vient APRÈS
+  const iReel = corps.indexOf("await relever(Object.keys(carte), this.ZONES[z].indices);");
+  const iRepli = corps.indexOf("if (!mesures.length) { surExemples = true; await relever([...SYM_EXEMPLES], []); }");
+  assert.ok(iReel > 0, "le relevé de l’univers réel a disparu");
+  assert.ok(iRepli > iReel,
+    "le repli doit suivre le relevé : décidé avant, il redevient une intention");
 });
