@@ -17368,7 +17368,34 @@ GROUPES = {
     }
     return suite;
   }
+  // ————— LE DÉMARRAGE SE CHRONOMÈTRE, SINON ON OPTIMISE À L'AVEUGLE —————
+  //
+  // Un chargement lent a été attribué au POIDS DU FICHIER. Mesuré sur un navigateur
+  // vide, le premier rendu utile tient en 0,4 s, et 4,9 s dans le pire cas fabriqué —
+  // processeur divisé par six ET 3G. Mais un navigateur vide n'est la condition de
+  // personne : l'application relit ses séries AVANT le premier rendu utile, et c'est du
+  // travail de fil principal que la mesure à vide ne voit pas du tout.
+  //
+  // Ces marques restent dans le produit. Elles ne coûtent rien, elles ne s'affichent
+  // nulle part, et elles se lisent d'une ligne dans la console de n'importe qui :
+  //
+  //   performance.getEntriesByType('measure').filter((m) => m.name.startsWith('vena:'))
+  //
+  // Sans elles, la seule façon de savoir où passent les secondes chez un utilisateur
+  // est de lui demander de croire à une hypothèse.
+  chrono(nom) {
+    const t0 = (globalThis.performance || Date).now();
+    return (extra) => {
+      try {
+        const p = globalThis.performance;
+        if (p && p.measure) p.measure('vena:' + nom + (extra ? ' ' + extra : ''),
+          { start: t0, end: p.now() });
+      } catch (e) {}
+    };
+  }
+
   async reprendreSeries() {
+    const fini = this.chrono('reprendreSeries');
     await this.retirerCompteDemo();
     await this.migrerSeriesCommunes();
     await this.reconcilierSeries();
@@ -17378,7 +17405,9 @@ GROUPES = {
     // Les dix séries d'exemple entrent AVANT la sortie anticipée : un compte sans
     // aucune série déposée est précisément celui qui en a le plus besoin.
     if (!this.state.exemplesCaches) this.poserExemples();
-    if (!idx.length || !this.M) return 0;
+    // la sortie anticipée se mesure AUSSI : sans ça, le cas « navigateur vide » ne
+    // laisserait aucune trace, et c'est précisément celui auquel on veut le comparer
+    if (!idx.length || !this.M) { fini('0 série'); return 0; }
     const couvVues = this.lireCouv();
     let couvNeuves = false;
     this.dfs = this.dfs || {};
@@ -17404,6 +17433,9 @@ GROUPES = {
       n++;
     }
     if (couvNeuves) this.ecrireCouv(couvVues);
+    // le nombre de séries relues fait partie de la mesure : « 3,2 s » ne dit rien,
+    // « 3,2 s pour 47 séries » dit où chercher
+    fini(n + ' séries');
     if (n) {
       this.completerMt4();
     this.mesurerPlace();
